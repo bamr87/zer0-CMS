@@ -53,10 +53,21 @@ class BudgetExceeded(Exception):
 
 
 def start_run(
-    agent, *, trigger, target=None, input=None, user=None, parent=None, event_id="", revision=None, enqueue=True
+    agent,
+    *,
+    trigger,
+    target=None,
+    input=None,
+    user=None,
+    parent=None,
+    event_id="",
+    revision=None,
+    enqueue=True,
+    options=None,
 ) -> AgentRun:
-    """Queue a run of `agent`. Non-eval runs always use the live revision; a
-    definition that has never gone live cannot run outside its evals."""
+    """Queue a run of `agent` (`options`: Celery's, such as a time limit or a
+    queue). Non-eval runs always use the live revision; a definition that has
+    never gone live cannot run outside its evals."""
     if revision is None:
         if trigger != "eval" and not agent.live:
             raise RunRefused(f"{agent.slug} is not live: publish a revision that passed its evals first")
@@ -82,7 +93,7 @@ def start_run(
     if enqueue:
         from .tasks import run_agent
 
-        transaction.on_commit(lambda: run_agent.delay(run.pk))
+        transaction.on_commit(lambda: run_agent.apply_async((run.pk,), **(options or {})))
     return run
 
 

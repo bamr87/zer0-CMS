@@ -30,7 +30,6 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, transaction
@@ -48,7 +47,6 @@ from ops.errors import ApiError
 from research import fetch
 
 IGNORED = {".git", "node_modules", "venv", ".venv", "__pycache__", ".tox", "dist", "build", ".eggs"}
-REPO = Path(settings.BASE_DIR).parent
 
 
 def _patterns() -> list[dict]:
@@ -85,7 +83,7 @@ def _read(target: str, fmt: str) -> tuple[str, str]:
         if got.status >= 400:
             raise CommandError(f"{target} answered HTTP {got.status}")
         html = got.content_type.split(";", 1)[0].strip().lower() in crawl.HTML
-        return got.text(), "html" if html else fmt
+        return fetch.decode(got.body, got.charset), "html" if html else fmt
     path = Path(target)
     if not path.is_file():
         raise CommandError(f"no file {target}")
@@ -106,7 +104,7 @@ class Command(BaseCommand):
         audit.add_argument("--json", action="store_true")
         audit.add_argument("--ai", action="store_true", help="Record an audit and have the evaluator score it.")
         batch = sub.add_parser("batch-audit")
-        batch.add_argument("--sites", default=str(REPO / "apps" / "aieo" / "sites.txt"))
+        batch.add_argument("--sites", default=str(prompts.DATA / "sites.txt"))
         batch.add_argument("--output", default=None)
         batch.add_argument("--heuristic", action="store_true", help="Score with the heuristics only.")
         snapshot = sub.add_parser("crawl")
@@ -132,8 +130,8 @@ class Command(BaseCommand):
         run.add_argument("--max-files", type=int, default=0)
         run.add_argument("--dry-run", action="store_true")
         imported = sub.add_parser("import-reports")
-        imported.add_argument("--path", default=str(REPO / "apps" / "aieo" / "reports"))
-        imported.add_argument("--visibility", choices=["private", "shared"], default="shared")
+        imported.add_argument("--path", default=str(prompts.DATA / "reports"))
+        imported.add_argument("--visibility", choices=["private", "shared"], default="private")
         loaded = sub.add_parser("import-prompts")
         loaded.add_argument("--path", default=str(prompts.DATA / "prompts"))
         loaded.add_argument("--force", action="store_true")
@@ -320,7 +318,7 @@ class Command(BaseCommand):
         globbed = {p.resolve() for pattern in options["globs"] or ["**/*.md"] for p in root.glob(pattern) if kept(p)}
         if options["git_diff_base"]:
             done = subprocess.run(
-                ["git", "diff", "--name-only", f"{options['git_diff_base']}...HEAD"],
+                ["git", "diff", "--name-only", "--end-of-options", f"{options['git_diff_base']}...HEAD"],
                 cwd=root,
                 capture_output=True,
                 text=True,

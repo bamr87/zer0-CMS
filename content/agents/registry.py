@@ -21,7 +21,9 @@ every check below is written once and holds on every surface:
    a person (`ToolContext.on_behalf_of`: a run a person asked for, whose
    prompt and tools they chose), that person must be able to edit the page
    too, so a run never reads a draft its starter could not.
-6. **The rate holds** — per agent user and tool, in the cache.
+6. **The rate holds** — per agent user and tool, in the cache; a tool registered
+   again under another name (an alias: the same function) spends the budget of
+   the name it was first registered under.
 
 The call then runs in its own transaction and is recorded as an `AgentStep`
 of the caller's run, with its arguments, result, latency and any error.
@@ -109,6 +111,7 @@ class ToolContext:
 class Registry:
     def __init__(self):
         self._tools: dict[str, Tool] = {}
+        self._first: dict = {}  # a tool's function → the name it was first registered under, whose rate it spends
 
     def register(self, t: Tool) -> Tool:
         if t.effect not in EFFECTS:
@@ -117,6 +120,7 @@ class Registry:
             raise ValueError(f"tool {t.name} is registered twice")
         Draft202012Validator.check_schema(t.input_schema)
         self._tools[t.name] = t
+        self._first.setdefault(t.fn, t.name)
         return t
 
     def get(self, name: str) -> Tool:
@@ -233,16 +237,16 @@ class Registry:
             elif not user.has_perm(perm):
                 raise ToolError("permission_denied", f"{user.username} lacks {perm}")
 
-    @staticmethod
-    def _check_rate(t: Tool, user):
+    def _check_rate(self, t: Tool, user):
         if not t.rate:
             return
+        name = self._first.get(t.fn, t.name)
         count, unit = t.rate.split("/")
         window = {"s": 1, "m": 60, "h": 3600}[unit]
-        key = f"zer0:rate:{user.pk}:{t.name}:{int(time.time() // window)}"
+        key = f"zer0:rate:{user.pk}:{name}:{int(time.time() // window)}"
         cache.add(key, 0, timeout=window * 2)
         if cache.incr(key) > int(count):
-            raise ToolError("rate_limited", f"{t.name} allows {t.rate} per agent")
+            raise ToolError("rate_limited", f"{name} allows {t.rate} per agent")
 
     # ── steps ──────────────────────────────────────────────────────────────
     @staticmethod

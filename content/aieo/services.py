@@ -12,12 +12,14 @@ heuristic score, priorities from the last sync, share of voice — is answered h
 """
 
 import difflib
+import json
 import re
 import uuid
 from datetime import timedelta
 from statistics import mean
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -25,12 +27,13 @@ from wagtail.models import Page, Site
 
 from agents.models import AgentRun
 from ai import crypto, providers
-from ai.models import Assistant, Visibility, sites_for, usable
+from ai.handlers import page_text
+from ai.models import Assistant, Visibility, is_staff, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
-from graph.services import embed_object, knn
-from importers.markdown import block_to_markdown, from_blocks, to_blocks
-from ops.errors import Conflict, Forbidden, Invalid, Unavailable
+from graph.services import embed_object, knn, vector_of
+from importers.markdown import block_to_markdown, to_blocks
+from ops.errors import Conflict, Forbidden, Invalid, NotFound, Unavailable
 from research import fetch
 
 from . import analyzers, scoring
@@ -43,8 +46,23 @@ EVALUATOR, OPTIMIZER, SCRUBBER, REWRITER, PROBE = (
     "aieo-rewriter",
     "aieo-citation-probe",
 )
+PERFORMANCE = "aieo-performance"
+ANALYTICS = {"ga_data": "top_pages", "gsc_data": "queries", "dataforseo_data": "serp"}  # its prompt's inputs, by report
 MODES = {"optimize": OPTIMIZER, "expand": OPTIMIZER, "scrub": SCRUBBER, "rewrite": REWRITER, "pattern": OPTIMIZER}
-MAX_TEXT = 200_000  # characters of a pasted text an audit keeps
+MAX_TEXT = 200_000  # characters of a pasted text an audit keeps (scored in a run, under its time limit)
+# Characters of a text scored at once, inside a request or a tool call. Python-Markdown (the parser AIEO's scores
+# were made with) takes time with the square of a long paragraph or of many short lines: 5,000 "[" in one paragraph
+# take about two seconds, 10,000 seven. A longer text is audited.
+NOW_MAX = 5_000
+
+
+def limits(*, fetches=False) -> dict:
+    """How a run that scores is queued: stopped once it has run `AIEO_RUN_TIME_LIMIT` seconds (soft; the hard limit
+    half a minute later), since scoring a long text is slow (`NOW_MAX`) and nothing else would stop it; and one that
+    `fetches` — a URL's or a site's audit — on the `research` queue, where every fetch of the web waits
+    (CELERY_TASK_ROUTES), so a slow site never holds the worker that runs agents and publishes pages."""
+    limit = settings.AIEO_RUN_TIME_LIMIT
+    return {"soft_time_limit": limit, "time_limit": limit + 30} | ({"queue": "research"} if fetches else {})
 
 
 def bundled(key: str, user) -> Assistant:
@@ -57,8 +75,18 @@ def bundled(key: str, user) -> Assistant:
     return row
 
 
+def editor_of(user, site):
+    """`site`, if `user` edits it (staff: every site), else a 404 that names nothing: asked before a site's brand
+    context, its keywords and competitors, or its Search Console rows reach anyone, whichever surface asked. No site
+    stays no site."""
+    if site is None or is_staff(user) or (user is not None and user.is_authenticated and site.pk in sites_for(user)):
+        return site
+    raise NotFound(f"no site {site.pk}")
+
+
 def context_for(site) -> BrandContext | None:
-    """A site's brand context (made from the templates the first time it is read), or None for no site."""
+    """A site's brand context (made from the templates the first time it is read), or None for no site — of a site
+    the caller has asked `editor_of` about, or one the platform resolved for the person (their page's, their row's)."""
     return BrandContext.for_site(site) if site is not None else None
 
 
@@ -69,10 +97,10 @@ def signals(site) -> dict:
 
 
 def page_markdown(page, *, title=True) -> str:
-    """A page's latest revision as the Markdown AIEO scores: its title as the heading, then its body."""
-    latest = page.get_latest_revision_as_object()
-    body = from_blocks(latest.body.get_prep_value(), leading="").strip() if hasattr(latest, "body") else ""
-    return f"# {latest.title}\n\n{body}\n" if title else f"{body}\n"
+    """A page's latest revision as the Markdown AIEO scores: its title as the heading, then its body (the AI layer's
+    `page_text`)."""
+    body = page_text(page, "body")
+    return f"# {page_text(page, 'title')}\n\n{body}\n" if title else f"{body}\n"
 
 
 def editable(user, page) -> BasePage:
@@ -91,7 +119,7 @@ def _person(user) -> None:
 
 def _placement(user, site, visibility) -> dict:
     """An owned row's site and visibility: a site the person edits (staff: any), shared only when asked."""
-    if site is not None and not (user.is_staff or user.is_superuser) and site.pk not in sites_for(user):
+    if site is not None and not is_staff(user) and site.pk not in sites_for(user):
         raise Forbidden(f"{user} does not edit site {site.pk}")
     visibility = visibility or (Visibility.SITE if site is not None else Visibility.PRIVATE)
     if visibility == Visibility.SITE and site is None:
@@ -102,13 +130,14 @@ def _placement(user, site, visibility) -> dict:
 # ── scoring at once ────────────────────────────────────────────────────────
 
 
-def quick_score(content: str, format: str = "markdown", *, site=None) -> dict:
-    """The heuristic score of a text, now, with nothing recorded — what the editor shows while a person types."""
+def quick_score(content: str, format: str = "markdown", *, site=None, user=None) -> dict:
+    """The heuristic score of a text, now, with nothing recorded; with a site `user` edits, against its target
+    keywords and its competitors' topics."""
     if not content.strip():
         raise Invalid("there is nothing to score")
-    if len(content) > MAX_TEXT:
-        raise Invalid(f"a text is scored up to {MAX_TEXT} characters")
-    return scoring.score(content, format, library(), **signals(site))
+    if len(content) > NOW_MAX:
+        raise Invalid(f"a text is scored at once up to {NOW_MAX} characters: audit a longer one")
+    return scoring.score(content, format, library(), **signals(editor_of(user, site)))
 
 
 # ── audits ─────────────────────────────────────────────────────────────────
@@ -169,9 +198,13 @@ def audit(
     else:
         raise Invalid("an audit is of a text, a page, a URL or a site")
     _evaluator(user, method, provider)
-    row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
-    row.run = start(user, {"kind": "aieo.audit", "audit": str(row.public_id)}, target=page, trigger=trigger)
-    row.save(update_fields=["run"])
+    with transaction.atomic():  # its run is queued once it is the audit's run, which the handler asks
+        row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
+        data = {"kind": "aieo.audit", "audit": str(row.public_id)}
+        row.run = start(
+            user, data, target=page, trigger=trigger, options=limits(fetches=kind in (Audit.URL, Audit.SITE))
+        )
+        row.save(update_fields=["run"])
     return row
 
 
@@ -190,39 +223,46 @@ def batch_audit(user, urls: list[str], *, method: str = Audit.AI, origin="api", 
         ]
 
 
-def remember(row: Audit, parsed: dict) -> list[float] | None:
+def remember(row: Audit, parsed: dict) -> None:
     """Store what an audit read as a vector (`graph.Embedding`, kind `audit`; pgvector on Postgres), for the
     semantic benchmark — AIEO's configured, never-used Qdrant, done on the platform's vectors."""
     text = parsed.get("text", "")[:6000]
-    if not text.strip():
-        return None
-    stored, _ = embed_object(row, text, parsed.get("content_hash", ""), "audit")
-    return list(stored.vector)
+    if text.strip():
+        embed_object(row, text, parsed.get("content_hash", ""), "audit")
 
 
-def benchmark(row: Audit, vector: list[float] | None = None) -> dict:
-    """Where an audit stands: its percentile among the platform's audits of the same kind of thing (a page among
-    pages, a site among sites); per engine, how often the AI engines asked about its domain cited it; and the
-    audits closest to it in meaning, of those its owner sees, with their scores."""
+def benchmark(row: Audit) -> dict:
+    """What an audit keeps of its benchmark: its percentile among the platform's audits of the same kind of thing (a
+    page among pages, a site among sites) and how many it was compared with — counts that name no other row, so they
+    are shown to whoever the audit is shared with (`benchmark_for` adds the rest, per reader)."""
     peers = Audit.objects.filter(status=Audit.READY, score__isnull=False).exclude(pk=row.pk)
     peers = peers.filter(kind__in=(Audit.SITE,) if row.kind == Audit.SITE else (Audit.TEXT, Audit.PAGE, Audit.URL))
     scores = list(peers.values_list("score", flat=True)[:5000])
     below = sum(1 for s in scores if s < (row.score or 0))
+    return {"percentile": round(100 * below / len(scores), 1) if scores else None, "compared_with": len(scores)}
+
+
+def benchmark_for(row: Audit, user) -> dict:
+    """The parts of a finished audit's benchmark that name other rows, worked out for the person reading it and never
+    stored, so sharing an audit shares none of its owner's other audits or citation checks: per engine, how often
+    the engines asked about its domain (or a subdomain) cited it, of the checks `user` sees; and the audits nearest
+    it in meaning (its vector, `graph.Embedding` kind `audit`), of those `user` sees, with their scores."""
     domain = urlsplit(row.url).hostname or ""
     if row.page_id and not domain:
         domain = (row.page.get_site().hostname if row.page.get_site() else "") or ""
     engines = {}
-    if domain and row.owner_id:
-        checks = CitationCheck.objects.visible_to(row.owner).filter(
-            status=CitationCheck.READY, query__domain__iendswith=_bare(domain)
+    if domain:
+        bare = _bare(domain)
+        checks = CitationCheck.objects.visible_to(user).filter(
+            Q(query__domain__iexact=bare) | Q(query__domain__iendswith=f".{bare}"), status=CitationCheck.READY
         )
         for engine in sorted(set(checks.values_list("engine", flat=True))):
             asked = checks.filter(engine=engine)
             engines[engine] = {"checks": asked.count(), "cited": asked.filter(cited=True).count()}
             engines[engine]["rate"] = round(engines[engine]["cited"] / engines[engine]["checks"], 3)
-    similar = []
-    if vector is not None and row.owner_id:
-        seen = Audit.objects.visible_to(row.owner).filter(status=Audit.READY).exclude(pk=row.pk)
+    similar, vector = [], vector_of(row)
+    if vector is not None:
+        seen = Audit.objects.visible_to(user).filter(status=Audit.READY).exclude(pk=row.pk)
         near = knn(vector, kind="audit", k=3, exclude=[row.pk], only_ids=list(seen.values_list("pk", flat=True)[:5000]))
         found = Audit.objects.in_bulk([pk for pk, _ in near])
         similar = [
@@ -235,12 +275,7 @@ def benchmark(row: Audit, vector: list[float] | None = None) -> dict:
             for pk, s in near
             if pk in found
         ]
-    return {
-        "percentile": round(100 * below / len(scores), 1) if scores else None,
-        "compared_with": len(scores),
-        "engines": engines,
-        "similar": similar,
-    }
+    return {"engines": engines, "similar": similar}
 
 
 def history(user, *, page=None, url: str = ""):
@@ -289,7 +324,7 @@ def rewrite(
     else:
         data["content"] = content
     provider_slug(bundled(MODES[mode], user))
-    return start(user, data, target=page, trigger=trigger)
+    return start(user, data, target=page, trigger=trigger, options=limits())
 
 
 def optimization_prompt(content: str, gaps: list[dict], style: str, expand: bool) -> str:
@@ -409,8 +444,9 @@ def agent_prompt(*, content: str = "", page=None, site=None, inputs: dict | None
 
 
 def run_agent(user, key: str, *, content: str = "", page=None, site=None, inputs=None, trigger="rest") -> AgentRun:
-    """One of the AIEO agents on a text or a page, with the site's context: a run of its bundled assistant whose
-    structured answer a person reads (and, in the editor, may land as suggestions through the AI panel)."""
+    """One of the AIEO agents on a text or a page, with the context of a site `user` edits (the page's, unless they
+    name one): a run of its bundled assistant whose structured answer a person reads (and, in the editor, may land as
+    suggestions through the AI panel)."""
     from .prompts import AGENTS
 
     _person(user)
@@ -419,10 +455,24 @@ def run_agent(user, key: str, *, content: str = "", page=None, site=None, inputs
     if page is not None:
         page = editable(user, page)
         site = site or page.get_site()
+    site = editor_of(user, site)
+    if key == PERFORMANCE:
+        inputs = analytics(site, inputs)
     prompt = agent_prompt(content=content, page=page, site=site, inputs=inputs)
     if not prompt.strip():
         raise Invalid("give the agent something to read: a text, a page or its inputs")
     return run_assistant(bundled(key, user), user=user, prompt=prompt, page=page, trigger=trigger)
+
+
+def analytics(site, inputs: dict | None) -> dict:
+    """The performance analyst's analytics, as its prompt names them: where the person gave none, the site's last
+    synced rows of each report — GA4's top pages, Search Console's queries, DataForSEO's results; the first 50."""
+    found = dict(inputs or {})
+    for name, report in ANALYTICS.items():
+        last = latest(site, report) if site is not None and not str(found.get(name) or "").strip() else None
+        if last is not None and last.rows:
+            found[name] = json.dumps(last.rows[:50], ensure_ascii=False)
+    return found
 
 
 # ── citations ──────────────────────────────────────────────────────────────
@@ -437,20 +487,32 @@ def engines(query: CitationQuery) -> list[str]:
     return [str(e) for e in query.engines or []] or [providers.default_slug()]
 
 
+def schedule(query: CitationQuery) -> CitationQuery:
+    """A tracked question on beat's queue while it is active with an interval — due now if it was not scheduled — and
+    off it otherwise; asked when it is made or changed."""
+    due = (query.next_check_at or timezone.now()) if query.active and query.interval_days else None
+    if due != query.next_check_at:
+        CitationQuery.objects.filter(pk=query.pk).update(next_check_at=due)
+        query.next_check_at = due
+    return query
+
+
 def check_citations(query: CitationQuery, *, user, trigger: str = "rest") -> list[CitationCheck]:
-    """Ask every engine of the query, now: a check and a run per engine (the probe answers through that provider)."""
+    """Ask every engine of the query, now: a check and a run per engine (the probe answers through that provider).
+    Everyone it is shared with may ask; only its keepers' asking — or beat's — moves its schedule on."""
     if not query.can_edit(user) and not usable(query, user):
         raise Forbidden(f"citation query {query.public_id} is not {user}'s to check")
-    assistant = bundled(PROBE, user)
+    bundled(PROBE, user)  # the probe every check's run answers with, if the person may use it
     asked = [check_provider(engine) for engine in engines(query)]
     made = []
     with transaction.atomic():
         for engine in asked:
             check = CitationCheck.objects.create(query=query, engine=engine)
-            data = {"kind": "aieo.citation", "check": str(check.public_id), "assistant": str(assistant.public_id)}
-            check.run = start(user, data, trigger=trigger)
+            check.run = start(user, {"kind": "aieo.citation", "check": str(check.public_id)}, trigger=trigger)
             check.save(update_fields=["run"])
             made.append(check)
+        if trigger != "schedule" and not query.can_edit(user):
+            return made
         now = timezone.now()
         query.last_checked_at = now
         query.next_check_at = now + timedelta(days=query.interval_days) if query.interval_days else None
@@ -571,10 +633,11 @@ def latest(site, report: str, *, before=None) -> ConnectorData | None:
     return rows.first()
 
 
-def priorities(site) -> dict:
-    """The ranked content-update queue and the quick wins: Search Console's last rows through AIEO's opportunity
-    rule — the trend is the change in impressions since the sync before, and a query that names one of the site's
-    target keywords is a business priority."""
+def priorities(user, site) -> dict:
+    """The ranked content-update queue and the quick wins of a site `user` edits: Search Console's last rows through
+    AIEO's opportunity rule — the trend is the change in impressions since the sync before, and a query that names
+    one of the site's target keywords is a business priority."""
+    editor_of(user, site)
     snapshot = latest(site, "queries")
     if snapshot is None:
         return {"site": site.pk, "fetched_at": None, "queue": [], "quick_wins": []}

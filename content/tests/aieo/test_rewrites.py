@@ -44,6 +44,17 @@ def test_optimizing_a_page_lands_its_rewrite_as_suggestions_not_a_revision(alice
     )
 
 
+def test_a_rewrite_that_drops_blocks_proposes_their_deletion(alice, fake, worker, page):
+    fake.script = [
+        {"text": "# Nightly backups\n\nBackups are copies of a site. A backup is defined as a restorable copy."}
+    ]
+    run = worker(services.rewrite, alice, mode="scrub", page=page)
+    run.refresh_from_db()
+    assert run.status == AgentRun.SUCCEEDED, run.error
+    made = Suggestion.objects.filter(run=run).order_by("pk")
+    assert [s.op for s in made] == ["delete"] * 4 and run.output["suggestions"] == [s.pk for s in made]
+
+
 def test_the_rewrite_is_aligned_block_by_block():
     two, four = ({"level": "2", "text": text} for text in ("Two", "Four"))
     blocks = [

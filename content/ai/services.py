@@ -71,9 +71,11 @@ def agent() -> AgentDefinition:
     return definition
 
 
-def start(user, input: dict, *, target=None, parent=None, trigger="rest") -> AgentRun:
+def start(user, input: dict, *, target=None, parent=None, trigger="rest", options=None) -> AgentRun:
     try:
-        return start_run(agent(), trigger=trigger, target=target, input=input, user=user, parent=parent)
+        return start_run(
+            agent(), trigger=trigger, target=target, input=input, user=user, parent=parent, options=options
+        )
     except RunRefused as e:
         raise Conflict(str(e)) from e
 
@@ -205,7 +207,10 @@ def _propose(page, ctx: ToolContext, proposals, rationale: str) -> list:
         args = {"page_id": page.pk, "op": op, "rationale": rationale[:2000] or "Asked for by a person"}
         if block_id:
             args["block_id"] = block_id
-        args |= {"field": field, "value": payload["value"]} if op == "meta" else {"block": payload}
+        if op == "meta":
+            args |= {"field": field, "value": payload["value"]}
+        elif payload is not None:  # a delete names its block and carries none
+            args["block"] = payload
         with _as_api_errors():
             made.append(registry.call(PROPOSE, args, ctx)["suggestion_id"])
     found = Suggestion.objects.in_bulk(made)

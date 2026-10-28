@@ -20,7 +20,8 @@ person named — a WordPress site):
 
 `robots(url)` asks the site's robots.txt — through `get`, under the same guard —
 whether our user agent may fetch the page: `allowed`, `disallowed`, or
-`unknown` when there is no robots.txt to read. `extract` turns a body into text
+`unknown` when there is no robots.txt to read (`robots_rules` gives the rules
+themselves, for a crawl that also reads the sitemaps they declare). `extract` turns a body into text
 and metadata (HTML through trafilatura, PDF through pypdf, plain text and
 Markdown as they are) and `entries` reads a feed with feedparser — from bytes
 already fetched, handed over as a stream, so neither library opens a URL or a
@@ -236,18 +237,26 @@ async def _read(response) -> bytes:
     return bytes(body)
 
 
-def robots(url: str) -> str:
-    """What the site's robots.txt says about our fetching `url`."""
+def robots_rules(url: str) -> RobotFileParser | None:
+    """The robots.txt of `url`'s site, read through `get` (the guard), or None when there is none to read."""
     parts = urlsplit(url)
     try:
         found = get(urlunsplit((parts.scheme, parts.netloc, "/robots.txt", "", "")))
     except FetchError:
-        return UNKNOWN
+        return None
     if found.status != 200:
-        return UNKNOWN
+        return None
     parser = RobotFileParser()
-    parser.parse(found.text().splitlines())
-    return ALLOWED if parser.can_fetch(settings.RESEARCH_USER_AGENT, url) else DISALLOWED
+    parser.parse(decode(found.body, found.charset).splitlines())
+    return parser
+
+
+def robots(url: str) -> str:
+    """What the site's robots.txt says about our fetching `url`."""
+    rules = robots_rules(url)
+    if rules is None:
+        return UNKNOWN
+    return ALLOWED if rules.can_fetch(settings.RESEARCH_USER_AGENT, url) else DISALLOWED
 
 
 # ── reading what came back ─────────────────────────────────────────────────

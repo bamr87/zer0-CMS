@@ -13,6 +13,9 @@ test_analyzers_bundle.py, test_content_parser.py), ported.
 """
 
 import json
+import random
+import re
+import time
 from pathlib import Path
 
 import pytest
@@ -145,3 +148,30 @@ def test_a_models_evaluation_is_clamped_weighed_and_penalised():
     assert all(data["score"] == data["max"] for data in result["pattern_scores"].values())
     assert result["anti_pattern_penalties"] == 50 and result["score"] == 50.0 and result["grade"] == "D"
     assert result["scoring_method"] == "ai" and result["dimensions"]["aieo"] == 50.0 and result["gaps"] == []
+
+
+AIEO_QUESTIONS = re.compile(r"[^.!?\n]+\?")  # what AIEO's recursive-depth check counted
+
+
+def test_questions_are_counted_as_aieo_counted_them_in_linear_time():
+    """AIEO's question pattern takes time with the square of a long run with no stop, question mark or newline (the
+    parser joins a document's lines into one), so a long text pinned the thread scoring it — 50,000 characters took
+    seconds, 200,000 minutes. The count here is the same number, at once."""
+    rng = random.Random(7)
+    for _ in range(5000):
+        text = "".join(rng.choice("ab ?.!\nA?") for _ in range(rng.randint(0, 40)))
+        found = scoring._recursive_depth({"text": text, "headers": []}, 30)
+        assert found["evidence"] == [f"{len(AIEO_QUESTIONS.findall(text))} questions, 0 question headers"], text
+    started = time.perf_counter()
+    scoring._recursive_depth({"text": "why " * 12_500, "headers": []}, 30)
+    assert time.perf_counter() - started < 1
+
+
+def test_a_pattern_with_no_heuristic_is_left_to_a_model_and_never_lowers_a_heuristic_score():
+    """A pattern a person adds to the library has no deterministic check: the heuristics leave it out and name it,
+    so adding one never drags down every heuristic score (score/, the CI runner, the citability review)."""
+    added = {"name": "brand_story", "display_name": "Brand story", "weight": 100, "max_score": 10, "body": "Tell it."}
+    before = scoring.score(read("article.md"), "markdown")
+    after = scoring.score(read("article.md"), "markdown", [*scoring.bundled_patterns(), added])
+    assert after["score"] == before["score"] and after["model_only"] == ["brand_story"]
+    assert "brand_story" not in after["pattern_scores"] and "model_only" not in before
