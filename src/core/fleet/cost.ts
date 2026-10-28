@@ -29,7 +29,7 @@
  * cannot be lost between here and the screen.
  */
 
-import { parseYamlSubset } from '../content/frontmatter';
+import { parseYaml } from '../content/frontmatter';
 import type { FleetManifest, LaneCost, UsageSummary } from '../shared/types';
 import { workflowFileOf } from './manifest';
 
@@ -82,7 +82,7 @@ function runCount(entry: Record<string, unknown>): number {
  * cost is the same answer as no file at all.
  */
 export function parseUsageSummary(text: string): UsageSummary | null {
-  const raw = parseYamlSubset(text);
+  const raw = parseYaml(text);
   const known = ['by_workflow', 'by_role', 'all_time', 'last_30d', 'last_7d'];
   if (!known.some((key) => key in raw)) {
     return null;

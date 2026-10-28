@@ -2,112 +2,64 @@
  * Reading a front-matter block: which dialect a file uses, where the block
  * starts and stops, and what its keys mean.
  *
- * This is the deliberate, documented cost of decision D3 (zero runtime
- * dependencies): a hand-rolled YAML *subset* instead of js-yaml. The subset is
- * chosen from what content front matter actually contains, and the parser is
- * tolerant by construction — a malformed block degrades to "no front matter" or
- * to "these keys, minus the ones I could not read". It never throws, because
- * the panel renders on every keystroke of a file somebody is mid-edit.
+ * YAML is read by the `yaml` package (ADR 0006 decision 9, which retired the
+ * hand-rolled subset this file used to carry): anchors, aliases, merge keys,
+ * tags, block and folded scalars, multi-line flow collections and every escape
+ * mean what YAML says they mean. TOML stays a small reader of its own (below),
+ * and JSON is `JSON.parse`.
  *
- * Two rules matter more than everything else here:
+ * Three rules matter more than everything else here:
  *
- *   1. **Dates stay strings.** Nothing in this file constructs a `Date`.
- *      Round-tripping `2026-07-31` through a JS `Date` is how a CMS silently
- *      rewrites every date in a repository to a timezone-shifted timestamp.
+ *   1. **Dates stay strings.** The YAML core schema has no timestamp type, and
+ *      nothing in this file constructs a `Date`. Round-tripping `2026-07-31`
+ *      through a JS `Date` is how a CMS silently rewrites every date in a
+ *      repository to a timezone-shifted timestamp.
  *   2. **The dialect comes from the file, not from configuration.**
  *      `detectFormat` looks at the leading characters (`---`, `+++`, `{`). A
  *      workspace whose `zer0.json` says `frontMatter.format: "yaml"` still
  *      reads its one TOML file correctly; that key only decides what *new*
- *      blocks look like. It is a `zer0.json` key, not a VS Code setting.
- *
- * ## The YAML subset — what is supported
- *
- * - Scalars, quoted (`"…"`, `'…'`) and plain, with coercion (below).
- * - Nested mappings to any depth, by indentation.
- * - Block sequences, indented or at the parent's own indentation, including
- *   sequences of mappings (`- name: a` / `  role: b`).
- * - Flow sequences (`[a, b]`) and flow mappings (`{a: 1, b: 2}`) on one line,
- *   nested, with quoted commas handled correctly.
- * - Block scalars: `|`, `>`, all chomping indicators (`-`, `+`) and an explicit
- *   indentation indicator (`|2`).
- * - Multi-line plain scalars: a value continued on more-indented lines is
- *   folded the way YAML folds it — one space per line break, a newline per
- *   blank line — so a wrapped `summary:` reads as one sentence. A continuation
- *   line that looks like a key or a sequence item ends the scalar instead.
- * - Multi-line quoted scalars: a `"…"` or `'…'` that closes on a later line,
- *   every continuation indented past its key — which is exactly how PyYAML
- *   wraps a long string at column 80. Folded the way YAML folds a flow scalar
- *   (a break is one space, a blank line a newline, and in double quotes a
- *   line ending in `\` joins with nothing), then unescaped, and always a
- *   string. Inside the quotes a line that looks like a key is still prose.
- * - `#` comments (at line start and after a value), blank lines, CRLF, a BOM.
- * - Duplicate keys: last one wins.
- * - Quoted-string escapes: `\\ \" \/ \n \r \t \b \f` in double quotes and `''`
- *   in single quotes. `\uXXXX`, `\xNN` and octal escapes are **not** decoded —
- *   they survive as the literal characters that were written.
- *
- * ## What is NOT supported, and what happens instead
- *
- * | Construct | Result |
- * |---|---|
- * | Anchors, aliases, merge keys (`&a`, `*a`, `<<:`) | Kept as the literal string (`"*base"`); never resolved. |
- * | Tags (`!!str`, `!Custom`) | Kept as part of the literal string value. |
- * | Multi-document (`---` inside, `...`) | Unreachable — the second `---` closes the block. A `...` line is skipped. |
- * | Complex keys (`? key` / `: value`) | The lines are skipped; the key is absent from the result. |
- * | Multi-line flow collections | The value is the literal first line; the continuation lines are skipped. |
- * | A quoted scalar that never closes inside its value (the end of the block, or a line not indented past its key, comes first) | The value is the literal first line; the continuation lines are skipped. |
- * | Sequences at the document root | Skipped — front matter must be a mapping. |
- *
- * In every one of those cases the *raw text is untouched on disk*: nothing in
- * this file writes, and `serialize.ts` rewrites only the lines of keys the user
- * actually changed. A construct we cannot read is a construct we cannot
- * corrupt. `article.writeArticle` is what upholds the second half of that
- * sentence: it refuses to rewrite a YAML block wholesale, precisely because a
- * full re-emit rebuilds it from what the parser understood.
- *
- * ## The warnings channel
- *
- * Silence about the table above was the gap. A caller got `data` and no way to
- * ask whether the parser had *understood* the block or merely survived it, so a
- * site-wide audit over a file containing `defaults: &series` reported a
- * confident `missing-key` for every key the anchor was meant to supply, and a
- * fix-it stood ready to rewrite a file nothing had actually read.
- *
- * `FmBlock.warnings` closes it. Every construct in the table above appends one
- * line naming the construct and the line it sits on; an empty array means the
- * parser met nothing it had to guess at. The warnings are produced by a
- * separate scan (`scanFrontMatterWarnings`) rather than by threading a sink
- * through the recursive descent, so the parse path is byte-for-byte the code it
- * always was — **the parser still never throws**, and it still returns the same
- * values it returned before this existed.
- *
- * Every warning starts with `line <n>: `, 1-based within the block body. That
- * prefix is a small contract: `content/audit.ts` reads it to place an
- * `unreadable-frontmatter` finding on the right line.
- *
- * ## `__proto__` is data, not a prototype
- *
- * Every mapping this file builds is populated through `setOwn` and read through
- * `ownValue`, never through `node[key]`. `node['__proto__']` on a plain object
- * is `Object.prototype` — it passes every "is this a nested mapping?" test — so
- * a block containing `[__proto__]` or `__proto__.x = 1` would otherwise have
- * let a file in a repository write a key onto the prototype every object in the
- * extension host shares, including the one the publish gate reads. A key
- * literally spelled `__proto__` is kept as an ordinary own key instead: nothing
- * is dropped, and nothing escapes the object it was written to.
+ *      blocks look like.
+ *   3. **Reading never throws, and never writes.** The panel renders on every
+ *      keystroke of a file somebody is mid-edit, so a block the parser cannot
+ *      read is a value — the keys it could read, and one `FmBlock.warnings`
+ *      line per problem — not an exception. `serialize.ts` rewrites only the
+ *      lines of keys a person changed, and `article.writeArticle` refuses to
+ *      rebuild a block that has warnings, so a construct we cannot read is a
+ *      construct we cannot corrupt.
  *
  * ## Scalar coercion
  *
- * `true`/`false` (and `True`/`TRUE`) → boolean. `null`/`~` (and `Null`/`NULL`,
- * and an empty value) → `null`. Integers and decimals → number. Everything
- * else stays a string, including:
+ * The YAML 1.2 core schema, with three values kept as the text that was
+ * written, because front matter means them as text: a zero-padded integer
+ * (`007` is an identifier, not seven), an integer past
+ * `Number.MAX_SAFE_INTEGER` (coercing would lose digits), and the octal, hex,
+ * `.inf` and `.nan` spellings. So `true`/`false` (and `True`, `TRUE`) are
+ * booleans, `null`, `~` and an empty value are `null`, decimal integers and
+ * floats are numbers, and everything else — `yes`, `no`, `on`, `off`, and
+ * anything date-shaped — is a string.
  *
- * - `yes` / `no` / `on` / `off` — YAML 1.1 booleans, but a field whose value is
- *   the *word* "no" is far more common in prose than a YAML 1.1 purist,
- * - zero-padded integers (`007`) — an id, not the number seven,
- * - integers beyond `Number.MAX_SAFE_INTEGER` — coercing would lose digits,
- * - anything date-shaped, per rule 1 above.
+ * ## The warnings channel
+ *
+ * `FmBlock.warnings` is one line per problem the parser met: each of the YAML
+ * package's errors and warnings (an unclosed quote, an alias to an anchor that
+ * does not exist, an unknown tag, a tab used as indentation), and in TOML the
+ * two constructs its reader does not support. Every line starts with
+ * `line <n>: `, 1-based within the block body — a small contract
+ * `content/audit.ts` reads to place an `unreadable-frontmatter` finding.
+ * An empty array is the normal state, and the only one under which `data` is a
+ * complete account of the block.
+ *
+ * ## `__proto__` is data, not a prototype
+ *
+ * Every mapping is populated through `setOwn` (TOML) or by the YAML package,
+ * which defines a `__proto__` key as an own property, and read through
+ * `ownValue`, never through `node[key]`. `node['__proto__']` on a plain object
+ * is `Object.prototype`, so a block naming that key would otherwise write onto
+ * the prototype every object in the extension host shares, including the one
+ * the publish gate reads.
  */
+
+import { isAlias, isScalar, LineCounter, parseDocument, Scalar, visit, type Alias, type ScalarTag, type Tags } from 'yaml';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -241,8 +193,9 @@ function splitFencedBlock(
         eol: eolAt(text, opening.end),
         start: offset,
         end: line.next,
-        data: parseFrontMatterBlock(raw, format),
-        warnings: scanFrontMatterWarnings(raw, format),
+        ...(format === 'yaml'
+          ? readYaml(raw)
+          : { data: parseFrontMatterBlock(raw, format), warnings: scanFrontMatterWarnings(raw, format) }),
       };
       return { block, body: text.slice(line.next) };
     }
@@ -325,7 +278,7 @@ export function parseFrontMatterBlock(raw: string, format: FmFormat): FrontMatte
     if (format === 'json') {
       return parseJsonBlock(raw);
     }
-    return parseYamlSubset(raw);
+    return readYaml(raw).data;
   } catch {
     // Deliberately swallowed. The parsers below are written not to throw, so
     // reaching here means an input pathological enough that "this file has no
@@ -517,19 +470,7 @@ function toNumber(value: string): number | null {
   return null;
 }
 
-/** Coerce one plain or quoted scalar. Never throws; never builds a `Date`. */
-/**
- * One YAML scalar read the way a value is read: quotes removed and escapes
- * decoded, `null`/booleans/numbers coerced, anything else the text itself.
- *
- * Exported for `platform/siteConfig.ts`, which strips an anchor (`&title "X"`)
- * off a value this parser keeps literally, and must then read what is left
- * exactly as the unanchored value would have been read — quotes included.
- */
-export function parseYamlScalar(text: string): FmValue {
-  return parseScalar(stripComment(text));
-}
-
+/** Coerce one plain or quoted TOML scalar. Never throws; never builds a `Date`. */
 function parseScalar(text: string): FmValue {
   const value = text.trim();
   if (value.length === 0) {
@@ -680,49 +621,107 @@ function splitFlowPair(part: string): { key: string; rest: string | null } {
 }
 
 // ---------------------------------------------------------------------------
-// The YAML subset parser
+// YAML — the `yaml` package, and the two line rules line surgery shares
 // ---------------------------------------------------------------------------
 
-interface YamlLine {
-  /** The line with any trailing CR removed. */
-  text: string;
-  /** Count of leading space/tab characters. */
-  indent: number;
-  /** `text` with its indentation removed. */
-  content: string;
-  blank: boolean;
-  comment: boolean;
-}
+const INT = 'tag:yaml.org,2002:int';
+const FLOAT = 'tag:yaml.org,2002:float';
 
-/** A shared read position, so the recursive parsers advance one cursor. */
-interface Cursor {
-  i: number;
-}
-
-function makeLine(content: string, indent: number): YamlLine {
-  return {
-    text: ' '.repeat(indent) + content,
-    indent,
-    content,
-    blank: content.length === 0,
-    comment: content.startsWith('#'),
-  };
-}
-
-function toLines(raw: string): YamlLine[] {
-  return raw.split('\n').map((line) => {
-    const text = line.endsWith('\r') ? line.slice(0, -1) : line;
-    let indent = 0;
-    while (indent < text.length) {
-      const ch = text.charAt(indent);
-      if (ch !== ' ' && ch !== '\t') {
-        break;
-      }
-      indent++;
+/**
+ * The core schema's tags with the coercions front matter needs (the module
+ * doc): octal, hex, `.inf` and `.nan` are left to be read as text, and a
+ * decimal integer is a number only without a leading zero and while it is
+ * safe — otherwise it is the text that was written.
+ */
+function frontMatterTags(tags: Tags): Tags {
+  return tags.flatMap((tag): Tags => {
+    if (typeof tag === 'string' || (tag.tag !== INT && tag.tag !== FLOAT)) {
+      return [tag];
     }
-    const content = text.slice(indent);
-    return { text, indent, content, blank: content.length === 0, comment: content.startsWith('#') };
+    const scalar = tag as ScalarTag;
+    if (scalar.format === 'OCT' || scalar.format === 'HEX' || scalar.test?.test('.nan') === true) {
+      return [];
+    }
+    if (scalar.tag !== INT) {
+      return [scalar];
+    }
+    const resolve = (text: string): number | string => {
+      const value = Number(text);
+      return Number.isSafeInteger(value) ? value : text;
+    };
+    return [{ ...scalar, test: /^[-+]?(?:0|[1-9][0-9]*)$/, resolve }];
   });
+}
+
+/**
+ * A YAML block read by the `yaml` package: its mapping (front matter is a
+ * mapping, so anything else is `{}`) and one `line <n>: …` per problem — each
+ * error and warning the package reported, and each alias that names no anchor
+ * or sits inside the node it names (`seo: &seo {again: *seo}`), whose value is
+ * then unknown (`null`, or no merge at all) rather than the reason the rest of
+ * the block is lost. The second kind would make data that contains itself,
+ * which every caller that walks or serialises front matter — `postMessage`,
+ * the ledger's JSON, the audit — would follow until the stack ran out.
+ * Never throws, and never returns a cycle.
+ */
+export function readYaml(raw: string): { data: FrontMatter; warnings: string[] } {
+  const lines = new LineCounter();
+  // `logLevel: 'error'`: what the package would print about a strange document is in `warnings` instead.
+  const doc = parseDocument(raw, {
+    schema: 'core',
+    merge: true,
+    uniqueKeys: false,
+    customTags: frontMatterTags,
+    logLevel: 'error',
+    lineCounter: lines,
+  });
+  const warnings = [...doc.errors, ...doc.warnings].map(
+    (problem) => `line ${problem.linePos?.[0].line ?? 1}: ${problem.message.split(' at line ')[0] ?? problem.message}`,
+  );
+  /** Why an alias's value cannot be read — it names no anchor, or a node it is inside of — or undefined. */
+  const unreadable = (alias: Alias, ancestors: readonly unknown[]): string | undefined => {
+    const target = alias.resolve(doc);
+    return target === undefined ? 'names no anchor' : ancestors.includes(target) ? 'is inside the node it names' : undefined;
+  };
+  const note = (alias: Alias, why: string, outcome: string) =>
+    warnings.push(`line ${lines.linePos(alias.range?.[0] ?? 0).line}: the alias *${alias.source} ${why}, ${outcome}`);
+  visit(doc, {
+    Pair: (_, pair, ancestors) => {
+      // With `merge` on, the package reads a `<<` key as a scalar holding `Symbol('<<')`.
+      const merge = isScalar(pair.key) && String(pair.key.value) === String(Symbol('<<'));
+      if (!merge || !isAlias(pair.value)) {
+        return undefined;
+      }
+      const why = unreadable(pair.value, ancestors);
+      if (why === undefined) {
+        return undefined;
+      }
+      note(pair.value, why, 'so nothing is merged');
+      return visit.REMOVE;
+    },
+    Alias: (_, alias, ancestors) => {
+      const why = unreadable(alias, ancestors);
+      if (why === undefined) {
+        return undefined;
+      }
+      note(alias, why, 'so its value is unknown');
+      return new Scalar(null);
+    },
+  });
+  try {
+    const value: unknown = doc.toJS({ maxAliasCount: 100 });
+    // The package builds plain objects of strings, numbers, booleans, nulls
+    // and arrays under the core schema, with `__proto__` as an own key.
+    return { data: isPlainObject(value) ? (value as FrontMatter) : {}, warnings };
+  } catch (error) {
+    // An alias expanding past the limit, or a merge of a scalar: no keys, and why.
+    return { data: {}, warnings: [...warnings, `line 1: ${error instanceof Error ? error.message : String(error)}`] };
+  }
+}
+
+/** A YAML block's mapping (`readYaml` without the warnings). */
+export function parseYaml(raw: string): FrontMatter {
+  return readYaml(raw).data;
 }
 
 /**
@@ -773,376 +772,6 @@ export function parseYamlKeyLine(content: string): { key: string; rest: string }
 /** Whether a line's content opens a block-sequence item. */
 export function isYamlSequenceItem(content: string): boolean {
   return content === '-' || content.startsWith('- ') || content.startsWith('-\t');
-}
-
-function skipIgnorable(lines: YamlLine[], cur: Cursor): void {
-  while (cur.i < lines.length) {
-    const line = lines[cur.i];
-    if (line === undefined || !(line.blank || line.comment)) {
-      return;
-    }
-    cur.i++;
-  }
-}
-
-function peekSignificant(lines: YamlLine[], from: number): { line: YamlLine; index: number } | null {
-  for (let i = from; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined) {
-      continue;
-    }
-    if (!line.blank && !line.comment) {
-      return { line, index: i };
-    }
-  }
-  return null;
-}
-
-const BLOCK_SCALAR_RE = /^[|>](?:[+-]?\d*|\d*[+-]?)$/;
-
-/**
- * Parse the value that follows `key:` (or `-`), consuming any continuation
- * lines that belong to it.
- */
-function readValue(lines: YamlLine[], cur: Cursor, parentIndent: number, rest: string): FmValue {
-  const text = stripComment(rest);
-
-  if (text.length === 0) {
-    const next = peekSignificant(lines, cur.i);
-    if (next === null) {
-      return null;
-    }
-    // A block sequence may sit at its parent's own indentation, which is why
-    // this is `>=` for sequences but `>` for nested mappings.
-    if (next.line.indent >= parentIndent && isYamlSequenceItem(next.line.content)) {
-      cur.i = next.index;
-      return parseSequence(lines, cur, next.line.indent);
-    }
-    if (next.line.indent > parentIndent && parseYamlKeyLine(next.line.content) !== null) {
-      cur.i = next.index;
-      return parseMapping(lines, cur, next.line.indent);
-    }
-    return null;
-  }
-
-  if (BLOCK_SCALAR_RE.test(text)) {
-    return parseBlockScalar(lines, cur, parentIndent, text);
-  }
-  if (text.startsWith('[') || text.startsWith('{')) {
-    return parseFlowValue(text);
-  }
-  if (text.startsWith('"') || text.startsWith("'")) {
-    if (closingQuote(text, 0) < 0) {
-      const span = quotedScalarSpan(lines, cur.i, parentIndent, text);
-      if (span !== null) {
-        cur.i = span.end;
-        return foldQuoted(span.quoted);
-      }
-    }
-    return parseScalar(text);
-  }
-  return readPlainScalar(lines, cur, parentIndent, text);
-}
-
-/**
- * A quoted scalar that closes on a later line, as the quoted text spanning
- * those lines — or `null` when it never closes inside its value.
- *
- * `from` is the first line after the one that opened the quote. A line belongs
- * to the scalar while it is blank or indented past `parentIndent`, and the
- * scalar ends on the line that closes the quote. Reaching a line at or above
- * `parentIndent`, or the end of the block, first means the quote never closed
- * where YAML would have closed it; `null` keeps that construct in the warnings
- * channel rather than guessing where it was meant to end.
- *
- * The parser and the warnings scan both call this, so they cannot disagree
- * about which blocks they vouch for.
- */
-function quotedScalarSpan(
-  lines: readonly YamlLine[],
-  from: number,
-  parentIndent: number,
-  first: string,
-): { quoted: string; end: number } | null {
-  const pieces: string[] = [first];
-  for (let i = from; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined) {
-      break;
-    }
-    if (line.blank) {
-      pieces.push('');
-      continue;
-    }
-    if (line.indent <= parentIndent) {
-      return null;
-    }
-    pieces.push(line.content);
-    const joined = pieces.join('\n');
-    const close = closingQuote(joined, 0);
-    if (close >= 0) {
-      // Anything after the closing quote is a comment or malformed YAML, and
-      // the single-line reader drops it the same way.
-      return { quoted: joined.slice(0, close + 1), end: i + 1 };
-    }
-  }
-  return null;
-}
-
-/**
- * YAML's flow folding for a quoted scalar that spans lines, then its escapes.
- *
- * Inside the quotes a line break becomes one space and each blank line a
- * newline; white space around a break is not content. In double quotes a line
- * ending in an unescaped `\` escapes the break itself, so the lines join with
- * nothing between them and the white space before the backslash is kept. That
- * is what PyYAML reads back from its own wrapped dump.
- */
-function foldQuoted(quoted: string): string {
-  const quote = quoted.charAt(0);
-  const rows = quoted.slice(1, -1).split('\n');
-  let out = '';
-  let blanks = 0;
-  let join: 'none' | 'fold' | 'escaped' = 'none';
-  for (let r = 0; r < rows.length; r++) {
-    const last = r === rows.length - 1;
-    let text = rows[r] ?? '';
-    if (r > 0) {
-      text = text.replace(/^[ \t]+/, '');
-    }
-    let escaped = false;
-    if (!last) {
-      if (quote === '"' && /(?:^|[^\\])(?:\\\\)*\\$/.test(text)) {
-        text = text.slice(0, -1);
-        escaped = true;
-      } else {
-        text = text.replace(/[ \t]+$/, '');
-      }
-    }
-    if (r > 0 && !last && !escaped && text.length === 0) {
-      blanks++;
-      continue;
-    }
-    if (join === 'fold') {
-      out += blanks === 0 ? ' ' : '\n'.repeat(blanks);
-    } else if (join === 'escaped') {
-      out += '\n'.repeat(blanks);
-    }
-    blanks = 0;
-    out += text;
-    join = last ? 'none' : escaped ? 'escaped' : 'fold';
-  }
-  return unquote(`${quote}${out}${quote}`);
-}
-
-/**
- * A plain scalar and the continuation lines that belong to it.
- *
- * YAML lets a plain value wrap onto lines indented deeper than its key, and
- * folds them: a line break becomes one space, a blank line becomes a newline.
- * A continuation line is any more-indented, non-comment line that does not
- * itself read as a key or a sequence item — those two are structure, and were
- * skipped by `parseMapping` before this existed, so they still are. Trailing
- * blank lines are left for whatever follows.
- *
- * A single-line value goes through `parseScalar` exactly as before, so nothing
- * that parsed previously parses differently. A folded value is always a
- * string: a number or boolean that wraps onto a second line is prose.
- */
-function readPlainScalar(lines: YamlLine[], cur: Cursor, parentIndent: number, first: string): FmValue {
-  const collected: string[] = [first];
-  let pendingBlanks = 0;
-  let end = cur.i;
-  for (let i = cur.i; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined) {
-      break;
-    }
-    if (line.blank) {
-      pendingBlanks++;
-      continue;
-    }
-    if (line.comment || line.indent <= parentIndent) {
-      break;
-    }
-    if (isYamlSequenceItem(line.content) || parseYamlKeyLine(line.content) !== null) {
-      break;
-    }
-    const piece = stripComment(line.content);
-    if (piece.length === 0) {
-      break;
-    }
-    for (let n = 0; n < pendingBlanks; n++) {
-      collected.push('');
-    }
-    pendingBlanks = 0;
-    collected.push(piece);
-    end = i + 1;
-  }
-  if (collected.length === 1) {
-    return parseScalar(first);
-  }
-  cur.i = end;
-  return foldLines(collected);
-}
-
-function parseMapping(lines: YamlLine[], cur: Cursor, indent: number): FrontMatter {
-  const map: FrontMatter = {};
-  while (cur.i < lines.length) {
-    skipIgnorable(lines, cur);
-    const line = lines[cur.i];
-    if (line === undefined || line.indent < indent) {
-      break;
-    }
-    const pair = parseYamlKeyLine(line.content);
-    if (pair === null || line.indent > indent) {
-      if (line.indent > indent) {
-        // A continuation line, an over-indented key, or a construct from the
-        // "not supported" table. Skipping keeps the enclosing mapping intact.
-        cur.i++;
-        continue;
-      }
-      break;
-    }
-    cur.i++;
-    setOwn(map, pair.key, readValue(lines, cur, line.indent, pair.rest));
-  }
-  return map;
-}
-
-function parseSequence(lines: YamlLine[], cur: Cursor, indent: number): FmValue[] {
-  const items: FmValue[] = [];
-  while (cur.i < lines.length) {
-    skipIgnorable(lines, cur);
-    const line = lines[cur.i];
-    if (line === undefined || line.indent !== indent || !isYamlSequenceItem(line.content)) {
-      break;
-    }
-    const after = line.content.slice(1);
-    const rest = after.trim();
-    const restColumn = indent + 1 + (after.length - after.trimStart().length);
-    cur.i++;
-
-    if (rest.length === 0) {
-      const next = peekSignificant(lines, cur.i);
-      if (next !== null && next.line.indent > indent) {
-        cur.i = next.index;
-        items.push(
-          isYamlSequenceItem(next.line.content)
-            ? parseSequence(lines, cur, next.line.indent)
-            : parseMapping(lines, cur, next.line.indent),
-        );
-      } else {
-        items.push(null);
-      }
-      continue;
-    }
-
-    if (parseYamlKeyLine(rest) !== null) {
-      // `- name: a` opens a mapping whose keys are aligned to the column the
-      // first key starts at. Re-indenting the line in this local copy lets the
-      // ordinary mapping parser handle it — `lines` is built fresh per parse,
-      // so the rewrite is invisible outside this call.
-      lines[cur.i - 1] = makeLine(rest, restColumn);
-      cur.i--;
-      items.push(parseMapping(lines, cur, restColumn));
-      continue;
-    }
-
-    items.push(readValue(lines, cur, indent, rest));
-  }
-  return items;
-}
-
-function parseBlockScalar(lines: YamlLine[], cur: Cursor, parentIndent: number, header: string): string {
-  const folded = header.charAt(0) === '>';
-  const modifiers = header.slice(1);
-  const chomp = modifiers.includes('-') ? 'strip' : modifiers.includes('+') ? 'keep' : 'clip';
-  const explicit = /(\d+)/.exec(modifiers)?.[1];
-  let contentIndent = explicit === undefined ? -1 : parentIndent + Number(explicit);
-
-  const collected: string[] = [];
-  while (cur.i < lines.length) {
-    const line = lines[cur.i];
-    if (line === undefined) {
-      break;
-    }
-    if (line.blank) {
-      collected.push('');
-      cur.i++;
-      continue;
-    }
-    if (line.indent <= parentIndent) {
-      break;
-    }
-    if (contentIndent < 0) {
-      contentIndent = line.indent;
-    }
-    if (line.indent < contentIndent) {
-      break;
-    }
-    collected.push(line.text.slice(contentIndent));
-    cur.i++;
-  }
-
-  // Blank lines trailing the block belong to whatever follows it, so hand them
-  // back to the caller and let chomping decide how many newlines they mean.
-  let trailingBlanks = 0;
-  while (collected.length > 0 && collected[collected.length - 1] === '') {
-    collected.pop();
-    trailingBlanks++;
-  }
-  cur.i -= trailingBlanks;
-
-  const body = folded ? foldLines(collected) : collected.join('\n');
-  if (chomp === 'strip' || body.length === 0) {
-    return body;
-  }
-  return chomp === 'keep' ? body + '\n'.repeat(trailingBlanks + 1) : body + '\n';
-}
-
-/** Folded (`>`) joining: line breaks become spaces, blank lines become breaks. */
-function foldLines(collected: readonly string[]): string {
-  let out = '';
-  let pending = false;
-  for (const line of collected) {
-    if (line.length === 0) {
-      out += '\n';
-      pending = false;
-      continue;
-    }
-    if (pending) {
-      out += ' ';
-    }
-    out += line;
-    pending = true;
-  }
-  return out;
-}
-
-/**
- * Parse a YAML-subset front-matter body. Front matter is a mapping, so a
- * document-level sequence or scalar yields `{}`. Never throws.
- */
-export function parseYamlSubset(raw: string): FrontMatter {
-  const lines = toLines(raw);
-  const cur: Cursor = { i: 0 };
-  const data: FrontMatter = {};
-  while (cur.i < lines.length) {
-    const before = cur.i;
-    // Not `Object.assign`: it copies through [[Set]], so a source key named
-    // `__proto__` would reach the accessor on `Object.prototype` instead of
-    // becoming a key on `data`.
-    for (const [key, value] of Object.entries(parseMapping(lines, cur, 0))) {
-      setOwn(data, key, value);
-    }
-    if (cur.i === before) {
-      // parseMapping refused this line (a root-level sequence item, a `...`
-      // document end, a complex key). Step over it and keep reading.
-      cur.i++;
-    }
-  }
-  return data;
 }
 
 // ---------------------------------------------------------------------------
@@ -1294,185 +923,24 @@ function descend(root: FrontMatter, path: readonly string[]): FrontMatter {
 }
 
 // ---------------------------------------------------------------------------
-// The warnings channel — the constructs the parser had to guess at
+// The warnings channel
 // ---------------------------------------------------------------------------
 
 /**
- * One line per construct from the "not supported" table that this block
- * actually contains, each prefixed `line <n>: ` (1-based, within `raw`).
- *
- * This is a **second pass**, deliberately: threading a sink through the
- * recursive descent above would have meant editing every parse function to
- * report something none of them needs, and the one property that must not move
- * is that the parse path still never throws and still returns exactly what it
- * returned before. A separate scan can be read, tested and changed on its own.
- *
- * It reports only lines that carry a *value*: a key line, or a sequence item.
- * The body of a block scalar and the continuation lines of a folded plain
- * scalar are prose, and an `&` or a `*` in prose is an ampersand and an
- * asterisk. Under-reporting there is the right failure: a warning that fires on
- * ordinary writing teaches its reader to ignore the channel.
+ * One line per problem the reader met in this block, each prefixed
+ * `line <n>: ` (1-based, within `raw`): the YAML package's errors and
+ * warnings, or the two TOML constructs the TOML reader does not support.
  */
 export function scanFrontMatterWarnings(raw: string, format: FmFormat): string[] {
   if (format === 'json') {
     // `JSON.parse` either agrees with the file exactly or there is no block.
     return [];
   }
-  return format === 'toml' ? scanTomlWarnings(raw) : scanYamlWarnings(raw);
+  return format === 'toml' ? scanTomlWarnings(raw) : readYaml(raw).warnings;
 }
 
 function warnAt(line: number, message: string): string {
   return `line ${line}: ${message}`;
-}
-
-/** An anchor name, as YAML spells it: no spaces, no flow indicators. */
-const ANCHOR_RE = /^&[A-Za-z0-9_][\w.\-/]*(?:\s|$)/;
-/** An alias is a whole value — `*base`, never `*emphasis* in prose`. */
-const ALIAS_RE = /^\*[A-Za-z0-9_][\w.\-/]*$/;
-/** `!!str`, `!Custom`, `!<tag:x>`. */
-const TAG_RE = /^!(?:!?[A-Za-z_][\w:.\-/]*|<[^>]*>)(?:\s|$)/;
-
-/**
- * The offending escape in a double-quoted region of `value`, or `null`.
- *
- * `unquote` decodes eight escapes and lets every other one through as the
- * literal characters that were written, so `"é"` reaches a caller as a
- * backslash, a `u` and four digits rather than as `é`.
- */
-function undecodedEscape(value: string): string | null {
-  let quoted = false;
-  for (let i = 0; i < value.length; i++) {
-    const ch = value.charAt(i);
-    if (!quoted) {
-      if (ch === '"') {
-        quoted = true;
-      } else if (ch === "'") {
-        // A single-quoted region has no backslash escapes at all.
-        const close = closingQuote(value, i);
-        i = close < 0 ? value.length : close;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      quoted = false;
-      continue;
-    }
-    if (ch !== '\\') {
-      continue;
-    }
-    const next = value.charAt(i + 1);
-    if (DOUBLE_ESCAPES[next] !== undefined) {
-      i++;
-      continue;
-    }
-    if (next === 'u' || next === 'x' || /[0-7]/.test(next)) {
-      return `\\${next}`;
-    }
-    i++;
-  }
-  return null;
-}
-
-/** The constructs a value can open, checked in the order the parser meets them. */
-function scanYamlValue(out: string[], lineNo: number, value: string): void {
-  if (value.length === 0) {
-    return;
-  }
-  if (ANCHOR_RE.test(value)) {
-    out.push(warnAt(lineNo, `a YAML anchor (\`${value.split(/\s/)[0] ?? value}\`) is kept as the literal text — anchors are not resolved`));
-    return;
-  }
-  if (ALIAS_RE.test(value)) {
-    out.push(warnAt(lineNo, `a YAML alias (\`${value}\`) is kept as the literal text — aliases are not resolved`));
-    return;
-  }
-  if (TAG_RE.test(value)) {
-    out.push(warnAt(lineNo, `a YAML tag (\`${value.split(/\s/)[0] ?? value}\`) stays part of the literal value — tags are not applied`));
-    return;
-  }
-  const first = value.charAt(0);
-  if ((first === '"' || first === "'") && closingQuote(value, 0) < 0) {
-    out.push(warnAt(lineNo, 'a quoted scalar that never closes inside its value — the value is truncated to this line'));
-    return;
-  }
-  if ((first === '[' || first === '{') && closingBracket(value, 0) < 0) {
-    out.push(warnAt(lineNo, 'a flow collection that closes on a later line — the value is truncated to this line'));
-    return;
-  }
-  const escape = undecodedEscape(value);
-  if (escape !== null) {
-    out.push(warnAt(lineNo, `a \`${escape}\` escape is not decoded — the literal characters survive`));
-  }
-}
-
-function scanYamlWarnings(raw: string): string[] {
-  const out: string[] = [];
-  const lines = toLines(raw);
-  // While >= 0, we are inside the body of a block scalar opened by a key at
-  // this indentation. Its lines are prose and are never inspected.
-  let blockScalarAt = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined) {
-      continue;
-    }
-    if (blockScalarAt >= 0) {
-      if (line.blank || line.indent > blockScalarAt) {
-        continue;
-      }
-      blockScalarAt = -1;
-    }
-    if (line.blank || line.comment) {
-      continue;
-    }
-
-    let content = line.content;
-    let indent = line.indent;
-    // `- name: a` is a key line that happens to open a sequence item; `- *base`
-    // is a bare value. Both carry a value worth inspecting.
-    while (isYamlSequenceItem(content)) {
-      const after = content.slice(1);
-      indent += 1 + (after.length - after.trimStart().length);
-      content = after.trim();
-    }
-
-    const pair = parseYamlKeyLine(content);
-    if (pair === null) {
-      // Neither a key nor a sequence item: a continuation line of a folded
-      // plain scalar, or a construct `parseMapping` skips. Prose either way.
-      continue;
-    }
-    if (pair.key === '<<') {
-      out.push(
-        warnAt(i + 1, 'a YAML merge key (`<<`) is read as an ordinary key — the referenced mapping is not merged in'),
-      );
-      continue;
-    }
-
-    const value = stripComment(pair.rest);
-    if (BLOCK_SCALAR_RE.test(value)) {
-      blockScalarAt = indent;
-      continue;
-    }
-    const opens = value.charAt(0);
-    if ((opens === '"' || opens === "'") && closingQuote(value, 0) < 0) {
-      const span = quotedScalarSpan(lines, i + 1, indent, value);
-      if (span !== null) {
-        // The parser reads this whole — it is not a finding — but an escape it
-        // does not decode is still one, wherever in the span it sits. Its
-        // continuation lines are prose inside quotes, never keys to inspect.
-        const escape = undecodedEscape(span.quoted);
-        if (escape !== null) {
-          out.push(warnAt(i + 1, `a \`${escape}\` escape is not decoded — the literal characters survive`));
-        }
-        i = span.end - 1;
-        continue;
-      }
-    }
-    scanYamlValue(out, i + 1, value);
-  }
-  return out;
 }
 
 function scanTomlWarnings(raw: string): string[] {

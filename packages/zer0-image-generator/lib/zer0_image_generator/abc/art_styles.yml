@@ -4,10 +4,10 @@
 # This file is the canonical, machine-readable catalog of illustration styles
 # and knobs for the ABC book pipeline that spans the fleet:
 #
-#   zer0-CMS (Rails content engine + wizard)  ─ picks a style, composes prompts
+#   zer0-CMS (platform, content/books/abc.py) ─ picks a style, composes prompts
 #   zer0-image-generator (THIS repo — plugin) ─ owns this catalog + renders art
 #   drsai (publishing app)                    ─ ships the prompts to render
-#   zer0-mistakes (theme)                     ─ maps each `id` to a CSS skin
+#   the sites' Jekyll theme                   ─ maps each `id` to a CSS skin
 #
 # The `id` of every style is a stable contract: zer0-CMS writes it into book
 # front matter (`art_style:`), and the theme's `book-abc` layout adds a

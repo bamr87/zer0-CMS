@@ -667,7 +667,7 @@ export function registerGovernanceCommands(shell: Zer0Shell): GovernanceActions 
  */
 async function doReview(shell: Zer0Shell, draftPath: string): Promise<void> {
   await openInEditor(draftPath);
-  await vscode.commands.executeCommand('zer0Cms.dashboard');
+  await vscode.commands.executeCommand('zer0Cms.dashboard.files');
   shell.log.verbose(`review ${path.basename(draftPath)}`);
 }
 

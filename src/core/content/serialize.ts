@@ -260,8 +260,8 @@ function emitScalar(value: FmValue, opts: SerializeOptions): string {
     return value ? 'true' : 'false';
   }
   if (typeof value === 'number') {
-    // YAML's `.inf`/`.nan` are not in the subset the parser reads, so emitting
-    // them would create a block we could not read back.
+    // `.inf`/`.nan` are read back as text (frontmatter.ts), so emitting them
+    // would write a number that comes back as a string.
     return Number.isFinite(value) ? String(value) : 'null';
   }
   if (typeof value === 'string') {

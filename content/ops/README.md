@@ -8,11 +8,11 @@ What an operator, a load balancer and a log pipeline need from the platform, and
 | `readiness.py` | The checks `/readyz` runs, each bounded (0.5 s on Redis). | BE-10 |
 | `context.py` | The request id: bound for the request's duration, echoed from `X-Request-Id` when it is safe to log, else a UUID4. | BE-04 |
 | `middleware.py` | `RequestIdMiddleware` (first in `MIDDLEWARE`: `X-Request-Id` and `X-App-Version` on every response), `AccessLogMiddleware` (one line per request, probes excepted), `SecurityHeadersMiddleware` (`Permissions-Policy`, a report-only CSP). | BE-04, OPS-11, OPS-23 |
-| `logging.py` | `JsonFormatter` (`ts level msg logger request_id trace_id app version` + extras), `TextFormatter`, `RedactionFilter` and `ContextFilter`; `redact()` scrubs `sk-ant-`, `ghp_`, `github_pat_`, `AIza`, this platform's `zer0_` tokens and `Authorization` values. `LOG_FORMAT` is `json` or `text`. | OPS-10, OPS-12 |
+| `logging.py` | `JsonFormatter` (`ts level msg logger request_id trace_id app version` + extras), `TextFormatter`, `RedactionFilter` and `ContextFilter`; `redact()` scrubs `sk-ant-`, `ghp_`, `github_pat_`, `AIza`, this platform's `zer0_` (agent) and `zer0u_` (person) tokens and `Authorization` values. `ExceptionReporterFilter` (`DEFAULT_EXCEPTION_REPORTER_FILTER`) redacts the same shapes in the frame variables of Django's error reports and keeps `sensitive_variables` hidden with `DEBUG` on too. `LOG_FORMAT` is `json` or `text`. | OPS-10, OPS-12 |
 | `errors.py` | The envelope and the handlers that produce it (below). | BE-20, BE-21, BE-22 |
 | `throttling.py` | Per anonymous address, per person, per agent token; `429` + `Retry-After`; an empty rate turns a scope off. | BE-05 |
 | `openapi.py` | The document's URLconf (`SERVE_URLCONF`), the envelope's schema and the agent-token security scheme. | BE-12, BE-31 |
-| `sentry.py` | Error reporting when `SENTRY_DSN` is set, release-tagged, request-id-tagged, redacted. | OPS-13 |
+| `sentry.py` | Error reporting when `SENTRY_DSN` is set, release-tagged, request-id-tagged, and redacted: every string in an event — the message, each exception's value, every frame's variables — goes through `redact()`. | OPS-13 |
 | `apps.py` | System check `ops.E001`: `CORS_ALLOW_ALL_ORIGINS` with credentials is refused. | BE-06 |
 
 ## The envelope

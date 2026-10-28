@@ -817,8 +817,8 @@ export type PlatformProfileJson = Omit<PlatformProfile, 'frontMatter' | 'probes'
 
 /**
  * What the site's own config file actually says. Every field is `null` when the
- * file did not say, and an alias or an include the subset parser cannot follow
- * becomes a `warnings` line — never a guessed value.
+ * file did not say, and what the YAML reader could not read — an alias to no
+ * anchor, an unclosed quote — becomes a `warnings` line, never a guessed value.
  */
 export interface SiteConfigFacts {
   title: string | null;

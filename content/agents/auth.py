@@ -6,6 +6,7 @@ REST views. `request.auth` is the `AgentToken`, which narrows the tools a
 caller may use when the token lists any.
 """
 
+from django.views.decorators.debug import sensitive_variables
 from rest_framework import authentication, exceptions
 
 from .models import AgentToken
@@ -19,6 +20,7 @@ def bearer(header: str | None) -> str | None:
 
 
 class AgentTokenAuthentication(authentication.BaseAuthentication):
+    @sensitive_variables("raw")
     def authenticate(self, request):
         raw = bearer(request.headers.get("Authorization"))
         if raw is None:

@@ -68,8 +68,10 @@ projects:
       - ".vsix-manifest.txt"
     kind: extension
     stack: [node]
-    summary: The VS Code extension — front matter as controls, a dashboard, SEO insights and a governed publishing path.
+    summary: The VS Code extension — front matter as controls, a dashboard, SEO insights and a governed publishing path; with a platform configured, its webviews render the studio's workspaces from web/packages (PLAN G10).
     upstream: bamr87/zer0-CMS
+    # dist/studio.js is built from web/packages (ADR 0006 decision 9).
+    depends_on: [web]
     publishes: [vsix]
     ci: extension.yml
     tasks:
@@ -100,13 +102,13 @@ projects:
 
   # The one React frontend (ADR 0006 decision 2): the studio, and the shared
   # packages its workspaces are built from — the extension's webviews render
-  # the same ones (PLAN G10). Its API client is generated from the platform's
-  # committed OpenAPI document, so it depends on the platform.
+  # the same ones (PLAN G10, packages/webview). Its API client is generated from
+  # the platform's committed OpenAPI document, so it depends on the platform.
   web:
     path: web
     kind: app
     stack: [node]
-    summary: The React frontend — the studio, where people write, create, review and run AI on their content (served by the platform at /studio/), and the shared packages (the generated API client, the design tokens, the workspaces) the extension's webviews will render too (ADR 0006).
+    summary: The React frontend — the studio, where people write, create, review and run AI on their content (served by the platform at /studio/), and the shared packages (the generated API client, the design tokens, the workspaces and their registry) the extension's webviews render too (ADR 0006, PLAN G10).
     upstream: bamr87/zer0-CMS
     depends_on: [content]
     ci: web.yml

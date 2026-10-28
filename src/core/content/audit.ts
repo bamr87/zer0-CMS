@@ -531,7 +531,7 @@ export function auditPage(
           field: null,
           message: warning.replace(WARNING_LINE_RE, ''),
           line: matched === null ? null : Number(matched[1]),
-          suggestion: 'Rewrite the construct in the supported subset, or edit this file by hand.',
+          suggestion: 'Fix what the YAML reader names, or edit this file by hand.',
         }),
       );
     }

@@ -16,7 +16,7 @@
  * back as `{ refused }` — a value, never a throw (decision D9: an absent or
  * unreadable file is a normal state).
  *
- * Parsing goes through `parseYamlSubset`, the hand-rolled reader, not the `yaml`
+ * Parsing goes through `parseYaml`, the hand-rolled reader, not the `yaml`
  * package: this module is barrel-exported and therefore lives in the MCP
  * server's import graph, where no bare import is allowed at all (D14).
  *
@@ -33,7 +33,7 @@
  * its blind spot is worse than no number.
  */
 
-import { parseYamlSubset } from '../content/frontmatter';
+import { parseYaml } from '../content/frontmatter';
 
 /** The one registry schema this reader speaks. */
 export const HARNESS_REGISTRY_SCHEMA = 'harness-registry/v1';
@@ -246,7 +246,7 @@ function coerceRepo(raw: unknown): RegistryRepo | undefined {
  * harness with no `path` is dropped, a number that is not a number is `null`.
  */
 export function readHarnessRegistry(text: string): ReadRegistryResult {
-  const doc = asRecord(parseYamlSubset(text));
+  const doc = asRecord(parseYaml(text));
   if (doc === undefined) {
     return { refused: 'the harness registry is not a YAML mapping' };
   }

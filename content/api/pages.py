@@ -57,6 +57,7 @@ from wagtail.models import Page, Site, get_page_models
 
 from cms import files, services
 from importers.markdown import from_blocks
+from importers.services import pages_imported_from
 from ops.errors import Conflict, Forbidden, Invalid, Locked, NotFound
 from ops.openapi import ERROR_RESPONSES
 from suggestions.services import SuggestionError, pending_for
@@ -338,6 +339,11 @@ class PageFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(choices=[(s, s) for s in STATUS_FILTERS], method="by_status")
     q = django_filters.CharFilter(method="by_text", help_text="Text in the title or the slug.")
     can_have_children = django_filters.BooleanFilter(method="by_children", help_text="Only pages that take children.")
+    source = django_filters.CharFilter(
+        method="by_source",
+        help_text="A file's path from the folder a client has open, starting with that folder's name "
+        "(`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is.",
+    )
 
     # The `value` type hints are what the OpenAPI document reads for each parameter.
     def by_site(self, qs, name, value: int):
@@ -360,6 +366,9 @@ class PageFilter(django_filters.FilterSet):
     def by_children(self, qs, name, value: bool):
         parents = [m for m in get_page_models() if m is not Page and m.creatable_subpage_models()]
         return qs.type(*parents) if value else qs.not_type(*parents)
+
+    def by_source(self, qs, name, value: str):
+        return qs.filter(pk__in=pages_imported_from(value))
 
 
 class PageList(generics.ListAPIView):
