@@ -55,6 +55,8 @@ Two allowlists on purpose: `CORS_ALLOWED_ORIGINS` decides which browser origins 
 
 `schemas/openapi/openapi.json` is generated and committed, and CI fails when it drifts, like the GraphQL SDL and the agent schema. It covers the platform's own endpoints under `/api/v2/`; Wagtail's `pages`, `images` and `documents` viewsets build their serializer per request and cannot be introspected, so they are documented by Wagtail and listed in the description. The docs UI is at `/api/v2/docs/` where `API_DOCS_ENABLED` is true (development and tests; off in production by default).
 
+It is the same document whichever database generates it, and `content.yml` checks it on SQLite and on Postgres. A ModelSerializer gives a writable integer field the bounds Django reads from the database (`connection.ops.integer_field_range`: 64-bit on SQLite, 16- or 32-bit on Postgres), so a field the API only answers with is read-only (`read_only_fields`), and one it accepts is declared with the bounds the API means; `tests/ops/test_openapi.py` fails on any bound that is a database's integer range.
+
 ```bash
 cd content && python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json
 ```

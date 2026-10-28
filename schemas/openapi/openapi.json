@@ -28201,9 +28201,7 @@
                 "properties": {
                     "idx": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "at": {
                         "type": "string",
@@ -28211,15 +28209,22 @@
                         "readOnly": true
                     },
                     "level": {
-                        "$ref": "#/components/schemas/GuardLevelEnum"
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/GuardLevelEnum"
+                            }
+                        ],
+                        "readOnly": true
                     },
                     "text": {
-                        "type": "string"
+                        "type": "string",
+                        "readOnly": true
                     }
                 },
                 "required": [
                     "at",
                     "idx",
+                    "level",
                     "text"
                 ]
             },

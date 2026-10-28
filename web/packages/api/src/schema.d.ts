@@ -4685,12 +4685,11 @@ export interface components {
             lines: components["schemas"]["JobLine"][];
         };
         JobLine: {
-            /** Format: int64 */
-            idx: number;
+            readonly idx: number;
             /** Format: date-time */
             readonly at: string;
-            level?: components["schemas"]["GuardLevelEnum"];
-            text: string;
+            readonly level: components["schemas"]["GuardLevelEnum"];
+            readonly text: string;
         };
         /**
          * @description * `queued` - Queued

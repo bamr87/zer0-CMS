@@ -7,9 +7,14 @@ from .models import Job, JobArtifact, JobLine
 
 
 class JobLineSerializer(serializers.ModelSerializer):
+    # A job writes its log; the API only reads it. Read-only fields also take no
+    # validator from the model, whose PositiveIntegerField bound is the database's
+    # integer range (64-bit on SQLite, 32-bit on Postgres), so the OpenAPI
+    # document is the same whichever database generates it.
     class Meta:
         model = JobLine
         fields = ["idx", "at", "level", "text"]
+        read_only_fields = fields
 
 
 class JobArtifactSerializer(serializers.ModelSerializer):
