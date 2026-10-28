@@ -32,6 +32,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { DistributionChannel, DistributionKind } from '@zer0/api';
 import { useState } from 'react';
 
+import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { KINDS, kindLabel, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
@@ -184,7 +185,7 @@ function NewChannel({ siteId, onDone }: { siteId?: number; onDone: (id: string) 
       <SettingsFields kind={kind} values={settings} onChange={setSettings} />
       {kind === 'email' ? <NewsletterPicker siteId={site ?? undefined} value={newsletter} onChange={setNewsletter} /> : null}
       {create.error ? <Alert color="red">{errorText(create.error)}</Alert> : null}
-      <Button w="fit-content" disabled={!site || !name.trim()} loading={create.isPending} onClick={() => create.mutate()}>
+      <Button w="fit-content" disabled={!site || !name.trim()} loading={create.isPending} onClick={oneClick(() => create.mutate())}>
         Add the channel
       </Button>
     </Stack>

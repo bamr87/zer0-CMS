@@ -68,7 +68,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
     },
   });
 
-  const editable = !['publishing', 'published'].includes(post.status);
+  const editable = !['publishing', 'published', 'rejected'].includes(post.status);
   const approved = ['approved', 'failed'].includes(post.status);
   const unsaved = Object.keys(changed).length > 0;
   const status = statusOf(post.status);
@@ -217,7 +217,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           </Button>
         ) : null}
       </Group>
-      {editable && post.status !== 'rejected' ? (
+      {editable ? (
         <Group align="flex-end">
           <TextInput label="Why reject it" value={reason} onChange={(e) => setReason(e.currentTarget.value)} style={{ flex: 1 }} />
           <Button variant="default" color="orange" disabled={!post.can_publish} loading={reject.isPending} onClick={() => reject.mutate()}>

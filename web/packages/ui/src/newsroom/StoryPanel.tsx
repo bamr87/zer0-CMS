@@ -37,7 +37,7 @@ import { fromLocalInput, toLocalInput } from '../FieldsPanel';
 import { Distribute } from '../distribution/Compose';
 import { RunStatus } from '../RunTimeline';
 import { MoveDialog } from './MoveDialog';
-import { moveLabel, needOf, PRIORITIES, PUBLISHED, statusOf, useMove, when } from './shared';
+import { moveLabel, needOf, PRIORITIES, PUBLISHED, statusOf, useDesks, useMove, when } from './shared';
 
 const FINAL = ['succeeded', 'failed', 'refused', 'cancelled'];
 const AI_LABEL = { pitch: 'Pitch', draft: 'Draft', headlines: 'Headlines', correction: 'Correction note' };
@@ -98,6 +98,7 @@ function Panel({ story }: { story: StoryDetail }) {
   const go = useGo();
   const qc = useQueryClient();
   const move = useMove();
+  const site = useDesks().data?.results.find((d) => d.id === story.desk)?.site; // the story's site: its channels
   const [asking, setAsking] = useState<StoryStatus | null>(null);
   const path = { params: { path: { public_id: story.id } } };
   const refresh = () => qc.invalidateQueries({ queryKey: ['newsroom'] });
@@ -231,7 +232,7 @@ function Panel({ story }: { story: StoryDetail }) {
           <Badge variant="light" color={story.page.live ? 'green' : 'gray'}>
             {story.page.live ? 'live' : 'not live'}
           </Badge>
-          <Distribute storyId={story.id} disabled={!story.page.live} />
+          <Distribute storyId={story.id} siteId={site} disabled={!story.page.live} />
         </Group>
       ) : (
         <Text size="sm" c="dimmed">

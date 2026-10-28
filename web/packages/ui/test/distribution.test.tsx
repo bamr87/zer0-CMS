@@ -198,6 +198,17 @@ describe('a post', () => {
   });
 });
 
+describe('a rejected post', () => {
+  it('is read-only: no text to save and nothing to reject', async () => {
+    const platform = fakePlatform({ [`GET ${API}/posts/p1/`]: () => post({ status: 'rejected', reason: 'not this week' }) });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByText('Rejected: not this week')).toBeInTheDocument();
+    expect(screen.getByLabelText('Text')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save the text' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
+  });
+});
+
 describe('what a post says about where it went', () => {
   it('shows a post’s notes, such as where its site ledger entry went', async () => {
     const note = "written to the site's ledger file (.github/linkedin-log.json): commit it";
@@ -227,8 +238,9 @@ describe('Distribute', () => {
     await userEvent.click(await screen.findByLabelText('Channel', { selector: 'input' }));
     await userEvent.click(await screen.findByRole('option', { name: /The page — LinkedIn/ }));
     await userEvent.type(screen.getByLabelText('Text'), 'Our world-class backups.');
-    await userEvent.click(screen.getByRole('button', { name: 'Draft the post' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Draft the post' }));
     expect(await screen.findByText(/banned phrase "world-class"/)).toBeInTheDocument();
+    expect(platform.calls.filter((c) => c.method === 'POST')).toHaveLength(1); // a double click drafts once
     expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({
       channel: 'c1',
       kind: 'article',

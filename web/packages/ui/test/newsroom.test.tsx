@@ -214,6 +214,21 @@ describe('a story’s panel', () => {
     await waitFor(() => expect(platform.calls.some((c) => c.method === 'POST' && c.path.endsWith('/apply-draft/'))).toBe(true));
   });
 
+  it('distributes a live story to the channels of its own site', async () => {
+    const page = { id: 5, title: 'Bridge closes', live: true, has_unpublished_changes: false, url_path: '/x/', first_published_at: null };
+    const platform = fakePlatform({
+      [`GET ${STORIES}s1/`]: () => detail({ status: 'published', moves: [], page }),
+      'GET /api/v2/newsroom/desks/': () => listOf([{ ...DESK, site: 4 }]),
+      'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
+      'GET /api/v2/newsroom/authors/': () => listOf([]),
+      'GET /api/v2/distribution/channels/': () => listOf([]),
+    });
+    renderUi(<StoryPanel storyId="s1" />, { api: platform.api });
+    await waitFor(() => expect(platform.calls.some((c) => c.path === '/api/v2/newsroom/desks/')).toBe(true));
+    await userEvent.click(await screen.findByRole('button', { name: 'Distribute' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.path === '/api/v2/distribution/channels/')?.query.get('site')).toBe('4'));
+  });
+
   it('drafts a correction note with the AI and posts the one the editor keeps, which publishes nothing else', async () => {
     const noteRun = { kind: 'correction', run: { id: 11, status: 'succeeded', links: { self: '', stream: '' } }, result: { text: 'An earlier version misstated the day.' }, text: '', error: '' };
     const page = { id: 5, title: 'Bridge closes', live: true, has_unpublished_changes: true, url_path: '/x/', first_published_at: null };
