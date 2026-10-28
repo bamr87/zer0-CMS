@@ -4,15 +4,19 @@ key signs a JWT that Google's token endpoint trades for an access token — and 
 opportunity rule over Search Console's queries, with the trend since the last sync and the site's keywords as the
 business priority."""
 
+import io
 import json
 from urllib.parse import parse_qs
 
 import jwt
 import pytest
 import respx
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.contrib.auth.models import Permission
+from django.core.management import CommandError, call_command
+from django.test import override_settings
 
 from aieo import connectors, services, tasks
 from aieo.models import BrandContext, Connector, ConnectorData
@@ -196,3 +200,21 @@ def test_connectors_are_configured_over_the_api_with_a_write_only_encrypted_cred
     priorities = api(configurer).get("/api/v2/aieo/priorities/", {"site": site.pk})
     assert priorities.status_code == 200 and priorities.json()["queue"] == []
     assert api(bob).get("/api/v2/aieo/priorities/", {"site": site.pk}).status_code == 404
+
+
+def test_rotating_the_ai_keys_carries_every_connectors_credential(site):
+    """A connector's credential is under the AI layer's keys: `rotate_ai_credentials`, the one command that rotates
+    them, moves it too (`ai.crypto.credentials_rotated`, as distribution's channels and the automations' secrets do),
+    and one no key can read stops the rotation, named — never a connector that fails to sync once the old key goes."""
+    old, new = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+    with override_settings(AI_CREDENTIAL_KEYS=[old]):
+        row = connect(site, Connector.DATAFORSEO, {"keywords": ["backup"]}, credential="login:password")
+    out = io.StringIO()
+    with override_settings(AI_CREDENTIAL_KEYS=[new, old]):
+        call_command("rotate_ai_credentials", stdout=out)
+    assert "1 credential(s) re-encrypted" in out.getvalue()
+    with override_settings(AI_CREDENTIAL_KEYS=[new], SECRET_KEY="another-secret"):
+        assert Connector.objects.get(pk=row.pk).get_credential() == "login:password"
+    with override_settings(AI_CREDENTIAL_KEYS=[old], SECRET_KEY="another-secret"):
+        with pytest.raises(CommandError, match="DataForSEO"):
+            call_command("rotate_ai_credentials", stdout=io.StringIO())

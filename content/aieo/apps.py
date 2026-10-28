@@ -2,7 +2,9 @@
 audit or a citation check whose run ended without succeeding, and the one that drops a deleted audit's vector; after
 every migrate, the pattern library and the bundled assistants and output schemas made from AIEO's prompt files where
 they do not exist yet (aieo/prompts.py, with the migrated models, and not while the tables they need are
-unapplied). Its tools (aieo/tools.py) are found by the agents app's tool discovery."""
+unapplied); and the connectors' credentials, kept under the AI layer's keys, join `manage.py rotate_ai_credentials`
+(`ai.crypto.credentials_rotated`), so one rotation moves them too. Its tools (aieo/tools.py) are found by the agents
+app's tool discovery."""
 
 from django.apps import AppConfig
 from django.apps import apps as installed
@@ -16,14 +18,17 @@ class AieoConfig(AppConfig):
 
     def ready(self):
         from agents.runner import run_finished
+        from ai.crypto import credentials_rotated
         from research.services import forget
 
         from .handlers import settle
         from .models import Audit
+        from .services import rotate_credentials
 
         post_migrate.connect(_seed, sender=self)
         run_finished.connect(settle, dispatch_uid="aieo.settle")
         post_delete.connect(forget, sender=Audit, dispatch_uid="aieo.forget")  # an audit's vector goes with it
+        credentials_rotated.connect(rotate_credentials, dispatch_uid="aieo.connectors")
 
 
 def _seed(sender, apps=installed, **kwargs):

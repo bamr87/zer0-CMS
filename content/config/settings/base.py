@@ -394,10 +394,10 @@ AGENT_DEFINITIONS_DIR = BASE_DIR / "agents" / "definitions"
 AI_PROVIDERS: dict[str, str] = {}
 # The provider a request uses when no ProviderConfig row is flagged default.
 AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
-# Fernet keys for provider credentials, distribution's channel credentials and
-# automations' webhook secrets, the newest first; none derives one from
-# SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`,
-# which re-encrypts them all.
+# Fernet keys for provider credentials, distribution's channel credentials,
+# automations' webhook secrets and AIEO's connector credentials, the newest
+# first; none derives one from SECRET_KEY (ai/crypto.py). Rotate with
+# `manage.py rotate_ai_credentials`, which re-encrypts them all.
 AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 
 # ── Books (books/README.md) ─────────────────────────────────────────────────

@@ -24,7 +24,7 @@ from django.utils import timezone
 from wagtail.models import Page, Site
 
 from agents.models import AgentRun
-from ai import providers
+from ai import crypto, providers
 from ai.models import Assistant, Visibility, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
@@ -540,6 +540,27 @@ def sync(connector: Connector, *, user=None) -> Connector:
     connector.status = Connector.SYNCING
     transaction.on_commit(lambda: sync_connector.delay(connector.pk))
     return connector
+
+
+@transaction.atomic
+def rotate_credentials(**_signal) -> int:
+    """Every connector's credential under the AI layer's first key, for `manage.py rotate_ai_credentials` (it sends
+    `ai.crypto.credentials_rotated` in its transaction; apps.py connects this). One no key can read stops the
+    rotation, naming the connector, before anything is written. How many it re-encrypted."""
+    rows = list(Connector.objects.exclude(credential_encrypted="").select_related("site"))
+    fresh = []
+    for connector in rows:
+        try:
+            fresh.append(crypto.encrypt(connector.get_credential()))
+        except crypto.InvalidToken as e:
+            raise providers.NotConfigured(
+                f"the credential of the {connector} connector was encrypted with a key that is gone: add that key to "
+                "AI_CREDENTIAL_KEYS (or its SECRET_KEY to SECRET_KEY_FALLBACKS) and rotate again, or give the "
+                "connector its credential again"
+            ) from e
+    for connector, credential in zip(rows, fresh, strict=True):
+        Connector.objects.filter(pk=connector.pk).update(credential_encrypted=credential)
+    return len(rows)
 
 
 def latest(site, report: str, *, before=None) -> ConnectorData | None:

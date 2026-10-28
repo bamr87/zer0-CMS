@@ -2,8 +2,8 @@
 layer's keys (ai/crypto.py) with the first key — the first of
 `AI_CREDENTIAL_KEYS`, else the one derived from `SECRET_KEY`: the providers'
 credentials and every other secret an app keeps under them (distribution's
-channels, the automations' webhook secrets: `crypto.credentials_rotated`), in
-one transaction. Put the new key first, run this, then drop the old key. A secret no current key can read is
+channels, the automations' webhook secrets, AIEO's connectors:
+`crypto.credentials_rotated`), in one transaction. Put the new key first, run this, then drop the old key. A secret no current key can read is
 named, not lost, and then nothing is changed."""
 
 from django.core.management.base import BaseCommand, CommandError
