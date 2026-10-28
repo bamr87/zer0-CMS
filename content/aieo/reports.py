@@ -24,8 +24,12 @@ def url_to_filename(url: str) -> str:
 
 
 def data_of(audit) -> dict:
-    """An audit as the report reads it: AIEO's result JSON."""
+    """An audit as the report reads it: AIEO's result JSON, its patterns in the order their scorer gave them (kept
+    beside them by Audit.save, since Postgres's jsonb reorders an object's keys)."""
     result = dict(audit.result or {})
+    order, scores = result.pop("pattern_order", None), result.get("pattern_scores")
+    if order and isinstance(scores, dict):
+        result["pattern_scores"] = {name: scores[name] for name in order if name in scores} | scores
     return {
         **result,
         "url": audit.url or audit.target,

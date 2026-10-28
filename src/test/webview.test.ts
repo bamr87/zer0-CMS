@@ -893,6 +893,6 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.match(html, /<script nonce="N0nce" src="vscode-webview:\/\/abc\/dist\/studio\.js"><\/script>/);
     assert.match(html, /data-view="page"/);
     assert.match(html, /<meta property="csp-nonce" nonce="N0nce">/);
-    assert.ok(!/<script>|<style>/.test(html), 'no inline script or style');
+    assert.ok(!/<script(?![^>]*\bsrc=)[^>]*>|<style[\s>]/i.test(html), 'no inline script (one without src) or style element');
   });
 });

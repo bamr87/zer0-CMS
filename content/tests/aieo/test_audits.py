@@ -272,3 +272,19 @@ def test_aieos_ten_site_audits_import_as_history_and_report_as_aieo_reported_the
     assert reports.summary_report(data, FIXED) == (golden / "REPORT.md").read_text(encoding="utf-8")
     summary = json.loads((source / "summary.json").read_text())
     assert {r.url.strip() for r in rows} == {s["url"].strip() for s in summary}
+
+
+def test_the_reports_keep_the_scorers_pattern_order_where_the_database_reorders_keys(db):
+    """Postgres's jsonb hands an object back with its keys in its own order (shortest first), so patterns that tie
+    would list differently than on SQLite; the reports follow the order Audit.save kept beside them instead."""
+    source = settings.REPO_ROOT / "apps" / "aieo" / "reports"
+    call_command("aieo", "import-reports", "--path", str(source))
+    for row in Audit.objects.filter(batch="aieo-reports"):
+        scores = row.result["pattern_scores"]
+        jsonb = dict(sorted(scores.items(), key=lambda kv: (len(kv[0]), kv[0])))
+        Audit.objects.filter(pk=row.pk).update(result={**row.result, "pattern_scores": jsonb})  # what Postgres returns
+    golden = HERE / "golden" / "reports"
+    data = sorted((reports.data_of(r) for r in Audit.objects.filter(batch="aieo-reports")), key=lambda d: d["_name"])
+    for item in data:
+        assert reports.site_report(item, FIXED) == (golden / f"{item['_name']}.md").read_text(encoding="utf-8")
+    assert reports.summary_report(data, FIXED) == (golden / "REPORT.md").read_text(encoding="utf-8")

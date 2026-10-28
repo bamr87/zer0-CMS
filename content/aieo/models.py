@@ -139,6 +139,14 @@ class Audit(Owned):
     error = models.TextField(blank=True)
     audited_at = models.DateTimeField(null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        # Postgres's jsonb does not keep an object's key order (SQLite does), and a report lists patterns that tie in
+        # the order their scorer gave them; so that order is kept as a list beside them, read by reports.data_of.
+        scores = (self.result or {}).get("pattern_scores")
+        if isinstance(scores, dict):
+            self.result = {**self.result, "pattern_order": list(scores)}
+        super().save(*args, **kwargs)
+
     class Meta:
         ordering = ["-created_at", "-id"]
         indexes = [models.Index(fields=["page", "created_at"]), models.Index(fields=["url", "created_at"])]
