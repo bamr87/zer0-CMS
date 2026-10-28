@@ -183,6 +183,19 @@ def test_a_crawl_reads_no_more_than_its_pages_need_and_stops_at_its_deadline(db,
     assert late.pages == [] and late.discovery["stopped"] == "time"
 
 
+def test_a_sitemap_with_a_dtd_is_refused_in_whatever_encoding_it_comes(db, web):
+    """A sitemap needs no DTD, so one that declares one is not read — UTF-16 included, where a byte search for the
+    declaration finds nothing — and its entities never become pages to read."""
+    sneaky = '<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE u [<!ENTITY e "https://example.com/evil/">]>'
+    sneaky += "<urlset><url><loc>&e;</loc></url></urlset>"
+    plain = "<urlset><url><loc>https://example.com/fine/</loc></url></urlset>"
+    web.get(at("/a.xml")).respond(200, content=sneaky.encode("utf-16"), headers={"Content-Type": "application/xml"})
+    web.get(at("/b.xml")).respond(200, content=plain.encode("utf-16"), headers={"Content-Type": "application/xml"})
+    assert list(crawl.sitemap_urls(["https://example.com/a.xml", "https://example.com/b.xml"])) == [
+        "https://example.com/fine/"
+    ]
+
+
 def test_an_audit_that_reaches_the_web_runs_on_the_research_queue(
     alice, monkeypatch, django_capture_on_commit_callbacks
 ):

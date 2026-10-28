@@ -16,13 +16,14 @@ audit's pages and its link map — the hubs most pages link to, and the orphans 
 
 import re
 import time
-import xml.etree.ElementTree as ET
 from collections import Counter
 from dataclasses import dataclass, field
 from urllib.parse import urldefrag, urljoin, urlparse, urlunparse
 from urllib.robotparser import RobotFileParser
 
 from bs4 import BeautifulSoup
+from defusedxml import DefusedXmlException
+from defusedxml.ElementTree import ParseError, fromstring
 from django.conf import settings
 
 from research import fetch
@@ -35,7 +36,6 @@ ASSET = re.compile(
 TRAP = re.compile(r"/(?:19|20)\d{2}/|/page[-/]?\d+/?$|[?&]page=\d+", re.IGNORECASE)
 DENIED = ("/assets/", "/tag/", "/tags/", "/category/", "/categories/", "/page/")
 FEEDS = ("/feed.xml", "/atom.xml", "/feed/", "/rss.xml")
-XML_DECLARATION = re.compile(rb"<!(?:DOCTYPE|ENTITY)\b", re.IGNORECASE)
 HTML = ("text/html", "application/xhtml+xml")
 MAX_SITEMAPS = 10  # sitemap documents one crawl opens, an index's sitemaps included
 
@@ -87,12 +87,11 @@ def normalize(url: str, base: str) -> str | None:
 
 
 def xml_root(body: bytes):
-    """Untrusted XML's root, refusing any DTD or entity declaration (no sitemap or feed needs one)."""
-    if XML_DECLARATION.search(body):
-        return None
+    """Untrusted XML's root, refusing any DTD or entity declaration in whatever encoding (no sitemap needs one), with
+    defusedxml — as AIEO's safe_xml_parse refused them."""
     try:
-        return ET.fromstring(body)
-    except ET.ParseError:
+        return fromstring(body, forbid_dtd=True)
+    except (ParseError, DefusedXmlException):
         return None
 
 
