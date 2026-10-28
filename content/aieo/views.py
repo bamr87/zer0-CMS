@@ -75,6 +75,22 @@ def site_param(request, *, required=False):
     return site
 
 
+class BatchThrottle(FetchThrottle):
+    """A batch reaches the web once for every site it lists, so each spends the person's fetch rate as one fetch
+    would: one that would not fit is refused whole, and spends nothing."""
+
+    def allow_request(self, request, view):
+        urls = request.data.get("urls") if isinstance(request.data, dict) else None
+        self.cost = len(urls) if isinstance(urls, list) and urls else 1
+        if self.rate is not None:
+            self.num_requests -= self.cost - 1  # room for every site, or none
+        return super().allow_request(request, view)
+
+    def throttle_success(self):
+        self.history[:0] = [self.now] * (self.cost - 1)
+        return super().throttle_success()
+
+
 class Newest(CursorPagination):
     ordering = "-created_at"
     page_size = 50
@@ -125,7 +141,9 @@ class AuditViewSet(OwnedViewSet):
 
     def get_throttles(self):
         data = self.request.data if self.request.method == "POST" else {}
-        fetches = self.action == "batch" or (isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE))
+        if self.action == "batch":
+            return [*super().get_throttles(), BatchThrottle()]
+        fetches = isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE)
         return [*super().get_throttles(), FetchThrottle()] if fetches else super().get_throttles()
 
     @extend_schema(

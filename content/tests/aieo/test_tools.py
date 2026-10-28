@@ -52,6 +52,24 @@ def test_every_alias_is_its_platform_tool_under_aieos_name():
     assert registry.get("aieo_editor_review").effect == registry.get("aieo_headline_generate").effect == "propose"
 
 
+def test_an_alias_spends_the_budget_of_the_tool_it_names(agent, db, monkeypatch):
+    """AIEO's names are the same tool, so they share its rate: aieo.audit_site's ten a minute are ten whichever of
+    its three names is called, not ten for each."""
+    from aieo import tools
+
+    monkeypatch.setattr(tools, "_audit", lambda row: {"audit": str(row.public_id)})
+    monkeypatch.setattr(services, "audit", lambda *a, **k: Audit(kind=Audit.SITE))
+    ctx = ToolContext(user=agent("aieo").user, agent=agent("aieo"))
+    for name in ["aieo.audit_site"] * 4 + ["aieo_crawl_site"] * 3 + ["aieo_site_context"] * 3:
+        registry.call(name, {"url": "https://example.com/", "max_pages": 1}, ctx)
+    for name in ("aieo.audit_site", "aieo_crawl_site", "aieo_site_context"):
+        try:
+            registry.call(name, {"url": "https://example.com/", "max_pages": 1}, ctx)
+            raise AssertionError(f"{name} has a budget of its own")
+        except ToolError as e:
+            assert e.code == "rate_limited" and "aieo.audit_site" in e.message
+
+
 def test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_text(agent, db):
     assert agent("aieo").live  # its evals passed in the session's sync_agents --publish
     raw = token()

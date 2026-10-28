@@ -78,6 +78,26 @@ def test_a_batch_audits_a_list_of_sites_and_its_summary_ranks_them(
     assert "**2 sites audited**" in summary["markdown"] and "| Failed | 1 |" in summary["markdown"]
 
 
+def test_auditing_the_web_spends_the_fetch_rate_once_for_every_site(alice, api, fake, monkeypatch):
+    """Audits that reach the web are throttled like the research library's fetches (`THROTTLE_RESEARCH_FETCH_RATE`),
+    and a batch spends it once for every site it lists: one that would not fit is refused whole, and spends nothing.
+    A text's audit reaches nothing, and is not counted."""
+    from research.views import FetchThrottle
+
+    monkeypatch.setitem(FetchThrottle.THROTTLE_RATES, "research_fetch", "3/min")
+    urls = [f"https://example.com/{name}" for name in "abcd"]
+    four = api(alice).post("/api/v2/aieo/audits/batch/", {"urls": urls, "method": "heuristic"}, format="json")
+    assert four.status_code == 429 and not Audit.objects.exists()
+    three = api(alice).post("/api/v2/aieo/audits/batch/", {"urls": urls[:3], "method": "heuristic"}, format="json")
+    assert three.status_code == 202 and Audit.objects.count() == 3
+    one = api(alice).post("/api/v2/aieo/audits/", {"kind": "url", "url": urls[3], "method": "heuristic"}, format="json")
+    assert one.status_code == 429  # the three sites spent the minute's three fetches
+    text = api(alice).post(
+        "/api/v2/aieo/audits/", {"kind": "text", "content": "# A", "method": "heuristic"}, format="json"
+    )
+    assert text.status_code == 202
+
+
 def test_everyone_reads_the_pattern_library_and_only_its_keepers_change_it(alice, api, worker, fake):
     listed = api(alice).get("/api/v2/aieo/patterns/").json()
     assert len(listed) == 10 and sum(p["weight"] for p in listed) == 125 and all(p["bundled"] for p in listed)
