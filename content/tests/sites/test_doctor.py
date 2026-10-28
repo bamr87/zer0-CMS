@@ -12,7 +12,10 @@ severity, rule, file, line, evidence and fingerprint — except:
 * `config-unreadable`, the theme check's one generic rule, is now the
   `config` check's (so its fingerprint has the new check id);
 * a YAML or JSON syntax error's evidence is the parser's wording (PyYAML's,
-  Python's json), compared by rule, file and line.
+  Python's json), compared by rule, file and line;
+* `vendored-linkedin-publisher` names the lane that replaces a per-site
+  publisher, `manage.py linkedin` (the Ruby doctor named `zer0-cms linkedin`,
+  deleted with rails/), so it too is compared by rule, file and line.
 
 The rest ports `test_doctor.rb`'s assertions, and adds the generic content
 check that replaced the theme schema: required fields from the site's own
@@ -51,7 +54,7 @@ def comparable(f: dict) -> str:
         f["fingerprint"] = doctor.finding("config", f["severity"], f["rule"], f["evidence"], file=f["file"])[
             "fingerprint"
         ]
-    if f["evidence"].startswith(SYNTAX):
+    if f["evidence"].startswith(SYNTAX) or f["rule"] == "vendored-linkedin-publisher":
         f.pop("evidence"), f.pop("fingerprint")
     return json.dumps(f, sort_keys=True)
 
@@ -272,3 +275,39 @@ def test_command_line_formats_and_exit_codes(tmp_path):
     with pytest.raises(SystemExit) as exited:
         doctor.main(["--format", "xml", str(tmp_path)])
     assert exited.value.code == 2
+
+
+def test_the_distribution_check_as_the_lane_ported_it(tmp_path):
+    """The Ruby doctor's `check_distribution` (test_doctor.rb) as the distribution lane's own tests ported it, over
+    the doctor that runs it."""
+
+    def findings(root):
+        return [f for f in doctor.run(root, today=RECORDED_ON).findings if f["check_id"] == "distribution"]
+
+    def site(block=None, **files):
+        root = tmp_path / f"s{len(list(tmp_path.iterdir()))}"
+        root.mkdir()
+        zer0 = '{\n  // console dialect\n  "$schema": "https://example.com/zer0.schema.json",\n}\n'
+        if block is not None:
+            zer0 = zer0.replace('"$schema"', f'"distribution": {{ "linkedin": {block} }},\n  "$schema"')
+        (root / "zer0.json").write_text(zer0)
+        for rel, text in files.items():
+            (root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (root / rel).write_text(text)
+        return root
+
+    def rules(found, severity=None):
+        return sorted(f["rule"] for f in found if severity in (None, f["severity"]))
+
+    valid = '{ "author": "urn:li:organization:1", "siteUrl": "https://example.test", "ledger": "log.json" }'
+    assert findings(site(valid)) == [] and findings(site()) == []
+    bad = findings(site('{ "author": "urn:li:company:1", "publishAllow": true }'))
+    assert rules(bad, "error") == ["distribution-config-invalid"] and "distribution-config" in rules(bad, "warning")
+    assert "distribution-ledger-unreadable" in rules(findings(site(valid, **{"log.json": "{ not json"})), "error")
+    assert "distribution-config-invalid" in rules(
+        findings(site('{ "author": "urn:li:person:x", "queue": "../outside" }')), "error"
+    )
+    vendored = findings(site(**{"scripts/features/linkedin/posts.py": "# publisher\n"}))
+    assert [(f["severity"], f["file"], f["check_id"], len(f["fingerprint"])) for f in vendored] == [
+        ("warning", "scripts/features/linkedin/posts.py", "distribution", 12)
+    ]

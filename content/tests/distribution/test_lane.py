@@ -671,39 +671,6 @@ def test_the_mcp_server_lists_tools_previews_and_keeps_publish_off(checkout, web
     assert not web.calls
 
 
-def test_the_doctors_distribution_check(tmp_path):
-    """The Ruby doctor's `check_distribution` (test_doctor.rb), ported with the lane it reads."""
-    from distribution.lane.doctor import findings
-
-    def site(block=None, **files):
-        root = tmp_path / f"s{len(list(tmp_path.iterdir()))}"
-        root.mkdir()
-        zer0 = '{\n  // console dialect\n  "$schema": "https://example.com/zer0.schema.json",\n}\n'
-        if block is not None:
-            zer0 = zer0.replace('"$schema"', f'"distribution": {{ "linkedin": {block} }},\n  "$schema"')
-        (root / "zer0.json").write_text(zer0)
-        for rel, text in files.items():
-            (root / rel).parent.mkdir(parents=True, exist_ok=True)
-            (root / rel).write_text(text)
-        return root
-
-    def rules(found, severity=None):
-        return sorted(f["rule"] for f in found if severity in (None, f["severity"]))
-
-    valid = '{ "author": "urn:li:organization:1", "siteUrl": "https://example.test", "ledger": "log.json" }'
-    assert findings(site(valid)) == [] and findings(site()) == []
-    bad = findings(site('{ "author": "urn:li:company:1", "publishAllow": true }'))
-    assert rules(bad, "error") == ["distribution-config-invalid"] and "distribution-config" in rules(bad, "warning")
-    assert "distribution-ledger-unreadable" in rules(findings(site(valid, **{"log.json": "{ not json"})), "error")
-    assert "distribution-config-invalid" in rules(
-        findings(site('{ "author": "urn:li:person:x", "queue": "../outside" }')), "error"
-    )
-    vendored = findings(site(**{"scripts/features/linkedin/posts.py": "# publisher\n"}))
-    assert [(f["severity"], f["file"], f["check_id"], len(f["fingerprint"])) for f in vendored] == [
-        ("warning", "scripts/features/linkedin/posts.py", "distribution", 12)
-    ]
-
-
 def test_the_oauth_callback_request_line():
     assert cli.parse_request_line("GET /callback?code=abc&state=s1 HTTP/1.1\r\n") == {"code": "abc", "state": "s1"}
     assert cli.parse_request_line("GET /favicon.ico HTTP/1.1\r\n") is None

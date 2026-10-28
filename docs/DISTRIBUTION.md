@@ -86,7 +86,7 @@ The environment, all optional, overrides the file for one process: `LINKEDIN_AUT
 | `ZER0_LINKEDIN_MERGED` | switch | `1` says this run publishes the default branch, so a `pending` draft there was merged; the reusable workflow sets it for a run on the default branch and nowhere else |
 | `ZER0_CMS_LINKEDIN_REDIRECT_URI` | setting | The platform's OAuth callback, when it is not this request's origin plus `/api/v2/distribution/oauth/linkedin/` |
 
-`manage.py linkedin status` reads the block the way the lane does and fails on its errors, so the reusable workflow's `status` command gates a site's settings. `content/distribution/lane/doctor.py` is `zer0 doctor`'s `distribution` check — the block's errors and warnings, an unreadable ledger, a leftover per-site publisher, with the environment ignored so the report is the same on every machine — ported for PLAN G4's Python doctor; the Ruby `zer0 doctor` stopped running it when the Ruby lane was deleted.
+`manage.py linkedin status` reads the block the way the lane does and fails on its errors, so the reusable workflow's `status` command gates a site's settings. `zer0 doctor`'s `distribution` check is `content/sites/doctor.py`'s — the block's errors and warnings, an unreadable ledger, a leftover per-site publisher, with the environment ignored so the report is the same on every machine; it needs no Django, so the reusable `zer0-doctor.yml` runs it.
 
 ## The draft queue
 
