@@ -13,8 +13,12 @@ its provenance until it is changed again.
 
 `Suggestion.objects.visible_to(user, site=None)` is the one scope every
 surface reads suggestions through (TARGET.md § Rules): the review inbox, the
-REST and GraphQL lists and decisions, and the runs a reviewer may open.
+REST and GraphQL lists and decisions, and the runs a reviewer may open. A
+suggestion's UUID `public_id` is the only id a surface gives or takes (P-D6,
+ADR 0009); its integer key stays internal.
 """
+
+import uuid
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -65,6 +69,7 @@ class Suggestion(models.Model):
     PENDING, ACCEPTED, REJECTED, SUPERSEDED, FAILED = "pending", "accepted", "rejected", "superseded", "failed"
     STATUSES = [(s, s) for s in (PENDING, ACCEPTED, REJECTED, SUPERSEDED, FAILED)]
 
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     target_ct = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="+")
     target_id = models.PositiveBigIntegerField()
     target = GenericForeignKey("target_ct", "target_id")

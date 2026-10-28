@@ -13,13 +13,16 @@
   agent user. Only a hash is stored (`accounts.tokens.HashedToken`).
 
 `AgentRun.objects.visible_to(user)` is the one scope every surface reads runs
-through (TARGET.md § Rules): REST, GraphQL and the run's event stream.
+through (TARGET.md § Rules): REST, GraphQL and the run's event stream. A run's
+UUID `public_id` is the only id a surface gives or takes (P-D6, ADR 0009); its
+integer key stays internal — foreign keys, the worker's task argument.
 
 Each agent acts as its own Django user, `agent:<slug>`, in the `Agents` group
 and its own `agent:<slug>` group, which holds its Wagtail page and collection
 permissions (agents/principals.py). There is no superuser path.
 """
 
+import uuid
 from decimal import Decimal
 
 from django.conf import settings
@@ -162,6 +165,7 @@ class AgentRun(models.Model):
     FINAL = (SUCCEEDED, FAILED, REFUSED, CANCELLED)
     TRIGGERS = ["manual", "graphql", "rest", "mcp", "workflow", "event", "schedule", "eval", "import"]
 
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     agent = models.ForeignKey(AgentDefinition, on_delete=models.PROTECT, related_name="runs")
     revision = models.ForeignKey(
         "wagtailcore.Revision",
@@ -201,7 +205,15 @@ class AgentRun(models.Model):
         ordering = ["-created_at", "-id"]
 
     def __str__(self):
-        return f"{self.agent.slug} run {self.pk} ({self.status})"
+        return f"{self.agent.slug} run {self.public_id} ({self.status})"
+
+    @property
+    def links(self) -> dict:
+        """Where a client follows the run: the run with its steps, and its event stream."""
+        return {
+            "self": f"/api/v2/agent-runs/{self.public_id}/",
+            "stream": f"/api/v2/agent-runs/{self.public_id}/stream/",
+        }
 
     @property
     def is_final(self) -> bool:
