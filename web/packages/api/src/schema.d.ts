@@ -4034,15 +4034,9 @@ export interface components {
             description?: string;
             weight: number;
             max_score: number;
-            /**
-             * Format: int64
-             * @description Citation boost, % (low).
-             */
+            /** @description Citation boost, % (low). */
             boost_min?: number | null;
-            /**
-             * Format: int64
-             * @description Citation boost, % (high).
-             */
+            /** @description Citation boost, % (high). */
             boost_max?: number | null;
             /** @description The criteria the evaluator reads, in Markdown. */
             body: string;
@@ -4064,15 +4058,9 @@ export interface components {
             description?: string;
             weight: number;
             max_score: number;
-            /**
-             * Format: int64
-             * @description Citation boost, % (low).
-             */
+            /** @description Citation boost, % (low). */
             boost_min?: number | null;
-            /**
-             * Format: int64
-             * @description Citation boost, % (high).
-             */
+            /** @description Citation boost, % (high). */
             boost_max?: number | null;
             /** @description The criteria the evaluator reads, in Markdown. */
             body: string;
@@ -7297,15 +7285,9 @@ export interface components {
             description?: string;
             weight?: number;
             max_score?: number;
-            /**
-             * Format: int64
-             * @description Citation boost, % (low).
-             */
+            /** @description Citation boost, % (low). */
             boost_min?: number | null;
-            /**
-             * Format: int64
-             * @description Citation boost, % (high).
-             */
+            /** @description Citation boost, % (high). */
             boost_max?: number | null;
             /** @description The criteria the evaluator reads, in Markdown. */
             body?: string;

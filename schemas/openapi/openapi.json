@@ -28531,9 +28531,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -28541,9 +28540,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {
@@ -28620,9 +28618,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -28630,9 +28627,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {
@@ -38515,9 +38511,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -38525,9 +38520,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {

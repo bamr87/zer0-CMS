@@ -65,8 +65,12 @@ class Pattern(models.Model):
     description = models.TextField(blank=True, help_text="One line on what the pattern is.")
     weight = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
     max_score = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
-    boost_min = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Citation boost, % (low).")
-    boost_max = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Citation boost, % (high).")
+    boost_min = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)], help_text="Citation boost, % (low)."
+    )
+    boost_max = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)], help_text="Citation boost, % (high)."
+    )
     body = models.TextField(help_text="The criteria the evaluator reads, in Markdown.")
     enabled = models.BooleanField(default=True, help_text="Scored, and offered to apply.")
     bundled = models.BooleanField(default=False, editable=False)
