@@ -15,6 +15,10 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | every other front-matter key                | `front_matter`, in source order              |
 | the body                                    | StreamField blocks (importers/markdown.py)   |
 
+An ABC book's spec sidecar (`_data/abc_books/<book>.json`, books/abc.py) is
+read with its page and kept on its `ImportedSource`, for the exporter to write
+the two together; a sync refreshes it while the page has not changed here.
+
 Which files are content is the platform's one Jekyll reader's answer
 (sites/catalog.py, Jekyll 4.4's reader rules, held to Jekyll's own lists by
 tests/sites/test_catalog.py): pages with front matter (Markdown and HTML),
@@ -48,10 +52,11 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from agents.principals import ensure_legacy_import_user
+from books import abc
 from cms.files import holder_of
 from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
 from cms.services import publish, save_draft
-from sites import catalog
+from sites import catalog, writer
 
 from . import frontmatter
 from .markdown import to_blocks
@@ -382,6 +387,12 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         if isinstance(page, BookPage):
             books[Path(doc.rel).parent.as_posix()] = page
         if source.source_digest == digest:
+            sidecars = _sidecars(doc, page)
+            if sidecars != source.sidecars and (
+                not source.sidecars or source.unchanged(page.get_latest_revision_as_object())
+            ):
+                source.sidecars = sidecars
+                source.save(update_fields=["sidecars"])
             report.unchanged.append(doc.rel)
             return
         current = page.get_latest_revision_as_object()
@@ -392,6 +403,7 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         _save(current, doc, importer)
         source.source_text, source.source_digest = doc.text, digest
         source.import_hash = current.compute_content_hash()
+        source.sidecars = _sidecars(doc, current)
         source.save()
         report.updated.append(doc.rel)
         return
@@ -416,8 +428,27 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         source_text=doc.text,
         source_digest=digest,
         import_hash=page.get_latest_revision_as_object().compute_content_hash(),
+        sidecars=_sidecars(doc, page),
     )
     report.created.append(doc.rel)
+
+
+def _sidecars(doc: Document, page) -> dict:
+    """The files read with the document's: an ABC book's spec sidecar, at
+    `_data/abc_books/<book>.json` under the site root, when it has one —
+    {path: text}. Read through the confined reader, so a symlink or a path
+    that leaves the site is never followed."""
+    if not (isinstance(page, BookPage) and page.profile == "abc"):
+        return {}
+    rel = abc.sidecar_path(doc.front_matter.get("book"))
+    if rel is None:
+        return {}
+    root = doc.path.parents[len(Path(doc.rel).parts) - 1]
+    try:
+        data = writer.read_bytes(root, rel)
+        return {} if data is None else {rel: data.decode("utf-8")}
+    except (writer.Refused, UnicodeDecodeError):
+        return {}  # not a file the platform reads: the book exports without it, as before
 
 
 def _save(page, doc, importer):

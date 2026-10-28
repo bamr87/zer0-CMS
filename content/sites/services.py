@@ -26,7 +26,9 @@ is not written at all. A file changed by hand since is a conflict, kept as it
 is: sync it first. The file of a page deleted here is removed while it is
 unchanged since. What it writes is recorded both ways — the digest on the site,
 the text on the page's `ImportedSource` — so the next sync sees the file as the
-platform's own and the next write-back writes it verbatim.
+platform's own and the next write-back writes it verbatim. A file written
+with a page's — an ABC book's spec sidecar — is indexed, guarded and recorded
+the same way, on that page's `ImportedSource.sidecars`.
 
 Every write-back covers the pages that are not live, not only one with
 `include_drafts`: a page unpublished here is taken down on the site by the
@@ -230,11 +232,10 @@ def run_sync(job, ctx):
         ctx.log(line, "error")
     read = report.created + report.updated + report.unchanged
     digests = dict(managed.digests)
-    digests.update(
-        ImportedSource.objects.filter(site_key=managed.key, legacy_path__in=read).values_list(
-            "legacy_path", "source_digest"
-        )
-    )
+    read_sources = ImportedSource.objects.filter(site_key=managed.key, legacy_path__in=read)
+    digests.update(read_sources.values_list("legacy_path", "source_digest"))
+    for sidecars in read_sources.values_list("sidecars", flat=True):
+        digests.update((rel, writer.sha256(text)) for rel, text in sidecars.items())
     gone = sorted(rel for rel in digests if not (managed.root / rel).exists())
     for rel in gone:
         ctx.log(f"{rel} is gone from the checkout; its page stays, and a write-back will not bring it back", "warning")
@@ -286,8 +287,9 @@ def run_export(job, ctx):
             )
     for rel in sorted(set(digests) - planned):
         ctx.check()
-        if ImportedSource.objects.filter(site_key=managed.key, legacy_path=rel).exists():
-            continue  # its page is still here, at another path now (a page moved: its old file stays)
+        sources = ImportedSource.objects.filter(site_key=managed.key)
+        if sources.filter(legacy_path=rel).exists() or sources.filter(sidecars__has_key=rel).exists():
+            continue  # its page is still here, at another path now (a page moved: its old file stays), or a book's sidecar
         outcome, note = _remove(root, rel, digests)
         counts[outcome] += 1
         ctx.log(f"{rel}: {note}", "warning" if outcome == "conflict" else "info")
@@ -335,7 +337,13 @@ def _write(root, file, digests, base, key) -> tuple[str, str]:
 def _record(file, key) -> None:
     """The file as written is what the page was last exported as. A take-down
     moved only the marker, so the content it holds — and the hash that says the
-    page is still that content — stays."""
+    page is still that content — stays. An ABC book's sidecar is kept beside its
+    page's source."""
+    if file.sidecar:
+        source = ImportedSource.objects.get(pk=file.source.pk)
+        source.sidecars = {**source.sidecars, file.rel: file.text}
+        source.save(update_fields=["sidecars"])
+        return
     fields = {"source_text": file.text, "source_digest": writer.sha256(file.text)}
     if not file.take_down:
         fields["import_hash"] = file.rendered.compute_content_hash()

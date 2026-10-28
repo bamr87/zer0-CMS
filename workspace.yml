@@ -330,9 +330,11 @@ projects:
         cwd: frontend
 
 vendored:
-  # Nothing is vendored since the Rails fleet CMS went (ADR 0008): its two copies
-  # of the image generator's files went with it, and the ABC lexicon's one copy,
-  # content/agents/data/abc_lexicons/, is now the only one — its source.
+  - copy: content/books/data/abc_art_styles.yml
+    source: packages/zer0-image-generator/lib/zer0_image_generator/abc/art_styles.yml
+    why: The platform composes an ABC plate's prompt from the image generator's art styles (content/books/abc.py); its image carries only content/.
+  # The Rails fleet CMS's copies went with it (ADR 0008), and the ABC lexicon's
+  # one copy, content/agents/data/abc_lexicons/, is now the only one — its source.
   # The hub-seeded one-paragraph-per-line fixer, tools/unwrap-prose.py, has one
   # copy: the root's, which markdown-oneline.yml runs over the whole repository
   # and every project calls as ../../tools/unwrap-prose.py.

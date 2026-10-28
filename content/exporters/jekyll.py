@@ -20,10 +20,18 @@ For each page under a site root, in tree order:
   (cms/files.py), gets its typed keys first and its raw keys after them, as a
   file a person writes. For an ABC book the `alphabet:` list is rebuilt
   from its `letter` blocks, each merged into the original entry so a plate's
-  `image`, `prompt` and `status` survive an edit to its word; a story's
-  `authors` (its bylines) and `corrections` (its corrections and updates log:
-  date, kind, text) come from the newsroom, for the site to render. The body
-  is the blocks as Markdown (importers/markdown.py).
+  `image`, `prompt` and `status` survive an edit to its tagline or alt, and a
+  plate whose word or subject changed is planned again for it as the Rails
+  generator planned it (books/abc.py: the image named for the word, the prompt
+  composed for it, the status `planned`); a story's `authors` (its bylines)
+  and `corrections` (its corrections and updates log: date, kind, text) come
+  from the newsroom, for the site to render. The body is the blocks as
+  Markdown (importers/markdown.py).
+
+An ABC book read with its spec sidecar (`_data/abc_books/<slug>.json`, kept
+on its `ImportedSource`) writes the sidecar with the page: as it was read while
+the page is, else rewritten to agree with the page (books/abc.py), so drsai's
+`tools/import_abc_book.py --check` holds after an edit.
 
 A page is written at its file path (`legacy_path`: the file it was imported
 from, or the one a person gave it). A page created in Wagtail without one gets
@@ -65,6 +73,7 @@ import yaml
 from django.utils import timezone
 from wagtail.models import Page
 
+from books import abc
 from cms.files import SUFFIXES
 from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage
 from importers import frontmatter
@@ -116,15 +125,34 @@ def path_for(page, root: SiteRootPage) -> str:
     return f"{page.slug}.md"
 
 
-def _alphabet(page, original) -> list | None:
+def _alphabet(page, original, fm: dict, spec: dict) -> list | None:
+    """The `alphabet:` list from the page's `letter` blocks. A plate whose word,
+    or subject, is not the one its entry was composed for is planned again
+    (books/abc.py `replan`) with the book's art style and palette and its
+    sidecar's background and mood (`spec`); its subject is the block's, else
+    the sidecar's (the page does not carry one)."""
     letters = [b for b in page.body if b.block_type == "letter"]
     if not letters:
         return original
     by_letter = {str(item.get("letter")): item for item in (original or []) if isinstance(item, dict)}
+    composed = {str(e.get("letter")): e for e in spec.get("alphabet") or [] if isinstance(e, dict)}
     out = []
     for block in letters:
         value = block.value
         item = dict(by_letter.get(value["letter"], {}))
+        if item:
+            was = composed.get(value["letter"], {}).get("subject") or item.get("subject") or ""
+            subject = value.get("subject") or was
+            if value["word"] != item.get("word") or subject != was:
+                item = abc.replan(
+                    item,
+                    word=value["word"],
+                    subject=subject,
+                    style=fm.get("art_style"),
+                    palette=fm.get("palette"),
+                    background=spec.get("background"),
+                    mood=spec.get("mood"),
+                )
         item["letter"] = value["letter"]
         for key in ("word", "tagline", "alt"):
             if value.get(key):
@@ -170,8 +198,10 @@ def front_matter_for(page) -> dict:
             put(key, getattr(page, key))
         if page.profile == "abc":
             fm.setdefault("layout", "book-abc")
-            alphabet = _alphabet(page, fm.get("alphabet"))
+            alphabet = _alphabet(page, fm.get("alphabet"), fm, _spec(page))
             if alphabet is not None:
+                if alphabet != fm.get("alphabet") and fm.get("status") in abc.BOOK_STATUSES:
+                    fm["status"] = abc.book_status(alphabet)
                 fm["alphabet"] = alphabet
     if isinstance(page, ChapterPage) and page.number is not None:
         fm["chapter"] = page.number
@@ -179,6 +209,12 @@ def front_matter_for(page) -> dict:
     if made_here:
         fm.update((key, value) for key, value in stored.items() if key not in fm)
     return fm
+
+
+def _spec(page) -> dict:
+    """The spec sidecar an ABC book was read with (`ImportedSource.sidecars`), or {}."""
+    source = ImportedSource.objects.filter(page_id=page.pk).only("sidecars").first()
+    return next((abc.load(text) for text in (source.sidecars if source else {}).values()), {})
 
 
 def _as_list(value):
@@ -271,6 +307,7 @@ class File:
     source: ImportedSource | None
     verbatim: bool
     take_down: bool = False
+    sidecar: bool = False  # a file written with the page's, not the page's own: an ABC book's spec
 
 
 def site_files(site_key: str, *, include_drafts=False, report: ExportReport | None = None) -> Iterator[File]:
@@ -299,13 +336,29 @@ def site_files(site_key: str, *, include_drafts=False, report: ExportReport | No
         moved = source is not None and current.file_editor_fields and source.legacy_path != rel
         if moved and report is not None and source.legacy_path.endswith(SUFFIXES):  # a page's file it was read from
             report.moved.append((source.legacy_path, rel))
-        if unchanged and page.pk not in newsroom_pages:
+        verbatim = unchanged and page.pk not in newsroom_pages
+        if verbatim:
             text = mark(source.source_text, rel, current, live=page.live, now=now)
             yield File(rel, text, page, current, source, verbatim=text == source.source_text)
         else:
             text = render(current, source.source_text if source is not None else None)
             text = mark(text, rel, current, live=page.live, now=now)
             yield File(rel, text, page, current, source, verbatim=False)
+        if source is not None and source.sidecars:
+            yield from _sidecar_files(page, current, source, verbatim)
+
+
+def _sidecar_files(page, current, source: ImportedSource, verbatim: bool) -> Iterator[File]:
+    """An ABC book's spec sidecar, written with its page: as it was read while
+    the page is, else agreeing with the page's front matter (books/abc.py)."""
+    abc_book = isinstance(current, BookPage) and current.profile == "abc"
+    for rel, stored in source.sidecars.items():
+        text = stored
+        if abc_book and not verbatim:
+            letters = (b.value for b in current.body if b.block_type == "letter")
+            subjects = {v["letter"]: v["subject"] for v in letters if v.get("subject")}
+            text = abc.sidecar_text(stored, front_matter_for(current), subjects)
+        yield File(rel, text, page, current, source, verbatim=text == stored, sidecar=True)
 
 
 def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:

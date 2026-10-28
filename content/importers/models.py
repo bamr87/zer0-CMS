@@ -9,6 +9,10 @@ round-trips byte for byte — and the importer skips a file whose digest has not
 moved, and refuses to overwrite a page an editor changed in Wagtail since the
 last import.
 
+A file can come with another the platform writes beside it — an ABC book's
+spec sidecar, `_data/abc_books/<slug>.json` (books/abc.py) — kept here too,
+as `sidecars` (`{path: text}`), so the exporter writes the two together.
+
 `ImportedRecord` is the same promise for a row that is not a page (the AI
 layer's assistants, briefs, conversations …, importers/parodynews_ai.py): a
 digest of the fields the import last wrote, so a re-import leaves alone a row a
@@ -29,6 +33,11 @@ class ImportedSource(models.Model):
     source_text = models.TextField()
     source_digest = models.CharField(max_length=64)
     import_hash = models.CharField(max_length=64, help_text="The page's content_hash right after import.")
+    sidecars = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Files written with this one, as last read or written: {path: text} (an ABC book's spec).",
+    )
     imported_at = models.DateTimeField(auto_now=True)
 
     class Meta:

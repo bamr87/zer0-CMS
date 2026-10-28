@@ -13,9 +13,9 @@
 # front matter (`art_style:`), and the theme's `book-abc` layout adds a
 # `abc-style--<id>` class. Renaming an id is a breaking change across 4 repos.
 #
-# Vendored copy note: zer0-CMS carries a byte-identical copy under
-# rails/lib/zer0_cms/data/abc_art_styles.yml with a header pointing here. When
-# you change this file, re-sync that copy (see docs/abc-plugin.md).
+# Vendored copy note: the zer0-CMS platform carries a byte-identical copy at
+# content/books/data/abc_art_styles.yml (workspace.yml `vendored:`). When you
+# change this file, re-sync that copy with `bin/zer0 vendor --write`.
 # ─────────────────────────────────────────────────────────────────────────────
 version: 1
 
