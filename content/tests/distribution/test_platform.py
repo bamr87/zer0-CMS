@@ -185,6 +185,30 @@ def test_only_people_who_manage_channels_set_them_up_and_everyone_on_the_site_se
     assert api(alice).patch(f"{API}/channels/{channel.public_id}/", {"armed": False}, format="json").status_code == 403
 
 
+def test_one_channel_of_a_site_per_target_so_nothing_goes_twice_to_one_place(api, manager, channel):
+    """Each channel keeps its own ledger, so a second channel for the same LinkedIn author (WordPress site,
+    repository, newsletter) would post a page the first already posted: refused, naming the first."""
+
+    def made(kind, name, settings):
+        body = {"site": channel.site_id, "kind": kind, "name": name, "settings": settings}
+        return api(manager).post(f"{API}/channels/", body, format="json")
+
+    twin = made("linkedin", "Same page again", {"author": AUTHOR})
+    assert twin.status_code == 409 and "The page already publishes this site there" in twin.json()["error"]["message"]
+    other = made("linkedin", "A member", {"author": "urn:li:person:abc"})
+    assert other.status_code == 201
+    moved = api(manager).patch(f"{API}/channels/{other.json()['id']}/", {"settings": {"author": AUTHOR}}, format="json")
+    assert moved.status_code == 409, "pointing a channel at another one's target is refused too"
+    assert (
+        api(manager).patch(f"{API}/channels/{other.json()['id']}/", {"armed": True}, format="json").status_code == 200
+    )
+    assert made("wordpress", "Blog", {"url": "https://Blog.example.com/", "username": "ed"}).status_code == 201
+    assert made("wordpress", "Blog again", {"url": "https://blog.example.com", "username": "al"}).status_code == 409
+    assert made("github_pr", "Repo", {"repo": "bamr87/news", "directory": "site"}).status_code == 201
+    assert made("github_pr", "Repo, docs", {"repo": "bamr87/news", "directory": "docs"}).status_code == 201
+    assert made("github_pr", "Repo again", {"repo": "Bamr87/News", "directory": "/site/"}).status_code == 409
+
+
 @override_settings(**LINKEDIN_APP)
 def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker(
     api, manager, channel, web, worker
@@ -781,7 +805,7 @@ def test_a_published_page_drafts_a_post_for_each_auto_channel_never_a_publish(
 ):
     Channel.objects.filter(pk=channel.pk).update(auto_draft=True)
     quiet = Channel.objects.create(
-        site=channel.site, kind="linkedin", name="Not automatic", settings={"author": AUTHOR}
+        site=channel.site, kind="linkedin", name="Not automatic", settings={"author": "urn:li:person:quiet"}
     )
     page = make_article(site_root, "Restores tested", publish=False, search_description="Test your restores.")
     worker(lambda: page.save_revision().publish())

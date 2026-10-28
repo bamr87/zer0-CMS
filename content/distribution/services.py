@@ -62,6 +62,7 @@ from .models import (
     LedgerEntry,
     Statistic,
     manages_channels,
+    target_of,
 )
 from .transports import TransportError
 
@@ -152,6 +153,7 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
         raise Invalid("a channel's kind does not change: make another channel", details=_detail("kind", "fixed"))
     before = {k: channel.setting(k) for k in IDENTITY.get(kind, ())} if channel.pk else None
     site_before = channel.site_id if channel.pk else None
+    target_before = (site_before, target_of(channel)) if channel.pk else None
     for name in ("site", "kind", "name", "newsletter", "auto_draft", "armed"):
         if name in fields:
             setattr(channel, name, fields[name])
@@ -169,6 +171,14 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
     moved = before is not None and (before != {k: channel.setting(k) for k in before} or site_before != channel.site_id)
     if moved:
         channel.forget_credentials()  # it points somewhere else now: the credential was for there
+    target = target_of(channel)
+    if target and (channel.site_id, target) != target_before:
+        siblings = Channel.objects.filter(site_id=channel.site_id, kind=kind).exclude(pk=channel.pk)
+        if twin := next((c for c in siblings if target_of(c) == target), None):
+            raise Conflict(
+                f"{twin.name} already publishes this site there ({target}): one channel per place, so one ledger "
+                "holds what went there and nothing goes twice"
+            )
     channel.save()
     return channel
 

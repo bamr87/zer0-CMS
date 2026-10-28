@@ -2,7 +2,7 @@
 
 | Model | What it is |
 |---|---|
-| `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
+| `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters — one channel of a site per target (`target_of`), so one ledger holds what went there. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
 | `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person (`approved_digest`: the exact text they approved — a text changed since needs approving again) → published or failed, with a readable error; an email post follows its newsletter `issue` until the newsroom has sent it |
 | `LedgerEntry` | what a channel has published, keyed by canonical URL (or `draft:<post>` for a text update) — the platform's half of the ledger file every lane writes (`ledger.py`); an attempt the target did not confirm is an entry with no URN |
 | `Statistic` | a published post's aggregate counts on a day |
@@ -14,6 +14,7 @@ the channels of the sites a person edits (people who manage channels — the
 
 import json
 import uuid
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.db import models
@@ -50,6 +51,21 @@ SECRETS = {
 }
 # A change to one of these points the channel somewhere else, so its credential is forgotten.
 IDENTITY = {Kind.LINKEDIN: ("author",), Kind.WORDPRESS: ("url", "username"), Kind.GITHUB_PR: ("repo",), Kind.EMAIL: ()}
+
+
+def target_of(channel) -> str:
+    """Where a channel publishes, as one string: the LinkedIn author, the WordPress site's address, the repository
+    and the folder in it, the newsletter. Each channel keeps its own ledger, so two channels of a site with one target
+    would post a page there twice (`services.save_channel` refuses the second); empty while the channel does not say."""
+    if channel.kind == Kind.EMAIL:
+        return str(channel.newsletter_id or "")
+    if channel.kind == Kind.WORDPRESS:
+        url = urlsplit(str(channel.setting("url")))
+        return f"{url.scheme.lower()}://{url.netloc.lower()}{url.path.rstrip('/')}" if url.netloc else ""
+    if channel.kind == Kind.GITHUB_PR:
+        repo = str(channel.setting("repo")).lower()
+        return f"{repo}/{str(channel.setting('directory')).strip('/')}".rstrip("/") if repo else ""
+    return str(channel.setting("author"))
 
 
 def manages_channels(user) -> bool:
