@@ -8,7 +8,7 @@
 // that a destination a view does not show, a stream and a link go to the host.
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { WORKSPACES } from '@zer0/ui';
+import { HOME, WORKSPACES, workspaceFor, type Destination } from '@zer0/ui';
 import { describe, expect, it } from 'vitest';
 
 import { App, type View } from '../src/App';
@@ -123,6 +123,49 @@ describe('the extension webviews', () => {
     expect(await screen.findByLabelText('Suggestions to review')).toHaveTextContent('1');
   });
 
+  it('has a workspace for every destination the studio has, each the studio area for that path', () => {
+    // HOME's keys are the whole Destination union (the type checker holds it to that); each names a registered workspace.
+    const ids = WORKSPACES.map((w) => w.id);
+    expect(ids).toEqual(['home', 'write', 'create', 'ideas', 'research', 'newsroom', 'books', 'review', 'ai', 'outbox', 'sites', 'distribution']);
+    for (const [to, id] of Object.entries(HOME)) {
+      expect(ids, to).toContain(id);
+      expect(workspaceFor({ to } as Destination)?.id, to).toBe(id);
+    }
+    expect(WORKSPACES.filter((w) => w.id !== 'home').every((w) => Object.values(HOME).includes(w.id))).toBe(true);
+  });
+
+  it("opens main's newer workspaces at the destinations the host hands the dashboard", async () => {
+    const host = open('dashboard');
+    const workspaces = await screen.findByRole('tablist', { name: 'Workspaces' });
+    const at = async (to: Destination, workspace: string, section?: [string, string]) => {
+      await host.deliver({ type: 'go', to });
+      expect(within(workspaces).getByRole('tab', { name: workspace, selected: true })).toBeInTheDocument();
+      if (section) {
+        const sections = await screen.findByRole('tablist', { name: section[0] });
+        expect(within(sections).getByRole('tab', { name: section[1], selected: true })).toBeInTheDocument();
+      }
+    };
+    await at({ to: 'briefs' }, 'Create', ['What to create', 'Briefs']);
+    await at({ to: 'ideas' }, 'Ideas');
+    await at({ to: 'source', id: 'src-1' }, 'Research');
+    await at({ to: 'story', id: 'story-1' }, 'Newsroom');
+    await at({ to: 'chapter', book: 3, id: 4 }, 'Books');
+    await at({ to: 'assistant', id: 'a-1' }, 'AI', ['AI sections', 'Assistants']);
+    await at({ to: 'ai', section: 'models' }, 'AI', ['AI sections', 'Models']);
+    await at({ to: 'trial', id: 'trial-1' }, 'Outbox');
+    await at({ to: 'job', id: 'job-1' }, 'Sites');
+    await at({ to: 'channel', id: 'ch-1' }, 'Distribution');
+
+    // Each asked the platform for what it shows — through the host, by path, never with a credential.
+    await waitFor(() => {
+      const paths = host.sent.filter((m) => m.type === 'api').map((m) => String(m.path));
+      for (const path of ['/api/v2/ai/briefs/', '/api/v2/research/sources/src-1/', '/api/v2/books/3/', '/api/v2/ai/assistants/a-1/', '/api/v2/jobs/job-1/']) {
+        expect(paths.some((p) => p.startsWith(path)), path).toBe(true);
+      }
+    });
+    expect(host.sent.filter((m) => m.type === 'api').every((m) => String(m.path).startsWith('/api/v2/') && !('headers' in m && JSON.stringify(m.headers).includes('Authorization')))).toBe(true);
+  });
+
   it('works through the workspaces: Write opens a page in the editor, Review shows diffs, AI lists runs', async () => {
     const host = open('dashboard');
     await userEvent.click(await screen.findByRole('tab', { name: 'Write' }));
@@ -146,6 +189,55 @@ describe('the extension webviews', () => {
       expect(Object.keys(request).every((key) => ['body', 'id', 'method', 'path', 'type'].includes(key))).toBe(true);
       expect(String(request.path)).toMatch(/^\/api\/v2\//);
     }
+  });
+
+  it('votes on an idea, and syncs a site and follows its job, each through the host', async () => {
+    const jobId = 'b0b0b0b0-0000-4000-8000-000000000001';
+    const idea = (votes: number, voted: boolean) => ({
+      id: 'i1', owner: 'editor', site: null, visibility: 'private', created_at: '2026-10-22T09:00:00Z', updated_at: '2026-10-22T09:00:00Z',
+      board: null, title: 'Backups in five minutes', notes: '', tags: [], status: 'new', origin: 'captured', url: '', sources: [],
+      source_message: null, brief: null, page: null, votes, voted,
+    });
+    const job = (status: string) => ({
+      id: jobId, kind: 'sync', status, is_final: status !== 'running', site: 3, params: {}, created_by: 'editor',
+      created_at: '2026-10-22T10:00:00Z', started_at: '2026-10-22T10:00:01Z', finished_at: null, cancel_requested: false,
+      result: {}, error: '', artifacts: [],
+    });
+    const site = {
+      id: 3, name: 'drsai', hostname: 'drsai.localhost', port: 80, is_default: false, root_page_id: 9, can_manage: true,
+      managed: {
+        key: 'drsai', checkout: 'sites/drsai', content_source: 'files', render: 'jekyll-theme', theme_tag: 'v1.31.3', server: 'github-pages',
+        domains: [], deploy_target: '/drsai/', last_synced_at: null, last_exported_at: null, last_doctor_at: null, errors: 0, warnings: 0,
+      },
+      pages: { total: 18, live: 16, drafts: 2 }, files: 17, jobs: [],
+    };
+    const host = fakeHost({
+      ...PLATFORM,
+      'GET /api/v2/ideas/boards/': () => ({ next: null, previous: null, results: [] }),
+      'GET /api/v2/ideas/': () => ({ next: null, previous: null, results: [idea(2, false)] }),
+      'POST /api/v2/ideas/i1/vote/': () => idea(3, true),
+      'GET /api/v2/sites/3/': () => site,
+      'GET /api/v2/sites/3/settings/': () => new Reply(404, { error: { code: 'resource.not_found', message: 'none', status: 404, details: [] } }),
+      'POST /api/v2/sites/3/sync/': () => new Reply(202, { job: job('running') }),
+      [`GET /api/v2/jobs/${jobId}/`]: () => ({ ...job('running'), lines: [{ idx: 0, at: '2026-10-22T10:00:01Z', level: 'info', text: 'Reading sites/drsai …' }] }),
+    });
+    render(<App view="dashboard" port={host.port} />);
+    await screen.findByRole('tablist', { name: 'Workspaces' });
+
+    await host.deliver({ type: 'go', to: { to: 'ideas' } });
+    const card = await screen.findByRole('article', { name: 'Backups in five minutes' });
+    await userEvent.click(within(card).getByRole('button', { name: 'Vote · 2' }));
+    await waitFor(() => expect(host.sent).toContainEqual(expect.objectContaining({ type: 'api', method: 'POST', path: '/api/v2/ideas/i1/vote/' })));
+
+    await host.deliver({ type: 'go', to: { to: 'site', id: 3 } });
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync' }));
+    expect(await screen.findByText('Reading sites/drsai …')).toBeInTheDocument();
+    const sync = host.sent.find((m) => m.type === 'api' && m.path === '/api/v2/sites/3/sync/');
+    expect(sync).toMatchObject({ method: 'POST', headers: { 'Idempotency-Key': expect.stringMatching(/.{16,}/) } });
+    const stream = host.sent.find((m) => m.type === 'stream');
+    expect(stream).toMatchObject({ path: `/api/v2/jobs/${jobId}/stream/`, events: ['line', 'status', 'end'] });
+    await host.deliver({ type: 'event', id: stream?.id, event: 'line', data: JSON.stringify({ idx: 1, at: '2026-10-22T10:00:02Z', level: 'warning', text: 'about.md: changed since the last import' }) });
+    expect(await screen.findByText('about.md: changed since the last import')).toBeInTheDocument();
   });
 
   it('compares and reverts revisions, publishes and accepts a suggestion — each a request the host sends', async () => {
@@ -200,7 +292,9 @@ describe('the extension webviews', () => {
 
   it('follows a run over the host, and hands the host what the AI view does not show', async () => {
     const host = open('ai');
-    expect(screen.queryAllByRole('tab')).toEqual([]);
+    // The AI area's own sections, and no workspace tabs: the agent view is the one workspace.
+    expect(screen.queryByRole('tablist', { name: 'Workspaces' })).toBeNull();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Runs', 'Assistants', 'Pipelines', 'Output schemas', 'Conversations', 'Providers', 'Models']);
     await userEvent.click(await screen.findByRole('button', { name: '#7' }));
     expect(await screen.findByText(/Run #7/)).toBeInTheDocument();
     const stream = host.sent.find((m) => m.type === 'stream');

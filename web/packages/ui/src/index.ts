@@ -39,4 +39,4 @@ export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
 export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
 export { SiteView } from './sites/SiteView';
 export { SuggestionInbox } from './SuggestionInbox';
-export { WORKSPACES, workspaceFor, type Workspace, type WorkspaceProps } from './workspaces';
+export { HOME, WORKSPACES, workspaceFor, type Workspace, type WorkspaceId, type WorkspaceProps } from './workspaces';

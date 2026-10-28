@@ -3,10 +3,12 @@
 // the page's CSP nonce on the <style> elements it writes, and the host
 // contract over postMessage — around the one view the extension host asked for:
 //
-//   dashboard  every workspace in WORKSPACES, as tabs, with the site picker;
+//   dashboard  every workspace in WORKSPACES, as tabs, with the site picker —
+//              the studio's areas, each with the destinations it shows;
 //   page       the page behind the file open in the editor, found through the
 //              path its import recorded, or a plain "not on the platform";
-//   ai         the AI workspace (the agent view).
+//   ai         the AI workspace (the agent view): runs, assistants, pipelines,
+//              output schemas, conversations, providers and models.
 //
 // Nothing here is per workspace: a workspace @zer0/ui registers is a tab. A
 // destination this view does not show is handed to the host, which opens the
@@ -113,7 +115,7 @@ function Workbench({ connection, ids }: { connection: Connection; ids: readonly 
         {shown.length > 1 ? (
           <Group justify="space-between" wrap="nowrap" align="flex-end">
             <Tabs value={current.id} onChange={(id) => id && setPlace({ id })}>
-              <Tabs.List>
+              <Tabs.List aria-label="Workspaces">
                 {shown.map((w) => (
                   <Tabs.Tab key={w.id} value={w.id} title={w.summary}>
                     {w.label}
