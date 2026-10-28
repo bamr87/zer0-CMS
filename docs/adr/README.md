@@ -1,6 +1,6 @@
 # Architecture decision records
 
-> The architecture decision records, 0001–0008, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target.
+> The architecture decision records, 0001–0009, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target.
 
 One file per decision that changes how the repository is put together. An ADR records the question, the answer and what it costs; it changes only when the decision does. The extension's own decisions (D1–D17) and lettered decisions (D-A–D-I) predate this directory and live in [`../ARCHITECTURE.md`](../ARCHITECTURE.md); the build plan the ADRs feed is [`../plan/PLAN.md`](../plan/PLAN.md).
 
@@ -14,5 +14,6 @@ One file per decision that changes how the repository is put together. An ADR re
 | [0005](0005-theme-goes-home.md) | The theme goes home: `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes` again (with its Rails theme studio), `packages/zer0-mistakes/` leaves this repository after its changes are upstream, and the platform consumes the theme as each site declares it | accepted, in progress (Phase T) |
 | [0007](0007-outbox-desk.md) | The outbox desk: the outbox harness (bamr87/outbox) as a dependency loaded under its own name, its belt's files the record (no mirror tables), a page going live announced on the belt through the transactional outbox's consumer, a claim desk that only advises, every run in the worker — the studio's Outbox area | proposed |
 | [0008](0008-retire-the-rails-cms.md) | Retire the Rails fleet CMS now: G4 and G5 merged, `rails/` deleted, and what it still owes kept as a spec ([`plan/rails-cms-spec.md`](../plan/rails-cms-spec.md)) — a ledger row whose source the owner deleted early is `specified` | accepted |
+| [0009](0009-public-ids.md) | Public ids (P-D6): a platform row is named on every surface by a UUID public id, never its integer key; agent runs and suggestions moved to theirs in one change across REST, GraphQL, MCP, events, the studio and the extension; Wagtail's and Django's rows keep their integer ids as a recorded exception | accepted |
 
 A new ADR takes the next number, opens with a status line, and names the mechanism that enforces it — a decision no test or gate defends is a preference.
