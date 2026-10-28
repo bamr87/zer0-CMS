@@ -79,6 +79,19 @@ def test_ga4_signs_a_jwt_for_its_token_and_reads_the_top_pages(site, google, wor
     }
 
 
+def test_a_keys_own_token_uri_is_never_where_the_grant_goes(site, google):
+    """The service-account key is what a person pasted, so its `token_uri` is theirs to choose: the grant always goes
+    to Google's own endpoint, and an address inside the network is never asked (nor its answer shown back)."""
+    key = json.dumps({**json.loads(SERVICE_ACCOUNT), "token_uri": "http://10.0.0.5:9200/_steal"})
+    row = connect(site, Connector.GA4, {"property_id": "1"}, credential=key)
+    inside = google.post("http://10.0.0.5:9200/_steal").respond(500, json={"error": "internal answer leaked"})
+    google.post(connectors.GA4.format(property="1")).respond(200, json={"rows": []})
+    assert tasks.sync_connector(row.pk) == Connector.OK
+    assert google.calls[0].request.url == connectors.TOKEN_URI and not inside.called
+    row.refresh_from_db()
+    assert row.error == ""
+
+
 def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(site, google):
     BrandContext.objects.update_or_create(
         site=site, defaults={"competitors": {"keywords": ["backup"], "competitors": [], "topics": []}}
