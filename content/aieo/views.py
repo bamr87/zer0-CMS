@@ -446,7 +446,12 @@ class ShareView(APIView):
 
 
 class ConnectorPermission(BasePermission):
+    """A connector is read by its site's editors (the queryset), changed by those of them with
+    `aieo.change_connector`, and removed by those who also hold `aieo.delete_connector`."""
+
     def has_object_permission(self, request, view, obj):
+        if request.method == "DELETE" and not request.user.has_perm("aieo.delete_connector"):
+            return False
         return request.method in SAFE_METHODS or obj.can_edit(request.user)
 
 

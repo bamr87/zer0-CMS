@@ -231,3 +231,12 @@ def test_rotating_the_ai_keys_carries_every_connectors_credential(site):
     with override_settings(AI_CREDENTIAL_KEYS=[old], SECRET_KEY="another-secret"):
         with pytest.raises(CommandError, match="DataForSEO"):
             call_command("rotate_ai_credentials", stdout=io.StringIO())
+
+
+def test_removing_a_connector_takes_the_right_to_delete_one(configurer, site, api):
+    row = connect(site, Connector.DATAFORSEO, {"keywords": ["backup"]}, credential="login:password")
+    url = f"/api/v2/aieo/connectors/{row.public_id}/"
+    assert api(configurer).delete(url).status_code == 403 and Connector.objects.filter(pk=row.pk).exists()
+    configurer.user_permissions.add(Permission.objects.get(codename="delete_connector"))
+    remover = type(configurer).objects.get(pk=configurer.pk)
+    assert api(remover).delete(url).status_code == 204 and not Connector.objects.filter(pk=row.pk).exists()
