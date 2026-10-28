@@ -197,6 +197,30 @@ def test_only_a_channel_manager_has_the_worker_ask_the_target(api, manager, caro
     assert asked == [("check", channel.pk), ("statistics", channel.pk)]
 
 
+def test_a_post_is_seen_by_those_who_find_its_page_and_a_page_is_distributed_once_live(
+    api, manager, channel, article, site_root
+):
+    """A post carries its page's text: someone who works on one section of the site sees the channel, and the posts
+    about the pages they find — not those about a page they cannot, nor a text update, which is the managers'. A
+    page that is not live is not distributed."""
+    section = make_article(site_root, "Their section", search_description="Theirs.")
+    dana = get_user_model().objects.create_user("dana", password="pw")
+    group = Group.objects.create(name="one section")
+    GroupPagePermission.objects.create(
+        group=group, page=section, permission=Permission.objects.get(codename="change_page")
+    )
+    dana.groups.add(group)
+    theirs = services.compose(channel, user=manager, page=section, commentary="Theirs.")
+    services.compose(channel, user=manager, page=article, commentary="Not theirs.")
+    services.compose(channel, user=manager, kind="update", commentary="A word from the page.")
+    assert api(dana).get(f"{API}/channels/{channel.public_id}/").status_code == 200
+    assert [p["id"] for p in api(dana).get(f"{API}/posts/").json()["results"]] == [str(theirs.public_id)]
+    assert len(api(manager).get(f"{API}/posts/").json()["results"]) == 3
+    draft = make_article(site_root, "Not yet", publish=False, search_description="Soon.")
+    refused = api(manager).post(f"{API}/posts/", {"channel": str(channel.public_id), "page": draft.pk}, format="json")
+    assert refused.status_code == 409 and "not live" in refused.json()["error"]["message"]
+
+
 def test_one_channel_of_a_site_per_target_so_nothing_goes_twice_to_one_place(api, manager, channel):
     """Each channel keeps its own ledger, so a second channel for the same LinkedIn author (WordPress site,
     repository, newsletter) would post a page the first already posted: refused, naming the first."""

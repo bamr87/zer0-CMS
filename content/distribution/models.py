@@ -10,8 +10,8 @@
 Channels, posts and ledger entries have a UUID `public_id`, the only id the API
 gives (P-D6); `visible_to(user, site)` is each one's scope: the channels of the
 sites a person edits (people who manage channels — the
-`distribution.change_channel` permission — see every site's), and their posts
-and ledger entries.
+`distribution.change_channel` permission — see every site's), their ledger
+entries, and their posts about pages the person finds (managers see them all).
 """
 
 import json
@@ -161,7 +161,13 @@ class Channel(models.Model):
 
 class PostQuerySet(models.QuerySet):
     def visible_to(self, user, site=None):
-        return self.filter(channel__in=Channel.objects.visible_to(user, site))
+        """The posts of the channels a person sees — and, for someone who does not manage channels, only those about
+        a page they find in the studio (`cms.services.visible_pages`): a post carries its page's text. A text update,
+        which has no page, is the channel managers'."""
+        from cms.services import visible_pages
+
+        rows = self.filter(channel__in=Channel.objects.visible_to(user, site))
+        return rows if manages_channels(user) else rows.filter(page__in=visible_pages(user))
 
 
 class DistributionPost(models.Model):

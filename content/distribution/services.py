@@ -573,6 +573,8 @@ def compose(
         page = page.specific
         if origin == DistributionPost.Origin.PERSON and not may_compose(page, user):
             raise PermissionDenied("you may not edit this page, so you may not distribute it")
+        if not page.live:
+            raise Conflict("the page is not live: publish it first, then distribute it")
         site = page.get_site()
         if site is not None and site.pk != channel.site_id:
             raise Invalid("the page belongs to another site than the channel's", details=_detail("page", "other site"))
