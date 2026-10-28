@@ -1739,7 +1739,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Ask the target whether the credential works (on the worker); follow the channel */
+        /** Ask the target whether the credential works (on the worker; people who manage channels) */
         post: operations["distribution_channels_check_create"];
         delete?: never;
         options?: never;
@@ -1808,7 +1808,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Read the channel's post statistics now (on the worker) */
+        /** Read the channel's post statistics now (on the worker; people who manage channels) */
         post: operations["distribution_channels_statistics_create"];
         delete?: never;
         options?: never;

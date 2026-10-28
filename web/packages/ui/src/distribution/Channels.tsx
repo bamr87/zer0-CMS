@@ -350,7 +350,7 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
             >
               Set the credential
             </Button>
-            <Button variant="default" loading={check.isPending} disabled={!channel.has_credential && channel.kind !== 'email'} onClick={() => check.mutate()}>
+            <Button variant="default" loading={check.isPending} disabled={!channel.can_manage || (!channel.has_credential && channel.kind !== 'email')} onClick={() => check.mutate()}>
               Check it
             </Button>
             {channel.has_credential ? (
@@ -386,7 +386,7 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
           )}
         </FileButton>
         {channel.kind === 'linkedin' ? (
-          <Button variant="default" size="xs" loading={statistics.isPending} onClick={() => statistics.mutate()}>
+          <Button variant="default" size="xs" disabled={!channel.can_manage} loading={statistics.isPending} onClick={() => statistics.mutate()}>
             Read statistics now
           </Button>
         ) : null}

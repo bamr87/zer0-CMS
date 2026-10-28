@@ -185,6 +185,18 @@ def test_only_people_who_manage_channels_set_them_up_and_everyone_on_the_site_se
     assert api(alice).patch(f"{API}/channels/{channel.public_id}/", {"armed": False}, format="json").status_code == 403
 
 
+def test_only_a_channel_manager_has_the_worker_ask_the_target(api, manager, carol, channel, worker, monkeypatch):
+    """Checking a channel and reading its statistics call the target with the channel's credential and rewrite what
+    it shows: an editor of the site sees the channel, and may not make the worker do either."""
+    asked = []
+    monkeypatch.setattr(services, "check", lambda c: asked.append(("check", c.pk)))
+    monkeypatch.setattr(services, "ingest_statistics", lambda c: asked.append(("statistics", c.pk)) or 0)
+    for what in ("check", "statistics"):
+        assert api(carol).post(f"{API}/channels/{channel.public_id}/{what}/").status_code == 403
+        assert worker(api(manager).post, f"{API}/channels/{channel.public_id}/{what}/").status_code == 202
+    assert asked == [("check", channel.pk), ("statistics", channel.pk)]
+
+
 def test_one_channel_of_a_site_per_target_so_nothing_goes_twice_to_one_place(api, manager, channel):
     """Each channel keeps its own ledger, so a second channel for the same LinkedIn author (WordPress site,
     repository, newsletter) would post a page the first already posted: refused, naming the first."""
@@ -747,7 +759,9 @@ def test_a_channel_nobody_connected_never_uses_the_environments_token(channel, w
 # ── statistics ──────────────────────────────────────────────────────────────
 
 
-def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api, alice, bob, channel, web, worker):
+def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(
+    api, alice, bob, manager, channel, web, worker
+):
     from distribution.tasks import ingest_statistics
 
     LedgerEntry.objects.create(channel=channel, key="https://example.test/a/", urn="urn:li:share:1", author=AUTHOR)
@@ -779,7 +793,7 @@ def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api,
     assert latest["https://example.test/a/"]["impressions"] == 90 and latest["https://example.test/b/"] is None
     assert {e["id"] for e in entries} == {str(row.public_id) for row in LedgerEntry.objects.all()}, "UUIDs only"
     assert api(bob).get(f"{API}/ledger/").json()["results"] == [], "the ledger's scope is its channels'"
-    assert worker(api(alice).post, f"{API}/channels/{channel.public_id}/statistics/").status_code == 202
+    assert worker(api(manager).post, f"{API}/channels/{channel.public_id}/statistics/").status_code == 202
 
 
 # ── the tools, MCP and the published-page consumer ──────────────────────────

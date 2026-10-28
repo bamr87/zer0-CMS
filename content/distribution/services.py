@@ -339,6 +339,18 @@ def session_for(channel) -> Session:
     )
 
 
+def ask_target(channel, user, what: str) -> None:
+    """Queue a check of the channel's credential (`check`) or a read of its statistics (`statistics`) for the
+    worker. Each calls the target with the channel's credential and rewrites what the channel shows, so it is a
+    channel manager's, as connecting it is."""
+    from .tasks import check_channel, ingest_statistics
+
+    if not manages_channels(user):
+        raise Forbidden(f"asking the target for the channel's {what} needs the right to manage channels")
+    task = check_channel if what == "check" else ingest_statistics
+    transaction.on_commit(lambda: task.delay(channel.pk))
+
+
 def check(channel) -> Channel:
     """In the worker: ask the target whether the credential works, and who it publishes as."""
     from .transports import github_check, wordpress_check

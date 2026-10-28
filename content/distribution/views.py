@@ -12,7 +12,6 @@ right the person lacks, 409 with every blocker for a post that may not go now.
 import time
 
 from django.conf import settings
-from django.db import transaction
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -32,7 +31,6 @@ from . import serializers as s
 from . import services
 from .linkedin import oauth
 from .models import LEDGER_STATES, Channel, DistributionPost, LedgerEntry, Statistic
-from .tasks import check_channel, ingest_statistics
 
 SESSION_KEY = "distribution_oauth"
 
@@ -111,23 +109,22 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
     @extend_schema(
         request=None,
         responses={202: s.DistributionChannelSerializer, **ERROR_RESPONSES},
-        summary="Ask the target whether the credential works (on the worker); follow the channel",
+        summary="Ask the target whether the credential works (on the worker; people who manage channels)",
     )
     @action(detail=True, methods=["post"])
     def check(self, request, public_id=None):
         channel = self.get_object()
-        transaction.on_commit(lambda: check_channel.delay(channel.pk))
+        services.ask_target(channel, request.user, "check")
         return Response(self.get_serializer(channel).data, status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(
         request=None,
         responses={202: None, **ERROR_RESPONSES},
-        summary="Read the channel's post statistics now (on the worker)",
+        summary="Read the channel's post statistics now (on the worker; people who manage channels)",
     )
     @action(detail=True, methods=["post"])
     def statistics(self, request, public_id=None):
-        channel = self.get_object()
-        transaction.on_commit(lambda: ingest_statistics.delay(channel.pk))
+        services.ask_target(self.get_object(), request.user, "statistics")
         return Response(status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(

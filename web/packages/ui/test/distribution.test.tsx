@@ -297,6 +297,18 @@ describe('a channel', () => {
   });
 });
 
+describe('a channel to someone who does not manage channels', () => {
+  it('offers neither a check nor a statistics read', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c1/`]: () => channel({ can_manage: false }),
+      [`GET ${API}/channels/c1/ledger-file/`]: () => ({ filename: 'linkedin-c1.json', content: '{}\n' }),
+    });
+    renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
+    expect(await screen.findByRole('button', { name: 'Check it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Read statistics now' })).toBeDisabled();
+  });
+});
+
 describe('removing a channel', () => {
   it('asks first, says how many posts go with it, and shows the platform’s refusal', async () => {
     const platform = fakePlatform({

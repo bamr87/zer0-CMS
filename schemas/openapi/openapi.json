@@ -13884,7 +13884,7 @@
         "/api/v2/distribution/channels/{public_id}/check/": {
             "post": {
                 "operationId": "distribution_channels_check_create",
-                "summary": "Ask the target whether the credential works (on the worker); follow the channel",
+                "summary": "Ask the target whether the credential works (on the worker; people who manage channels)",
                 "parameters": [
                     {
                         "in": "path",
@@ -14517,7 +14517,7 @@
         "/api/v2/distribution/channels/{public_id}/statistics/": {
             "post": {
                 "operationId": "distribution_channels_statistics_create",
-                "summary": "Read the channel's post statistics now (on the worker)",
+                "summary": "Read the channel's post statistics now (on the worker; people who manage channels)",
                 "parameters": [
                     {
                         "in": "path",
