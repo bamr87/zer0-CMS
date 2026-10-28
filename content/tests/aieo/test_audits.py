@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management import call_command
 
@@ -22,7 +23,7 @@ from agents.models import AgentRun
 from ai import providers
 from ai.providers.base import ProviderError
 from ai.providers.fake import FakeProvider
-from aieo import crawl, parser, reports, scoring, services, visual
+from aieo import crawl, parser, prompts, reports, scoring, services, visual
 from aieo.models import Audit
 from ops.errors import Forbidden, Invalid
 from research import fetch
@@ -495,6 +496,15 @@ def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker)
     assert audited(row).status == Audit.FAILED and audited(row).error == "assistant has policy off"
 
 
+def test_a_deleted_audit_takes_its_screenshot_with_it(alice, api, worker, django_capture_on_commit_callbacks):
+    row = audited(worker(services.audit, alice, kind="text", content="# Backups", method="heuristic"))
+    row.screenshot = default_storage.save(f"aieo/screenshots/{row.public_id}.png", ContentFile(b"\x89PNG"))
+    row.save(update_fields=["screenshot"])
+    with django_capture_on_commit_callbacks(execute=True):  # the file goes once the deletion is committed
+        assert api(alice).delete(f"/api/v2/aieo/audits/{row.public_id}/").status_code == 204
+    assert not default_storage.exists(row.screenshot)
+
+
 def test_a_page_in_a_charset_python_does_not_know_is_read_for_what_its_bytes_are(alice, worker, web):
     """One page that declares a charset Python has no codec for never fails a URL's or a site's audit."""
     bogus = {"Content-Type": "text/html; charset=x-bogus"}
@@ -560,11 +570,12 @@ FIXED = datetime(2026, 10, 22, 12, 0, 0)
 
 
 def test_aieos_ten_site_audits_import_as_history_and_report_as_aieo_reported_them(db):
-    source = settings.REPO_ROOT / "apps" / "aieo" / "reports"
+    source = prompts.DATA / "reports"  # AIEO's ten site audits, kept with the app (aieo/data/reports/)
     call_command("aieo", "import-reports", "--path", str(source))
     call_command("aieo", "import-reports", "--path", str(source))  # idempotent
     rows = list(Audit.objects.filter(batch="aieo-reports"))
     assert len(rows) == 10 and {r.status for r in rows} == {Audit.READY} and {r.scoring_method for r in rows} == {"ai"}
+    assert {r.visibility for r in rows} == {"private"}  # client sites' audits: shared only when asked (--visibility)
     golden = HERE / "golden" / "reports"
     data = sorted((reports.data_of(r) for r in rows), key=lambda d: d["_name"])
     for item in data:
@@ -577,7 +588,7 @@ def test_aieos_ten_site_audits_import_as_history_and_report_as_aieo_reported_the
 def test_the_reports_keep_the_scorers_pattern_order_where_the_database_reorders_keys(db):
     """Postgres's jsonb hands an object back with its keys in its own order (shortest first), so patterns that tie
     would list differently than on SQLite; the reports follow the order Audit.save kept beside them instead."""
-    source = settings.REPO_ROOT / "apps" / "aieo" / "reports"
+    source = prompts.DATA / "reports"  # AIEO's ten site audits, kept with the app (aieo/data/reports/)
     call_command("aieo", "import-reports", "--path", str(source))
     for row in Audit.objects.filter(batch="aieo-reports"):
         scores = row.result["pattern_scores"]
