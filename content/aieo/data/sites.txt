@@ -1,3 +1,4 @@
+# AIEO's batch of sites (apps/aieo/sites.txt), what `manage.py aieo batch-audit` audits by default; a # line is skipped.
 https://soprisaccounting.com/ 
 https://www.embodymylife.com/
 https://www.katherinerosewoller.com/ 
