@@ -31,6 +31,7 @@ def __getattr__(name):
             path("api/v2/outbox/", include("outboxdesk.urls")),
             path("api/v2/sites/", include("sites.urls")),
             path("api/v2/jobs/", include("jobs.urls")),
+            path("api/v2/distribution/", include("distribution.urls")),
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

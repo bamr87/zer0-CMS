@@ -8,7 +8,6 @@
 #   bin/zer0-cms new --theme "IT systems" \
 #        --art-style isometric-tech-toy --out ../drsai
 #   bin/zer0-cms new --theme "IT systems" --print   # preview, write nothing
-#   bin/zer0-cms linkedin status --site PATH  # LinkedIn distribution (see `linkedin --help`)
 #
 # Pure stdlib — no bundler needed. The web wizard (Rails) drives the same
 # Zer0Cms::Abc::Wizard + JekyllExporter this CLI drives. zer0 doctor is the
@@ -27,7 +26,6 @@ module Zer0Cms
       when "styles" then styles
       when "themes" then themes
       when "new"    then new_book(argv)
-      when "linkedin" then Distribution::CLI.main(argv)
       when nil, "-h", "--help", "help" then usage
       else
         warn "unknown command: #{command}\n\n"
@@ -117,8 +115,6 @@ module Zer0Cms
           styles                 list the ABC illustration styles
           themes                 list the bundled A–Z lexicons
           new --theme THEME ...  generate a book and export it to a Jekyll site
-          linkedin COMMAND       LinkedIn distribution: draft, approve, preview,
-                                 publish, statistics (`zer0-cms linkedin --help`)
 
         Run `zer0-cms new --help` for all generation options.
       USAGE

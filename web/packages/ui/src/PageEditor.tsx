@@ -9,6 +9,8 @@
 // read-only and says why; cancelling a schedule is the one thing it allows.
 // The AI panel opens beside the editor: an assistant or a pipeline run on the
 // page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx).
+// Distribute drafts a post of the live page for one of its site's channels
+// (distribution/Compose.tsx); a person approves it in the queue.
 import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +21,7 @@ import { AiPanel } from './ai/AiPanel';
 import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
 import { useApi } from './context';
+import { Distribute } from './distribution/Compose';
 import { FieldsPanel, fromLocalInput, type FieldValues } from './FieldsPanel';
 import { PageResearch } from './research/PageResearch';
 import { RevisionHistory } from './RevisionHistory';
@@ -141,6 +144,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
           <Anchor href={page.preview_url} target="_blank" rel="noreferrer" size="sm">
             Preview
           </Anchor>
+          <Distribute pageId={page.id} siteId={page.site_id ?? undefined} disabled={!page.live} />
           <Button variant="default" disabled={!dirty || !editable} loading={busy} onClick={() => run('save', changes)}>
             Save draft
           </Button>

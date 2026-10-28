@@ -47,7 +47,7 @@ npm run compile          # check-types + lint + all five bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
 SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
-docker compose --profile content up -d --wait db redis content worker research-worker beat relay belt-publisher  # the platform → http://localhost:8000/studio/
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay belt-publisher events  # the platform → http://localhost:8000/studio/
 bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
 

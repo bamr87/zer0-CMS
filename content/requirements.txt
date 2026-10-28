@@ -48,3 +48,7 @@ django-anymail==15.2
 # bamr87/outbox#10 (feature/platform-e2e-proof), which adds outbox/belt.py and outbox/claimdesk.py; its `main` does not
 # have them yet. Move the pin to that pull request's merge commit once it merges (ADR 0007, open item 1).
 outbox @ git+https://github.com/bamr87/outbox.git@4221c90a1f1cfa31148fec7ef5fab98e50539dc3
+# Distribution (distribution/README.md): pull requests to a site's repository (barodybroject's client), and a
+# site's zer0.json — JSONC, comments and trailing commas — read by the LinkedIn lane's CLI.
+PyGithub==2.10.0
+json5==0.17.3

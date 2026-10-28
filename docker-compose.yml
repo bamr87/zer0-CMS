@@ -74,14 +74,6 @@ services:
       # The ABC wizard's Claude fallback for themes without a bundled lexicon.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
-      # LinkedIn distribution (docs/DISTRIBUTION.md). The app credentials let a
-      # person connect a channel; LINKEDIN_ACCESS_TOKEN is the fallback token
-      # when a site has none; nothing publishes unless ZER0_LINKEDIN_PUBLISH=1.
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
-      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
-      ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
-      ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
     labels:
       <<: *fleet-labels
       com.bamr87.fleet.stack: rails
@@ -205,6 +197,18 @@ services:
       # Sites (content/sites/README.md): checkouts may be registered from /sites;
       # the worker, which runs their sync and write-back jobs, mounts it writable.
       SITES_DIR: /sites
+      # Distribution (content/distribution/README.md): the LinkedIn app lets a
+      # person connect a channel, LINKEDIN_ACCESS_TOKEN serves a LinkedIn
+      # channel with no token of its own, and nothing goes out to a kind unless
+      # its switch is 1 here and a person armed the channel.
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
+      ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
+      ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
+      ZER0_WORDPRESS_PUBLISH: ${ZER0_WORDPRESS_PUBLISH:-}
+      ZER0_GITHUB_PR_PUBLISH: ${ZER0_GITHUB_PR_PUBLISH:-}
+      ZER0_EMAIL_PUBLISH: ${ZER0_EMAIL_PUBLISH:-}
     volumes:
       - ${SITES_DIR:-.}:/sites:ro
       - ./packages/books/library:/app/packages/books/library
@@ -300,6 +304,22 @@ services:
     environment: *content-env
     volumes:
       - outbox-data:/app/content/var/outbox
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
+  # The platform's own consumers of its own events (content/outbox/README.md):
+  # a page going live drafts a post for every channel of its site that drafts
+  # automatically (distribution/consumers.py). A consumer group of its own, so
+  # the Rails plane's reading of the same stream is untouched.
+  events:
+    profiles: ["content"]
+    build: *content-build
+    command: python manage.py consume_events --stream zer0:content --group platform --name platform-1
+    environment: *content-env
     labels: *content-labels
     logging: *fleet-logging
     depends_on:

@@ -3,7 +3,9 @@
 // editors' to set) and bylines, saved as what changed; its page; the AI's help
 // — a pitch from its wire item, a draft from its pitch, headlines and a
 // summary, a correction note — each something the person applies or accepts;
-// its corrections and updates, which publish nothing else; and its history.
+// its corrections and updates, which publish nothing else; its history; and,
+// once it is live, Distribute — a draft post of it for one of its site's
+// channels, a newsletter among them.
 // Every change is a request the platform checks again; nothing here publishes
 // without the person saying so.
 import {
@@ -32,6 +34,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { fromLocalInput, toLocalInput } from '../FieldsPanel';
+import { Distribute } from '../distribution/Compose';
 import { RunStatus } from '../RunTimeline';
 import { MoveDialog } from './MoveDialog';
 import { moveLabel, needOf, PRIORITIES, PUBLISHED, statusOf, useMove, when } from './shared';
@@ -228,6 +231,7 @@ function Panel({ story }: { story: StoryDetail }) {
           <Badge variant="light" color={story.page.live ? 'green' : 'gray'}>
             {story.page.live ? 'live' : 'not live'}
           </Badge>
+          <Distribute storyId={story.id} disabled={!story.page.live} />
         </Group>
       ) : (
         <Text size="sm" c="dimmed">

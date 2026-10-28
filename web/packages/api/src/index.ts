@@ -90,3 +90,13 @@ export type DoctorFinding = Schemas['DoctorFinding'];
 export type Job = Schemas['Job'];
 export type JobDetail = Schemas['JobDetail'];
 export type JobLine = Schemas['JobLine'];
+// Distribution (PLAN G5): channels, the queue, the ledger, statistics.
+export type DistributionChannel = Schemas['DistributionChannel'];
+export type DistributionKind = Schemas['DistributionKindEnum'];
+export type DistributionPost = Schemas['DistributionPost'];
+export type DistributionPostDetail = Schemas['DistributionPostDetail'];
+export type DistributionPostStatus = Schemas['DistributionPostStatusEnum'];
+export type DistributionBlocker = Schemas['DistributionBlocker'];
+export type DistributionFinding = Schemas['DistributionFinding'];
+export type DistributionLedgerEntry = Schemas['DistributionLedgerEntry'];
+export type DistributionStatistic = Schemas['DistributionStatistic'];

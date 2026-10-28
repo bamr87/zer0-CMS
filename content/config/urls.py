@@ -15,6 +15,7 @@
 /api/v2/outbox/   the outbox desk: the harness's belt, arena trials, claim checks and calibration
 /api/v2/sites/   the site registry: settings, findings, and sync, write-back and doctor jobs
 /api/v2/jobs/    background jobs: their logs (also as server-sent events), artifacts, cancel
+/api/v2/distribution/ channels, the publishing queue, the ledger and statistics, LinkedIn's OAuth callback
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
@@ -62,6 +63,7 @@ urlpatterns = [
     path("api/v2/outbox/", include("outboxdesk.urls")),
     path("api/v2/sites/", include("sites.urls")),
     path("api/v2/jobs/", include("jobs.urls")),
+    path("api/v2/distribution/", include("distribution.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),

@@ -39,6 +39,7 @@ With Docker, from the repository root: `docker compose --profile content up -d -
 | `books/` | books in the platform: a book's `library/<slug>/` as a generated file set (`import_books`, `export_books`, `roundtrip_books`), the bookshelf's commands (`manage.py books …`: validation with its codes, statistics, manuscripts, the dashboard), and AI-assisted outlining and writing as runs of the `books` agent whose results are suggestions | [`books/README.md`](books/README.md) |
 | `sites/` | the sites the platform manages: `ManagedSite` (checkout, content source, renderer, domains, deploy target, the digests of its files, the doctor's findings) and per-site `SiteSettings`; the Jekyll 4.4 catalog, front-matter line surgery and the confined writer ported from the Rails catalog; sync, the write-back under the stale-write guard, and zer0 doctor as jobs | [`sites/README.md`](sites/README.md) |
 | `jobs/` | `Job`, its log lines and artifacts: background work a person starts and follows live, and cancels | [`jobs/README.md`](jobs/README.md) |
+| `distribution/` | channels (LinkedIn with OAuth and PKCE, WordPress, GitHub pull requests, newsletters; credentials encrypted and write-only), the queue (compose → brand guard → a person's approval → publish on the worker, every gate checked twice, a channel armed by a person and the deployment), the ledger keyed by canonical URL in the extension's byte format, statistics on beat, the `distribution.*` tools and the published-page consumer; and `manage.py linkedin`, the LinkedIn lane over a site's own files for its CI | [`distribution/README.md`](distribution/README.md) |
 | `suggestions/` | `Suggestion` (and `Suggestion.objects.visible_to`, the one scope every surface reads suggestions through), `BlockProvenance`, the accept/reject flow, the brand guard (ported from the extension), the editor panel and views | `suggestions/services.py` |
 | `graph/` | `Entity`, `Edge`, `Embedding`, behavioural counts; structural edges, kNN, related, semantic search, GraphRAG | [`graph/README.md`](graph/README.md) |
 | `workflow/` | `AgentReviewTask`, a Wagtail workflow task a review agent decides | `workflow/models.py` |
@@ -58,7 +59,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
                                                                                    ▼
                                      page revision ──► publish ──► graph index + outbox event (one transaction)
                                                                          │
-                                       relay ──► Redis Stream zer0:content ──► Rails (cache purge, LinkedIn), …
+                                       relay ──► Redis Stream zer0:content ──► consumers (distribution's drafts), …
 ```
 
 ## Surfaces
@@ -77,6 +78,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
 | `/api/v2/outbox/` | the outbox desk: `belt/` (the summary), `belt/messages/` (filtered, paged; per message its CloudEvent), `belt/traces/<trace>/`, `belt/dead-letters/`, `belt/send/` (as the editor station), `belt/deliver/` (`202`); `trials/` and `claim-checks/` (a run in the worker, `202`; per check `resolve/`), `claim-checks/calibration/` ([`outboxdesk/README.md`](outboxdesk/README.md)) |
 | `/api/v2/sites/` | the site registry: the sites a person sees (the studio's site switcher) and, for `sites.manage_site`, registering one, its registry fields and settings, its findings, and `sync/`, `export/` (the write-back) and `doctor/` as jobs ([`sites/README.md`](sites/README.md)) |
 | `/api/v2/jobs/` | background jobs: a person's and their sites', each with its log (`stream/` as server-sent events), artifacts and `cancel/` ([`jobs/README.md`](jobs/README.md)) |
+| `/api/v2/distribution/` | `channels/` (`connect/`, `disconnect/`, `check/`, `statistics/`, `ledger-file/`), `posts/` (the queue: `approve/`, `reject/`, `publish/` answering `202`, `record/`), `ledger/` with statistics, and LinkedIn's `oauth/linkedin/` callback ([`distribution/README.md`](distribution/README.md)) |
 | `/mcp/` | MCP, bearer-token authenticated (`manage.py agent_token <slug> --name …`) |
 | `/healthz`, `/readyz`, `/version` | liveness (touches nothing), readiness (database, cache, Redis — 503 with `checks` when one is down), the build (`name`, `version`, `commit`, `built_at`) |
 | `/api/v2/openapi.json`, `/api/v2/docs/` | the OpenAPI document (committed at [`schemas/openapi/openapi.json`](../schemas/openapi/openapi.json), drift-checked) and its UI where `API_DOCS_ENABLED` |
@@ -85,4 +87,4 @@ Every response carries `X-Request-Id` (echoed when a client sent one) and `X-App
 
 ## Tests
 
-`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14), `outboxdesk/` (ADR 0007), `sites/` and `jobs/` (G4). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.
+`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14), `outboxdesk/` (ADR 0007), `sites/` and `jobs/` (G4), `distribution/` (G5). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.

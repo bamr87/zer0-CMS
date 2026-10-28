@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "books",
     "sites",
     "jobs",
+    "distribution",
     "suggestions",
     "graph",
     "workflow",
@@ -264,6 +265,7 @@ SPECTACULAR_SETTINGS = {
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
         "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "OriginEnum": "ideas.models.Idea.ORIGINS",
         "BrainstormKindEnum": "ideas.services.KINDS",
         "PromotionEnum": "ideas.serializers.PROMOTIONS",
         "SourceKindEnum": "research.models.Source.KINDS",
@@ -288,6 +290,12 @@ SPECTACULAR_SETTINGS = {
         "ContentSourceEnum": "sites.models.ManagedSite.ContentSource",
         "SiteRenderEnum": "sites.models.ManagedSite.Render",
         "JekyllServerEnum": "sites.models.ManagedSite.Server",
+        "DistributionKindEnum": "distribution.models.Kind",
+        "DistributionPostKindEnum": "distribution.models.POST_KINDS",
+        "DistributionPostStatusEnum": "distribution.models.DistributionPost.Status",
+        "DistributionOriginEnum": "distribution.models.DistributionPost.Origin",
+        "LedgerStateEnum": "distribution.models.LEDGER_STATES",
+        "GuardLevelEnum": "distribution.serializers.LEVELS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -339,6 +347,8 @@ CELERY_BEAT_SCHEDULE = {
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
     # The outbox harness's belt: one relay pass a minute delivers what stations sent (outboxdesk/tasks.py).
     "outbox-belt": {"task": "outboxdesk.tasks.deliver_belt", "schedule": 60.0},
+    # Aggregate statistics for every LinkedIn channel's published posts, once a day (distribution/tasks.py).
+    "distribution-statistics": {"task": "distribution.tasks.ingest_statistics", "schedule": crontab(hour=4, minute=23)},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
@@ -379,6 +389,25 @@ BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
 # levels down, as the Rails fleet CMS discovered them); unset, only the
 # repository's own sites can be.
 SITES_DIR = env("SITES_DIR", default="")
+# ── Distribution (distribution/README.md) ───────────────────────────────────
+# A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
+# channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
+# LinkedIn lane always had), ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
+DISTRIBUTION_ARMED = {
+    kind
+    for kind, variable in (
+        ("linkedin", "ZER0_LINKEDIN_PUBLISH"),
+        ("wordpress", "ZER0_WORDPRESS_PUBLISH"),
+        ("github_pr", "ZER0_GITHUB_PR_PUBLISH"),
+        ("email", "ZER0_EMAIL_PUBLISH"),
+    )
+    if env.bool(variable, default=False)
+}
+# The platform's LinkedIn app (connecting an account, refreshing and introspecting its token), and the address
+# LinkedIn returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/linkedin/.
+LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
+LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
+LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

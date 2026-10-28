@@ -1,0 +1,14 @@
+title: Test
+url: &url https://example.test
+baseurl: ""
+collections_dir: pages
+permalink: pretty
+collections:
+  posts:
+    output: true
+    permalink: /:collection/:year/:month/:day/:slug/
+  docs:
+    output: true
+defaults:
+  - scope: { path: "pages/_docs/guides", type: docs }
+    values: { permalink: "/guides/:name/" }

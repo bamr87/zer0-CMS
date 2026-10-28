@@ -31,7 +31,7 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  rails/: 150
+  rails/: 110
   sites/zer0-pages/: 11
 
 theme_ratchet:
@@ -480,13 +480,26 @@ platform:
   # ── Distribution ────────────────────────────────────────────────────────────
   - id: distribution.channels
     what: Channels — LinkedIn (OAuth, encrypted token), WordPress, GitHub pull request — connected per site.
-    surfaces: {api: missing, studio: missing}
+    # G5: content/distribution (/api/v2/distribution/channels/) and the studio's Distribution → Channels — LinkedIn, WordPress, a GitHub repository as pull requests and a newsroom newsletter, per site; a credential encrypted with the AI layer's keys and never returned; LinkedIn connected with state and PKCE, the code exchanged on the worker; Check it on the worker; armed by a channel manager and by the deployment's switch for the kind.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker
+      studio: web/packages/ui/test/distribution.test.tsx
   - id: distribution.queue
     what: Compose, brand guard, approve and publish to a channel, with the ledger keyed by canonical URL and readable errors.
-    surfaces: {api: missing, studio: missing, extension: partial, mcp: missing}
+    # G5: posts of a page or a story, always drafts — by a person (Distribute in the editor and a story's panel), an agent (distribution.compose, over MCP too) or the published-page consumer; the brand guard's findings on the post; approval by someone who may publish the page; publishing answers 202 and the worker checks every gate again (distribution/gates.py) before LinkedIn, WordPress, GitHub or the newsletter; the ledger keyed by canonical URL in the extension's byte format, downloaded and imported. A site that is still files keeps the same lane in its CI (manage.py linkedin). Extension partial: it keeps its own file-mode publishing lane until it is the platform's client (G10).
+    surfaces: {api: done, studio: done, extension: partial, mcp: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker
+      studio: web/packages/ui/test/distribution.test.tsx
+      mcp: content/tests/distribution/test_platform.py::test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish
   - id: distribution.stats
     what: Statistics for published posts, ingested and reported.
-    surfaces: {api: missing, studio: missing}
+    # G5: LinkedIn's aggregate counts for a channel's own posts, daily on beat (distribution-statistics) or on request, one row per post a day, in the studio's Distribution → Statistics and beside each ledger entry. LinkedIn is the only channel with statistics: WordPress, pull requests and newsletters report none.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger
+      studio: web/packages/ui/test/distribution.test.tsx
 
   # ── Books ───────────────────────────────────────────────────────────────────
   - id: books.manage
@@ -614,7 +627,7 @@ sources:
       - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
-      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
+      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: done, proof: content/tests/distribution/test_transports.py::test_a_github_channel_opens_a_pull_request_with_the_pages_jekyll_file, note: "G5: a GitHub pull request channel (PyGithub) — the page exported as its Jekyll file onto a distribute/… branch, then a pull request into the channel's branch; 401, 403, 404 and 422 are sentences and an open pull request is named with its link (content/tests/distribution/test_transports.py::test_github_failures_are_reported_as_themselves_never_answered_with_another_write, ::test_an_already_open_pull_request_is_named_with_its_link); studio: Distribution → Channels → GitHub pull request, then a post's Publish (web/packages/ui/test/distribution.test.tsx)"}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
       - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
@@ -652,13 +665,13 @@ sources:
       - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
       - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: missing}
       - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: partial}
-      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: missing}
-      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: missing}
+      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: done, proof: web/packages/ui/test/distribution.test.tsx, note: "G5: the studio's Distribution → Queue (the guard, the exact payload, approve, publish with every blocker, force, record) and Statistics; API: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker. /admin/distribution is deleted."}
+      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: done, proof: content/tests/distribution/test_platform.py::test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker, note: "G5: Distribution → Channels → Connect with LinkedIn (web/packages/ui/test/distribution.test.tsx), state and PKCE, the token encrypted with ai/crypto.py's keys and never returned. /admin/channels and the channels table are deleted; a Rails channel is set up again and reconnected, its token re-entered."}
       - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: partial}
 
   - id: rails-lib
     path: rails/lib
-    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator, the LinkedIn distribution lane.
+    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator; until G5, the LinkedIn distribution lane.
     content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
     capabilities:
       - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: done, proof: "content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte", note: "G4: content/sites/catalog.py; the parity fixtures moved to content/tests/fixtures. The Ruby catalog stays while the Rails app and the LinkedIn lane run on it"}
@@ -666,8 +679,8 @@ sources:
       - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial, note: "G4: content/sites/writer.py — confinement, O_EXCL create, the atomic replace and the transliterating slugs (content/tests/sites/test_writer.py); a page made in the platform gets its file from the write-back. Open: duplicating a page as a draft (content.create)"}
       - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: done, proof: "content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor", note: "G4: content/sites/doctor.py, held to the Ruby doctor's recorded findings; zer0-doctor.yml runs it. Dropped by ADR 0006 decision 4 (the owner's): the theme check's theme-not-zer0 and no-theme-overrides, and the theme's front-matter schema, replaced by the site's own zer0.json content types. The Ruby doctor is deleted"}
       - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
-      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: missing}
-      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: missing}
+      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: done, proof: content/tests/distribution/test_lane.py::test_the_command_line_walks_the_governed_path, note: "G5: manage.py linkedin (content/distribution/lane/), held to the Ruby lane's recording (golden/ruby-lane.json): the other commands (content/tests/distribution/test_lane.py::test_the_command_line_reads_linkedin_back_and_records_by_hand), the loopback OAuth with state and PKCE (::test_the_oauth_callback_request_line), the MCP server (::test_the_mcp_server_lists_tools_previews_and_keeps_publish_off); zer0-linkedin.yml runs it on Python. A lane over a site's own files is a command line and CI by design; its studio counterpart is the platform's queue. rails/lib/zer0_cms/{linkedin,distribution} and their tests are deleted; the doctor's distribution check is content/distribution/lane/doctor.py, for G4."}
+      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: done, proof: content/tests/distribution/test_lane.py::test_statistics_join_onto_content_paths_and_merge_into_performance_json, note: "G5: the lane's stats --write into .cms/distribution/performance.json; the platform's daily ingest (content/tests/distribution/test_platform.py::test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger) shown in Distribution → Statistics"}
       - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
       - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial, note: "G4: the Python catalog is held to the lists jekyll-parity recorded from Jekyll 4.4.1 (content/tests/sites/test_catalog.py) and the surgery to the round-trip property over real front matter (test_frontmatter.py). Open: re-recording those lists needs jekyll-parity, which is Ruby beside the Jekyll gem"}
 
@@ -850,7 +863,7 @@ sources:
       - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
       - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}
       - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: missing}
-      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing}
+      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: done, proof: content/tests/distribution/test_transports.py::test_wordpress_publishes_a_draft_with_the_yoast_fields_through_the_ssrf_guard, note: "G5: a WordPress channel — POST /wp-json/wp/v2/posts with the user's application password, a draft unless the channel says otherwise, yoast_title and yoast_metadesc, every request behind research/fetch.py's SSRF guard; errors as sentences (::test_wordpress_errors_are_sentences_and_a_5xx_is_left_unconfirmed); studio: Distribution → Channels → WordPress (web/packages/ui/test/distribution.test.tsx)"}
       - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: missing}
       - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: missing}
       - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: missing}

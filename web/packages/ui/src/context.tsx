@@ -9,6 +9,8 @@ import { createContext, use, type ReactNode } from 'react';
 
 /** A section of the AI area (G8). */
 export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
+/** A tab of the Distribution area (G5). */
+export type DistributionTab = 'queue' | 'channels' | 'ledger' | 'statistics';
 
 /** A tab of the Outbox desk (ADR 0007): the belt, arena trials, the claim desk. */
 export type OutboxTab = 'belt' | 'trials' | 'claims';
@@ -40,7 +42,11 @@ export type Destination =
   // Sites and their jobs (G4).
   | { to: 'sites' }
   | { to: 'site'; id: number }
-  | { to: 'job'; id: string };
+  | { to: 'job'; id: string }
+  // Distribution (G5): the area, a post of the queue, a channel.
+  | { to: 'distribution'; tab?: DistributionTab }
+  | { to: 'distribution-post'; id: string }
+  | { to: 'channel'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.
