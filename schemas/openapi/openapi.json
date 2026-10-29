@@ -40866,6 +40866,11 @@
                             "$ref": "#/components/schemas/BannedPatternRequest"
                         }
                     },
+                    "chapter_builtin_bans": {
+                        "type": "boolean",
+                        "title": "Built-in bans on chapters",
+                        "description": "The brand guard's built-in bans hold for what an agent writes in the chapters of the site's books; off switches them off for every book here, whatever the book says. Its own banned phrases still hold."
+                    },
                     "skin": {
                         "type": "string",
                         "description": "The design's skin.",
@@ -42767,6 +42772,11 @@
                         "items": {
                             "$ref": "#/components/schemas/BannedPattern"
                         }
+                    },
+                    "chapter_builtin_bans": {
+                        "type": "boolean",
+                        "title": "Built-in bans on chapters",
+                        "description": "The brand guard's built-in bans hold for what an agent writes in the chapters of the site's books; off switches them off for every book here, whatever the book says. Its own banned phrases still hold."
                     },
                     "skin": {
                         "type": "string",

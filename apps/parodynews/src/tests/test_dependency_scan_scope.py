@@ -25,6 +25,10 @@ REQUIREMENTS = REPO_ROOT / "src" / "requirements.txt"
 
 SCANNERS = ("safety", "pip-audit")
 
+# The oldest setuptools free of GHSA-xmj3-9gf7-h52w. The guard asserts a floor,
+# not an exact pin, so routine upgrades do not break it.
+SETUPTOOLS_FLOOR = (84, 1, 0)
+
 
 def dependency_scan_branch() -> list[str]:
     """The body of the ``dependency-scan)`` case branch in quality.sh."""
@@ -117,7 +121,17 @@ def test_setuptools_workaround_is_gone():
         "the setuptools workaround is redundant once the audit is scoped to "
         "src/requirements.txt, which pins setuptools itself"
     )
-    assert "setuptools==83.0.0" in REQUIREMENTS.read_text(encoding="utf-8"), (
-        "src/requirements.txt no longer pins setuptools, so removing the runtime "
+    declared = re.search(
+        r"^setuptools\s*(?:==|>=|~=)\s*(?P<version>\d+(?:\.\d+)*)",
+        REQUIREMENTS.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    assert declared, (
+        "src/requirements.txt no longer declares setuptools, so removing the runtime "
         "upgrade from quality.sh needs rethinking"
+    )
+    version = tuple(int(part) for part in declared.group("version").split("."))
+    assert version >= SETUPTOOLS_FLOOR, (
+        f"src/requirements.txt declares setuptools {declared.group('version')}, below "
+        f"the patched floor {'.'.join(map(str, SETUPTOOLS_FLOOR))}"
     )
