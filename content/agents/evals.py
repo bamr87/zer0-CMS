@@ -107,7 +107,7 @@ def suggestion_text(s) -> str:
 
 
 def score_run(run: AgentRun, checks: list[dict]) -> tuple[float, list[dict]]:
-    from suggestions.guard import page_findings, site_of
+    from suggestions.guard import builtin_bans, page_findings, site_of
     from suggestions.models import Suggestion
 
     suggestions = list(Suggestion.objects.filter(run=run).order_by("id"))
@@ -131,7 +131,10 @@ def score_run(run: AgentRun, checks: list[dict]) -> tuple[float, list[dict]]:
         elif name == "brand_clean":
             site = site_of(run.target)
             errors = [
-                f for s in suggestions for f in page_findings(suggestion_text(s), site=site) if f["level"] == "error"
+                f
+                for s in suggestions
+                for f in page_findings(suggestion_text(s), site=site, builtin=builtin_bans(s.target))
+                if f["level"] == "error"
             ]
             ok, note = not errors, "; ".join(f["message"] for f in errors)
         elif name == "readability":

@@ -7725,6 +7725,11 @@ export interface components {
             /** @description How the site writes; AI help reads it. */
             brand_voice?: string;
             banned_patterns?: components["schemas"]["BannedPatternRequest"][];
+            /**
+             * Built-in bans on chapters
+             * @description The brand guard's built-in bans hold for what an agent writes in the chapters of the site's books; off switches them off for every book here, whatever the book says. Its own banned phrases still hold.
+             */
+            chapter_builtin_bans?: boolean;
             /** @description The design's skin. */
             skin?: string;
             design_tokens?: {
@@ -8365,6 +8370,11 @@ export interface components {
             /** @description How the site writes; AI help reads it. */
             brand_voice?: string;
             banned_patterns?: components["schemas"]["BannedPattern"][];
+            /**
+             * Built-in bans on chapters
+             * @description The brand guard's built-in bans hold for what an agent writes in the chapters of the site's books; off switches them off for every book here, whatever the book says. Its own banned phrases still hold.
+             */
+            chapter_builtin_bans?: boolean;
             /** @description The design's skin. */
             skin?: string;
             design_tokens?: {

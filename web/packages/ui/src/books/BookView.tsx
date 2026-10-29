@@ -4,7 +4,8 @@
 // reading order (open one to write it), the validation findings with the books
 // package's codes, and its compiled manuscript to read and download. The book's
 // fields are the page's own, saved as a draft revision through the page
-// endpoints, never published here; its other files are saved the same way, one
+// endpoints, never published here — the switch for the brand guard's built-in
+// bans on its chapters among them; its other files are saved the same way, one
 // at a time.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Progress, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
@@ -36,6 +37,7 @@ const FACTS = [
   'cast',
   'subtitle',
   'author',
+  'builtin_bans',
 ];
 const NOTES = ['character_notes', 'continuity_notes', 'style_guide'];
 

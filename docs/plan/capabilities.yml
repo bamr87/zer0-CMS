@@ -435,6 +435,7 @@ platform:
     # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
     # G10 (merge): the extension's Sites workspace renders the same registry and site page; registering, the registry fields and the settings not yet proved through its host.
     # P4 (G2's BrandRules per site): the settings carry the site's brand rules — its voice and its banned phrases, which the brand guard refuses on its pages (content/tests/suggestions/test_suggestions.py::test_a_sites_own_brand_rules_hold_on_its_pages_and_nowhere_else).
+    # P-D7 (2026-10-28): and whether the built-in bans hold on its books' chapters (content/tests/books/test_ai.py::test_a_site_may_switch_the_built_in_bans_off_for_every_books_chapters, sites.test.tsx).
     surfaces: {api: done, studio: done, extension: partial}
     proof:
       api: content/tests/sites/test_sites.py
@@ -634,6 +635,7 @@ platform:
     # book's context; writing arrives as suggestions on the chapter (studio: ChapterWriter's book assistant). No
     # MCP tool starts a book task yet.
     # G10: the extension's Books workspace renders the same ChapterWriter and book assistant; not yet proved through its host.
+    # P-D7 (2026-10-28): a book (the Books overview) or its site (the Sites area's settings) may switch the brand guard's built-in bans off for its chapters; the markup check and the site's own bans still hold (content/tests/books/test_ai.py::test_a_book_with_the_built_in_bans_off_takes_their_words_but_not_markup_or_its_sites_bans, books.test.tsx).
     surfaces: {api: done, studio: done, extension: partial, mcp: missing}
     proof:
       api: content/tests/books/test_ai.py::test_draft_replaces_the_chapters_prose_with_a_suggestion_a_person_accepts

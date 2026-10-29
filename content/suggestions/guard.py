@@ -19,6 +19,12 @@ replaces text is judged on what it adds (`before`): a banned phrase the text
 already had is its author's, so it is refused only when the new text uses that
 phrase more often than the old (a novel's character may say "unlocking value";
 an agent continuing the chapter does not get to say it again).
+
+The built-in lists were written for marketing copy, and a novel may need
+"revolutionary" or a satirised "leverage synergies": a book, or a site for all
+its books, may switch them off for its chapters (`builtin_bans`, PLAN P-D7).
+The brand rules' and the site's own patterns still hold there, and so does the
+markup check, which is not the brand's but the page's safety.
 """
 
 import re
@@ -87,9 +93,23 @@ def site_of(target):
     return target.get_site() if hasattr(target, "get_site") else None
 
 
-def _bans(text: str, extra, before: str | None = None) -> tuple[list[dict], set[str]]:
+def builtin_bans(target) -> bool:
+    """Whether the built-in lists hold for `target`: not on a chapter whose book, or whose site, switched them off.
+    The book's switch is read from its latest revision, which is where the studio saves it."""
+    from cms.models import ChapterPage
+    from sites.models import SiteSettings
+
+    page = getattr(target, "specific", target)
+    if not isinstance(page, ChapterPage):
+        return True
+    book = page.get_parent().specific.get_latest_revision_as_object()
+    site = SiteSettings.objects.filter(site=page.get_site()).values_list("chapter_builtin_bans", flat=True).first()
+    return book.builtin_bans and site is not False
+
+
+def _bans(text: str, extra, before: str | None = None, builtin: bool = True) -> tuple[list[dict], set[str]]:
     findings, errored = [], set()
-    for name, pattern in BANNED_PATTERNS + list(extra):
+    for name, pattern in (BANNED_PATTERNS if builtin else []) + list(extra):
         match = pattern.search(text)
         if match and (before is None or len(pattern.findall(text)) > len(pattern.findall(before))):
             findings.append({"level": "error", "message": f'banned phrase "{match.group(0)}" ({name})'})
@@ -124,12 +144,12 @@ def guard_text(text: str, extra=()) -> list[dict]:
     return findings
 
 
-def page_findings(text: str, extra=None, before: str | None = None, site=None) -> list[dict]:
+def page_findings(text: str, extra=None, before: str | None = None, site=None, builtin: bool = True) -> list[dict]:
     """The bans and the filler; given `before` (the text this one replaces), only a ban it adds. Without `extra`,
-    the active brand rules' patterns and `site`'s own."""
+    the active brand rules' patterns and `site`'s own; without `builtin` (`builtin_bans`), only those."""
     extra = extra_patterns(site) if extra is None else extra
-    bans, errored = _bans(text or "", extra, before)
-    return bans + _filler(text or "", errored)
+    bans, errored = _bans(text or "", extra, before, builtin)
+    return bans + (_filler(text or "", errored) if builtin else [])
 
 
 # Markup that runs code or loads a frame. Raw HTML stays allowed in a

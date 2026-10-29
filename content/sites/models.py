@@ -15,7 +15,8 @@ last doctor run's findings.
 settings (`SiteSettings.for_site(site)`): SEO defaults, analytics ids,
 navigation, design and skin, a monthly budget, and its brand rules — the voice
 AI help reads and the phrases the brand guard refuses on its pages, on top of
-the built-in bans and every active `cms.BrandRules` (suggestions/guard.py). Who may see a
+the built-in bans and every active `cms.BrandRules` (suggestions/guard.py), and
+whether those built-in bans hold on its books' chapters (PLAN P-D7). Who may see a
 site and who may manage it is sites/access.py.
 """
 
@@ -99,6 +100,12 @@ class SiteSettings(BaseSiteSetting):
         blank=True,
         help_text='The site\'s own banned phrases: [{"name": "…", "pattern": "regex", "flags": "i"}]; the brand '
         "guard refuses them on its pages, on top of the built-in bans and every active BrandRules.",
+    )
+    chapter_builtin_bans = models.BooleanField(
+        "built-in bans on chapters",
+        default=True,
+        help_text="The brand guard's built-in bans hold for what an agent writes in the chapters of the site's books; "
+        "off switches them off for every book here, whatever the book says. Its own banned phrases still hold.",
     )
     skin = models.CharField(max_length=40, blank=True, help_text="The design's skin.")
     design_tokens = models.JSONField(

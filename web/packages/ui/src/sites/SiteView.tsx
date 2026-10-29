@@ -1,8 +1,9 @@
 // One site: its overview — how it renders, where its files live, its pages,
 // and its jobs — with sync, write-back and the doctor as jobs that a person
 // starts and follows live (JobLog), its registry fields, its per-site
-// settings (its brand rules among them: the voice AI help reads and the
-// phrases the brand guard refuses on its pages), and what its last doctor run
+// settings (its brand rules among them: the voice AI help reads, the phrases
+// the brand guard refuses on its pages, and whether its built-in bans hold on
+// its books' chapters), and what its last doctor run
 // found. Only someone who may manage the site sees the actions and may save;
 // the platform re-checks every one.
 import {
@@ -342,6 +343,13 @@ function SettingsFields({ siteId, initial, editable }: { siteId: number; initial
             <Pairs label="Design tokens" left="Token" right="Value" rows={tokens.map((t) => [t.name, t.value])} editable={editable} onChange={(rows) => setTokens(rows.map(([name, value]) => ({ name, value })))} />
             <Pairs label="Banned phrases (the brand guard refuses them on this site's pages, as regular expressions, any case)" left="Phrase" right="Pattern" rows={bans} editable={editable} onChange={setBans} />
             {fieldError(save.error, 'banned_patterns') ? <Text size="sm" c="red">{fieldError(save.error, 'banned_patterns')}</Text> : null}
+            <Switch
+              label="Built-in bans on its books' chapters"
+              description="Off for fiction that needs the marketing words they ban, in every book here; the banned phrases above still hold"
+              disabled={!editable}
+              checked={form.chapter_builtin_bans !== false}
+              onChange={(e) => set({ chapter_builtin_bans: e.currentTarget.checked })}
+            />
           </Stack>
         </Card>
         <Card withBorder>
