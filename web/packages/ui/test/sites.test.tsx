@@ -77,6 +77,7 @@ const SETTINGS = {
   navigation: [{ label: 'Books', url: '/books/' }],
   brand_voice: '',
   banned_patterns: [{ name: 'synergy', pattern: '\\bsynerg\\w*', flags: 'i' }],
+  chapter_builtin_bans: true,
   skin: '',
   design_tokens: {},
   monthly_budget_usd: null,
@@ -221,7 +222,7 @@ describe('<SiteView>', () => {
     expect(body).toMatchObject({ render: 'jekyll-theme', theme_tag: 'v1.31.3', content_source: 'files', domains: [] });
   });
 
-  it('edits the settings — the menu and the voice — and saves them', async () => {
+  it('edits the settings — the menu, the voice and the built-in bans on its books’ chapters — and saves them', async () => {
     let body: Record<string, unknown> = {};
     const { api } = fakePlatform({
       'GET /api/v2/sites/3/': () => detail(),
@@ -239,6 +240,7 @@ describe('<SiteView>', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Label 2' }), 'About');
     await userEvent.type(screen.getByRole('textbox', { name: 'Link 2' }), '/about/');
     await userEvent.type(screen.getByRole('textbox', { name: 'Brand voice' }), 'Plain and warm.');
+    await userEvent.click(screen.getByRole('switch', { name: /^Built-in bans on its books' chapters/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     expect(body.navigation).toEqual([
@@ -247,6 +249,7 @@ describe('<SiteView>', () => {
     ]);
     expect(body.brand_voice).toBe('Plain and warm.');
     expect(body.banned_patterns).toEqual([{ name: 'synergy', pattern: '\\bsynerg\\w*' }]);
+    expect(body.chapter_builtin_bans).toBe(false);
   });
 
   it('adds a banned phrase to the site’s brand rules and shows the platform’s refusal of a broken pattern', async () => {

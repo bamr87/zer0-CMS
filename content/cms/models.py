@@ -467,6 +467,15 @@ class BookPage(BasePage):
         validators=[document_list],
         help_text="The book's other files — act guides, README — as [{path, text}].",
     )
+    # A setting, not the book's text: it is in no file of library/<slug>/ and not in the content hash.
+    builtin_bans = models.BooleanField(
+        "built-in bans",
+        default=True,
+        blank=True,
+        help_text="The brand guard's built-in bans, written for marketing copy (“revolutionary”, “leverage synergies”), "
+        "hold for what an agent writes in this book's chapters. Switch them off for fiction that needs the words; the "
+        "markup check and the site's own banned phrases still hold. A site may switch them off for all its books.",
+    )
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types = ["cms.ChapterPage"]
@@ -500,7 +509,16 @@ class BookPage(BasePage):
     )
     sparse_hashed_fields = (*manuscript_fields, "documents")  # new in cms/0002
     # `documents` is edited file by file in the Books workspace (/api/v2/books/<id>/documents/).
-    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style", *manuscript_fields)
+    editor_fields = (
+        "subtitle",
+        "author",
+        "series",
+        "profile",
+        "audience",
+        "art_style",
+        *manuscript_fields,
+        "builtin_bans",
+    )
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -584,8 +602,9 @@ class ChapterPage(BasePage):
 @register_snippet
 class BrandRules(models.Model):
     """The house style an agent reads and the brand guard enforces. The
-    built-in bans (suggestions/guard.py) always run; these patterns add to
-    them, like the extension's `governance.bannedPatternsFile`."""
+    built-in bans (suggestions/guard.py) run everywhere but on a chapter whose
+    book or site switched them off; these patterns add to them, like the
+    extension's `governance.bannedPatternsFile`, and hold there too."""
 
     name = models.CharField(max_length=120)
     is_active = models.BooleanField(default=True)

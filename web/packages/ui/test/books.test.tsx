@@ -1,7 +1,8 @@
 // The Books workspace: the library's shelf with each book's status and
 // progress; a new book from the template; a book from a premise — outlined by a
 // run, read by the person, and made only when they say so; a book's facts saved
-// as a draft revision; its other files edited one at a time; its chapters,
+// as a draft revision, the switch for the brand guard's built-in bans on its
+// chapters among them; its other files edited one at a time; its chapters,
 // findings and manuscript; the outliner's proposal as a diff the person may
 // take; the chapter writer — the page editor, the book assistant's chapter tasks
 // and that chapter's own findings — and the assistant, whose writing comes back
@@ -104,6 +105,7 @@ const BOOK_FIELDS = {
   logline: 'A laid-off engineer finds the cover-up.',
   cast: ['Kareem Hassan'],
   outline: '# The Impairment\n\nOld plan.\n',
+  builtin_bans: true,
 };
 const bookPage = () =>
   pageDetail({
@@ -115,6 +117,7 @@ const bookPage = () =>
       { name: 'logline', label: 'Logline', group: 'content', kind: 'textarea', required: false, help_text: '', max_length: null, choices: [] },
       { name: 'cast', label: 'Cast', group: 'content', kind: 'tags', required: false, help_text: '', max_length: null, choices: [] },
       { name: 'outline', label: 'Outline', group: 'content', kind: 'textarea', required: false, help_text: '', max_length: null, choices: [] },
+      { name: 'builtin_bans', label: 'Built-in bans', group: 'content', kind: 'boolean', required: false, help_text: 'Switch them off for fiction.', max_length: null, choices: [] },
     ],
   });
 
@@ -206,6 +209,17 @@ describe('<BookView>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ base_revision_id: 41, fields: { logline: 'A sharper logline.' } });
+  });
+
+  it('switches the brand guard’s built-in bans off for the book’s chapters, as a draft revision', async () => {
+    const { api, calls } = platform();
+    renderUi(<BookView bookId={20} />, { api });
+    const bans = await screen.findByRole('switch', { name: /^Built-in bans/ });
+    expect(bans).toBeChecked();
+    await userEvent.click(bans);
+    await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ base_revision_id: 41, fields: { builtin_bans: false } });
   });
 
   it('lists the chapters in order, opens one, and adds the next', async () => {
