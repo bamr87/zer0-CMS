@@ -51,6 +51,8 @@ jobs:
     needs: release
     if: needs.release.outputs.release_created == 'true'
     runs-on: ubuntu-latest
+    # Capped so a wedged step cannot run to the six-hour default.
+    timeout-minutes: 20
     permissions:
       contents: write
     env:
