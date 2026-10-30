@@ -1,16 +1,25 @@
-# sites/zer0-pages — the bridge/graph unit tests, the SCHEMA.md pyramid lint
-# and the themed Jekyll build that used to run in bamr87/zer0-pages (the last
-# through the hub's standard-ci), ported into the monorepo and filtered to the
-# site's own tree. The Pages deploy (pages.yml) is not ported: GitHub
-# Pages still publishes from the original repository (see docs/MONOREPO.md).
+# sites/zer0-pages — the Obsidian bridge's and graph index's tests, the
+# SCHEMA.md pyramid lint and a site build through the Jekyll-theme option, the
+# three jobs that used to run in bamr87/zer0-pages (the last through the hub's
+# standard-ci), ported into the monorepo. Since PLAN P-D7 the site builds with
+# no Ruby: its `build` task (tools/jekyll_theme.py) resolves the vault's
+# wikilinks, embeds, callouts, Dataview and graph index in Python
+# (tools/obsidian, tested in tools/tests, which replaced the site's Ruby
+# plugins and minitest suites), renders it with the zer0 theme at the tag its
+# `render:` setting pins and builds it with the jekyll-4 server in Docker. The
+# workflow runs when anything that builds the site changes — the site, its
+# `render:` setting (workspace.yml), the workspace tool that reads it, the
+# option, its server and the bridge (pages.yml compares the build with its
+# recording). The Pages deploy is pages.yml's; GitHub Pages still publishes
+# from the original repository (see docs/MONOREPO.md).
 name: zer0-pages
 
 on:
   push:
     branches: [main]
-    paths: ["sites/zer0-pages/**", ".github/workflows/zer0-pages.yml"]
+    paths: ["sites/zer0-pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/tests/test_obsidian_*.py", "tools/tests/test_graph_index.py", ".github/workflows/zer0-pages.yml"]
   pull_request:
-    paths: ["sites/zer0-pages/**", ".github/workflows/zer0-pages.yml"]
+    paths: ["sites/zer0-pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/tests/test_obsidian_*.py", "tools/tests/test_graph_index.py", ".github/workflows/zer0-pages.yml"]
 
 permissions:
   contents: read
@@ -19,41 +28,63 @@ concurrency:
   group: zer0-pages-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: sites/zer0-pages
-
 jobs:
   unit:
-    name: Bridge + graph index (minitest)
+    name: Bridge + graph index (Python)
     runs-on: ubuntu-latest
     # Capped so a wedged step cannot run to the six-hour default.
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
-      - run: ruby -Ipages/_plugins tests/test_obsidian_bridge.rb
-      - run: ruby -Ipages/_plugins tests/test_graph_index.rb
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - run: python -m unittest tools/tests/test_obsidian_bridge.py tools/tests/test_graph_index.py tools/tests/test_obsidian_vault.py
 
   schema:
     name: SCHEMA.md pyramid
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sites/zer0-pages
     # Capped so a wedged step cannot run to the six-hour default.
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - run: python3 tools/schema_lint.py check .
 
   build:
-    name: jekyll build
+    name: Jekyll build (the Jekyll-theme option)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
-          bundler-cache: true
-          working-directory: sites/zer0-pages
-      - run: bundle exec jekyll build
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      # The jekyll-4 server's image, built from tools/jekyll/Dockerfile under the tag the option looks for, and cached.
+      - name: The jekyll-4 server's image tag
+        id: image
+        run: echo "tag=$(python tools/jekyll_theme.py image jekyll-4)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: tools/jekyll
+          load: true
+          tags: ${{ steps.image.outputs.tag }}
+          cache-from: type=gha,scope=jekyll-4
+          cache-to: type=gha,scope=jekyll-4,mode=max
+      - name: Build with the Jekyll-theme option
+        env:
+          ZER0_PAGES_DEST: ${{ runner.temp }}/site
+          PAGES_REPO_NWO: ${{ github.repository }}
+        run: |
+          bin/zer0 run build zer0-pages
+          test -f "$ZER0_PAGES_DEST/index.html" || { echo "::error::zer0-pages built no index.html"; exit 1; }

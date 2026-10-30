@@ -1,12 +1,15 @@
 # zer0-pages — Jekyll configuration
-# The Obsidian vault at pages/ IS the Jekyll source. Obsidian constructs
-# (wikilinks, Dataview, callouts) are converted at build time by the bridge
-# plugins in pages/_plugins/. Content is never rendered with Liquid
-# (render_with_liquid: false default below) because many docs TEACH Liquid.
+# The Obsidian vault at pages/ IS the Jekyll source. It builds with zer0-CMS's
+# Jekyll-theme option (its `render:` setting in the root workspace.yml): Obsidian
+# constructs (wikilinks, Dataview, callouts, the graph index) are resolved in
+# Python before a plugin-less Jekyll build (tools/obsidian). Content is never
+# rendered with Liquid (render_with_liquid: false default below) because many
+# docs TEACH Liquid.
 #
-# Layouts/includes/assets come from the jekyll-theme-zer0 gem (the
-# zer0-mistakes theme). Jekyll does NOT load _data from theme gems, so all
-# theme data (navigation, ui-text, authors, ...) lives in pages/_data/.
+# Layouts/includes/assets come from the zer0-mistakes theme, which the option
+# fetches as a remote theme at the tag the setting pins and puts in place of
+# `theme:` below. Jekyll does NOT load _data from a theme, so all theme data
+# (navigation, ui-text, authors, ...) lives in pages/_data/.
 
 site_configured: true          # tells the theme this site has been personalised
 
@@ -122,11 +125,12 @@ nanobar:
 
 ## Preview images ##############################################################
 
-# `bundle exec jekyll preview-images` (zer0-image-generator gem) generates AI
-# banner images into pages/assets/images/previews/ and writes `preview:` front
-# matter (/images/previews/… — the theme re-adds /assets at render time).
-# Jekyll's `source: pages` is honored automatically (gem >= 0.2). Rendering
-# needs OPENAI_API_KEY; `--provider local` generates key-free template banners.
+# The zer0-image-generator's Python engine generates AI banner images into
+# pages/assets/images/previews/ and writes `preview:` front matter
+# (/images/previews/… — the theme re-adds /assets at render time); the gem's
+# `jekyll preview-images` left with the Gemfile (PLAN G6 makes it a platform
+# command). Rendering needs OPENAI_API_KEY; `--provider local` generates
+# key-free template banners.
 preview_images:
   enabled: true
   provider: openai

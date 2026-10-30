@@ -9,9 +9,10 @@
 # `baseurl` for its route. A site on the Jekyll-theme option (its `render:` setting, PLAN P2)
 # is built by tools/jekyll_theme.py — the zer0 theme at the tag the setting pins, built by a
 # Jekyll server in Docker (GitHub Pages' own builder, or the jekyll-4 image of
-# tools/jekyll/Dockerfile) — and installs no Ruby; zer0-pages still builds with its Gemfile.
-# The workflow runs when any of that changes: a site, the setting (workspace.yml), the
-# workspace tool that reads it, the option and its server, or a recording.
+# tools/jekyll/Dockerfile) — and installs no Ruby. Every routed site is on the option since
+# zer0-pages moved (PLAN P-D7), so no leg installs Ruby. The workflow runs when any of that
+# changes: a site, the setting (workspace.yml), the workspace tool that reads it, the option
+# and its server, or a recording.
 #
 # Pull requests build and verify everything and deploy nothing. A push to main deploys
 # only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF). The default target is this
@@ -24,9 +25,8 @@
 # resolved — and the fresh recording is uploaded as the site-manifest-<site> artifact, to
 # commit when the change is intended. A site on the Jekyll-theme option reproduces its
 # recording exactly (P2), so on a pull request a difference fails its leg until the same
-# pull request re-records it; zer0-pages, still on its Gemfile, warns. A push to main only
-# warns, so a difference never stands between a site and its deploy; a dispatch with
-# `check` fails on any difference.
+# pull request re-records it. A push to main only warns, so a difference never stands
+# between a site and its deploy; a dispatch with `check` fails on any difference.
 name: pages
 
 on:
@@ -122,13 +122,6 @@ jobs:
           tags: ${{ steps.image.outputs.tag }}
           cache-from: type=gha,scope=jekyll-4
           cache-to: type=gha,scope=jekyll-4,mode=max
-      # zer0-pages alone still builds with its Gemfile (PLAN P2 records why), so only its leg installs Ruby.
-      - uses: ruby/setup-ruby@v1
-        if: ${{ !matrix.site.render }}
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
-          working-directory: ${{ matrix.site.bundle_dir }}
       - name: Build at ${{ matrix.site.route }}
         env:
           NAME: ${{ matrix.site.name }}
