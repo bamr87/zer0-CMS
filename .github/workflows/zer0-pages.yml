@@ -27,6 +27,8 @@ jobs:
   unit:
     name: Bridge + graph index (minitest)
     runs-on: ubuntu-latest
+    # Capped so a wedged step cannot run to the six-hour default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
@@ -38,6 +40,8 @@ jobs:
   schema:
     name: SCHEMA.md pyramid
     runs-on: ubuntu-latest
+    # Capped so a wedged step cannot run to the six-hour default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - run: python3 tools/schema_lint.py check .

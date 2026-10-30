@@ -8,6 +8,11 @@
 # runs the fast tier against pgvector, where the vector column, `<=>` kNN and
 # `SKIP LOCKED` are real. No job reaches a model provider: the LLM backend is
 # the recorded one (content/agents/recordings/).
+#
+# The sqlite job is a two-interpreter matrix, and what each leg runs differs on
+# purpose (see `PRIMARY_PYTHON` below): the version-independent checks run once,
+# and on a pull request the secondary interpreter skips the `slow` tier. A push
+# to main always runs everything on both.
 name: content
 
 on:
@@ -50,6 +55,13 @@ jobs:
         python: ["3.12", "3.13"]
     env:
       DJANGO_SETTINGS_MODULE: config.settings.testing
+      # The leg that carries the version-INDEPENDENT work. ruff (pinned
+      # `target-version = "py312"` in content/pyproject.toml), the
+      # makemigrations check, the three committed-schema diffs and the recorded
+      # eval suites all reach the same verdict on either interpreter, so running
+      # them on both bought nothing but minutes. The suite itself still runs on
+      # both — that is what the matrix is for.
+      PRIMARY_PYTHON: "3.13"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -59,31 +71,49 @@ jobs:
           cache-dependency-path: content/requirements*.txt
       - run: pip install -r requirements-dev.txt
       - name: Lint
+        if: matrix.python == env.PRIMARY_PYTHON
         run: ruff check . && ruff format --check .
       - name: Migrations are complete
+        if: matrix.python == env.PRIMARY_PYTHON
         run: python manage.py makemigrations --check --dry-run
       # The theme's docs site is the largest round-trip fixture (376 files). It lives in
       # its own repository (ADR 0005), so the suite reads it from a pinned checkout under
       # ZER0_THEME_CHECKOUT and skips that one case when the directory is absent.
+      # Only the `slow` tier reads this fixture, so it is checked out only on
+      # the legs that run that tier.
       - uses: actions/checkout@v7
+        if: matrix.python == env.PRIMARY_PYTHON || github.event_name != 'pull_request'
         with:
           repository: bamr87/zer0-mistakes
           ref: v1.31.3
           path: .cache/zer0-mistakes
           persist-credentials: false
       - name: Tests (full suite)
+        if: matrix.python == env.PRIMARY_PYTHON || github.event_name != 'pull_request'
         run: python -m pytest -q
+      # On a pull request the secondary interpreter runs everything except the
+      # `slow` tier — the round trips of the large in-repo sites, which compare
+      # a site export with its recording and so cannot differ between 3.12 and
+      # 3.13. The push to main that follows the merge runs the full suite on
+      # both, so nothing reaches main unproven on either interpreter.
+      - name: Tests (fast tier)
+        if: matrix.python != env.PRIMARY_PYTHON && github.event_name == 'pull_request'
+        run: python -m pytest -q -m "not slow"
       - name: The committed GraphQL schema is current
+        if: matrix.python == env.PRIMARY_PYTHON
         run: |
           python manage.py graphql_schema --out "$RUNNER_TEMP/schema.graphql"
           diff -u ../schemas/graphql/schema.graphql "$RUNNER_TEMP/schema.graphql"
       - name: The committed agent schema is current
+        if: matrix.python == env.PRIMARY_PYTHON
         run: python manage.py wagtail_ai_schema --check ../schemas/content/ai-schema.json
       - name: The committed OpenAPI document is current
+        if: matrix.python == env.PRIMARY_PYTHON
         run: |
           python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file "$RUNNER_TEMP/openapi.json"
           diff -u ../schemas/openapi/openapi.json "$RUNNER_TEMP/openapi.json"
       - name: Eval suites (recorded models)
+        if: matrix.python == env.PRIMARY_PYTHON
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
           DATABASE_URL: sqlite:///${{ runner.temp }}/evals.sqlite3
@@ -123,5 +153,6 @@ jobs:
           cache: pip
           cache-dependency-path: content/requirements*.txt
       - run: pip install -r requirements-dev.txt
-      - run: python manage.py makemigrations --check --dry-run
+      # No makemigrations check here: the sqlite leg above already runs it, and
+      # it reads the migration graph, not the database.
       - run: python -m pytest -q -m "not slow"

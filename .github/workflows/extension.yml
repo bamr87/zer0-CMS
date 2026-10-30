@@ -57,6 +57,10 @@ jobs:
   extension:
     name: Build, lint and test the VS Code extension
     runs-on: ubuntu-latest
+    # The job takes about two minutes. `vscode-test` launches a real editor
+    # under xvfb, and an extension host that never exits would otherwise run to
+    # the six-hour default.
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
