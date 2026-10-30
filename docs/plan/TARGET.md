@@ -147,7 +147,7 @@ The extension is built from the studio's code, not beside it: TypeScript, React,
 - Business logic lives in services (`<app>/services.py`): views validate, call a service and serialize. A service is testable without HTTP.
 - Nothing calls a model provider or the network inside a request. It enqueues a job and returns `202` with the run or job id; the client follows the event stream.
 - One place scopes rows: each owned model has a `visible_to(user, site=None)` queryset method, and every view and GraphQL resolver uses it.
-- Public ids are UUIDs; integer keys stay internal. No prefixed string keys.
+- Public ids are UUIDs; integer keys stay internal. No prefixed string keys. A model the platform adds carries its UUID `public_id` from its first migration, and every surface names its rows by it alone. The recorded exception (P-D6, [ADR 0009](../adr/0009-public-ids.md)): Wagtail's and Django's own rows — pages and page types, revisions, sites, users, groups, images, documents, workflow tasks — keep their integer ids, as Wagtail's own APIs use them; `content/tests/api/test_public_ids.py` holds every other model to a public id or a named reason.
 - Settings are per site (Wagtail site settings) or per provider row, never a singleton table.
 - Credentials are encrypted at rest (`cryptography` Fernet, rotatable), write-only in the API, and never logged.
 - Lists are paginated (cursor pagination for messages, runs, sources and findings), filtered with django-filter, ordered from an allow-list, and indexed for the filters they offer.

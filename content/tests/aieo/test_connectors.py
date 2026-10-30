@@ -21,6 +21,8 @@ from django.test import override_settings
 from aieo import connectors, services, tasks
 from aieo.models import BrandContext, Connector, ConnectorData
 
+from .conftest import answer
+
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PEM = KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
 SERVICE_ACCOUNT = json.dumps({"client_email": "aieo@project.iam.gserviceaccount.com", "private_key": PEM.decode()})
@@ -79,7 +81,20 @@ def test_ga4_signs_a_jwt_for_its_token_and_reads_the_top_pages(site, google, wor
     }
 
 
-def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(site, google):
+def test_a_keys_own_token_uri_is_never_where_the_grant_goes(site, google):
+    """The service-account key is what a person pasted, so its `token_uri` is theirs to choose: the grant always goes
+    to Google's own endpoint, and an address inside the network is never asked (nor its answer shown back)."""
+    key = json.dumps({**json.loads(SERVICE_ACCOUNT), "token_uri": "http://10.0.0.5:9200/_steal"})
+    row = connect(site, Connector.GA4, {"property_id": "1"}, credential=key)
+    inside = google.post("http://10.0.0.5:9200/_steal").respond(500, json={"error": "internal answer leaked"})
+    google.post(connectors.GA4.format(property="1")).respond(200, json={"rows": []})
+    assert tasks.sync_connector(row.pk) == Connector.OK
+    assert google.calls[0].request.url == connectors.TOKEN_URI and not inside.called
+    row.refresh_from_db()
+    assert row.error == ""
+
+
+def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(alice, site, google):
     BrandContext.objects.update_or_create(
         site=site, defaults={"competitors": {"keywords": ["backup"], "competitors": [], "topics": []}}
     )
@@ -106,7 +121,7 @@ def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(sit
     rows[0]["impressions"] = 6000
     query.respond(200, json={"rows": rows})
     assert tasks.sync_connector(row.pk) == Connector.OK
-    ranked = services.priorities(site)
+    ranked = services.priorities(alice, site)
     first = ranked["queue"][0]
     assert first["query"] == "nightly backup" and first["components"]["business_priority"] == 100
     assert first["components"]["trend"] == 100  # impressions up 50% since the sync before
@@ -218,3 +233,44 @@ def test_rotating_the_ai_keys_carries_every_connectors_credential(site):
     with override_settings(AI_CREDENTIAL_KEYS=[old], SECRET_KEY="another-secret"):
         with pytest.raises(CommandError, match="DataForSEO"):
             call_command("rotate_ai_credentials", stdout=io.StringIO())
+
+
+def test_removing_a_connector_takes_the_right_to_delete_one(configurer, site, api):
+    row = connect(site, Connector.DATAFORSEO, {"keywords": ["backup"]}, credential="login:password")
+    url = f"/api/v2/aieo/connectors/{row.public_id}/"
+    assert api(configurer).delete(url).status_code == 403 and Connector.objects.filter(pk=row.pk).exists()
+    configurer.user_permissions.add(Permission.objects.get(codename="delete_connector"))
+    remover = type(configurer).objects.get(pk=configurer.pk)
+    assert api(remover).delete(url).status_code == 204 and not Connector.objects.filter(pk=row.pk).exists()
+
+
+def test_a_failed_sync_is_logged_without_the_frames_that_hold_its_credential(site, caplog, monkeypatch):
+    """A traceback carries its frames' variables — a service account's whole key, its private key, the signed grant —
+    which Sentry sends unless a name is on its list; an unexpected failure is logged by its type alone."""
+
+    def broken(connector):
+        key = connector.get_credential()  # what the vendor client's frames hold when it fails  # noqa: F841
+        raise KeyError("access_token")
+
+    monkeypatch.setattr(connectors, "fetch_rows", broken)
+    row = connect(site, Connector.GA4, {"property_id": "1"})
+    with caplog.at_level("ERROR", logger="aieo.tasks"):
+        assert tasks.sync_connector(row.pk) == Connector.FAILED
+    assert caplog.records and all(r.exc_info is None for r in caplog.records)
+    row.refresh_from_db()
+    assert row.error == "the sync failed: KeyError"
+
+
+def test_the_performance_analyst_reads_the_sites_last_synced_rows(alice, fake, worker, site):
+    """AIEO's performance agent reads analytics (`ga_data`, `gsc_data`, `dataforseo_data`): the site's last synced
+    rows of each connector, where the person gave none of their own."""
+    gsc = Connector.objects.create(site=site, kind=Connector.GSC, options={"site_url": "sc-domain:x"})
+    ga4 = Connector.objects.create(site=site, kind=Connector.GA4, options={"property_id": "1"})
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "old query", "impressions": 1}])
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "nightly backup", "impressions": 9}])
+    ConnectorData.objects.create(connector=ga4, report="top_pages", rows=[{"page": "/backups/", "sessions": 420}])
+    fake.script = [answer({"quick_wins": ["Refresh the guide"], "declining_content": [], "roadmap": []})]
+    worker(services.run_agent, alice, "aieo-performance", site=site, inputs={"dataforseo_data": "given by hand"})
+    sent = fake.calls[0]["messages"][0]["content"]
+    assert "## Gsc data" in sent and "nightly backup" in sent and "old query" not in sent  # the last sync's rows
+    assert "## Ga data" in sent and "/backups/" in sent and "## Dataforseo data\n\ngiven by hand" in sent

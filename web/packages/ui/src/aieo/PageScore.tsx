@@ -28,7 +28,7 @@ export function PageScore({ pageId, dirty, held, onReview }: Props) {
   const go = useGo();
   const qc = useQueryClient();
   const [ai, setAi] = useState(false);
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const latest = useQuery({
     queryKey: ['aieo', 'audits', 'page', pageId],
     queryFn: () => call(api.GET('/api/v2/aieo/audits/', { params: { query: { page: pageId, page_size: 1 } } })),

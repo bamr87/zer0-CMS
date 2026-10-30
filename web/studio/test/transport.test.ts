@@ -37,7 +37,7 @@ describe('openStream', () => {
   it('relays named events, closes at the end, and reports a stream it can no longer follow', () => {
     vi.stubGlobal('EventSource', FakeEventSource);
     const onEvent = vi.fn();
-    openStream('/api/v2/agent-runs/9/stream/', ['step', 'end'], onEvent);
+    openStream('/api/v2/agent-runs/9b2f6c4e-1d3a-4f5b-8c7d-0e1f2a3b4c5d/stream/', ['step', 'end'], onEvent);
     const source = FakeEventSource.last as FakeEventSource;
     source.emit('step', '{"idx": 0}');
     expect(onEvent).toHaveBeenLastCalledWith('step', { idx: 0 });
@@ -49,7 +49,7 @@ describe('openStream', () => {
     source.emit('error');
     expect(onEvent).toHaveBeenLastCalledWith('error', null);
 
-    openStream('/api/v2/agent-runs/9/stream/', ['end'], onEvent);
+    openStream('/api/v2/agent-runs/9b2f6c4e-1d3a-4f5b-8c7d-0e1f2a3b4c5d/stream/', ['end'], onEvent);
     (FakeEventSource.last as FakeEventSource).emit('end', '{}');
     expect(FakeEventSource.last?.readyState).toBe(FakeEventSource.CLOSED);
   });

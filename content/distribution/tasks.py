@@ -1,7 +1,10 @@
 """Distribution's work on the worker, never inside a request: publishing a
 post (`services.deliver`: the gates again, the channel's transport, the
 ledger), exchanging an OAuth code, checking a channel's credential, and — on
-Celery beat, once a day — the statistics of every LinkedIn channel's posts.
+Celery beat — settling every attempt that is over without its worker saying so
+(each minute: a send whose worker died, a post no worker took, an email post
+whose newsletter issue the newsroom sent or failed) and the statistics of every
+LinkedIn channel's posts (daily).
 """
 
 import logging
@@ -13,15 +16,24 @@ from .models import Channel, Kind
 
 log = logging.getLogger(__name__)
 
-# A send never outlives this, so `services.deliver` reads an older claim as a worker that died mid-send.
+# A send never outlives this, so `services._settle` reads an older claim as a worker that died mid-send. A send
+# still going a minute before is stopped from the inside (the soft limit) and fails as one whose outcome is unknown,
+# rather than being killed.
 SEND_TIME_LIMIT = 600
 
 
-@shared_task(time_limit=SEND_TIME_LIMIT)
+@shared_task(time_limit=SEND_TIME_LIMIT, soft_time_limit=SEND_TIME_LIMIT - 60)
 def publish_post(post_id: int) -> str:
     from .services import deliver
 
     return deliver(post_id).status
+
+
+@shared_task
+def settle_posts() -> int:
+    from .services import settle_due
+
+    return settle_due()
 
 
 @shared_task

@@ -26,8 +26,8 @@ export type Destination =
   | { to: 'page'; id: number; tab?: 'suggestions' }
   | { to: 'pages' }
   | { to: 'create' }
-  | { to: 'run'; id: number }
-  | { to: 'review'; runId?: number }
+  | { to: 'run'; id: string }
+  | { to: 'review'; runId?: string }
   // The AI content layer (G8); a row without an id is a new one.
   | { to: 'ai'; section?: AiSection }
   | { to: 'assistant' | 'pipeline' | 'schema' | 'brief'; id?: string }

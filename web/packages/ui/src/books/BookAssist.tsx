@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { RunStatus } from '../RunTimeline';
+import { RunStatus, shortId } from '../RunTimeline';
 import { useFollowRun, type BookTaskKey, type Finding, type TaskOutput } from './types';
 
 const SEVERITY: Record<string, string> = { high: 'red', medium: 'orange', low: 'gray' };
@@ -34,7 +34,7 @@ export function BookAssist({ bookId, chapterId, onOutline }: Props) {
   const chosen = offered.find((t) => t.key === task) ?? offered[0];
   const [instruction, setInstruction] = useState('');
   const [selection, setSelection] = useState('');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [showContext, setShowContext] = useState(false);
   const start = useMutation({
     mutationFn: () =>
@@ -122,7 +122,9 @@ export function BookAssist({ bookId, chapterId, onOutline }: Props) {
         ) : null}
         {run.data ? (
           <Group gap="xs">
-            <Text size="sm">Run #{run.data.id}</Text>
+            <Text size="sm" title={run.data.id}>
+              Run {shortId(run.data.id)}
+            </Text>
             <RunStatus status={run.data.status} />
             <Button size="compact-xs" variant="subtle" onClick={() => runId !== null && go({ to: 'run', id: runId })}>
               Steps
@@ -136,7 +138,7 @@ export function BookAssist({ bookId, chapterId, onOutline }: Props) {
   );
 }
 
-function Result({ output, runId, onOutline }: { output: TaskOutput; runId: number; onOutline?: (markdown: string) => void }) {
+function Result({ output, runId, onOutline }: { output: TaskOutput; runId: string; onOutline?: (markdown: string) => void }) {
   const go = useGo();
   if (output.suggestions) {
     return (

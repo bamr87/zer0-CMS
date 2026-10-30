@@ -452,7 +452,7 @@ class BriefViewSet(OwnedViewSet):
             {
                 "brief": s.BriefSerializer(brief, context=self.get_serializer_context()).data,
                 "page_id": page.pk,
-                "suggestions": [suggestion.pk for suggestion in suggestions],
+                "suggestions": [suggestion.public_id for suggestion in suggestions],
             },
             status=status.HTTP_201_CREATED,
         )

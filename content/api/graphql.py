@@ -11,7 +11,9 @@ Mutations route through the same functions the admin and REST views call
 (`runner.start_run`, `suggestions.services.accept` / `reject`), and every
 resolver reads runs and suggestions through the same scopes
 (`AgentRun.objects.visible_to`, `Suggestion.objects.visible_to`), so a gate is
-never only in GraphQL.
+never only in GraphQL. A run and a suggestion are named by their UUID public ids
+(`UUID`), in arguments and results alike; pages and revisions by Wagtail's ids
+(P-D6).
 """
 
 import graphene
@@ -45,7 +47,7 @@ class EntityType(graphene.ObjectType):
 
 
 class SuggestionType(graphene.ObjectType):
-    id = graphene.Int()
+    id = graphene.UUID()
     op = graphene.String()
     block_id = graphene.String()
     field = graphene.String()
@@ -53,12 +55,12 @@ class SuggestionType(graphene.ObjectType):
     rationale = graphene.String()
     status = graphene.String()
     agent = graphene.String()
-    run_id = graphene.Int()
+    run_id = graphene.UUID()
 
     @staticmethod
     def of(s: Suggestion):
         return SuggestionType(
-            id=s.pk,
+            id=s.public_id,
             op=s.op,
             block_id=s.block_id,
             field=s.field,
@@ -66,7 +68,7 @@ class SuggestionType(graphene.ObjectType):
             rationale=s.rationale,
             status=s.status,
             agent=s.agent.slug if s.agent else None,
-            run_id=s.run_id,
+            run_id=s.run.public_id if s.run else None,
         )
 
 
@@ -79,7 +81,7 @@ class StepType(graphene.ObjectType):
 
 
 class AgentRunType(graphene.ObjectType):
-    id = graphene.Int()
+    id = graphene.UUID()
     agent = graphene.String()
     status = graphene.String()
     trigger = graphene.String()
@@ -93,7 +95,7 @@ class AgentRunType(graphene.ObjectType):
     @staticmethod
     def of(run: AgentRun):
         return AgentRunType(
-            id=run.pk,
+            id=run.public_id,
             agent=run.agent.slug,
             status=run.status,
             trigger=run.trigger,
@@ -138,7 +140,7 @@ class Query(graphene.ObjectType):
     )
     entities = graphene.List(EntityType, page_id=graphene.Int(required=True))
     suggestions = graphene.List(SuggestionType, page_id=graphene.Int(required=True))
-    agent_run = graphene.Field(AgentRunType, id=graphene.Int(required=True))
+    agent_run = graphene.Field(AgentRunType, id=graphene.UUID(required=True))
     ai_schema = GenericScalar()
 
     def resolve_semantic_search(self, info, query, first=10, page_type=None):
@@ -180,7 +182,7 @@ class Query(graphene.ObjectType):
         return [SuggestionType.of(s) for s in pending_for(page.specific).visible_to(_user(info))]
 
     def resolve_agent_run(self, info, id):
-        run = AgentRun.objects.visible_to(_user(info)).filter(pk=id).select_related("agent").first()
+        run = AgentRun.objects.visible_to(_user(info)).filter(public_id=id).select_related("agent").first()
         return AgentRunType.of(run) if run is not None else None
 
     def resolve_ai_schema(self, info):
@@ -193,7 +195,7 @@ class RequestAgentRun(graphene.Mutation):
         page_id = graphene.Int()
         input = GenericScalar()
 
-    run_id = graphene.Int()
+    run_id = graphene.UUID()
     status = graphene.String()
     trace_id = graphene.String()
 
@@ -217,22 +219,22 @@ class RequestAgentRun(graphene.Mutation):
             run = start_run(definition, trigger="graphql", target=page, input=input or {}, user=user)
         except RunRefused as e:
             raise GraphQLError(str(e)) from e
-        return RequestAgentRun(run_id=run.pk, status=run.status, trace_id=run.trace_id)
+        return RequestAgentRun(run_id=run.public_id, status=run.status, trace_id=run.trace_id)
 
 
 class AcceptSuggestion(graphene.Mutation):
     class Arguments:
-        id = graphene.Int()
-        ids = graphene.List(graphene.Int)
+        id = graphene.UUID()
+        ids = graphene.List(graphene.UUID)
 
     ok = graphene.Boolean()
     revision_id = graphene.Int()
-    accepted = graphene.List(graphene.Int)
+    accepted = graphene.List(graphene.UUID)
 
     def mutate(self, info, id=None, ids=None):
         user = _user(info)
         wanted = [*([id] if id else []), *(ids or [])]
-        suggestions = list(Suggestion.objects.visible_to(user).filter(pk__in=wanted))
+        suggestions = list(Suggestion.objects.visible_to(user).filter(public_id__in=wanted))
         if user is None or len(suggestions) != len(set(wanted)) or not wanted:
             raise GraphQLError("unknown suggestion, or not signed in")
         try:
@@ -240,19 +242,19 @@ class AcceptSuggestion(graphene.Mutation):
         except (SuggestionError, PermissionDenied) as e:
             raise GraphQLError(str(e)) from e
         revision_id = result.pk if isinstance(result, Revision) else None
-        return AcceptSuggestion(ok=True, revision_id=revision_id, accepted=[s.pk for s in suggestions])
+        return AcceptSuggestion(ok=True, revision_id=revision_id, accepted=[s.public_id for s in suggestions])
 
 
 class RejectSuggestion(graphene.Mutation):
     class Arguments:
-        id = graphene.Int(required=True)
+        id = graphene.UUID(required=True)
         reason = graphene.String()
 
     ok = graphene.Boolean()
 
     def mutate(self, info, id, reason=""):
         user = _user(info)
-        suggestion = Suggestion.objects.visible_to(user).filter(pk=id).first()
+        suggestion = Suggestion.objects.visible_to(user).filter(public_id=id).first()
         if user is None or suggestion is None:
             raise GraphQLError("unknown suggestion, or not signed in")
         try:

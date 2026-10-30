@@ -20,6 +20,7 @@ import {
   PageEditor,
   PageList,
   ResearchWorkspace,
+  shortId,
   SitesWorkspace,
   SiteView,
   SourceView,
@@ -231,9 +232,9 @@ function EditPage() {
 function Review() {
   const { siteId } = useSite();
   const [params] = useSearchParams();
-  const runId = Number(params.get('run')) || undefined;
+  const runId = params.get('run') || undefined;
   return (
-    <Section title={runId ? `Review run #${runId}` : 'Review'}>
+    <Section title={runId ? `Review run ${shortId(runId)}` : 'Review'}>
       <SuggestionInbox siteId={runId ? undefined : siteId} runId={runId} />
     </Section>
   );

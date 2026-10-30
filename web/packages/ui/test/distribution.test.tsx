@@ -90,7 +90,7 @@ function post(overrides: Record<string, unknown> = {}) {
 
 function entry(overrides: Record<string, unknown> = {}) {
   return {
-    id: 1,
+    id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e5f',
     channel: 'c1',
     channel_name: 'The page',
     channel_kind: 'linkedin',
@@ -177,10 +177,10 @@ describe('a post', () => {
     expect(await screen.findByText('The worker is publishing it…')).toBeInTheDocument();
   });
 
-  it('saves only the text that changed, and records a post found after a failure', async () => {
+  it('saves only the text that changed — a failed post’s goes back to draft — and records a post found after a failure', async () => {
     const platform = fakePlatform({
       [`GET ${API}/posts/p1/`]: () => post({ status: 'failed', error: 'HTTP 503: down — it may have published' }),
-      [`PATCH ${API}/posts/p1/`]: () => post({ status: 'failed' }),
+      [`PATCH ${API}/posts/p1/`]: () => post({ status: 'draft' }),
       [`POST ${API}/posts/p1/record/`]: () => post({ status: 'published', external_id: 'urn:li:share:42' }),
     });
     renderUi(<PostPanel postId="p1" />, { api: platform.api });
@@ -188,11 +188,41 @@ describe('a post', () => {
     const text = screen.getByLabelText('Text');
     await userEvent.clear(text);
     await userEvent.type(text, 'Every night, a copy.');
+    expect(screen.getByText(/Saving a changed text sends the post back to draft/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publish…' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Save the text' }));
     await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ commentary: 'Every night, a copy.' }));
     await userEvent.type(screen.getByLabelText(/Record it/), 'urn:li:share:42');
     await userEvent.click(screen.getByRole('button', { name: 'Record' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/record/'))?.body).toEqual({ urn: 'urn:li:share:42' }));
+  });
+});
+
+describe('a rejected post', () => {
+  it('is read-only: no text to save and nothing to reject', async () => {
+    const platform = fakePlatform({ [`GET ${API}/posts/p1/`]: () => post({ status: 'rejected', reason: 'not this week' }) });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByText('Rejected: not this week')).toBeInTheDocument();
+    expect(screen.getByLabelText('Text')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save the text' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
+  });
+});
+
+describe('what a post says about where it went', () => {
+  it('shows a post’s notes, such as where its site ledger entry went', async () => {
+    const note = "written to the site's ledger file (.github/linkedin-log.json): commit it";
+    const platform = fakePlatform({ [`GET ${API}/posts/p1/`]: () => post({ status: 'published', notes: [note], blockers: [] }) });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(within(await screen.findByLabelText('Notes')).getByText(note)).toBeInTheDocument();
+  });
+
+  it('says the newsroom is sending its issue while it waits', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post({ status: 'publishing', channel_kind: 'email', attempted_at: '2026-10-28T09:00:00Z', blockers: [] }),
+    });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByText('The newsroom is sending the newsletter issue…')).toBeInTheDocument();
   });
 });
 
@@ -208,8 +238,9 @@ describe('Distribute', () => {
     await userEvent.click(await screen.findByLabelText('Channel', { selector: 'input' }));
     await userEvent.click(await screen.findByRole('option', { name: /The page — LinkedIn/ }));
     await userEvent.type(screen.getByLabelText('Text'), 'Our world-class backups.');
-    await userEvent.click(screen.getByRole('button', { name: 'Draft the post' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Draft the post' }));
     expect(await screen.findByText(/banned phrase "world-class"/)).toBeInTheDocument();
+    expect(platform.calls.filter((c) => c.method === 'POST')).toHaveLength(1); // a double click drafts once
     expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({
       channel: 'c1',
       kind: 'article',
@@ -278,11 +309,43 @@ describe('a channel', () => {
   });
 });
 
+describe('a channel to someone who does not manage channels', () => {
+  it('offers neither a check nor a statistics read', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c1/`]: () => channel({ can_manage: false }),
+      [`GET ${API}/channels/c1/ledger-file/`]: () => ({ filename: 'linkedin-c1.json', content: '{}\n' }),
+    });
+    renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
+    expect(await screen.findByRole('button', { name: 'Check it' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Read statistics now' })).toBeDisabled();
+  });
+});
+
+describe('removing a channel', () => {
+  it('asks first, says how many posts go with it, and shows the platform’s refusal', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c1/`]: () => channel(),
+      [`GET ${API}/channels/c1/ledger-file/`]: () => ({ filename: 'linkedin-c1.json', content: '{}\n' }),
+      [`GET ${API}/posts/`]: () => ({ count: 3, next: null, previous: null, results: [post()] }),
+      [`DELETE ${API}/channels/c1/`]: () =>
+        new Reply(409, { error: { code: 'conflict', message: 'The page’s ledger holds 1 entry: disconnect the channel instead', status: 409, details: [] } }),
+    });
+    renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove the channel…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Remove this channel?' });
+    expect(await within(dialog).findByText(/and its 3 posts with it/)).toBeInTheDocument();
+    expect(platform.calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove it' }));
+    expect(await within(dialog).findByText(/disconnect the channel instead/)).toBeInTheDocument();
+    expect(platform.calls.find((c) => c.path === `${API}/posts/`)?.query.get('channel')).toBe('c1');
+  });
+});
+
 describe('the ledger and its statistics', () => {
   it('marks an attempt that may have landed and links a LinkedIn post', async () => {
     const platform = fakePlatform({
       [`GET ${API}/ledger/`]: () =>
-        listOf([entry(), entry({ id: 2, key: 'https://example.test/b/', urn: '', state: 'unconfirmed', posted_at: null, attempted_at: '2026-10-21T09:00:00Z' })]),
+        listOf([entry(), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e60', key: 'https://example.test/b/', urn: '', state: 'unconfirmed', posted_at: null, attempted_at: '2026-10-21T09:00:00Z' })]),
       [`GET ${API}/channels/`]: () => listOf([channel()]),
     });
     renderUi(<Ledger siteId={1} />, { api: platform.api });
@@ -294,7 +357,7 @@ describe('the ledger and its statistics', () => {
   it('lists the most seen first, with the totals', async () => {
     const platform = fakePlatform({
       [`GET ${API}/ledger/`]: () =>
-        listOf([entry({ key: 'https://example.test/a/', latest: stats(10) }), entry({ id: 2, key: 'https://example.test/b/', latest: stats(90) }), entry({ id: 3, key: 'https://example.test/c/' })]),
+        listOf([entry({ key: 'https://example.test/a/', latest: stats(10) }), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e60', key: 'https://example.test/b/', latest: stats(90) }), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e61', key: 'https://example.test/c/' })]),
       [`GET ${API}/channels/`]: () => listOf([channel()]),
     });
     renderUi(<Statistics />, { api: platform.api });

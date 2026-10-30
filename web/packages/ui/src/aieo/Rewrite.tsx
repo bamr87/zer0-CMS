@@ -38,7 +38,7 @@ export function Rewrite({ siteId, pattern, pageId: fixedPage, onReview }: Props)
   const [content, setContent] = useState('');
   const [mode, setMode] = useState<AieoRewriteMode>('optimize');
   const [style, setStyle] = useState<'preserve' | 'aggressive'>('preserve');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [done, setDone] = useState<Run | null>(null);
   const page = fixedPage ?? (on === 'page' ? pageId : null);
   const start = useMutation({

@@ -10,33 +10,38 @@ writes the tables.
     page         stored)     the page    deployment's switch
 
 The gates are `gates.ORDER`, the same as a site's own lane's: a post publishes
-only when a person approved it, the channel is armed (`Channel.armed`) and the
+only when a person approved its exact text (`approval_digest`), the channel is
+armed (`Channel.armed`) and the
 deployment armed the kind (`DISTRIBUTION_ARMED`, from `ZER0_LINKEDIN_PUBLISH`,
 `ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`, `ZER0_EMAIL_PUBLISH`), the
 ledger has no entry for its key — in the channel's rows and, for a LinkedIn
 channel with a `ledger_file`, in the site's own ledger file, where the
 extension and CI write — and the brand guard has no error. The worker runs the
-gates again before anything leaves.
+gates again before anything leaves, and every attempt ends published or
+failed: an error nobody expected fails it as one that may have published, an
+attempt whose worker died — or that no worker took — is settled by the next
+request for it or by the beat's sweep (`settle_due`), and an email post follows
+its newsletter issue until the newsroom has sent it.
 """
 
+import hashlib
 import json
 import logging
-import os
 import re
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import UTC, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
-from wagtail.models import Page
 
 from ai import crypto
 from ai.providers import NotConfigured
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from ops.errors import Conflict, Forbidden, Invalid
 from suggestions.guard import extra_patterns, guard_text
 
 from . import gates, permalink
@@ -55,16 +60,25 @@ from .models import (
     LedgerEntry,
     Statistic,
     manages_channels,
+    target_of,
 )
 from .transports import TransportError
 
 log = logging.getLogger(__name__)
 FINAL = (DistributionPost.Status.PUBLISHED, DistributionPost.Status.REJECTED)
 EDITABLE = ("title", "description", "commentary", "kind")
+# A post a person approved: waiting, going, or back after an attempt that failed.
+APPROVED = (DistributionPost.Status.APPROVED, DistributionPost.Status.PUBLISHING, DistributionPost.Status.FAILED)
 
 
 def _detail(field_name, message):
     return [{"field": field_name, "code": "invalid", "message": message}]
+
+
+def approval_digest(post) -> str:
+    """What a person approves: the post's kind and text, exactly. `approve` keeps it and the gates compare it, so a
+    text changed afterwards — by any path — is not one anybody approved."""
+    return hashlib.sha256(json.dumps([post.kind, post.title, post.description, post.commentary]).encode()).hexdigest()
 
 
 # ── who may do what ─────────────────────────────────────────────────────────
@@ -118,8 +132,11 @@ def clean_settings(kind: str, values: dict) -> dict:
             if text.startswith("/") or ".." in text.split("/"):
                 raise Invalid("ledger_file is a path inside the site", details=_detail("settings", "ledger_file"))
     if kind == Kind.WORDPRESS and out.get("url"):
-        if not re.match(r"https?://[^\s/]+", str(out["url"])):
-            raise Invalid("url is the WordPress site's address, http(s)", details=_detail("settings", "url"))
+        if not re.match(r"https://[^\s/]+", str(out["url"])):
+            raise Invalid(
+                "url is the WordPress site's https address: an application password never travels in the clear",
+                details=_detail("settings", "url"),
+            )
         if out.get("status", "draft") not in ("draft", "pending", "private", "publish"):
             raise Invalid("status is draft, pending, private or publish", details=_detail("settings", "status"))
     if kind == Kind.GITHUB_PR and out.get("repo") and not re.fullmatch(r"[\w.-]+/[\w.-]+", str(out["repo"])):
@@ -137,6 +154,7 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
         raise Invalid("a channel's kind does not change: make another channel", details=_detail("kind", "fixed"))
     before = {k: channel.setting(k) for k in IDENTITY.get(kind, ())} if channel.pk else None
     site_before = channel.site_id if channel.pk else None
+    target_before = (site_before, target_of(channel)) if channel.pk else None
     for name in ("site", "kind", "name", "newsletter", "auto_draft", "armed"):
         if name in fields:
             setattr(channel, name, fields[name])
@@ -154,8 +172,30 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
     moved = before is not None and (before != {k: channel.setting(k) for k in before} or site_before != channel.site_id)
     if moved:
         channel.forget_credentials()  # it points somewhere else now: the credential was for there
+    target = target_of(channel)
+    if target and (channel.site_id, target) != target_before:
+        siblings = Channel.objects.filter(site_id=channel.site_id, kind=kind).exclude(pk=channel.pk)
+        if twin := next((c for c in siblings if target_of(c) == target), None):
+            raise Conflict(
+                f"{twin.name} already publishes this site there ({target}): one channel per place, so one ledger "
+                "holds what went there and nothing goes twice"
+            )
     channel.save()
     return channel
+
+
+@transaction.atomic
+def delete_channel(channel, user) -> None:
+    """A channel goes, with its posts, only while its ledger is empty: a post that went out, or an attempt that may
+    have, is what keeps a page from going there twice — a new channel for the same place would not know it."""
+    if not manages_channels(user):
+        raise Forbidden("removing a channel needs the right to manage channels")
+    if held := channel.ledger.count():
+        raise Conflict(
+            f"{channel.name}'s ledger holds {held} entr{'y' if held == 1 else 'ies'} — posts that went out or may "
+            "have — and is what keeps them from going there twice: disconnect the channel instead"
+        )
+    channel.delete()
 
 
 @transaction.atomic
@@ -231,6 +271,11 @@ def start_connect(channel, user, redirect_uri: str) -> dict:
     return {"url": url, "state": state, "verifier": verifier}
 
 
+def connect_refused(channel, reason: str) -> None:
+    """LinkedIn came back without a code (the owner declined, or LinkedIn refused): the channel says why."""
+    Channel.objects.filter(pk=channel.pk).update(last_error=f"LinkedIn: {reason}"[:1000])
+
+
 @transaction.atomic
 def finish_connect(channel, *, code: str, verifier: str, redirect_uri: str) -> Channel:
     """LinkedIn came back with a code: keep it (encrypted) for the worker, which exchanges it."""
@@ -271,16 +316,12 @@ def exchange(channel) -> Channel:
 
 
 def linkedin_credentials(channel) -> Credentials:
-    """The channel's token, or — with none stored — the environment's (LINKEDIN_ACCESS_TOKEN …), as the Rails CMS
-    fell back; the app's id and secret are the deployment's."""
+    """The channel's own token and the deployment's app (id and secret). Never the environment's
+    LINKEDIN_ACCESS_TOKEN, which is the site lane's (`lane/`): a channel that fell back to it would check, read
+    statistics as — and look connected for — an identity nobody connected it to."""
     stored = channel.credentials()
     client_id, client_secret = linkedin_app()
-    if stored:
-        return Credentials(stored.get("access_token", ""), stored.get("refresh_token", ""), client_id, client_secret)
-    env = Credentials.from_env(os.environ)
-    return Credentials(
-        env.access_token, env.refresh_token, client_id or env.client_id, client_secret or env.client_secret
-    )
+    return Credentials(stored.get("access_token", ""), stored.get("refresh_token", ""), client_id, client_secret)
 
 
 def _client(channel, token):
@@ -303,6 +344,18 @@ def session_for(channel) -> Session:
         api_version=channel.setting("api_version", plan.DEFAULT_API_VERSION),
         on_refresh=keep,
     )
+
+
+def ask_target(channel, user, what: str) -> None:
+    """Queue a check of the channel's credential (`check`) or a read of its statistics (`statistics`) for the
+    worker. Each calls the target with the channel's credential and rewrites what the channel shows, so it is a
+    channel manager's, as connecting it is."""
+    from .tasks import check_channel, ingest_statistics
+
+    if not manages_channels(user):
+        raise Forbidden(f"asking the target for the channel's {what} needs the right to manage channels")
+    task = check_channel if what == "check" else ingest_statistics
+    transaction.on_commit(lambda: task.delay(channel.pk))
 
 
 def check(channel) -> Channel:
@@ -379,25 +432,47 @@ def site_root_of(page):
     return root.specific if root else None
 
 
-def jekyll_config_of(root) -> dict:
-    """The site's `_config.yml` from its checkout when the platform can read it (permalinks need its styles,
-    collections and defaults), else the parts the importer kept."""
-    from importers.jekyll import read_config
+def site_checkout(root) -> Path:
+    """Where a site's files are on this machine — the one rule for reading its `_config.yml` and its ledger file:
+    the importer's `source_root`, followed (through symlinks) only into this repository or SITES_DIR, where the
+    platform registers checkouts (`sites.services.resolve_checkout`). A person who edits the site's root page may
+    change `source_root`, so nowhere else is read or written. `SiteError` (its message says why) otherwise."""
+    from sites.services import SiteError, resolve_checkout
 
-    if root.source_root:
-        folder = (Path(settings.REPO_ROOT) / root.source_root).resolve()
-        if folder.is_relative_to(Path(settings.REPO_ROOT).resolve()) and (folder / "_config.yml").is_file():
-            try:
-                return read_config(folder)
-            except (OSError, ValueError):
-                pass  # an unreadable checkout falls back to what the import kept
-    return dict(root.jekyll_config or {})
+    if not getattr(root, "source_root", ""):
+        raise SiteError("the site has no files of its own")
+    return resolve_checkout(root.source_root)
+
+
+def jekyll_config_of(root) -> dict:
+    """The site's configuration for its pages' URLs. A site that lives in files is read from its checkout's
+    `_config.yml`: the URL Jekyll gives a page depends on its permalink styles, collections and defaults, and a guess
+    from the few keys the importer kept would key the page by a URL Jekyll never builds — one the site's own lane
+    and the extension never wrote, so what they published would not stop the platform. Refused (409) when that file
+    cannot be read here; a site without files, or whose files name no URL, gets the keys the platform keeps."""
+    from importers.jekyll import read_config
+    from sites.services import SiteError
+
+    kept = dict(root.jekyll_config or {})
+    if not root.source_root:
+        return kept
+    try:
+        return read_config(site_checkout(root))
+    except (SiteError, OSError, ValueError) as e:
+        if not kept.get("url"):
+            return kept  # files with no URL of their own (an imported app's root): its pages have Wagtail's
+        raise Conflict(
+            f"the URL Jekyll gives this page — the ledger's key, the one its own lane and the extension use — needs "
+            f"the site's _config.yml, which cannot be read here ({e}); the platform reads a site's files inside its "
+            "repository or SITES_DIR"
+        ) from e
 
 
 def canonical_url(page) -> str | None:
     """The URL the page is read at — what every lane keys the ledger by. A Jekyll-backed site's page has the URL
-    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it); any other page, Wagtail's —
-    unless the page names its canonical URL (its SEO field, or its file's `canonical_url`)."""
+    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it, from the checkout's
+    `_config.yml` — `jekyll_config_of` refuses rather than guess); any other page, Wagtail's — unless the page names
+    its canonical URL (its SEO field, or its file's `canonical_url`)."""
     from cms import seo
     from cms.models import ArticlePage, CollectionPage
     from exporters.jekyll import front_matter_for
@@ -452,14 +527,11 @@ def default_commentary(page, limit: int = 3) -> str:
 
 def guard(text: str, channel) -> list[dict]:
     """The brand guard (suggestions/guard.py, the extension's rules, with the active brand rules and the channel's
-    site's own), and for LinkedIn its own limit once the text is escaped."""
-    findings = guard_text(text or "", extra_patterns(channel.site))
-    if channel.kind == Kind.LINKEDIN:
-        escaped = posts.commentary_length(text)
-        if escaped > plan.COMMENTARY_MAX and len(text or "") <= 3000:
-            message = f"commentary is {escaped} chars once escaped for LinkedIn (max {plan.COMMENTARY_MAX})"
-            findings.insert(len(findings) - 1, {"level": "error", "message": message})
-    return findings
+    site's own), and for LinkedIn its own limit once the text is escaped — the site lane's check, the same rule."""
+    from .lane.pipeline import check_commentary
+
+    extra = extra_patterns(channel.site)
+    return check_commentary(text or "", extra) if channel.kind == Kind.LINKEDIN else guard_text(text or "", extra)
 
 
 def guard_errors(findings) -> list[str]:
@@ -502,6 +574,8 @@ def compose(
         page = page.specific
         if origin == DistributionPost.Origin.PERSON and not may_compose(page, user):
             raise PermissionDenied("you may not edit this page, so you may not distribute it")
+        if not page.live:
+            raise Conflict("the page is not live: publish it first, then distribute it")
         site = page.get_site()
         if site is not None and site.pk != channel.site_id:
             raise Invalid("the page belongs to another site than the channel's", details=_detail("page", "other site"))
@@ -535,7 +609,8 @@ def compose(
 
 @transaction.atomic
 def edit(post, user, **fields) -> DistributionPost:
-    """A change to an approved post's text returns it to draft: approval is of the exact text."""
+    """A change to the text of a post a person approved — waiting, or back after a failed attempt — returns it to
+    draft: approval is of the exact text, and someone who may edit the page need not be someone who may publish it."""
     post = DistributionPost.objects.select_for_update().get(pk=post.pk)
     if not may_compose(post, user):
         raise PermissionDenied("you may not edit this page, so you may not change its posts")
@@ -548,10 +623,21 @@ def edit(post, user, **fields) -> DistributionPost:
         setattr(post, name, fields[name])
     if changed:
         post.guard = guard(post.commentary, post.channel)
-        if post.status == DistributionPost.Status.APPROVED:
+        if post.status in APPROVED:
             post.status, post.approved_by, post.approved_at = DistributionPost.Status.DRAFT, None, None
+            post.approved_digest = ""
         post.save()
     return post
+
+
+@transaction.atomic
+def delete_post(post, user) -> None:
+    """A draft or a rejected post goes, by someone who may change it; any other stays in the record."""
+    if post.status not in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED):
+        raise Conflict(f"a {post.status} post stays in the record; only a draft or a rejected post is deleted")
+    if not may_compose(post, user):
+        raise Forbidden("you may not edit this page, so you may not delete its posts")
+    post.delete()
 
 
 @transaction.atomic
@@ -566,7 +652,7 @@ def approve(post, user) -> DistributionPost:
         post.save(update_fields=["guard", "updated_at"])
         raise Conflict(f"brand guard: {'; '.join(errors)}")
     post.status, post.approved_by, post.approved_at = DistributionPost.Status.APPROVED, user, timezone.now()
-    post.reason = ""
+    post.approved_digest, post.reason = approval_digest(post), ""
     post.save()
     return post
 
@@ -599,10 +685,11 @@ class Preview:
 
 
 class AbsentLedger:
-    """A ledger file a channel names that cannot be reached from here — the site's checkout is not on this machine,
-    or the path leaves it. Refused like an unreadable file, never read as "nothing published"."""
+    """A ledger file a channel names that cannot be reached from here — the site's checkout is not on this machine
+    (or not where the platform may read it), or the path leaves it. Refused like an unreadable file, never read as
+    "nothing published"."""
 
-    readable = False
+    readable = writable = False
 
     def __init__(self, problem: str):
         self.problem = problem
@@ -618,14 +705,16 @@ class AbsentLedger:
 
 def site_ledger(channel) -> Ledger | AbsentLedger | None:
     """The site's own ledger file, where the extension and the site's CI record what they published — None when the
-    channel names none."""
+    channel names none. Found by the same rule as the site's `_config.yml` (`site_checkout`)."""
+    from sites.services import SiteError
+
     relative = channel.setting("ledger_file")
     if not relative:
         return None
-    source_root = getattr(channel.site.root_page.specific, "source_root", "")
-    base = (Path(settings.REPO_ROOT) / source_root).resolve() if source_root else None
-    if base is None or not base.is_dir():
-        return AbsentLedger(f"the site's checkout is not here to read its ledger file {relative}")
+    try:
+        base = site_checkout(channel.site.root_page.specific)
+    except SiteError as e:
+        return AbsentLedger(f"the site's checkout is not here to read its ledger file {relative} ({e})")
     path = (base / relative).resolve()
     if not path.is_relative_to(base):
         return AbsentLedger(f"the ledger file {relative} is outside the site's checkout")
@@ -720,8 +809,12 @@ def preview(post, *, live: bool = True) -> Preview:
                 ),
             )
         )
-    if post.status not in (DistributionPost.Status.APPROVED, DistributionPost.Status.PUBLISHING):
+    if post.status not in APPROVED:
         blockers.append(Blocker("status_not_accepted", f"the post is {post.status}: a person approves it first"))
+    elif post.approved_digest != approval_digest(post):
+        blockers.append(
+            Blocker("status_not_accepted", "the text is not the text a person approved: a person approves it again")
+        )
     if not channel.armed:
         blockers.append(
             Blocker("publish_disabled", f"publishing to {channel.name} is not armed (the channel's setting)")
@@ -752,20 +845,27 @@ def preview(post, *, live: bool = True) -> Preview:
 def request_publish(post, user, *, force: bool = False, agent: bool = False) -> DistributionPost:
     """A person asks for the post to go — or an agent, through `distribution.publish`, whose call the registry
     has already held to the `auto` policy and the page's publish permission, and which never forces: every gate now
-    (the worker asks again), then the work is queued. Either way only a post a person approved goes."""
+    (the worker asks again), then the work is queued. Either way only the text a person approved goes — a failed
+    post's included, whose approval stands only while its text is the one approved. A post already queued or being
+    sent is not queued again; an attempt that is over without its worker saying so is settled instead (`_settle`),
+    and comes back as it ended — failed and doubted, for a person to check before anything goes again."""
     from .tasks import publish_post
 
-    post = DistributionPost.objects.select_for_update().get(pk=post.pk)
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
     if agent:
         force = False
     elif not may_publish(post, user):
         raise PermissionDenied("publishing a post is the right of someone who may publish its page")
-    if post.status == DistributionPost.Status.PUBLISHING and post.attempted_at is not None:
-        raise Conflict("it is being sent now: wait for it to finish", code="distribution.sending")
-    if post.status == DistributionPost.Status.FAILED:
-        post.status = (
-            DistributionPost.Status.APPROVED
-        )  # a failed post was approved; trying again is not re-approving it
+    if post.status == DistributionPost.Status.PUBLISHING:
+        if not _settle(post):
+            raise Conflict(
+                "it is being sent now: wait for it to finish"
+                if post.attempted_at is not None
+                else "it is queued for the worker: wait for it",
+                code="distribution.sending",
+            )
+        if post.status != DistributionPost.Status.APPROVED:
+            return post  # it may have gone: a person checks before anything is sent again
     blockers = gates.lifted(preview(post).blockers, force=force)
     if blockers:
         raise Conflict("; ".join(f"{b.kind}: {b.message}" for b in blockers), code="distribution.blocked")
@@ -778,55 +878,164 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
 
 def deliver(post_id: int) -> DistributionPost:
     """In the worker: the gates again, then the channel's transport, then the ledger. The attempt is claimed
-    (`attempted_at`, committed) before anything is sent, so a second delivery of one request — a task redelivered
-    after its worker died (acks are late), or a duplicate — never sends the post twice: within the send's time limit
-    it leaves the post to the worker that claimed it; after that, that worker is gone and the post may exist, so it
-    is ledgered unconfirmed for a person to check."""
-    from .tasks import SEND_TIME_LIMIT
-
+    (`attempted_at`, committed, by a conditional update — `select_for_update` does nothing on SQLite) before anything
+    is sent, so a second delivery of one request — a task redelivered after its worker died (acks are late), or a
+    duplicate — never sends the post twice: a claim younger than the send's time limit is left to the worker that
+    holds it, and an older one is settled (`_settle`). Whatever happens after the claim ends the attempt published
+    or failed; an error nobody expected leaves the outcome unknown, so it is doubted as well."""
     with transaction.atomic():
         post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post_id)
         if post.status != DistributionPost.Status.PUBLISHING:
             return post
         if post.attempted_at is not None:
-            if (timezone.now() - post.attempted_at).total_seconds() < SEND_TIME_LIMIT:
-                return post
-            message = (
-                "an earlier attempt to send this never finished, so it may have published: check, then record the "
-                "post if it did, or publish again with force if it did not"
-            )
-            _doubt(post, message)
-            post.status, post.error = DistributionPost.Status.FAILED, message
-            post.save()
+            _settle(post)
             return post
         blockers = gates.lifted(preview(post).blockers, force=post.force)
+        ledger = site_ledger(post.channel)
+        if ledger is not None and ledger.readable and not ledger.writable:  # the worker writes it; the web may not
+            blockers.append(
+                Blocker(
+                    "ledger_unreadable",
+                    f"the worker cannot write the site's ledger file {post.channel.setting('ledger_file')}, so what "
+                    "this publishes would never reach it: mount the site's checkout writable for the worker, or take "
+                    "the file off the channel",
+                )
+            )
         if blockers:
             post.status, post.error = DistributionPost.Status.APPROVED, "; ".join(b.message for b in blockers)
             post.save()
             return post
-        post.attempted_at = timezone.now()
-        post.save(update_fields=["attempted_at", "updated_at"])
+        now = timezone.now()
+        unclaimed = DistributionPost.objects.filter(
+            pk=post.pk, status=DistributionPost.Status.PUBLISHING, attempted_at__isnull=True
+        )
+        if not unclaimed.update(attempted_at=now, updated_at=now):
+            return post  # another delivery claimed it first
+        post.attempted_at = now
     try:
         external_id, url, extra = _send(post)
     except (TransportError, LinkedInError, LedgerError, ValueError) as e:
         message = getattr(e, "message", None) or str(e)
-        if LedgerEntry.objects.filter(channel=post.channel, key=post.ledger_key, urn="").exists():
-            message += " — it may have published: the ledger marks it unconfirmed until a person checks"
-        DistributionPost.objects.filter(pk=post.pk).update(
-            status=DistributionPost.Status.FAILED,
-            error=message[:2000],
-            external_url=getattr(e, "url", "") or "",
-            updated_at=timezone.now(),
+        if getattr(e, "doubt", False):
+            _doubt(post, message)
+        return _failed(post, message, url=getattr(e, "url", "") or "")
+    except Exception as e:  # noqa: BLE001 — anything else (an error a library left unwrapped, the soft time limit, an unreadable image, the database) leaves the outcome unknown: doubted and failed, never left publishing
+        log.exception("distribution: post %s stopped mid-send", post.public_id)
+        message = (
+            f"the send stopped on an unexpected error ({type(e).__name__}), so it may have published: check "
+            f"{post.channel.name}, then record the post if it did, or publish again with force if it did not"
         )
-        post.refresh_from_db()
-        return post
-    with transaction.atomic():
-        entry = record(post, external_id, **extra)
-        post.status, post.external_id, post.external_url = DistributionPost.Status.PUBLISHED, external_id, url
-        post.published_at, post.error, post.force = timezone.now(), "", False
-        post.save()
-        log.info("distribution: post %s published to %s as %s", post.public_id, post.channel_id, entry.urn)
+        _doubt(post, message)
+        return _failed(post, message)
+    if post.channel.kind == Kind.EMAIL:
+        return post  # the newsroom sends the issue; the post follows it (`_settle`)
+    try:
+        with transaction.atomic():
+            entry = record(post, external_id, **extra)
+            post.status, post.external_id, post.external_url = DistributionPost.Status.PUBLISHED, external_id, url
+            post.published_at, post.error, post.force = timezone.now(), "", False
+            post.save()
+    except Exception:  # noqa: BLE001 — logged with what it went out as, then raised: the sweep settles the claim as doubted
+        log.exception("distribution: post %s went out as %s but was not recorded", post.public_id, external_id)
+        raise
+    log.info("distribution: post %s published to %s as %s", post.public_id, post.channel_id, entry.urn)
     return post
+
+
+def _failed(post, message: str, *, url: str = "") -> DistributionPost:
+    """The attempt is over and nothing says it went: failed, with the sentence a person acts on."""
+    unconfirmed = LedgerEntry.objects.filter(channel=post.channel, key=post.ledger_key, urn="").exists()
+    if unconfirmed and "may have published" not in message:
+        message += " — it may have published: the ledger marks it unconfirmed until a person checks"
+    DistributionPost.objects.filter(pk=post.pk).update(
+        status=DistributionPost.Status.FAILED,
+        error=message[:2000],
+        external_url=url,
+        notes=post.notes,
+        updated_at=timezone.now(),
+    )
+    post.refresh_from_db()
+    return post
+
+
+def _settle(post) -> bool:
+    """End an attempt that is over without its worker saying so, on a post the caller holds locked; False while it
+    may still be going. An email post follows its newsletter issue (`_follow_issue`). Past the send's time limit
+    (`tasks.SEND_TIME_LIMIT`, after which the worker is killed), a post no worker took goes back to approved —
+    nothing was sent —, and one a worker claimed belonged to a worker that died mid-send: the post may exist, so it
+    is ledgered unconfirmed and failed for a person to check."""
+    from .tasks import SEND_TIME_LIMIT
+
+    if post.status != DistributionPost.Status.PUBLISHING:
+        return False
+    since = post.attempted_at or post.updated_at
+    stale = (timezone.now() - since).total_seconds() >= SEND_TIME_LIMIT
+    if post.issue_id is not None and post.attempted_at is not None:
+        return _follow_issue(post, stale=stale)
+    if not stale:
+        return False
+    if post.attempted_at is None:
+        post.status, post.error = DistributionPost.Status.APPROVED, "no worker took it: publish it again"
+    else:
+        message = (
+            "an earlier attempt to send this never finished, so it may have published: check, then record the "
+            "post if it did, or publish again with force if it did not"
+        )
+        _doubt(post, message)
+        post.status, post.error = DistributionPost.Status.FAILED, message
+    post.save()
+    return True
+
+
+def _follow_issue(post, *, stale: bool) -> bool:
+    """An email post is published when the newsroom has sent its issue — and ledgered then, under the issue's id —
+    and failed with the newsroom's reason when it could not (publishing again sends the same issue to those who have
+    not had it), or when no worker holds a send that went quiet. Mail is never doubted: the newsroom records each
+    message the backend accepted."""
+    from django.core.cache import cache
+
+    from newsroom.models import Issue
+    from newsroom.services import sending
+
+    issue = post.issue
+    if issue.status == Issue.Status.SENT:
+        record(post, str(issue.public_id), now=issue.sent_at)
+        post.status, post.external_id, post.error, post.force = (
+            DistributionPost.Status.PUBLISHED,
+            str(issue.public_id),
+            "",
+            False,
+        )
+        post.published_at = issue.sent_at or timezone.now()
+    elif issue.status == Issue.Status.FAILED or (stale and not cache.get(sending(issue.pk))):
+        post.status = DistributionPost.Status.FAILED
+        post.error = (
+            f"The newsletter issue did not reach everyone: {issue.error or 'its send stopped'}. Publishing again "
+            "sends it to those who have not had it."
+        )
+    else:
+        return False
+    post.save()
+    return True
+
+
+def settle_due() -> int:
+    """The beat's sweep (`distribution-settle`): every post whose attempt is over without its worker saying so,
+    settled one at a time — so the studio never waits on one forever."""
+    from .tasks import SEND_TIME_LIMIT
+
+    cutoff = timezone.now() - timedelta(seconds=SEND_TIME_LIMIT)
+    due = DistributionPost.objects.filter(status=DistributionPost.Status.PUBLISHING).filter(
+        Q(attempted_at__lt=cutoff)
+        | Q(attempted_at__isnull=True, updated_at__lt=cutoff)
+        | Q(attempted_at__isnull=False, issue__isnull=False)
+    )
+    settled = 0
+    for pk in due.values_list("pk", flat=True):
+        with transaction.atomic():
+            post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=pk)
+            settled += _settle(post)
+    return settled
 
 
 def _send(post) -> tuple[str, str, dict]:
@@ -835,19 +1044,14 @@ def _send(post) -> tuple[str, str, dict]:
     channel = post.channel
     page = post.page.specific if post.page_id else None
     if channel.kind == Kind.WORDPRESS:
-        try:
-            external_id, url = wordpress_publish(channel, channel.credentials(), post, page)
-        except TransportError as e:
-            if e.doubt:
-                _doubt(post, e.message)
-            raise
+        external_id, url = wordpress_publish(channel, channel.credentials(), post, page)
         return f"wp:{external_id}", url, {}
     if channel.kind == Kind.GITHUB_PR:
         number, url = github_publish(channel, channel.credentials(), post, page)
         return f"pr:{channel.setting('repo')}#{number}", url, {}
     if channel.kind == Kind.EMAIL:
-        issue, _ = email_publish(channel, post, post.published_by)
-        return f"issue:{issue}", "", {}
+        issue = email_publish(channel, post, post.published_by)
+        return str(issue.public_id), "", {}
     return _send_linkedin(post, page)
 
 
@@ -889,6 +1093,7 @@ def _doubt(post, message: str) -> None:
                 "attempted_at": timezone.now(),
                 "error": message[:300],
                 "kind": post.kind,
+                "extra": {},  # a new fact about the key: nothing another lane wrote about an older one
                 "post": post,
                 "author": channel.setting("author"),
                 "source_file": _source_file(post),
@@ -909,8 +1114,13 @@ def _doubt(post, message: str) -> None:
                     source_file=_source_file(post) or None,
                 ),
             )
-        except (OSError, LedgerError):
-            log.warning("distribution: could not mark %s unconfirmed in the site's ledger file", key)
+        except (OSError, LedgerError) as e:
+            log.warning("distribution: could not mark %s unconfirmed in the site's ledger file: %s", key, e)
+            _note(post, f"the site's ledger file ({channel.setting('ledger_file')}) did not take the doubt: {e}")
+
+
+def _note(post, text: str) -> None:
+    post.notes = [*(post.notes or []), text]
 
 
 def _source_file(post) -> str:
@@ -918,7 +1128,9 @@ def _source_file(post) -> str:
 
 
 def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
-    """What was published, under its key: the channel's row (a re-publish replaces it) and the site's ledger file."""
+    """What was published, under its key: the channel's row (a re-publish replaces it) and the site's ledger file — a
+    change in the site's checkout, which the site's own CI reads once it is committed. The post's notes say where the
+    entry went; the caller saves the post."""
     from .ledger import entry_for
 
     channel, now = post.channel, now or timezone.now()
@@ -935,6 +1147,7 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             "author": channel.setting("author"),
             "source_file": _source_file(post),
             "image_urn": image_urn,
+            "extra": {},  # a re-publish is a new fact about the key: nothing from an older entry (ledger.entry_for)
             "post": post,
         },
     )
@@ -957,15 +1170,31 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             # The post exists at the target: the row above must survive a file that cannot take it, or the
             # platform would send the post again. The site's lane keeps its own copy (Download gives this one).
             log.warning("distribution: %s is recorded here but not in the site's ledger file: %s", post.ledger_key, e)
+            _note(
+                post,
+                f"not written to the site's ledger file ({channel.setting('ledger_file')}): {e} — the platform's "
+                "ledger has it; download the channel's ledger file for the site",
+            )
+        else:
+            _note(post, f"written to the site's ledger file ({channel.setting('ledger_file')}): commit it")
     return entry
 
 
 @transaction.atomic
 def record_by_hand(post, user, urn: str) -> DistributionPost:
-    """A person found the post at the target — after an unconfirmed attempt, or one made by hand — and records it."""
-    post = DistributionPost.objects.select_for_update().get(pk=post.pk)
+    """A person found the post at the target — after an unconfirmed attempt, or one made by hand — and records it.
+    Only a post a person approved: waiting, or failed (an attempt that is over without its worker saying so is
+    settled first). A draft or a rejected post is not recorded as published, nor one a worker is sending now."""
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
     if not may_publish(post, user):
         raise PermissionDenied("recording a post is the right of someone who may publish its page")
+    _settle(post)
+    if post.status not in (DistributionPost.Status.APPROVED, DistributionPost.Status.FAILED):
+        raise Conflict(
+            f"a {post.status} post is not recorded: approve it first"
+            if post.status in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED)
+            else f"a {post.status} post is not recorded"
+        )
     if post.channel.kind == Kind.LINKEDIN and not plan.POST_URN.match(urn or ""):
         raise Invalid("not a LinkedIn post URN (urn:li:share:… or urn:li:ugcPost:…)", details=_detail("urn", "invalid"))
     if not str(urn or "").strip():
@@ -1033,16 +1262,53 @@ def ledger_file(channel) -> str:
 
 
 def _parse_stamp(value):
+    """A file's timestamp; ValueError for one that is not a real date and time (`2026-02-30T10:00:00Z`, `soon`)."""
     from django.utils.dateparse import parse_datetime
 
-    parsed = parse_datetime(str(value)) if value else None
+    try:
+        parsed = parse_datetime(str(value)) if value else None
+    except ValueError as e:
+        raise ValueError(f"{value!r} is not a date and time ({e})") from e
+    if value and parsed is None:
+        raise ValueError(f"{value!r} is not a date and time")
     return parsed if parsed is None or parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _ledger_row(channel, key, entry) -> LedgerEntry:
+    """A file's entry as the row it becomes, checked as the model checks a row (lengths, `type`, dates) —
+    `ValidationError` naming the file's keys otherwise."""
+    urn = urn_of(entry) or ""
+    try:
+        stamps = {name: _parse_stamp(entry.get(name)) for name in ("posted_at", "attempted_at")}
+    except ValueError as e:
+        raise ValidationError(str(e)) from e
+    row = LedgerEntry(
+        channel=channel,
+        key=key,
+        urn=urn,
+        state="published" if urn else "unconfirmed",
+        kind=str(entry.get("type") or "article"),
+        error=str(entry.get("error") or ""),
+        author=str(entry.get("author") or ""),
+        source_file=str(entry.get("source_file") or ""),
+        image_urn=str(entry.get("image_urn") or ""),
+        extra={k: v for k, v in entry.items() if k not in MODELLED},
+        **stamps,
+    )
+    try:
+        row.full_clean(exclude=["channel", "post", "public_id"], validate_unique=False, validate_constraints=False)
+    except ValidationError as e:
+        named = {"kind": "type", "urn": "urn"}
+        raise ValidationError("; ".join(f"{named.get(f, f)}: {' '.join(m)}" for f, m in e.message_dict.items())) from e
+    return row
 
 
 @transaction.atomic
 def import_ledger(channel, user, text: str) -> dict:
     """Read a ledger file's entries in (the extension's, CI's, the Ruby lane's): what another lane published is
-    then never published again from here. A row this channel already has a URN for is kept."""
+    then never published again from here. A row this channel already has a URN for is kept. Every entry is checked
+    first, and one that cannot be a row (a date that does not exist, a value longer than its column, a `type` that
+    is neither article nor update) refuses the file (422, naming them) — nothing is half imported."""
     if not manages_channels(user):
         raise Forbidden("importing a ledger needs the right to manage channels")
     try:
@@ -1051,7 +1317,8 @@ def import_ledger(channel, user, text: str) -> dict:
         raise Invalid(f"the ledger is not valid JSON: {e}") from e
     if not isinstance(data, dict):
         raise Invalid("a ledger is a JSON object keyed by URL")
-    added = kept = skipped = 0
+    kept = skipped = 0
+    rows, problems = [], []
     for key, entry in data.items():
         if key.startswith("_") or not isinstance(entry, dict):
             skipped += 1
@@ -1060,33 +1327,42 @@ def import_ledger(channel, user, text: str) -> dict:
         if existing is not None and existing.urn:
             kept += 1
             continue
-        urn = urn_of(entry) or ""
-        LedgerEntry.objects.update_or_create(
-            channel=channel,
-            key=key,
-            defaults={
-                "urn": urn,
-                "state": "published" if urn else "unconfirmed",
-                "kind": str(entry.get("type") or "article"),
-                "posted_at": _parse_stamp(entry.get("posted_at")),
-                "attempted_at": _parse_stamp(entry.get("attempted_at")),
-                "error": str(entry.get("error") or ""),
-                "author": str(entry.get("author") or ""),
-                "source_file": str(entry.get("source_file") or ""),
-                "image_urn": str(entry.get("image_urn") or ""),
-                "extra": {k: v for k, v in entry.items() if k not in MODELLED},
-            },
+        try:
+            rows.append(_ledger_row(channel, key, entry))
+        except ValidationError as e:
+            problems.append({"field": "content", "code": "invalid", "message": f"{key[:200]}: {' '.join(e.messages)}"})
+    if problems:
+        raise Invalid(
+            f"{len(problems)} entr{'y' if len(problems) == 1 else 'ies'} of the file cannot be read in, so nothing was "
+            "imported",
+            details=problems[:50],
         )
-        added += 1
-    return {"added": added, "kept": kept, "skipped": skipped}
+    fields = (
+        "urn",
+        "state",
+        "kind",
+        "posted_at",
+        "attempted_at",
+        "error",
+        "author",
+        "source_file",
+        "image_urn",
+        "extra",
+    )
+    for row in rows:
+        LedgerEntry.objects.update_or_create(
+            channel=channel, key=row.key, defaults={name: getattr(row, name) for name in fields}
+        )
+    return {"added": len(rows), "kept": kept, "skipped": skipped}
 
 
 # ── statistics ──────────────────────────────────────────────────────────────
 
 
 def ingest_statistics(channel, *, today=None) -> int:
-    """Aggregate counts for the channel's own LinkedIn posts, one row per post a day; nothing about who engaged."""
-    if channel.kind != Kind.LINKEDIN:
+    """Aggregate counts for the channel's own LinkedIn posts, one row per post a day; nothing about who engaged. A
+    channel nobody connected is skipped: it has no token of its own."""
+    if channel.kind != Kind.LINKEDIN or not channel.connected:
         return 0
     author = channel.setting("author")
     rows = [
@@ -1111,17 +1387,3 @@ def ingest_statistics(channel, *, today=None) -> int:
                 entry=row, day=day, defaults={**counts[row.urn], "fetched_at": timezone.now()}
             )
     return len(counts)
-
-
-def get_visible(model, public_id, user):
-    row = model.objects.visible_to(user).filter(public_id=public_id).first()
-    if row is None:
-        raise NotFound(f"no such {model._meta.verbose_name}")
-    return row
-
-
-def page_or_404(page_id, user):
-    page = Page.objects.filter(pk=page_id).first()
-    if page is None or not page.specific.permissions_for_user(user).can_edit():
-        raise NotFound("no such page")
-    return page.specific

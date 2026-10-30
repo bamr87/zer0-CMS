@@ -260,6 +260,7 @@ class DistributionStatisticSerializer(serializers.ModelSerializer):
 
 
 class DistributionLedgerEntrySerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="public_id", read_only=True)
     channel = serializers.UUIDField(source="channel.public_id", read_only=True)
     channel_name = serializers.CharField(source="channel.name", read_only=True)
     channel_kind = serializers.CharField(source="channel.kind", read_only=True)

@@ -572,6 +572,9 @@ suite('webview: a run list GitHub refused renders unknown', () => {
  */
 suite('studio: the host side of the webview transport (G10)', () => {
   const ORIGIN = 'https://cms.test';
+  // Agent runs, by their public ids (P-D6): a UUID is one path segment like any other.
+  const RUN = '7d1c5e3a-2b4f-4c6d-8e9f-0a1b2c3d4e5f';
+  const OTHER_RUN = '4c7a9e21-8b3d-4e6f-9a1b-2c3d4e5f6a7b';
   const TOKEN = 'zer0u_secret-token';
 
   interface FakeStream {
@@ -737,7 +740,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     await bridge.receive(api('/api/v2/content/pages/5/unpublish/', 'POST'));
     await bridge.receive(api('/api/v2/content/pages/5/schedule/', 'POST', '{"go_live_at":null}'));
     await bridge.receive(api('/api/v2/content/pages/5/', 'PATCH', '{}'));
-    await bridge.receive(api('/api/v2/review/runs/7/accept/', 'POST', '{}'));
+    await bridge.receive(api(`/api/v2/review/runs/${RUN}/accept/`, 'POST', '{}'));
     assert.equal(agreed.asked.length, 2, 'only the live-site changes ask');
     assert.equal(agreed.sent.length, 4);
   });
@@ -778,7 +781,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
         Promise.resolve(
           new Response('{"run":7}', {
             status: 202,
-            headers: { 'Content-Type': 'application/json', Location: '/api/v2/agent-runs/7/', 'Retry-After': '3', 'Set-Cookie': 'sessionid=x', 'X-Request-Id': 'r-1' },
+            headers: { 'Content-Type': 'application/json', Location: `/api/v2/agent-runs/${RUN}/`, 'Retry-After': '3', 'Set-Cookie': 'sessionid=x', 'X-Request-Id': 'r-1' },
           }),
         ),
     });
@@ -796,7 +799,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
       id: 1,
       status: 202,
       body: '{"run":7}',
-      headers: { 'Content-Type': 'application/json', Location: '/api/v2/agent-runs/7/', 'Retry-After': '3', 'X-Request-Id': 'r-1' },
+      headers: { 'Content-Type': 'application/json', Location: `/api/v2/agent-runs/${RUN}/`, 'Retry-After': '3', 'X-Request-Id': 'r-1' },
     });
     for (const headers of [{ Authorization: 'Bearer other' }, { Cookie: 'sessionid=x' }, { 'Idempotency-Key': 'a\r\nX-Evil: 1' }, { 'Idempotency-Key': 7 }, 'k-1']) {
       const refused = fake();
@@ -817,10 +820,10 @@ suite('studio: the host side of the webview transport (G10)', () => {
   test('a stream is followed with the token, relayed by its id, closed at its end, and refused off the API', async () => {
     const f = fake();
     const bridge = new StudioBridge(f.deps);
-    await bridge.receive({ type: 'stream', id: 3, path: '/api/v2/agent-runs/7/stream/', events: ['step', 'status', 'end'] });
+    await bridge.receive({ type: 'stream', id: 3, path: `/api/v2/agent-runs/${RUN}/stream/`, events: ['step', 'status', 'end'] });
     const stream = f.streams[0];
     assert.ok(stream !== undefined);
-    assert.equal(stream.url, `${ORIGIN}/api/v2/agent-runs/7/stream/`);
+    assert.equal(stream.url, `${ORIGIN}/api/v2/agent-runs/${RUN}/stream/`);
     assert.deepEqual(stream.headers, { Authorization: `Bearer ${TOKEN}` });
     stream.emit('step', '{"idx":0}');
     stream.emit('end', null);
@@ -834,7 +837,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(f.streams.length, 1);
     assert.deepEqual(f.posted.at(-1), { type: 'event', id: 4, event: 'error', data: null });
 
-    await bridge.receive({ type: 'stream', id: 5, path: '/api/v2/agent-runs/8/stream/', events: ['step'] });
+    await bridge.receive({ type: 'stream', id: 5, path: `/api/v2/agent-runs/${OTHER_RUN}/stream/`, events: ['step'] });
     bridge.dispose();
     assert.equal(f.streams[1]?.closed, true, 'a closed webview leaves no stream open');
   });

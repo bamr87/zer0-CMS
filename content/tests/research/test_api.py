@@ -28,7 +28,7 @@ LISTS = ("collections/", "sources/", "quotes/", "citations/", "feeds/", "questio
 
 def ran(response):
     assert response.status_code == 202, response.content
-    return AgentRun.objects.get(pk=response.json()["run"]["id"])
+    return AgentRun.objects.get(public_id=response.json()["run"]["id"])
 
 
 @pytest.mark.django_db
@@ -272,7 +272,10 @@ def test_a_fact_check_of_a_draft_lists_findings_and_the_suggestions_they_became(
     check = api(alice).get(f"{BASE}/fact-checks/{response.json()['fact_check']['id']}/").json()
     suggestion = Suggestion.objects.get(run=run)
     assert (check["status"], check["page_title"], check["summary"]) == ("ready", "Boiling", "One error.")
-    assert check["findings"][0]["suggestion"] == suggestion.pk and check["findings"][0]["verdict"] == "contradicted"
+    assert (
+        check["findings"][0]["suggestion"] == str(suggestion.public_id)
+        and check["findings"][0]["verdict"] == "contradicted"
+    )
     assert [c["id"] for c in api(alice).get(f"{BASE}/fact-checks/", {"page_id": page.pk}).json()["results"]] == [
         check["id"]
     ]

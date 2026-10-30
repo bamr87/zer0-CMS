@@ -15,6 +15,7 @@ import pytest
 from django.conf import settings
 from django.core.management import CommandError, call_command
 
+from aieo import prompts
 from aieo.models import Audit, Pattern
 
 from .conftest import at
@@ -93,7 +94,7 @@ def test_a_site_is_crawled_into_an_offline_snapshot(db, web, tmp_path):
 
 
 def test_reports_are_written_from_aieos_json_results_as_aieo_wrote_them(db, tmp_path):
-    run("report", "--input", str(settings.REPO_ROOT / "apps" / "aieo" / "reports"), "--output", str(tmp_path))
+    run("report", "--input", str(prompts.DATA / "reports"), "--output", str(tmp_path))
     golden = HERE / "golden" / "reports"
     stamp = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}")  # when it was written: now here, noon in the recording
     for written in [tmp_path / "REPORT.md", tmp_path / "soprisaccounting_com" / "soprisaccounting_com.md"]:
@@ -151,6 +152,20 @@ def test_the_headless_runner_follows_a_git_diff_and_proposes_rewrites_never_in_p
     result = json.loads((out / "results" / "docs__new.md.json").read_text())
     assert result["score_after"] >= result["score_before"] and "optimized_content" not in result
     assert "| `docs/new.md` | success |" in (out / "REPORT.md").read_text()
+
+
+def test_a_diff_base_is_a_revision_never_an_option_of_git(db, tmp_path):
+    """`--git-diff-base` comes from a CI input: one that starts with a dash is still read as a revision, so it cannot
+    hand git an option (`--output=<file>` would have git write a file of its choosing)."""
+    root = _repo(tmp_path)
+    git = ["git", "-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false"]
+    subprocess.run([*git[:1], "init", "-q", "-b", "main", str(root)], check=True)
+    subprocess.run([*git, "-C", str(root), "add", "."], check=True)
+    subprocess.run([*git, "-C", str(root), "commit", "-qm", "base"], check=True)
+    planted = tmp_path / "planted"
+    with pytest.raises(CommandError, match="git diff failed"):
+        run("run", "--root", str(root), f"--git-diff-base=--output={planted}", "--output-dir", str(tmp_path / "out"))
+    assert not list(tmp_path.glob("planted*"))
 
 
 def test_the_prompt_importer_keeps_a_persons_change_unless_forced(db, tmp_path):

@@ -116,6 +116,12 @@ def embed_object(obj, text: str, content_hash: str, kind: str) -> tuple[Embeddin
     return row, True
 
 
+def vector_of(obj) -> list[float] | None:
+    """`obj`'s stored vector under the current embedder, or None."""
+    row = Embedding.objects.filter(content_type=_ct(obj), object_id=obj.pk, model=get_embedder().model).first()
+    return list(row.vector) if row is not None else None
+
+
 def knn(vector: list[float], *, kind: str = "page", k: int = 10, exclude=(), only_ids=None) -> list[tuple[int, float]]:
     """(object id, cosine similarity) of the k nearest stored vectors."""
     model = get_embedder().model

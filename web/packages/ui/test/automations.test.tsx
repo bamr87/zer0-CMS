@@ -11,9 +11,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AutomationEditor, AutomationList } from '../src';
+import { AutomationEditor, AutomationList, shortId } from '../src';
 import { fakePlatform, renderUi, type Handler } from '../../../test/harness';
-import { EMPTY, page } from './ai/fixtures';
+import { EMPTY, page, RUN } from './ai/fixtures';
 
 const automation = (overrides: Record<string, unknown> = {}) => ({
   id: 'au1',
@@ -63,7 +63,7 @@ const run = (overrides: Record<string, unknown> = {}) => ({
   payload: { data: { severity: 'high' } },
   outcomes: [
     { index: 0, kind: 'idea', status: 'succeeded', input: { title: 'Fix https://example.com/a' }, result: { idea: 'i1' }, ms: 4 },
-    { index: 1, kind: 'assistant', status: 'succeeded', input: { prompt: 'Why?' }, result: { run: 12 }, ms: 6 },
+    { index: 1, kind: 'assistant', status: 'succeeded', input: { prompt: 'Why?' }, result: { run: RUN }, ms: 6 },
     { index: 2, kind: 'email', status: 'failed', input: { subject: 'A finding' }, error: 'the mail server is down', ms: 2 },
   ],
   error: 'an action failed',
@@ -249,8 +249,8 @@ describe('<AutomationEditor>', () => {
     await userEvent.click(await screen.findByRole('button', { name: /: succeeded$/ }));
     const outcomes = await screen.findByRole('list', { name: 'Outcomes' });
     expect(within(outcomes).getByRole('listitem', { name: 'Action 3' })).toHaveTextContent('the mail server is down');
-    await userEvent.click(within(outcomes).getByRole('button', { name: 'Run #12' }));
-    expect(go).toHaveBeenCalledWith({ to: 'run', id: 12 });
+    await userEvent.click(within(outcomes).getByRole('button', { name: `Run ${shortId(RUN)}` }));
+    expect(go).toHaveBeenCalledWith({ to: 'run', id: RUN });
     await userEvent.click(within(outcomes).getByRole('button', { name: 'The idea' }));
     expect(go).toHaveBeenCalledWith({ to: 'ideas' });
   });

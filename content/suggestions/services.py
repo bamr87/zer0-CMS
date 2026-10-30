@@ -214,15 +214,16 @@ def propose(*, target, op, user, run=None, agent=None, block_id="", payload=None
     emit(
         "content.suggestion.created",
         subject=f"{'page' if isinstance(target, BasePage) else 'image'}:{target.pk}",
+        version=2,
         data={
-            "suggestion_id": suggestion.pk,
+            "suggestion_id": str(suggestion.public_id),
             "target": f"{'page' if isinstance(target, BasePage) else 'image'}:{target.pk}",
             "page_id": target.pk if isinstance(target, BasePage) else None,
             "op": op,
             "block_id": block_id or None,
             "field": field or None,
             "agent": suggestion.agent.slug if suggestion.agent else "unknown",
-            "run_id": run.pk if run else None,
+            "run_id": str(run.public_id) if run else None,
         },
     )
     return suggestion
@@ -235,7 +236,7 @@ def _logged(suggestion) -> dict:
         "op": suggestion.op,
         "field": suggestion.field or None,
         "block_id": suggestion.block_id or None,
-        "run_id": suggestion.run_id,
+        "run_id": str(suggestion.run.public_id) if suggestion.run else None,
     }
 
 
@@ -341,7 +342,7 @@ def accept(suggestions, user):
         runs,
         user,
         "accept",
-        {"suggestions": [s.pk for s in suggestions]},
+        {"suggestions": [str(s.public_id) for s in suggestions]},
         {"revision_id": applied.pk if applied else None},
     )
     return result
@@ -363,7 +364,9 @@ def reject(suggestion, user, reason=""):
     suggestion.save(update_fields=["status", "decided_by", "decided_at", "error"])
     log(suggestion, "zer0.suggestion.reject", user=user, data={**_logged(suggestion), "reason": reason})
     if suggestion.run:
-        _record_human_step([suggestion.run], user, "reject", {"suggestion": suggestion.pk}, {"reason": reason})
+        _record_human_step(
+            [suggestion.run], user, "reject", {"suggestion": str(suggestion.public_id)}, {"reason": reason}
+        )
     return suggestion
 
 
@@ -447,17 +450,19 @@ def accept_run(run, user, ids) -> tuple[list[Suggestion], list]:
     """Accept the suggestions `ids` of `run` — the ones the person saw, never
     the rest of the run — as one revision per target (and per proposing user,
     as `accept` requires). Each must be a pending suggestion of the run that
-    the person may decide. All of them, or none. Returns the suggestions and
-    what each `accept` returned."""
-    wanted = set(ids)
+    the person may decide. All of them, or none. `ids` are public ids.
+    Returns the suggestions and what each `accept` returned."""
+    wanted = {str(i) for i in ids}
     found = list(
         Suggestion.objects.visible_to(user)
-        .filter(run=run, status=Suggestion.PENDING, pk__in=wanted)
+        .filter(run=run, status=Suggestion.PENDING, public_id__in=wanted)
         .order_by("created_at", "id")
     )
-    missing = sorted(wanted - {s.pk for s in found})
+    missing = ", ".join(sorted(wanted - {str(s.public_id) for s in found}))
     if not wanted or missing:
-        raise SuggestionError(f"not pending suggestions of run {run.pk} you may decide: {missing or 'none given'}")
+        raise SuggestionError(
+            f"not pending suggestions of run {run.public_id} you may decide: {missing or 'none given'}"
+        )
     groups: dict = {}
     for s in found:
         groups.setdefault((s.target_ct_id, s.target_id, s.created_by_id), []).append(s)

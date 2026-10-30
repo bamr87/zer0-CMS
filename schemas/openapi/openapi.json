@@ -618,16 +618,17 @@
                 }
             }
         },
-        "/api/v2/agent-runs/{id}/": {
+        "/api/v2/agent-runs/{public_id}/": {
             "get": {
                 "operationId": "agent_runs_retrieve",
                 "summary": "One run with its steps",
                 "parameters": [
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -740,7 +741,7 @@
                 }
             }
         },
-        "/api/v2/agent-runs/{id}/stream/": {
+        "/api/v2/agent-runs/{public_id}/stream/": {
             "get": {
                 "operationId": "agent_runs_stream_retrieve",
                 "description": "Server-sent events: each step as it lands, then the final status.",
@@ -759,9 +760,10 @@
                     },
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     },
@@ -13884,7 +13886,7 @@
         "/api/v2/distribution/channels/{public_id}/check/": {
             "post": {
                 "operationId": "distribution_channels_check_create",
-                "summary": "Ask the target whether the credential works (on the worker); follow the channel",
+                "summary": "Ask the target whether the credential works (on the worker; people who manage channels)",
                 "parameters": [
                     {
                         "in": "path",
@@ -14517,7 +14519,7 @@
         "/api/v2/distribution/channels/{public_id}/statistics/": {
             "post": {
                 "operationId": "distribution_channels_statistics_create",
-                "summary": "Read the channel's post statistics now (on the worker)",
+                "summary": "Read the channel's post statistics now (on the worker; people who manage channels)",
                 "parameters": [
                     {
                         "in": "path",
@@ -15092,7 +15094,7 @@
             },
             "patch": {
                 "operationId": "distribution_posts_partial_update",
-                "summary": "Change a post's text; an approved one goes back to draft",
+                "summary": "Change a post's text; an approved or failed one goes back to draft for a person to approve",
                 "parameters": [
                     {
                         "in": "path",
@@ -15390,7 +15392,7 @@
         "/api/v2/distribution/posts/{public_id}/publish/": {
             "post": {
                 "operationId": "distribution_posts_publish_create",
-                "summary": "Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go",
+                "summary": "Publish an approved post: 202, the worker sends it — or, for an attempt that is over without its worker saying so, the post as it ended; 409 while it is queued or being sent, or with every blocker",
                 "parameters": [
                     {
                         "in": "path",
@@ -26237,7 +26239,8 @@
                         "in": "path",
                         "name": "run_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -26412,8 +26415,10 @@
                         "in": "query",
                         "name": "run",
                         "schema": {
-                            "type": "number"
-                        }
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A run's id: the suggestions it proposed."
                     },
                     {
                         "in": "query",
@@ -28028,7 +28033,7 @@
                 }
             }
         },
-        "/api/v2/suggestions/{id}/{decision}/": {
+        "/api/v2/suggestions/{public_id}/{decision}/": {
             "post": {
                 "operationId": "suggestions_create",
                 "description": "`decision` is `accept` or `reject`.",
@@ -28044,9 +28049,10 @@
                     },
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -28301,7 +28307,8 @@
                     "ids": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "description": "The run's pending suggestions the caller saw and accepts — only these, never the rest of the run.",
                         "minItems": 1
@@ -28317,7 +28324,8 @@
                     "accepted": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     "revision_ids": {
@@ -28573,7 +28581,8 @@
                         "description": "A site audit's pages: url, title, score, grade …"
                     },
                     "benchmark": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees."
                     },
                     "screenshot": {
                         "type": [
@@ -28736,7 +28745,7 @@
             },
             "AieoAuditList": {
                 "type": "object",
-                "description": "An audit in a list: everything but the whole result and the pages.",
+                "description": "An audit in a list: everything but the whole result and the pages, and of its benchmark the counts.",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -28869,7 +28878,8 @@
                         "readOnly": true
                     },
                     "benchmark": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees."
                     },
                     "screenshot": {
                         "type": [
@@ -30003,7 +30013,8 @@
                     "suggestions": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "description": "To accept on the draft."
                     }
@@ -30026,7 +30037,8 @@
                     "suggestions": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 },
@@ -31837,10 +31849,11 @@
                                 },
                                 "result": {
                                     "type": "object",
-                                    "description": "What it made: an agent run's id (`run`), a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status.",
+                                    "description": "What it made: an agent run, a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status.",
                                     "properties": {
                                         "run": {
-                                            "type": "integer"
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "brief": {
                                             "type": "string",
@@ -34766,7 +34779,7 @@
                 "type": "object",
                 "properties": {
                     "level": {
-                        "$ref": "#/components/schemas/GuardLevelEnum"
+                        "$ref": "#/components/schemas/DistributionGuardLevelEnum"
                     },
                     "message": {
                         "type": "string"
@@ -34776,6 +34789,15 @@
                     "level",
                     "message"
                 ]
+            },
+            "DistributionGuardLevelEnum": {
+                "enum": [
+                    "error",
+                    "warning",
+                    "info"
+                ],
+                "type": "string",
+                "description": "* `error` - error\n* `warning` - warning\n* `info` - info"
             },
             "DistributionKindEnum": {
                 "enum": [
@@ -34791,7 +34813,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "integer",
+                        "type": "string",
+                        "format": "uuid",
                         "readOnly": true
                     },
                     "channel": {
@@ -34819,13 +34842,17 @@
                     "state": {
                         "allOf": [
                             {
-                                "$ref": "#/components/schemas/LedgerStateEnum"
+                                "$ref": "#/components/schemas/DistributionLedgerStateEnum"
                             }
                         ],
                         "readOnly": true
                     },
                     "kind": {
-                        "type": "string",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DistributionPostKindEnum"
+                            }
+                        ],
                         "readOnly": true
                     },
                     "posted_at": {
@@ -34945,6 +34972,14 @@
                     "kept",
                     "skipped"
                 ]
+            },
+            "DistributionLedgerStateEnum": {
+                "enum": [
+                    "published",
+                    "unconfirmed"
+                ],
+                "type": "string",
+                "description": "* `published` - Published\n* `unconfirmed` - Unconfirmed"
             },
             "DistributionOriginEnum": {
                 "enum": [
@@ -36107,9 +36142,10 @@
                     },
                     "suggestion": {
                         "type": [
-                            "integer",
+                            "string",
                             "null"
                         ],
+                        "format": "uuid",
                         "description": "The suggestion it became — with the block's other corrections — to accept or reject."
                     },
                     "error": {
@@ -36298,15 +36334,6 @@
                     "site",
                     "slug"
                 ]
-            },
-            "GuardLevelEnum": {
-                "enum": [
-                    "error",
-                    "warning",
-                    "info"
-                ],
-                "type": "string",
-                "description": "* `error` - error\n* `warning` - warning\n* `info` - info"
             },
             "Handoff": {
                 "type": "object",
@@ -37123,7 +37150,7 @@
                     "level": {
                         "allOf": [
                             {
-                                "$ref": "#/components/schemas/GuardLevelEnum"
+                                "$ref": "#/components/schemas/DistributionGuardLevelEnum"
                             }
                         ],
                         "readOnly": true
@@ -37229,14 +37256,6 @@
                     "count",
                     "kind"
                 ]
-            },
-            "LedgerStateEnum": {
-                "enum": [
-                    "published",
-                    "unconfirmed"
-                ],
-                "type": "string",
-                "description": "* `published` - Published\n* `unconfirmed` - Unconfirmed"
             },
             "ManagedSite": {
                 "type": "object",
@@ -42112,7 +42131,8 @@
                 "description": "What `api.views.run_json` returns; `steps` only on a single run.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "agent": {
                         "type": "string"
@@ -42323,10 +42343,11 @@
             },
             "RunRef": {
                 "type": "object",
-                "description": "An agent run to follow on the existing runs API.",
+                "description": "An agent run to follow on the existing runs API, by its public id.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "status": {
                         "type": "string"
@@ -42348,10 +42369,11 @@
             },
             "RunRefRequest": {
                 "type": "object",
-                "description": "An agent run to follow on the existing runs API.",
+                "description": "An agent run to follow on the existing runs API, by its public id.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "status": {
                         "type": "string",
@@ -44002,7 +44024,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "op": {
                         "type": "string"
@@ -44028,9 +44051,11 @@
                     },
                     "run_id": {
                         "type": [
-                            "integer",
+                            "string",
                             "null"
-                        ]
+                        ],
+                        "format": "uuid",
+                        "description": "The run that proposed it."
                     },
                     "created_at": {
                         "type": "string",
@@ -44081,7 +44106,8 @@
                     "with": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     "reason": {

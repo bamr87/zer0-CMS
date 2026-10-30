@@ -14,11 +14,14 @@ followed on `/api/v2/agent-runs/<id>/stream/` like any other:
   whether its answer cites the domain.
 
 What a run names is asked again here, as for every AI run: the row must still be its starter's to use (`owned`),
-the assistant visible to them (`used`), a page one they may edit. A run that ends without succeeding — even one
-refused before reaching its handler — leaves its audit or check failed with the run's error (`settle`).
+the assistant visible to them (`used`), a page one they may edit — and an audit or a citation check must be the one
+its service started this very run for (`_started_for`): the generic run endpoint takes any input, so a run made by
+hand never re-does an audit or answers a check, and the probe is always the bundled one. A run that ends without
+succeeding — even one refused before reaching its handler — leaves its audit or check failed with the run's error
+(`settle`).
 """
 
-import copy
+import time
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -33,13 +36,14 @@ from ai import providers, rendering
 from ai.handlers import Persona, generate, owned, register, used
 from ai.models import Assistant
 from ai.providers.base import InvalidOutput, ProviderError
+from ai.services import _propose as propose
 from ai.services import acting_for, check_page, stable_id
+from ops.errors import ApiError
 from research import fetch
 
 from . import crawl, parser, scoring, services, visual
 from .models import Audit, CitationCheck, CitationQuery, Pattern, library
 
-PROPOSE = "content.propose_edit"
 SCREENSHOT = (
     "\n\n## Screenshot\n\nA screenshot of the live page is attached. Use it to evaluate visual layout, design "
     "quality, information hierarchy, readability, and UX signals that affect AI citability. Include a "
@@ -74,14 +78,17 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
             raise fetch.FetchError(f"the site answered HTTP {got.status}")
         kind = got.content_type.split(";", 1)[0].strip().lower()
         if kind in crawl.HTML:
-            body = got.text()
+            body = fetch.decode(got.body, got.charset)
             soup = BeautifulSoup(body, "html.parser")
             title = soup.title.get_text(strip=True) if soup.title else ""
             return [{"url": got.url, "title": title, "content": body, "format": Audit.HTML}], {}
         if kind.startswith("text/"):
             return [{"url": got.url, "title": "", "content": fetch.decode(got.body, got.charset)}], {}
         raise fetch.FetchError(f"{kind or 'this'} is not a web page or text")
-    found = crawl.crawl(audit.url, max_pages=audit.max_pages)
+    # Half the run's time for reading pages, the rest for scoring them and asking a model (services.limits).
+    found = crawl.crawl(
+        audit.url, max_pages=audit.max_pages, deadline=time.monotonic() + settings.AIEO_RUN_TIME_LIMIT / 2
+    )
     documents = [
         {"url": p.url, "title": p.title, "content": p.html, "format": Audit.HTML, "error": p.error, "how": p.source}
         for p in found.pages
@@ -96,9 +103,7 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
 def _evaluate(run, ctx, audit: Audit, parsed: dict, patterns: list[dict], extra: dict, png: bytes | None) -> dict:
     """A model's evaluation, as a score: the bundled evaluator, its schema rebuilt from the library's patterns."""
     assistant = _assistant(services.EVALUATOR, run)
-    persona = Persona.of(assistant)
-    if audit.provider:
-        persona.provider = audit.provider
+    persona = _on(Persona.of(assistant), audit.provider)
     persona.schema = scoring.evaluation_schema(persona.schema or {}, patterns)
     persona.render_template = ""
     request = rendering.prompt(persona.prompt_template, scoring.evaluation_prompt(parsed, patterns))
@@ -108,6 +113,14 @@ def _evaluate(run, ctx, audit: Audit, parsed: dict, patterns: list[dict], extra:
         content = [{"type": "text", "text": request + SCREENSHOT}, visual.image_part(png)] if sees else request
     out = generate(run, ctx, persona, [{"role": "user", "content": content}])
     return scoring.from_evaluation(out["json"], parsed, patterns, provider=out["provider"], model=out["model"], **extra)
+
+
+def _on(persona: Persona, provider: str) -> Persona:
+    """`persona` asking `provider` instead of its own: then with that provider's default model, since its own model
+    is its own provider's."""
+    if provider and provider != persona.provider:
+        persona.provider, persona.model = provider, ""
+    return persona
 
 
 def _page_summary(doc: dict, result: dict | None) -> dict:
@@ -126,9 +139,16 @@ def _page_summary(doc: dict, result: dict | None) -> dict:
     }
 
 
+def _started_for(row, run: AgentRun):
+    """`row`, if `run` is the run its service started for it."""
+    if row.run_id != run.pk:
+        raise PermissionError(f"run {run.public_id} was not started for {type(row).__name__} {row.public_id}")
+    return row
+
+
 @register("aieo.audit")
 def audit(run: AgentRun, ctx: ToolContext) -> dict:
-    row = owned(Audit, run.input.get("audit"), run, edit=True)
+    row = _started_for(owned(Audit, run.input.get("audit"), run, edit=True), run)
     Audit.objects.filter(pk=row.pk).update(status=Audit.RUNNING, error="")
     patterns = library()
     extra = services.signals(row.site)
@@ -156,7 +176,7 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
     if row.method == Audit.AI:
         try:
             result = _evaluate(run, ctx, row, parsed, patterns, extra, png)
-        except (ProviderError, InvalidOutput) as e:
+        except (ProviderError, InvalidOutput, ApiError) as e:  # ApiError: the provider switched off or out of budget
             notes["fallback"] = f"the model's evaluation failed, so the heuristics scored it: {e}"
     scored[lead] = (doc, parsed, result)
     pages = [_page_summary(d, r) for d, _, r in scored] if row.kind == Audit.SITE else []
@@ -165,6 +185,10 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         read = [p["score"] for p in pages if p["score"] is not None]
         score = round(sum(read) / len(read), 1)
         notes["site"] = {**site, "pages": len(read), "unread": len(pages) - len(read)}
+    try:
+        services.remember(row, parsed)  # the benchmark's vector, which is optional
+    except Exception as e:  # noqa: BLE001 — whatever an embedder raises, the scored audit stands without its neighbours
+        notes["benchmark"] = f"its vector could not be stored: {type(e).__name__}"
     with transaction.atomic():
         fresh = Audit.objects.select_for_update().get(pk=row.pk)
         fresh.status, fresh.error = Audit.READY, ""
@@ -177,30 +201,12 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         fresh.screenshot = shot or fresh.screenshot
         fresh.audited_at = timezone.now()
         fresh.save()
-        fresh.benchmark = services.benchmark(fresh, services.remember(fresh, parsed))
+        fresh.benchmark = services.benchmark(fresh)
         fresh.save(update_fields=["benchmark"])
     return {"audit": str(row.public_id), "score": score, "grade": fresh.grade, "scoring_method": fresh.scoring_method}
 
 
 # ── rewrites ───────────────────────────────────────────────────────────────
-
-
-def _propose(run: AgentRun, ctx: ToolContext, page, operations, rationale: str) -> list[int]:
-    """Every operation as a suggestion on `page`, through the registry as this agent acting for the run's starter,
-    each call a step of the run — all of them, or (a refusal) none."""
-    proposer = copy.copy(ctx.agent)  # this call may use the one propose tool its definition lists, and nothing else
-    proposer.tools = [tool for tool in ctx.agent.tools or [] if tool == PROPOSE]
-    acting = acting_for(ToolContext(user=ctx.user, agent=proposer, run=run, trigger=ctx.trigger, extra=ctx.extra))
-    made = []
-    with transaction.atomic():
-        for op, block_id, block in operations:
-            args = {"page_id": page.pk, "op": op, "rationale": rationale[:2000]}
-            if block_id:
-                args["block_id"] = block_id
-            if block is not None:
-                args["block"] = block
-            made.append(registry.call(PROPOSE, args, acting)["suggestion_id"])
-    return made
 
 
 @register("aieo.rewrite")
@@ -242,7 +248,10 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
         why = {"optimize": "optimized for AI citability", "expand": "expanded for AI citability"}.get(mode, mode)
         if mode == "pattern":
             why = f"applied the {run.input.get('pattern')} pattern"
-        made = _propose(run, ctx, page, operations, f"AIEO {why} (score {before['score']} → {after['score']})")
+        rationale = f"AIEO {why} (score {before['score']} → {after['score']})"
+        with transaction.atomic():  # all of them, or (a refusal) none
+            proposed = propose(page, acting_for(ctx), [(op, at, "", block) for op, at, block in operations], rationale)
+        made = [str(s.public_id) for s in proposed]
     return {
         "markdown": markdown,
         "mode": mode,
@@ -261,10 +270,11 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
 
 @register("aieo.citation")
 def citation(run: AgentRun, ctx: ToolContext) -> dict:
-    check = CitationCheck.objects.select_related("query").get(public_id=run.input.get("check"))
+    check = CitationCheck.objects.select_related("query").filter(public_id=run.input.get("check")).first()
+    if check is None or _started_for(check, run).status != CitationCheck.QUEUED:
+        raise PermissionError("this run has no citation check waiting for its answer")
     query = owned(CitationQuery, check.query.public_id, run)
-    persona = Persona.of(used(Assistant.objects.get(public_id=run.input.get("assistant")), run))
-    persona.provider = check.engine
+    persona = _on(Persona.of(_assistant(services.PROBE, run)), check.engine)
     out = generate(run, ctx, persona, [{"role": "user", "content": f"Question: {query.prompt}"}])
     data = out["json"]
     found = services.cited(query.domain, data["answer"], data["sources"])

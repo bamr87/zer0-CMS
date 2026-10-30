@@ -11,14 +11,19 @@ reaches WordPress, GitHub or a mail server.
 import base64
 import json
 
+import httpx
 import pytest
+import requests
 import responses
+from django.contrib.auth.models import Permission
 from django.core import mail
+from django.core.mail.backends.base import BaseEmailBackend
 from django.test import override_settings
 
 from distribution import services
 from distribution.models import Channel, LedgerEntry
-from newsroom.models import Newsletter, Subscriber
+from distribution.tasks import settle_posts
+from newsroom.models import Issue, Newsletter, Subscriber
 from research import fetch
 
 from ..conftest import make_article
@@ -128,6 +133,46 @@ def test_wordpress_on_a_private_address_is_refused_before_a_socket(alice, page, 
     worker(services.request_publish, post, alice)
     post.refresh_from_db()
     assert post.status == "failed" and "not a public address" in post.error and not web.calls
+
+
+@override_settings(DISTRIBUTION_ARMED={"wordpress"})
+@pytest.mark.parametrize(
+    ("error", "doubted"),
+    [(httpx.ConnectError("refused"), False), (httpx.ConnectTimeout("slow"), False), (httpx.ReadTimeout("quiet"), True)],
+)
+def test_a_wordpress_connection_that_never_opened_is_no_doubt_and_an_answer_that_never_came_is(
+    alice, page, web, worker, error, doubted
+):
+    """Only a request that may have reached WordPress may have published: a refused or timed-out connection did
+    not, and leaves nothing for a person to check; a request sent and never answered is ledgered unconfirmed."""
+    channel = channel_for(
+        page, "wordpress", {"url": "https://blog.example.com", "username": "ed"}, {"application_password": "x"}
+    )
+    web.post(f"https://{PUBLIC}/wp-json/wp/v2/posts").mock(side_effect=error)
+    post = ready(channel, page, alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "did not answer" in post.error
+    assert LedgerEntry.objects.filter(channel=channel, state="unconfirmed").exists() is doubted
+
+
+@override_settings(DISTRIBUTION_ARMED={"wordpress"})
+def test_a_wordpress_application_password_never_travels_over_http(api, alice, page, web, worker):
+    """The address is the person's input: https only, refused when the channel is set up — and by the transport for
+    a channel saved before, before any socket."""
+    alice.user_permissions.add(*Permission.objects.filter(content_type__app_label="distribution"))
+    settings = {"url": "http://blog.example.com", "username": "ed"}
+    made = api(alice).post(
+        "/api/v2/distribution/channels/",
+        {"site": page.get_site().pk, "kind": "wordpress", "name": "Blog", "settings": settings},
+        format="json",
+    )
+    assert made.status_code == 422 and "https address" in made.json()["error"]["message"]
+    channel = channel_for(page, "wordpress", settings, {"application_password": "x"})
+    post = ready(channel, page, alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "is not https" in post.error and not web.calls
 
 
 def test_checking_a_wordpress_channel_names_the_account(alice, page, web, worker):
@@ -262,21 +307,85 @@ def test_github_failures_are_reported_as_themselves_never_answered_with_another_
     assert writes == [], "a refused read is not answered by writing a file or opening a pull request"
 
 
+@override_settings(DISTRIBUTION_ARMED={"github_pr"})
+@pytest.mark.parametrize(("where", "doubted"), [("repo", False), ("pull", True)])
+def test_a_github_request_never_answered_is_a_sentence_and_doubted_only_for_the_pull_request(
+    alice, page, worker, where, doubted
+):
+    """PyGithub lets `requests`' own errors through. A read that never came back is a failure to try again; the pull
+    request — the publish — may have been opened, so it is ledgered unconfirmed for a person to check. Either way the
+    post ends failed, never left publishing."""
+    channel = channel_for(page, "github_pr", {"repo": "bamr87/it-journey", "directory": "sites/news"}, {"token": "x"})
+    post = ready(channel, page, alice)
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        if where == "repo":
+            rsps.add(responses.GET, GITHUB, body=requests.exceptions.ConnectionError("connection reset by peer"))
+        else:
+            github(rsps, f"distribute/{post.public_id.hex[:12]}", pull={"body": requests.exceptions.ReadTimeout()})
+        worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "GitHub did not answer" in post.error
+    assert LedgerEntry.objects.filter(channel=channel, state="unconfirmed").exists() is doubted
+    assert ("may have published" in post.error) is doubted
+
+
 # ── email: a newsroom newsletter ────────────────────────────────────────────
 
 
-@override_settings(DISTRIBUTION_ARMED={"email"})
-def test_an_email_channel_sends_the_story_as_an_issue_of_its_newsletter(desk, advance, ed, worker):
+class Refusing(BaseEmailBackend):
+    """A mail backend whose provider refuses every message."""
+
+    def send_messages(self, messages):
+        raise ConnectionError("the provider is down")
+
+
+@pytest.fixture
+def weekly(desk, advance):
+    """A published story, and a newsletter of its site with one confirmed reader, as an armed email channel."""
     story = advance(desk, "published", headline="Bridge reopens")
     newsletter = Newsletter.objects.create(site=desk.site, name="The Weekly", slug="weekly")
     Subscriber.objects.create(newsletter=newsletter, email="reader@example.com", status=Subscriber.Status.CONFIRMED)
     channel = Channel.objects.create(site=desk.site, kind="email", name="Weekly", newsletter=newsletter, armed=True)
+    return story, channel
+
+
+@override_settings(DISTRIBUTION_ARMED={"email"})
+def test_an_email_channel_sends_the_story_as_an_issue_of_its_newsletter(weekly, ed, worker):
+    """The newsroom sends the issue; the post is published — and ledgered, under the issue's id — once it has."""
+    story, channel = weekly
     with pytest.raises(Exception, match="story"):
         services.compose(channel, user=ed, page=story.page)
     post = services.approve(services.compose(channel, user=ed, story=story, commentary="This week: the bridge."), ed)
     worker(services.request_publish, post, ed)
     post.refresh_from_db()
-    assert post.status == "published" and post.external_id.startswith("issue:")
+    assert post.status == "publishing" and post.issue.status == Issue.Status.SENT, "the newsroom sends it, not us"
+    assert not LedgerEntry.objects.exists()
     assert [m.to for m in mail.outbox] == [["reader@example.com"]]
     assert "Bridge reopens" in mail.outbox[0].body and "This week: the bridge." in mail.outbox[0].body
+    assert settle_posts() == 1, "the beat's sweep: the post follows its issue"
+    post.refresh_from_db()
+    assert post.status == "published" and post.external_id == str(post.issue.public_id)
     assert LedgerEntry.objects.get(channel=channel).urn == post.external_id
+
+
+@override_settings(DISTRIBUTION_ARMED={"email"})
+def test_an_email_post_fails_with_the_newsrooms_reason_and_publishing_again_resumes_its_issue(
+    weekly, ed, worker, settings
+):
+    """Published means the newsletter went: a provider that refuses it fails the post with the newsroom's reason
+    and ledgers nothing; publishing again sends the same issue to those who have not had it."""
+    story, channel = weekly
+    settings.EMAIL_BACKEND = "tests.distribution.test_transports.Refusing"
+    post = services.approve(services.compose(channel, user=ed, story=story, commentary="This week: the bridge."), ed)
+    worker(services.request_publish, post, ed)
+    assert settle_posts() == 1
+    post.refresh_from_db()
+    assert post.status == "failed" and "did not reach everyone" in post.error
+    assert "the mail backend refused the rest" in post.error and "Publishing again" in post.error
+    assert mail.outbox == [] and not LedgerEntry.objects.filter(channel=channel).exists()
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    worker(services.request_publish, post, ed)
+    settle_posts()
+    post.refresh_from_db()
+    assert post.status == "published" and Issue.objects.filter(newsletter=channel.newsletter).count() == 1
+    assert [m.to for m in mail.outbox] == [["reader@example.com"]]

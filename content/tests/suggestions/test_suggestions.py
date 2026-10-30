@@ -212,7 +212,7 @@ def test_editor_admin_view_lists_and_accepts(client, article, run, editor):
     client.force_login(editor)
     listing = client.get(f"/admin/suggestions/page/{article.pk}/")
     assert listing.status_code == 200 and b"Admin accepted" in listing.content
-    response = client.post(f"/admin/suggestions/{s.pk}/accept/")
+    response = client.post(f"/admin/suggestions/{s.public_id}/accept/")
     assert response.status_code == 302
     s.refresh_from_db()
     assert s.status == Suggestion.ACCEPTED

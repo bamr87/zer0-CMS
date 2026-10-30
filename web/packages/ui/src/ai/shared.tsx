@@ -35,7 +35,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { ApiError, call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { RunStatus, useLiveRun } from '../RunTimeline';
+import { RunStatus, shortId, useLiveRun } from '../RunTimeline';
 
 /** Every row of a list in one page: the AI lists are short. */
 export const ALL = { page_size: 200 } as const;
@@ -206,11 +206,11 @@ export function JsonView({ value, label }: { value: unknown; label?: string }) {
  * timeline — that tells `onFinal` once when it has finished, so the screen
  * that started it reads what the run produced.
  */
-export function RunProgress({ runId, onFinal }: { runId: number; onFinal?: (run: Run) => void }) {
+export function RunProgress({ runId, onFinal }: { runId: string; onFinal?: (run: Run) => void }) {
   const go = useGo();
   const { run, steps } = useLiveRun(runId);
   const done = run.data?.is_final ? run.data : undefined;
-  const told = useRef<number | null>(null);
+  const told = useRef<string | null>(null);
   useEffect(() => {
     if (done && told.current !== done.id) {
       told.current = done.id;
@@ -220,7 +220,7 @@ export function RunProgress({ runId, onFinal }: { runId: number; onFinal?: (run:
   if (run.isError) return <Alert color="red">{errorText(run.error)}</Alert>;
   const last = steps.at(-1);
   return (
-    <Group gap="xs" role="status" aria-label={`Run #${runId}`}>
+    <Group gap="xs" role="status" aria-label={`Run ${shortId(runId)}`}>
       {run.data ? <RunStatus status={run.data.status} /> : null}
       {done ? null : <Loader size="xs" aria-label="Working" />}
       {last ? (
@@ -232,8 +232,8 @@ export function RunProgress({ runId, onFinal }: { runId: number; onFinal?: (run:
           Waiting for the first step…
         </Text>
       )}
-      <Anchor component="button" type="button" size="sm" onClick={() => go({ to: 'run', id: runId })}>
-        Run #{runId}
+      <Anchor component="button" type="button" size="sm" title={runId} onClick={() => go({ to: 'run', id: runId })}>
+        Run {shortId(runId)}
       </Anchor>
     </Group>
   );
@@ -259,9 +259,9 @@ export function Answer({ run }: { run: Run }) {
 }
 
 /** Try an assistant or a pipeline: a prompt, the run followed live, then its answer. `start` sends the action's key. */
-export function RunBox({ start, promptRequired = true }: { start: (prompt: string, key: string) => Promise<number>; promptRequired?: boolean }) {
+export function RunBox({ start, promptRequired = true }: { start: (prompt: string, key: string) => Promise<string>; promptRequired?: boolean }) {
   const [prompt, setPrompt] = useState('');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [answer, setAnswer] = useState<Run | null>(null);
   const begin = useMutation({
     mutationFn: (key: string) => start(prompt, key),

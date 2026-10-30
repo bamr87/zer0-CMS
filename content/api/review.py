@@ -7,7 +7,8 @@
                                                  (`ids`) — one revision per page
 
 A single suggestion is accepted or rejected (with a reason) through the
-existing `/api/v2/suggestions/<id>/accept|reject/`. Everything here reads
+existing `/api/v2/suggestions/<id>/accept|reject/`. A suggestion and a run are
+named by their UUID public ids; pages and sites by Wagtail's ids. Everything here reads
 through the one scope (`Suggestion.objects.visible_to`, `AgentRun.objects.
 visible_to`) and decides through `suggestions.services`, which re-checks the
 person's rights, the page's lock and its current state at decision time; the
@@ -39,7 +40,7 @@ from .serializers import AcceptedRunSerializer, AcceptRunSerializer, SuggestionS
 class InboxFilter(django_filters.FilterSet):
     site = django_filters.NumberFilter(method="by_site", help_text="A site id: suggestions on its pages.")
     page_id = django_filters.NumberFilter(method="by_page", help_text="A page id: the suggestions on that page.")
-    run = django_filters.NumberFilter(field_name="run_id")
+    run = django_filters.UUIDFilter(field_name="run__public_id", help_text="A run's id: the suggestions it proposed.")
     agent = django_filters.CharFilter(field_name="agent__slug")
 
     def by_site(self, qs, name, value: int):
@@ -63,7 +64,7 @@ def _row(suggestion: Suggestion, targets: dict) -> dict:
     else:
         change = describe(suggestion, latest)
     return {
-        "id": suggestion.pk,
+        "id": suggestion.public_id,
         "op": suggestion.op,
         "block_id": suggestion.block_id,
         "field": suggestion.field,
@@ -71,7 +72,7 @@ def _row(suggestion: Suggestion, targets: dict) -> dict:
         "rationale": suggestion.rationale,
         "status": suggestion.status,
         "agent": suggestion.agent.slug if suggestion.agent else None,
-        "run_id": suggestion.run_id,
+        "run_id": suggestion.run.public_id if suggestion.run else None,
         "created_at": suggestion.created_at,
         "target": {
             "type": "page" if is_page or target is None else "image",
@@ -118,11 +119,13 @@ class Inbox(generics.ListAPIView):
 @api_view(["POST"])
 @permission_classes([IsPerson])
 def accept_all(request, run_id):
-    run = AgentRun.objects.visible_to(request.user).filter(pk=run_id).first()
+    run = AgentRun.objects.visible_to(request.user).filter(public_id=run_id).first()
     if run is None:
         raise NotFound(f"no run {run_id}")
     data = _valid(AcceptRunSerializer, request)
     with service_errors():
         accepted, results = accept_run(run, request.user, data["ids"])
     revisions = [r.pk for r in results if isinstance(r, Revision)]
-    return Response(AcceptedRunSerializer({"accepted": [s.pk for s in accepted], "revision_ids": revisions}).data)
+    return Response(
+        AcceptedRunSerializer({"accepted": [s.public_id for s in accepted], "revision_ids": revisions}).data
+    )

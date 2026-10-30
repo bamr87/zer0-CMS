@@ -73,7 +73,7 @@ export function ProviderList() {
   const canConfigure = useCanConfigure();
   const providers = useProviders();
   const [editing, setEditing] = useState<Provider | null>(null);
-  const [checks, setChecks] = useState<Record<string, number>>({});
+  const [checks, setChecks] = useState<Record<string, string>>({});
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai'] });
   // One check at a time: every Test and Sync button waits while one is out, and a double click asks once.
   const check = useMutation({
@@ -133,7 +133,7 @@ export function ProviderList() {
                   {p.slug}
                   {p.default_model ? ` · ${p.default_model}` : ''}
                 </Text>
-                {checks[p.id] ? <RunProgress runId={checks[p.id] ?? 0} onFinal={refresh} /> : null}
+                {checks[p.id] ? <RunProgress runId={checks[p.id] ?? ''} onFinal={refresh} /> : null}
               </Table.Td>
               <Table.Td>
                 <Badge color={p.enabled ? 'teal' : 'gray'} variant="light">

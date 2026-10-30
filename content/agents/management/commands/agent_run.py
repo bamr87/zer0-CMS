@@ -34,7 +34,7 @@ class Command(BaseCommand):
         self.stdout.write(
             json.dumps(
                 {
-                    "run_id": run.pk,
+                    "run_id": str(run.public_id),
                     "status": run.status,
                     "error": run.error,
                     "output": run.output,

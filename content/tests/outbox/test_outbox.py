@@ -2,6 +2,7 @@
 transaction; at-least-once relay in order; consumers that dedupe by id."""
 
 import json
+import uuid
 from pathlib import Path
 
 import fakeredis
@@ -15,6 +16,8 @@ from outbox.relay import MemoryRelay, RedisStreamsRelay, relay_pending
 from outbox.services import OutboxError, emit
 
 from ..conftest import make_article
+
+RUN = "3f2b8c1e-9d4a-4e7b-b6c5-0a1d2e3f4a5b"  # a run's public id
 
 
 @pytest.mark.django_db
@@ -44,7 +47,7 @@ def test_emit_refuses_to_run_outside_a_transaction():
     # pytest-django's db fixture wraps a test in a transaction, so this test
     # deliberately has no database access at all.
     with pytest.raises(OutboxError, match="inside the transaction"):
-        emit("agent.run.completed", {"run_id": 1, "agent": "x", "status": "succeeded"})
+        emit("agent.run.completed", {"run_id": RUN, "agent": "x", "status": "succeeded"}, version=2)
 
 
 @pytest.mark.django_db
@@ -52,14 +55,16 @@ def test_emit_validates_data_against_the_shared_schema():
     from outbox.schemas import EventSchemaError
 
     with pytest.raises(EventSchemaError, match="status"):
-        emit("agent.run.completed", {"run_id": 1, "agent": "x", "status": "exploded"})
+        emit("agent.run.completed", {"run_id": RUN, "agent": "x", "status": "exploded"}, version=2)
+    with pytest.raises(EventSchemaError, match="run_id"):  # v2 names a run by its public id, never its integer key
+        emit("agent.run.completed", {"run_id": 1, "agent": "x", "status": "succeeded"}, version=2)
 
 
 @pytest.mark.django_db
 def test_the_relay_delivers_in_order_and_retries_after_a_failure():
     OutboxEvent.objects.all().update(dispatched_at="2026-01-01T00:00:00Z")
-    first = emit("agent.run.completed", {"run_id": 1, "agent": "a", "status": "succeeded"})
-    second = emit("agent.run.completed", {"run_id": 2, "agent": "a", "status": "failed"})
+    first = emit("agent.run.completed", {"run_id": RUN, "agent": "a", "status": "succeeded"}, version=2)
+    second = emit("agent.run.completed", {"run_id": str(uuid.uuid4()), "agent": "a", "status": "failed"}, version=2)
 
     class Flaky(MemoryRelay):
         calls = 0

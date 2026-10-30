@@ -264,7 +264,7 @@ class FindingSerializer(serializers.Serializer):
     find = serializers.CharField(allow_blank=True, help_text="The block's words a source contradicts ('' if none).")
     replace = serializers.CharField(allow_blank=True, help_text="What those words should say, by the sources.")
     sources = FindingSourceSerializer(many=True)
-    suggestion = serializers.IntegerField(
+    suggestion = serializers.UUIDField(
         allow_null=True,
         help_text="The suggestion it became — with the block's other corrections — to accept or reject.",
     )

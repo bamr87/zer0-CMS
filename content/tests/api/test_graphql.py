@@ -90,9 +90,16 @@ def test_request_agent_run_needs_edit_rights_and_starts_a_run(article, editor, d
             HTTP_X_CSRFTOKEN=token,
         )
     assert "errors" not in data, data
-    run = AgentRun.objects.get(pk=data["data"]["requestAgentRun"]["runId"])
+    run = AgentRun.objects.get(public_id=data["data"]["requestAgentRun"]["runId"])
     run.refresh_from_db()
     assert run.trigger == "graphql" and run.started_by == editor and run.status == "succeeded"
+    read = gql(
+        client,
+        "query($id: UUID!) { agentRun(id: $id) { id status } }",
+        {"id": str(run.public_id)},
+        HTTP_X_CSRFTOKEN=token,
+    )
+    assert read["data"]["agentRun"] == {"id": str(run.public_id), "status": "succeeded"}
 
 
 @pytest.mark.django_db
@@ -130,12 +137,18 @@ def test_accept_suggestion_mutation_and_the_suggestions_query(article, editor, a
         client, "query($id: Int!) { suggestions(pageId: $id) { id field payload } }", {"id": article.pk}, **headers
     )
     assert listed["data"]["suggestions"] == [
-        {"id": s.pk, "field": "seo_title", "payload": {"value": "Through GraphQL"}}
+        {"id": str(s.public_id), "field": "seo_title", "payload": {"value": "Through GraphQL"}}
     ]
+    by_key = gql(client, "mutation($id: UUID) { acceptSuggestion(id: $id) { ok } }", {"id": s.pk}, **headers)
+    assert "errors" in by_key  # a suggestion is named by its public id, never its integer key
     accepted = gql(
-        client, "mutation($id: Int) { acceptSuggestion(id: $id) { ok revisionId } }", {"id": s.pk}, **headers
+        client,
+        "mutation($id: UUID) { acceptSuggestion(id: $id) { ok revisionId accepted } }",
+        {"id": str(s.public_id)},
+        **headers,
     )
     assert accepted["data"]["acceptSuggestion"]["ok"] is True
+    assert accepted["data"]["acceptSuggestion"]["accepted"] == [str(s.public_id)]
     assert Suggestion.objects.get(pk=s.pk).status == "accepted"
 
 
@@ -151,6 +164,9 @@ def test_rest_agent_runs_create_read_and_stream(article, editor, django_capture_
         )
     assert created.status_code == 201, created.content
     run_id = created.json()["id"]
+    assert run_id == str(AgentRun.objects.get(trigger="rest").public_id)  # the public id, never the integer key
+    assert created.json()["links"]["stream"] == f"/api/v2/agent-runs/{run_id}/stream/"
+    assert client.get(f"/api/v2/agent-runs/{AgentRun.objects.get(trigger='rest').pk}/").status_code == 404
     detail = client.get(f"/api/v2/agent-runs/{run_id}/").json()
     assert detail["status"] == "succeeded" and detail["steps"][0]["name"] == "review.submit_verdict"
     stream = client.get(f"/api/v2/agent-runs/{run_id}/stream/")

@@ -63,7 +63,7 @@ export { ResearchWorkspace } from './research/ResearchWorkspace';
 export { SourceView } from './research/SourceView';
 export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
-export { RunList, RunStatus, RunTimeline, useLiveRun } from './RunTimeline';
+export { RunList, RunStatus, RunTimeline, shortId, useLiveRun } from './RunTimeline';
 export { SitePicker } from './SitePicker';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
 export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';

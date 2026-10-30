@@ -84,7 +84,7 @@ def test_an_assistant_on_a_page_proposes_its_answer_there_as_new_blocks(
     assert sent.startswith("Add a summary\n\n") and "We copy the site to a second disk every night." in sent
     assert "content.propose_edit" not in {t["name"] for t in fake.calls[0]["tools"]}  # the model only reads
     proposed = list(Suggestion.objects.filter(run=run).order_by("id"))
-    assert [s.pk for s in proposed] == run.output["suggestions"]
+    assert [str(s.public_id) for s in proposed] == run.output["suggestions"]
     assert [(s.op, s.block_id, s.payload["type"], s.status) for s in proposed] == [
         ("insert", "", "heading", "pending"),
         ("insert", "", "markdown", "pending"),

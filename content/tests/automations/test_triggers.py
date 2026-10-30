@@ -125,7 +125,7 @@ def test_an_event_fires_only_enabled_automations_waiting_for_it(alice, make, wor
 @pytest.mark.django_db
 def test_an_automation_hears_only_what_its_owner_may_see_and_its_own_sites(alice, bob, make, worker, site_root, agent):
     run = start_run(agent("seo"), trigger="rest", user=alice, enqueue=False)
-    completed = envelope("agent.run.completed", {"run_id": run.pk, "agent": "seo", "status": "succeeded"})
+    completed = envelope("agent.run.completed", {"run_id": str(run.public_id), "agent": "seo", "status": "succeeded"})
     hers = make(alice, {"kind": "event", "event": "agent.run.completed"}, [IDEA])
     his = make(bob, {"kind": "event", "event": "agent.run.completed"}, [IDEA])
     assert [r.automation for r in worker(services.on_event, completed)] == [hers]  # bob may not see alice's run
@@ -155,10 +155,10 @@ def test_every_event_belongs_to_its_pages_site_an_agent_runs_and_a_suggestions_i
         anywhere = make(alice, {"kind": "event", "event": event_type})
         run = start_run(agent("seo"), trigger="rest", user=alice, target=page, enqueue=False)
         if event_type == "agent.run.completed":
-            data = {"run_id": run.pk, "agent": "seo", "status": "succeeded"}
+            data = {"run_id": str(run.public_id), "agent": "seo", "status": "succeeded"}
         else:
             made = Suggestion.objects.create(target=page, op="meta", field="seo_title", payload={"value": "x"}, run=run)
-            data = {"suggestion_id": made.pk, "target": f"page:{page.pk}", "page_id": page.pk, "op": "meta"}
+            data = {"suggestion_id": str(made.public_id), "target": f"page:{page.pk}", "page_id": page.pk, "op": "meta"}
         heard = worker(services.on_event, envelope(event_type, data, id=str(uuid.uuid4())))
         assert {r.automation for r in heard} == {theirs, anywhere}, event_type
         assert ours not in {r.automation for r in heard}
@@ -182,7 +182,7 @@ def test_an_automations_own_work_never_fires_an_automation(alice, make, worker, 
     parent = start_run(agent("seo"), trigger="event", user=alice, enqueue=False, event_id="automation-run:x")
     child = start_run(agent("seo"), trigger="event", user=alice, enqueue=False, parent=parent)
     for run in (parent, child):
-        event = envelope("agent.run.completed", {"run_id": run.pk, "agent": "seo", "status": "succeeded"})
+        event = envelope("agent.run.completed", {"run_id": str(run.public_id), "agent": "seo", "status": "succeeded"})
         assert worker(services.on_event, event) == []
 
 

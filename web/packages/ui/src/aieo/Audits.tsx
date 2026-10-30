@@ -53,7 +53,7 @@ export function Audits({ siteId }: { siteId?: number }) {
   const [ai, setAi] = useState(true);
   const [visual, setVisual] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const start = useMutation({
     mutationFn: (key: string) =>
       call(

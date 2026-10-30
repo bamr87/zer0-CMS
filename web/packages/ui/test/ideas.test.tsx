@@ -48,7 +48,7 @@ const reply = (status: string, result: unknown = null) => ({
   text: '',
   result,
   assistant: 'a1',
-  run: { id: 40, status: 'queued', links: { self: '/api/v2/agent-runs/40/', stream: '/api/v2/agent-runs/40/stream/' } },
+  run: { id: 'r40', status: 'queued', links: { self: '/api/v2/agent-runs/r40/', stream: '/api/v2/agent-runs/r40/stream/' } },
   status,
   provider: 'fake',
   model: 'fake-1',
@@ -214,10 +214,10 @@ describe('<IdeaDrawer> to a brief', () => {
       'GET /api/v2/content/pages/': () => ({ count: 1, next: null, previous: null, results: [section] }),
       'POST /api/v2/ideas/i1/promote/': () => {
         promoted = true;
-        return { idea: idea('i1', 'Restore drills', { status: 'promoted', brief: ideaRef }), brief: brief('generating'), page_id: null, run: { id: 61, status: 'queued', links: { self: '', stream: '' } } };
+        return { idea: idea('i1', 'Restore drills', { status: 'promoted', brief: ideaRef }), brief: brief('generating'), page_id: null, run: { id: 'r61', status: 'queued', links: { self: '', stream: '' } } };
       },
       'GET /api/v2/ai/briefs/br1/': () => brief(status),
-      'POST /api/v2/ai/briefs/br1/apply/': () => ({ brief: brief('applied', { page: 14 }), page_id: 14, suggestions: [1, 2] }),
+      'POST /api/v2/ai/briefs/br1/apply/': () => ({ brief: brief('applied', { page: 14 }), page_id: 14, suggestions: ['s1', 's2'] }),
     });
     const { go } = renderUi(<IdeaDrawer ideaId="i1" boards={[]} onClose={() => undefined} />, { api });
     await userEvent.click(await screen.findByRole('button', { name: 'Promote' }));

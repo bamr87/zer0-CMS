@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/agent.run.completed.v2.json",
+  "title": "agent.run.completed (v2)",
+  "description": "An agent run of the platform reached a final state. v2 names the run by its public id, the UUID every API gives (P-D6, ADR 0009); v1 named it by its integer key.",
+  "type": "object",
+  "required": ["run_id", "agent", "status"],
+  "properties": {
+    "run_id": { "type": "string", "format": "uuid", "description": "The run's public id: /api/v2/agent-runs/<run_id>/." },
+    "agent": { "type": "string" },
+    "status": { "enum": ["succeeded", "failed", "refused", "cancelled"] },
+    "trigger": { "type": "string" },
+    "cost_usd": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+    "tokens": { "type": "integer", "minimum": 0 },
+    "suggestions": { "type": "integer", "minimum": 0, "description": "How many suggestions the run proposed." }
+  },
+  "additionalProperties": false
+}

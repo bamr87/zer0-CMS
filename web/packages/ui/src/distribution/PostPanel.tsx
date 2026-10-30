@@ -1,8 +1,12 @@
 // A post in the queue: where it goes and what it shares, its text (saved as
-// what changed — changing an approved post's text sends it back to draft),
+// what changed — changing the text of an approved post, or of one whose
+// attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
-// for LinkedIn the exact payload. Approve, reject, publish (asked first, and
-// past a lifted gate only when the person ticks "force"), and record a post
+// for LinkedIn the exact payload — and, while an email post waits, that the
+// newsroom is sending its issue — and its notes (where its site ledger entry
+// went, say). Approve, reject, publish (asked first, never
+// with unsaved changes, and past a lifted gate only when the person ticks
+// "force"), and record a post
 // found at the target after an attempt that may have landed. The platform
 // checks every one of these again; a disabled button is a courtesy.
 import { Alert, Anchor, Badge, Button, Checkbox, Code, Group, Loader, Modal, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
@@ -64,7 +68,9 @@ function Panel({ post }: { post: DistributionPostDetail }) {
     },
   });
 
-  const editable = !['publishing', 'published'].includes(post.status);
+  const editable = !['publishing', 'published', 'rejected'].includes(post.status);
+  const approved = ['approved', 'failed'].includes(post.status);
+  const unsaved = Object.keys(changed).length > 0;
   const status = statusOf(post.status);
   const forceable = post.blockers.some((b) => FORCEABLE.includes(b.kind));
   const failure = save.error ?? approve.error ?? reject.error ?? publish.error ?? record.error ?? remove.error;
@@ -89,7 +95,11 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           Canonical URL (the ledger’s key): <Code>{post.link}</Code>
         </Text>
       ) : null}
-      {post.status === 'publishing' ? <Alert color="blue">The worker is publishing it…</Alert> : null}
+      {post.status === 'publishing' ? (
+        <Alert color="blue">
+          {post.channel_kind === 'email' && post.attempted_at ? 'The newsroom is sending the newsletter issue…' : 'The worker is publishing it…'}
+        </Alert>
+      ) : null}
       {post.status === 'published' ? (
         <Alert color="green" title="Published">
           {post.external_url ? (
@@ -116,6 +126,15 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         </Alert>
       ) : null}
       {post.status === 'rejected' && post.reason ? <Alert color="orange">Rejected: {post.reason}</Alert> : null}
+      {post.notes.length ? (
+        <Stack gap={2} aria-label="Notes">
+          {post.notes.map((note, i) => (
+            <Text key={i} size="sm" c="dimmed">
+              {note}
+            </Text>
+          ))}
+        </Stack>
+      ) : null}
       {failure ? <Alert color="red">{errorText(failure)}</Alert> : null}
 
       <TextInput label="Title" value={text.title} disabled={!editable} onChange={(e) => setText({ ...text, title: e.currentTarget.value })} />
@@ -139,7 +158,12 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       />
       {editable ? (
         <Group justify="flex-end">
-          <Button variant="default" disabled={Object.keys(changed).length === 0} loading={save.isPending} onClick={() => save.mutate()}>
+          {approved && unsaved ? (
+            <Text size="sm" c="dimmed">
+              Saving a changed text sends the post back to draft: a person approves the exact text that goes.
+            </Text>
+          ) : null}
+          <Button variant="default" disabled={!unsaved} loading={save.isPending} onClick={() => save.mutate()}>
             Save the text
           </Button>
         </Group>
@@ -182,8 +206,8 @@ function Panel({ post }: { post: DistributionPostDetail }) {
             Approve
           </Button>
         ) : null}
-        {['approved', 'failed'].includes(post.status) ? (
-          <Button disabled={!post.can_publish} onClick={() => setConfirming(true)}>
+        {approved ? (
+          <Button disabled={!post.can_publish || unsaved} onClick={() => setConfirming(true)}>
             Publish…
           </Button>
         ) : null}
@@ -193,7 +217,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           </Button>
         ) : null}
       </Group>
-      {editable && post.status !== 'rejected' ? (
+      {editable ? (
         <Group align="flex-end">
           <TextInput label="Why reject it" value={reason} onChange={(e) => setReason(e.currentTarget.value)} style={{ flex: 1 }} />
           <Button variant="default" color="orange" disabled={!post.can_publish} loading={reject.isPending} onClick={() => reject.mutate()}>
@@ -201,7 +225,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           </Button>
         </Group>
       ) : null}
-      {post.status === 'failed' || post.blockers.some((b) => b.kind === 'publish_unconfirmed') ? (
+      {post.status === 'failed' || (post.status === 'approved' && post.blockers.some((b) => b.kind === 'publish_unconfirmed')) ? (
         <Group align="flex-end">
           <TextInput
             label="It went out after all? Record it"

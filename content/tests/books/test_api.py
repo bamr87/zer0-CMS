@@ -98,7 +98,7 @@ def test_a_task_is_a_202_with_its_run_and_a_key_replays_it(sample, api, alice, f
     body = {"task": "draft", "chapter": first.pk}
     response = api(alice).post(f"/api/v2/books/{sample.pk}/assist/", body, format="json", HTTP_IDEMPOTENCY_KEY="k1")
     assert response.status_code == 202
-    run = AgentRun.objects.get(pk=response.json()["run"]["id"])
+    run = AgentRun.objects.get(public_id=response.json()["run"]["id"])
     assert run.agent.slug == "books" and response.json()["run"]["links"]["stream"].endswith("/stream/")
     replay = api(alice).post(f"/api/v2/books/{sample.pk}/assist/", body, format="json", HTTP_IDEMPOTENCY_KEY="k1")
     assert replay.status_code == 202 and replay["Idempotent-Replayed"] == "true"

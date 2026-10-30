@@ -7,7 +7,9 @@ typed client from that file. The views build plain values and pass them
 through these to shape and render them; input serializers validate a request
 before a service sees it. Values that depend on a page's type travel as one
 `fields` object, described per type by `FieldSpec`, so a client renders any
-page type without knowing the types in advance.
+page type without knowing the types in advance. A run and a suggestion are
+named by their UUID public ids; pages, revisions, sites and users by Wagtail's
+and Django's integer ids, the recorded exception (P-D6, ADR 0009).
 """
 
 from rest_framework import serializers
@@ -205,7 +207,7 @@ class TargetSerializer(serializers.Serializer):
 
 
 class SuggestionSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.UUIDField()
     op = serializers.CharField()
     block_id = serializers.CharField(allow_blank=True)
     field = serializers.CharField(allow_blank=True)
@@ -213,7 +215,7 @@ class SuggestionSerializer(serializers.Serializer):
     rationale = serializers.CharField(allow_blank=True)
     status = serializers.CharField()
     agent = serializers.CharField(allow_null=True)
-    run_id = serializers.IntegerField(allow_null=True)
+    run_id = serializers.UUIDField(allow_null=True, help_text="The run that proposed it.")
     created_at = serializers.DateTimeField()
     target = TargetSerializer()
     change = ChangeSerializer()
@@ -221,14 +223,14 @@ class SuggestionSerializer(serializers.Serializer):
 
 class AcceptRunSerializer(serializers.Serializer):
     ids = serializers.ListField(
-        child=serializers.IntegerField(),
+        child=serializers.UUIDField(),
         min_length=1,
         help_text="The run's pending suggestions the caller saw and accepts — only these, never the rest of the run.",
     )
 
 
 class AcceptedRunSerializer(serializers.Serializer):
-    accepted = serializers.ListField(child=serializers.IntegerField())
+    accepted = serializers.ListField(child=serializers.UUIDField())
     revision_ids = serializers.ListField(child=serializers.IntegerField())
 
 
@@ -258,7 +260,7 @@ class RunLinksSerializer(serializers.Serializer):
 class RunSerializer(serializers.Serializer):
     """What `api.views.run_json` returns; `steps` only on a single run."""
 
-    id = serializers.IntegerField()
+    id = serializers.UUIDField()
     agent = serializers.CharField()
     status = serializers.CharField()
     is_final = serializers.BooleanField(help_text="It has finished (succeeded, failed, refused or cancelled).")

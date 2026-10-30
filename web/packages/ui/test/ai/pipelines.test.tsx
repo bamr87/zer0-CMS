@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PipelineEditor } from '../../src';
 import { fakePlatform, renderUi } from '../../../../test/harness';
-import { agentRun, assistant, liveStream, page, runRef } from './fixtures';
+import { agentRun, assistant, liveStream, page, RUN, runRef } from './fixtures';
 
 const pipeline = {
   owner: 'editor',
@@ -129,8 +129,8 @@ describe('<PipelineEditor>', () => {
       'GET /api/v2/ai/pipelines/p1/': () => pipeline,
       'GET /api/v2/ai/assistants/': () => page([assistant()]),
       'GET /api/v2/sites/': () => [],
-      'POST /api/v2/ai/pipelines/p1/run/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun(status, { text: 'A tight draft.', markdown: 'A tight draft.', steps: [10, 11, 12] }),
+      'POST /api/v2/ai/pipelines/p1/run/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status, { text: 'A tight draft.', markdown: 'A tight draft.', steps: ['r10', 'r11', 'r12'] }),
     });
     renderUi(<PipelineEditor id="p1" />, { api, stream });
     await userEvent.click(await screen.findByRole('button', { name: 'Run' }));

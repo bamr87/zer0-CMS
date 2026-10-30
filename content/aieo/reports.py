@@ -1,6 +1,7 @@
 """Audit reports: the Markdown AIEO's `generate_reports.py` wrote — one per site, and a summary that ranks the sites,
 draws the score distribution and a pattern heatmap, and lists the most common gaps — rendered from audits in the
-platform, and the same as HTML.
+platform, and the same as HTML — held to what the Markdown renders (Wagtail's whitelist), since a report quotes
+crawled titles and URLs and a model's evidence, and Python-Markdown passes raw HTML through.
 
 The renderers are AIEO's, ported line for line, with the time they stamp passed in: given the audits imported from
 `apps/aieo/reports/` they write AIEO's reports byte for byte (`tests/aieo/test_reports.py`). A report is an
@@ -13,6 +14,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import markdown
+from wagtail.whitelist import DEFAULT_ELEMENT_RULES, Whitelister, allow_without_attributes
 
 
 def url_to_filename(url: str) -> str:
@@ -45,8 +47,17 @@ def data_of(audit) -> dict:
     }
 
 
+class ReportHtml(Whitelister):
+    """Headings, paragraphs, lists, emphasis, links and images to safe addresses (Wagtail's rules), tables and code;
+    any other tag unwrapped to its text, and any other attribute dropped."""
+
+    element_rules = DEFAULT_ELEMENT_RULES | dict.fromkeys(
+        ("table", "thead", "tbody", "tr", "th", "td", "code", "pre", "blockquote"), allow_without_attributes
+    )
+
+
 def html(text: str) -> str:
-    return markdown.markdown(text, extensions=["tables", "fenced_code"])
+    return ReportHtml().clean(markdown.markdown(text, extensions=["tables", "fenced_code"]))
 
 
 def score_bar(score: float, max_score: float, width: int = 20) -> str:
