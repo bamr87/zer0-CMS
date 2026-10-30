@@ -14,7 +14,7 @@ reversal: >
   the entrance tunnel. The doomsday vault's first incident was caused by the
   doomsday it was built to hedge — the insurance flooded by the risk.
 planted: 2026-08-06
-gardener: engine (germination cycle 0, domain: history-of-science)
+gardener: "engine (germination cycle 0, domain: history-of-science)"
 alanis: 8/10 — PASS
 sources:
   - Reports on the May 2017 water intrusion at Svalbard; subsequent waterproofing upgrades (completed 2019)

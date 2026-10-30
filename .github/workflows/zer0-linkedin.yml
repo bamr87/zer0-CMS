@@ -1,6 +1,9 @@
 # zer0-linkedin — the LinkedIn distribution lane, as a reusable workflow.
 #
-# A content repository calls it (docs/DISTRIBUTION.md):
+# A content repository calls it (docs/DISTRIBUTION.md). It runs the lane over
+# the caller's own files — `manage.py linkedin` (content/distribution/lane/), the
+# Python port of the Ruby lane this workflow ran until PLAN G5 — and touches no
+# database:
 #
 #   on:
 #     push:
@@ -148,13 +151,20 @@ jobs:
           path: zer0-cms
           persist-credentials: false
 
-      # The lane is stdlib Ruby, like the doctor: no bundle.
-      - uses: ruby/setup-ruby@v1
+      # The lane is the platform's own code (content/distribution/lane/), run
+      # through manage.py with the development settings: no database is opened.
+      - uses: actions/setup-python@v7
         if: steps.gate.outputs.ready == 'true'
         with:
-          ruby-version: "3.3"
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: zer0-cms/content/requirements.txt
 
-      - name: Run zer0-cms linkedin ${{ inputs.command }}
+      - name: Install the platform
+        if: steps.gate.outputs.ready == 'true'
+        run: pip install -r zer0-cms/content/requirements.txt
+
+      - name: Run manage.py linkedin ${{ inputs.command }}
         id: run
         if: steps.gate.outputs.ready == 'true'
         env:
@@ -172,7 +182,7 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p linkedin-report
-          cli=(ruby -I zer0-cms/rails/lib zer0-cms/rails/bin/zer0-cms linkedin)
+          cli=(python zer0-cms/content/manage.py linkedin)
           site=(--site "site/$SITE_PATH")
           case "$COMMAND" in
             publish)
@@ -197,16 +207,26 @@ jobs:
         env:
           SITE_PATH: ${{ inputs.site-path }}
         run: |
-          ruby -rjson -rfileutils -e '
-            report = JSON.parse(File.read(ARGV[0])) rescue exit
-            %w[ledger queue performance].each do |key|
-              source = File.join(ARGV[1], report[key].to_s)
-              next if report[key].to_s.empty? || !File.exist?(source)
-              target = File.join("linkedin-report/state", report[key])
-              FileUtils.mkdir_p(File.dirname(target))
-              FileUtils.cp_r(source, target)
-            end
-          ' linkedin-report/status.json "site/$SITE_PATH" || true
+          python3 - linkedin-report/status.json "site/$SITE_PATH" <<'PY' || true
+          import json, shutil, sys
+          from pathlib import Path
+
+          try:
+              report = json.loads(Path(sys.argv[1]).read_text())
+          except (OSError, ValueError):
+              sys.exit(0)
+          for key in ("ledger", "queue", "performance"):
+              relative = str(report.get(key) or "")
+              source = Path(sys.argv[2]) / relative
+              if not relative or not source.exists():
+                  continue
+              target = Path("linkedin-report/state") / relative
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if source.is_dir():
+                  shutil.copytree(source, target, dirs_exist_ok=True)
+              else:
+                  shutil.copy2(source, target)
+          PY
 
       - name: Commit the ledger, the queue and the statistics back
         if: always() && steps.gate.outputs.ready == 'true' && ((inputs.command == 'publish' && inputs.live) || inputs.command == 'stats')
@@ -219,7 +239,7 @@ jobs:
           if [ ! -s "$report" ]; then echo "No status report; nothing to commit."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          ruby -rjson -e 'r = JSON.parse(File.read(ARGV[0])); %w[ledger queue performance].each { |k| puts File.join(ARGV[1], r[k]) }' \
+          python3 -c 'import json, os, sys; r = json.load(open(sys.argv[1])); print("\n".join(os.path.join(sys.argv[2], r[k]) for k in ("ledger", "queue", "performance")))' \
             "$report" "$SITE_PATH" | while read -r path; do
             if [ -e "$path" ]; then git add -- "$path"; fi
           done

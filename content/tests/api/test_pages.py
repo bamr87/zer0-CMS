@@ -16,8 +16,9 @@ from django.utils import timezone
 from wagtail.models import GroupApprovalTask, GroupPagePermission, Page, Revision, Workflow, WorkflowTask
 
 from agents.models import AgentToken
-from cms.models import ArticlePage, Category, CollectionPage
+from cms.models import ArticlePage, Category, CollectionPage, SiteRootPage
 from cms.tasks import publish_scheduled
+from importers.models import ImportedSource
 from tests.conftest import make_article
 
 PAGES = "/api/v2/content/pages/"
@@ -156,6 +157,10 @@ def test_page_detail_has_fields_blocks_markdown_and_what_the_person_may_do(artic
     assert (perms["edit"], perms["publish"], perms["unpublish"], perms["add_subpage"]) == (True, True, True, False)
     assert body["latest_revision"]["id"] == body["live_revision_id"] and body["preview_url"].endswith("/view_draft/")
     assert body["lock"] is None
+    client = Client()
+    client.force_login(editor)
+    preview = client.get(body["preview_url"])  # one template for every page type (cms/page.html)
+    assert preview.status_code == 200 and "We copy the site to a second disk every night." in preview.content.decode()
 
 
 @pytest.mark.django_db
@@ -164,7 +169,13 @@ def test_creatable_types_follow_the_tree_rules_and_permissions(site_root, articl
     every = {t["type"]: t["label"] for t in client.get("/api/v2/content/types/").json()}
     assert every["cms.ArticlePage"] == "Article page" and "wagtailcore.Page" not in every
     under_site = {t["type"] for t in client.get(f"{PAGES}{site_root.pk}/types/").json()}
-    assert under_site == {"cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"}
+    assert under_site == {
+        "cms.CollectionPage",
+        "cms.ArticlePage",
+        "cms.StandardPage",
+        "cms.BookPage",
+        "aieo.LandingPage",
+    }
     assert client.get(f"{PAGES}{article.pk}/types/").json() == []
     reader = person("reader", "change_page")
     assert signed_in(reader).get(f"{PAGES}{site_root.pk}/types/").json() == []
@@ -437,3 +448,59 @@ def test_revisions_compare_and_revert_as_a_new_draft(article, editor):
     assert client.get(f"{PAGES}{article.pk}/revisions/").json()["count"] == 3
     assert reverted["latest_revision"]["id"] not in (first, second)
     assert ArticlePage.objects.get(pk=article.pk).live_revision_id == first  # a revert is a draft, never a publish
+
+
+@pytest.mark.django_db
+def test_a_file_finds_the_pages_its_import_recorded(site_root, article, editor):
+    """`?source=` (the extension's page for the open file): the file's path from
+    the folder the client has open, whose name ends the site's recorded folder
+    or which is a folder above it."""
+    site_root.source_root = "sites/demo"
+    site_root.save()
+    ImportedSource.objects.create(
+        page=article, site_key="test-site", legacy_path="_posts/backups.md", source_digest="x", import_hash="y"
+    )
+    client = signed_in(editor)
+
+    def found(source):
+        return [p["id"] for p in client.get(PAGES, {"source": source}).json()["results"]]
+
+    assert found("demo/_posts/backups.md") == [article.pk]  # the site's own folder is open
+    assert found("sites/demo/_posts/backups.md") == [article.pk]  # a folder named for the repository's
+    assert found("zer0-cms/sites/demo/_posts/backups.md") == [article.pk]  # the repository is open
+    assert found("other/_posts/backups.md") == []  # another site's file of the same name
+    assert found("_posts/backups.md") == []  # no folder: no evidence of which site
+    assert found("/abs/_posts/backups.md") == [] and found("../_posts/backups.md") == []
+    assert signed_in(person("stranger")).get(PAGES, {"source": "demo/_posts/backups.md"}).json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_a_file_finds_only_its_own_sites_page(root_page, editor):
+    """Two sites with a file at the same path: each folder finds its own site's
+    page, and the folder of a site that was never imported finds none — rather
+    than another site's page, opened as if it were the file's."""
+    cookbook = SiteRootPage(
+        title="Cookbook", slug="cookbook", site_key="cookbook", source_root="sites/zer0-demo-cookbook"
+    )
+    root_page.add_child(instance=cookbook)
+    pot = make_article(cookbook, "Start with the pot, not the recipe", slug="welcome")
+    ImportedSource.objects.create(
+        page=pot, site_key="cookbook", legacy_path="pages/_posts/welcome.md", source_digest="x", import_hash="y"
+    )
+    client = signed_in(editor)
+
+    def found(source):
+        return [p["id"] for p in client.get(PAGES, {"source": source}).json()["results"]]
+
+    assert found("zer0-demo-cookbook/pages/_posts/welcome.md") == [pot.pk]
+    assert found("zer0-demo-garden/pages/_posts/welcome.md") == []  # a site still on files
+    garden = SiteRootPage(title="Garden", slug="garden", site_key="garden", source_root="sites/zer0-demo-garden")
+    root_page.add_child(instance=garden)
+    bed = make_article(garden, "This is a garden, not a blog", slug="welcome")
+    ImportedSource.objects.create(
+        page=bed, site_key="garden", legacy_path="pages/_posts/welcome.md", source_digest="x", import_hash="y"
+    )
+    assert found("zer0-demo-garden/pages/_posts/welcome.md") == [bed.pk]
+    assert found("zer0-demo-cookbook/pages/_posts/welcome.md") == [pot.pk]
+    assert found("zer0-cms/sites/zer0-demo-garden/pages/_posts/welcome.md") == [bed.pk]
+    assert found("pages/_posts/welcome.md") == []

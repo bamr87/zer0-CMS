@@ -33,6 +33,7 @@ from django.db import transaction
 from django.dispatch import Signal
 from django.utils import timezone
 from django.utils.module_loading import import_string
+from wagtail.log_actions import log
 
 from .llm import RecordingMissing, RecordingStale, get_llm
 from .models import AgentRun, AgentStep
@@ -71,6 +72,12 @@ def start_run(
         started_by_event=event_id,
         parent_run=parent,
         trace_id=current_trace_id() or new_trace_id(),
+    )
+    log(
+        run,
+        "zer0.run.start",
+        user=run.started_by,
+        data={"agent": agent.slug, "trigger": trigger, "target": run.target_id},
     )
     if enqueue:
         from .tasks import run_agent
@@ -280,6 +287,7 @@ def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:
             },
         )
         run_finished.send(sender=AgentRun, run=run)
+        log(run, "zer0.run.finish", data={"agent": run.agent.slug, "status": status, "error": error[:500]})
     if run.trigger == "workflow":
         from workflow.services import finish_review
 

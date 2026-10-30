@@ -15,13 +15,7 @@ npm test          # unit + golden + MCP stdio + integration
 
 The fast inner loop skips the VS Code download: `npx tsc -p . --outDir out`, then `npx mocha --ui tdd` over the fourteen pure-Node suites listed in `AGENTS.md`. It needs Node >= 22.12, because the engines seam is an ESM package reached through `require(esm)`.
 
-The Rails `lib/` half needs nothing installed — it is stdlib-only:
-
-```bash
-cd rails && ./bin/test-stdlib
-```
-
-The Rails app needs its bundle: `cd rails && bundle install && bin/rails test && bin/rails zeitwerk:check`. In Docker: `SITES_DIR=.. docker compose up --build` → http://localhost:3001/admin. See [`docs/PLATFORM.md`](docs/PLATFORM.md) and [`docs/CICD.md`](docs/CICD.md).
+The platform (`content/`) and the studio (`web/`) have their own commands in [`AGENTS.md`](AGENTS.md); in Docker, `docker compose --profile content up -d --wait` → http://localhost:8000/studio/. See [`docs/CICD.md`](docs/CICD.md).
 
 ## The rules that are not negotiable
 

@@ -9,10 +9,16 @@ and the Jekyll bridge need on every page:
   `content_hash`, which drives re-embedding and tells the exporter whether a
   page changed since it was imported.
 - `legacy_path`: where the page lived in its Jekyll site, kept for redirects
-  and for the exporter.
+  and for the exporter — and, for a page that is a file of its own
+  (`file_editor_fields`), the path a person gives it (`file_path`, cms/files.py).
 - `front_matter`: the source file's whole front matter, in source order. The
-  typed fields win over it on export, so an editor's change lands and every
-  key no field holds survives.
+  typed fields win over it on export (`front_matter_fields`), so an editor's
+  change lands and every key no field holds survives; a person edits those
+  other keys as the page's raw front matter (cms/files.py).
+- The SEO and social fields beyond Wagtail's own — `canonical_url`, the Open
+  Graph title, description and image, `noindex` (cms/seo.py) — each null while
+  the page says what its file says, so a page read before they existed, or
+  imported since, keeps its file's values and hash.
 
 `ai_keywords` is a JSON list rather than the note's `ArrayField`, so SQLite
 (development and the fast test tier) and Postgres share one schema. Vectors
@@ -49,6 +55,7 @@ from wagtail.snippets.models import register_snippet
 
 from suggestions.panels import SuggestionsPanel
 
+from . import seo
 from .blocks import BodyBlock
 from .fields import OrderedJSONField
 
@@ -63,6 +70,9 @@ POLICY_CHOICES = [
     (POLICY_AUTO, "Auto — agents may publish low-risk changes"),
 ]
 POLICY_ORDER = [POLICY_OFF, POLICY_SUGGEST, POLICY_DRAFT, POLICY_AUTO]
+# The page's file, as a person edits it beside the typed fields (cms/files.py):
+# `file_path` is `legacy_path` under the name a person reads.
+FILE_FIELDS = ("file_path", "front_matter")
 
 
 def _strip_ids(value):
@@ -109,6 +119,42 @@ class BasePage(AgentManagedMixin, Page):
         related_name="+",
         help_text="The page's preview image (front matter `preview`).",
     )
+    # The SEO and social fields beyond Wagtail's own (cms/seo.py): null means "what the file says".
+    og_title = models.CharField(
+        "Open Graph title",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="The title social sites show (front matter `og_title`); empty: the title tag, else the title.",
+    )
+    og_description = models.TextField(
+        "Open Graph description",
+        null=True,
+        blank=True,
+        help_text="The description social sites show (front matter `og_description`); empty: the meta description.",
+    )
+    og_image = models.CharField(
+        "Open Graph image",
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="The image social sites show, a path in the site such as /assets/images/x.png or a full URL "
+        "(front matter `image`, jekyll-seo-tag's og:image); empty: the preview image.",
+    )
+    canonical_url = models.URLField(
+        "canonical URL",
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="The address search engines should treat as this page's, when it is published elsewhere first "
+        "(front matter `canonical_url`); empty: the page's own.",
+    )
+    noindex = models.BooleanField(
+        "hide from search engines",
+        null=True,
+        blank=True,
+        help_text="Ask search engines not to index this page (front matter `noindex`).",
+    )
 
     # The typed fields a subclass adds to the hash, beyond the shared ones.
     hashed_fields: tuple[str, ...] = ()
@@ -124,13 +170,30 @@ class BasePage(AgentManagedMixin, Page):
         "slug",
         "seo_title",
         "search_description",
+        *seo.FIELDS,
         "ai_summary",
         "ai_keywords",
         "agent_policy",
     )
     editor_fields: tuple[str, ...] = ()
-    # Headless first: this template exists for the editor's preview only.
-    template = "cms/page.html"
+    # A page the Jekyll exporter writes as a file of its own also lets a person
+    # edit that file: its path in the site and its raw front matter (FILE_FIELDS,
+    # cms/files.py). Books are left out: their files are the library's (books/).
+    file_editor_fields: tuple[str, ...] = ()
+    # The front-matter keys the exporter writes from a typed field
+    # (exporters/jekyll.py's `front_matter_for`), each with the editor field that
+    # holds it: raw front matter never sets one (cms/files.py).
+    front_matter_fields: dict[str, str] = {
+        "title": "title",
+        "description": "search_description",
+        "seo_title": "seo_title",
+        **seo.KEYS,
+    }
+
+    # Headless first: one template, for the editor's preview only. Wagtail names a
+    # template per page type (`cms/article_page.html` …), which none of them has.
+    def get_template(self, request, *args, **kwargs):
+        return "cms/page.html"
 
     content_panels = Page.content_panels + [FieldPanel("body"), SuggestionsPanel(heading="Agent suggestions")]
     promote_panels = Page.promote_panels + [
@@ -202,6 +265,7 @@ class BasePage(AgentManagedMixin, Page):
             value = self.hashed_value(name)
             if name not in self.sparse_hashed_fields or value != self._meta.get_field(name).get_default():
                 data[name] = value
+        data.update(seo.changed(self))  # only where the page says other than its file
         return data
 
     def hashed_value(self, name):
@@ -229,7 +293,7 @@ class SiteRootPage(BasePage):
     jekyll_config = models.JSONField(default=dict, blank=True, help_text="The parts of _config.yml the bridge reads.")
 
     parent_page_types = ["wagtailcore.Page"]
-    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"]
+    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "aieo.LandingPage"]
     hashed_fields = ("site_key", "jekyll_config")
     editor_fields = ("source_root",)
     content_panels = BasePage.content_panels + [FieldPanel("site_key"), FieldPanel("source_root")]
@@ -242,7 +306,7 @@ class CollectionPage(BasePage):
     collection = models.CharField(max_length=80, help_text="The collection's name, e.g. posts.")
     output_dir = models.CharField(max_length=255, blank=True, help_text="Its directory in the site, e.g. pages/_posts.")
 
-    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage"]
+    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage", "aieo.LandingPage"]
     hashed_fields = ("collection", "output_dir")
     editor_fields = ("collection", "output_dir")
     content_panels = BasePage.content_panels + [FieldPanel("collection"), FieldPanel("output_dir")]
@@ -281,6 +345,14 @@ class ArticlePage(BasePage):
     subpage_types: list[str] = []
     hashed_fields = ("date", "author", "tags", "categories")
     editor_fields = ("date", "author", "tags", "categories")
+    file_editor_fields = FILE_FIELDS
+    front_matter_fields = {
+        **BasePage.front_matter_fields,
+        "date": "date",
+        "author": "author",
+        "tags": "tags",
+        "categories": "categories",
+    }
 
     content_panels = Page.content_panels + [
         MultiFieldPanel([FieldPanel("date"), FieldPanel("author"), FieldPanel("tags"), FieldPanel("categories")]),
@@ -310,6 +382,7 @@ class StandardPage(BasePage):
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage", "cms.StandardPage"]
     subpage_types = ["cms.StandardPage"]
+    file_editor_fields = FILE_FIELDS
 
 
 BOOK_PROFILES = [("book", "Book"), ("abc", "ABC board book"), ("story", "Picture-book story")]
@@ -394,6 +467,15 @@ class BookPage(BasePage):
         validators=[document_list],
         help_text="The book's other files — act guides, README — as [{path, text}].",
     )
+    # A setting, not the book's text: it is in no file of library/<slug>/ and not in the content hash.
+    builtin_bans = models.BooleanField(
+        "built-in bans",
+        default=True,
+        blank=True,
+        help_text="The brand guard's built-in bans, written for marketing copy (“revolutionary”, “leverage synergies”), "
+        "hold for what an agent writes in this book's chapters. Switch them off for fiction that needs the words; the "
+        "markup check and the site's own banned phrases still hold. A site may switch them off for all its books.",
+    )
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types = ["cms.ChapterPage"]
@@ -427,7 +509,16 @@ class BookPage(BasePage):
     )
     sparse_hashed_fields = (*manuscript_fields, "documents")  # new in cms/0002
     # `documents` is edited file by file in the Books workspace (/api/v2/books/<id>/documents/).
-    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style", *manuscript_fields)
+    editor_fields = (
+        "subtitle",
+        "author",
+        "series",
+        "profile",
+        "audience",
+        "art_style",
+        *manuscript_fields,
+        "builtin_bans",
+    )
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -511,8 +602,9 @@ class ChapterPage(BasePage):
 @register_snippet
 class BrandRules(models.Model):
     """The house style an agent reads and the brand guard enforces. The
-    built-in bans (suggestions/guard.py) always run; these patterns add to
-    them, like the extension's `governance.bannedPatternsFile`."""
+    built-in bans (suggestions/guard.py) run everywhere but on a chapter whose
+    book or site switched them off; these patterns add to them, like the
+    extension's `governance.bannedPatternsFile`, and hold there too."""
 
     name = models.CharField(max_length=120)
     is_active = models.BooleanField(default=True)

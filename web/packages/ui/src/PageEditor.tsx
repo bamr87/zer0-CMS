@@ -1,5 +1,6 @@
-// The editor: a page's latest revision — blocks, fields, SEO, settings — with
-// its suggestions and revisions beside it. Save writes a draft revision and
+// The editor: a page's latest revision — blocks, fields, SEO, settings and,
+// for a page that is a file of its site, that file (its path and its raw front
+// matter: the File tab) — with its suggestions and revisions beside it. Save writes a draft revision and
 // sends only what changed plus the revision it was edited from, so a save
 // over someone else's newer one is refused (409) rather than replacing it.
 // Publish, schedule (a time to go live, a time to come down, or both) and
@@ -8,7 +9,11 @@
 // person (`page.lock`: someone else's, a workflow's, a schedule's) opens
 // read-only and says why; cancelling a schedule is the one thing it allows.
 // The AI panel opens beside the editor: an assistant or a pipeline run on the
-// page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx).
+// page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx). The
+// Citability tab scores the page with AIEO and lands an optimize or scrub
+// rewrite there as suggestions too (aieo/PageScore.tsx).
+// Distribute drafts a post of the live page for one of its site's channels
+// (distribution/Compose.tsx); a person approves it in the queue.
 import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,9 +21,11 @@ import type { Block, PageDetail } from '@zer0/api';
 import { useState } from 'react';
 
 import { AiPanel } from './ai/AiPanel';
+import { PageScore } from './aieo/PageScore';
 import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
 import { useApi } from './context';
+import { Distribute } from './distribution/Compose';
 import { FieldsPanel, fromLocalInput, type FieldValues } from './FieldsPanel';
 import { PageResearch } from './research/PageResearch';
 import { RevisionHistory } from './RevisionHistory';
@@ -116,6 +123,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
     : null;
   const can = page.permissions;
   const editable = can.edit && !page.lock;
+  const hasFile = page.field_specs.some((spec) => spec.group === 'file');
   const setField = (name: string, value: unknown) => setFields((current) => ({ ...current, [name]: value }));
   // Accepting a suggestion or reverting makes a new revision, which would replace these edits.
   const hold = page.lock ?? (dirty ? 'You have unsaved edits: save them before accepting a suggestion or reverting.' : undefined);
@@ -141,6 +149,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
           <Anchor href={page.preview_url} target="_blank" rel="noreferrer" size="sm">
             Preview
           </Anchor>
+          <Distribute pageId={page.id} siteId={page.site_id ?? undefined} disabled={!page.live} />
           <Button variant="default" disabled={!dirty || !editable} loading={busy} onClick={() => run('save', changes)}>
             Save draft
           </Button>
@@ -213,10 +222,12 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             <Tabs.List>
               <Tabs.Tab value="content">Content</Tabs.Tab>
               <Tabs.Tab value="seo">SEO</Tabs.Tab>
+              {hasFile ? <Tabs.Tab value="file">File</Tabs.Tab> : null}
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
               <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
               <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
               <Tabs.Tab value="research">Research</Tabs.Tab>
+              <Tabs.Tab value="citability">Citability</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="content" pt="md">
               <Stack>
@@ -227,6 +238,11 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             <Tabs.Panel value="seo" pt="md">
               <FieldsPanel specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
             </Tabs.Panel>
+            {hasFile ? (
+              <Tabs.Panel value="file" pt="md">
+                <FieldsPanel specs={page.field_specs} values={fields} group="file" disabled={!editable} onChange={setField} />
+              </Tabs.Panel>
+            ) : null}
             <Tabs.Panel value="settings" pt="md">
               <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
             </Tabs.Panel>
@@ -243,6 +259,9 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             </Tabs.Panel>
             <Tabs.Panel value="research" pt="md">
               <PageResearch pageId={page.id} pageTitle={page.title} />
+            </Tabs.Panel>
+            <Tabs.Panel value="citability" pt="md">
+              <PageScore pageId={page.id} dirty={dirty} held={editable ? null : (page.lock ?? 'You cannot change this page.')} onReview={() => setTab('suggestions')} />
             </Tabs.Panel>
           </Tabs>
         </Grid.Col>

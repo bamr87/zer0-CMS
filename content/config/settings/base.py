@@ -15,6 +15,8 @@ import environ
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers as cors_default_headers
 
+from accounts.providers import group_map, socialaccount_providers
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # content/
 REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
 
@@ -51,19 +53,28 @@ INSTALLED_APPS = [
     "ideas",
     "newsroom",
     "books",
+    "sites",
+    "jobs",
+    "distribution",
+    "automations",
+    "aieo",
     "suggestions",
     "graph",
     "workflow",
     "outbox",
+    "outboxdesk",
     "api",
     "mcp_server",
     "importers",
     "exporters",
     "ops",
+    "accounts",
     # Wagtail.
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.contrib.settings",
+    "wagtail.contrib.table_block",
+    "wagtail.contrib.typed_table_block",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -85,6 +96,16 @@ INSTALLED_APPS = [
     "grapple",
     # Email through an ESP (newsroom/README.md).
     "anymail",
+    # Accounts (accounts/README.md): django-allauth, served headless to the studio — local accounts, OpenID
+    # Connect IdPs and GitHub from the environment, TOTP, recovery codes and passkeys, the session list.
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
+    "allauth.socialaccount.providers.github",
+    "allauth.mfa",
+    "allauth.usersessions",
+    "allauth.headless",
     # Django.
     "django.contrib.admin",
     "django.contrib.auth",
@@ -109,6 +130,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # allauth's request context, and the session list's row for a session that started before it existed.
+    "allauth.account.middleware.AccountMiddleware",
+    "allauth.usersessions.middleware.UserSessionsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
@@ -142,12 +166,83 @@ DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / '
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ── Accounts: sign-in, MFA, sessions, password policy (accounts/README.md) ──
+# django-allauth, configured rather than hand-rolled, and served only headless
+# (`/_allauth/browser/v1/…`) to the studio's sign-in and account menu: every
+# screen is React in web/, never a template here. Signing in to the Wagtail
+# admin or the Django admin goes there too (accounts/views.py), so a password
+# never skips a second factor through another form.
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+LOGIN_URL = "/studio/"
+WAGTAILADMIN_LOGIN_URL = LOGIN_URL
+# The studio's account menu changes and resets passwords (allauth), not the admin's own forms.
+WAGTAIL_PASSWORD_MANAGEMENT_ENABLED = False
+WAGTAIL_PASSWORD_RESET_ENABLED = False
+HEADLESS_ONLY = True
+HEADLESS_CLIENTS = ("browser", "app")
+# Where allauth's email and provider redirects send a person: the studio's account screens.
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": "/studio/account/verify-email/{key}",
+    "account_reset_password": "/studio/account/password/reset",
+    "account_reset_password_from_key": "/studio/account/password/reset/{key}",
+    "account_signup": "/studio/account/signup",
+    "socialaccount_login_error": "/studio/account/provider/callback",
+}
+ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.SocialAccountAdapter"
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+# Sign-up is closed unless a deployment opens it; an operator (or an OpenID Connect IdP) makes accounts otherwise.
+SIGNUP_OPEN = env.bool("SIGNUP_OPEN", default=False)
+# mandatory: no sign-in until the address is verified — by a code sent to it, as are sign-in codes and password
+# resets, so every flow finishes in the screen that started it. An account an operator made verifies its address
+# at its first sign-in (seed_demo's person is verified already). `optional` or `none` send a link instead, which
+# opens the studio's account screen (allauth verifies by code only when verification is mandatory).
+ACCOUNT_EMAIL_VERIFICATION = env("ACCOUNT_EMAIL_VERIFICATION", default="mandatory")
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+ACCOUNT_LOGIN_BY_CODE_ENABLED = env.bool("ACCOUNT_LOGIN_BY_CODE_ENABLED", default=True)
+ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[zer0-CMS] "
+# Changing the password, the second factor or the email asks for the password (or a factor) again after this long.
+ACCOUNT_REAUTHENTICATION_TIMEOUT = env.int("ACCOUNT_REAUTHENTICATION_TIMEOUT", default=300)
+# The password policy: these validators, at sign-up, change and reset.
+PASSWORD_MIN_LENGTH = env.int("PASSWORD_MIN_LENGTH", default=12)
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": PASSWORD_MIN_LENGTH},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+# The session policy: how long a sign-in lasts, whether closing the browser ends it, and cookies a page's
+# script cannot read or another site send.
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 24 * 14)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = env.bool("SESSION_EXPIRE_AT_BROWSER_CLOSE", default=False)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+# The session list records each sign-in; it does not write on every request (USERSESSIONS_TRACK_ACTIVITY), for the
+# reason authenticating writes nothing in a request (content/AGENTS.md).
+USERSESSIONS_TRACK_ACTIVITY = False
+# Second factors: TOTP, recovery codes, passkeys (WebAuthn) — which also sign in on their own.
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes", "webauthn"]
+MFA_PASSKEY_LOGIN_ENABLED = True
+# Signing up with a passkey instead of a password, where sign-up is open: allauth needs the address verified by code.
+MFA_PASSKEY_SIGNUP_ENABLED = ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+MFA_TOTP_ISSUER = "zer0-CMS"
+MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN = env.bool("MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN", default=False)
+# Third-party sign-in, each from the environment (accounts/providers.py): one OpenID Connect app per IdP named in
+# OIDC_PROVIDERS, and GitHub when GITHUB_LOGIN_CLIENT_ID is set. None set: local accounts only.
+SOCIALACCOUNT_PROVIDERS = socialaccount_providers(env.ENVIRON)
+SOCIALACCOUNT_STORE_TOKENS = False
+# An IdP's groups claim → Wagtail groups, synced at each sign-in through that IdP (accounts/groups.py).
+OIDC_GROUP_MAP = group_map(env("OIDC_GROUP_MAP", default=""))
+OIDC_GROUPS_CLAIM = env("OIDC_GROUPS_CLAIM", default="groups")
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -215,6 +310,8 @@ GRAPPLE = {
 # rate turns a scope off.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        # A person's token first: it answers only for `zer0u_`, so an agent's still reaches its own.
+        "accounts.auth.UserTokenAuthentication",
         "agents.auth.AgentTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
@@ -241,7 +338,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
     "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
-    "extension, the session, sites, pages, revisions, publishing and the review inbox. "
+    "extension, who is signed in and their API tokens, sites, pages, revisions, publishing and the review inbox. "
+    "Signing in is django-allauth's headless API at /_allauth/, which documents itself. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",
@@ -261,6 +359,7 @@ SPECTACULAR_SETTINGS = {
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
         "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "OriginEnum": "ideas.models.Idea.ORIGINS",
         "BrainstormKindEnum": "ideas.services.KINDS",
         "PromotionEnum": "ideas.serializers.PROMOTIONS",
         "SourceKindEnum": "research.models.Source.KINDS",
@@ -277,6 +376,34 @@ SPECTACULAR_SETTINGS = {
         "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
         "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
         "BookTaskEnum": "books.serializers.TASK_CHOICES",
+        "HandoffKindEnum": "outboxdesk.serializers.KINDS",
+        "SendableKindEnum": "outboxdesk.services.SENDABLE",
+        "ClaimVerdictEnum": "outboxdesk.serializers.VERDICTS",
+        "OutboxRunStatusEnum": "outboxdesk.models.Status",
+        "JobStatusEnum": "jobs.models.Job.Status",
+        "ContentSourceEnum": "sites.models.ManagedSite.ContentSource",
+        "SiteRenderEnum": "sites.models.ManagedSite.Render",
+        "JekyllServerEnum": "sites.models.ManagedSite.Server",
+        "DistributionKindEnum": "distribution.models.Kind",
+        "DistributionPostKindEnum": "distribution.models.POST_KINDS",
+        "DistributionPostStatusEnum": "distribution.models.DistributionPost.Status",
+        "DistributionOriginEnum": "distribution.models.DistributionPost.Origin",
+        "LedgerStateEnum": "distribution.models.LEDGER_STATES",
+        "GuardLevelEnum": "distribution.serializers.LEVELS",
+        "AutomationOnErrorEnum": "automations.models.Automation.ON_ERROR",
+        "AutomationRunStatusEnum": "automations.models.AutomationRun.STATUSES",
+        "AutomationRunTriggerEnum": "automations.models.AutomationRun.TRIGGERS",
+        "AuditKindEnum": "aieo.models.Audit.KINDS",
+        "AuditMethodEnum": "aieo.models.Audit.METHODS",
+        "AuditStatusEnum": "aieo.models.Audit.STATUSES",
+        "CitationCheckStatusEnum": "aieo.models.CitationCheck.STATUSES",
+        "ConnectorKindEnum": "aieo.models.Connector.KINDS",
+        "ConnectorStatusEnum": "aieo.models.Connector.STATUSES",
+        "RewriteModeEnum": "aieo.serializers.MODES",
+        "RewriteStyleEnum": "aieo.serializers.STYLES",
+        "AieoAgentGroupEnum": "aieo.serializers.GROUPS",
+        "TokenScopeEnum": "accounts.models.SCOPES",
+        "TokenStateEnum": "accounts.serializers.TOKEN_STATES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -326,11 +453,22 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
+    # The outbox harness's belt: one relay pass a minute delivers what stations sent (outboxdesk/tasks.py).
+    "outbox-belt": {"task": "outboxdesk.tasks.deliver_belt", "schedule": 60.0},
+    # Aggregate statistics for every LinkedIn channel's published posts, once a day (distribution/tasks.py).
+    "distribution-statistics": {"task": "distribution.tasks.ingest_statistics", "schedule": crontab(hour=4, minute=23)},
+    # The automations whose schedule came due: one dispatcher reads every cron line (automations/tasks.py).
+    "automations-schedule": {"task": "automations.tasks.tick", "schedule": 60.0},
+    # AIEO's tracked citation questions that are due, asked of every engine again (aieo/tasks.py).
+    "aieo-citations": {"task": "aieo.tasks.check_citations", "schedule": 3600.0},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
-# publishes pages.
-CELERY_TASK_ROUTES = {f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")}
+# publishes pages. An automation's run joins it, since its webhooks and email wait on someone else's server too.
+CELERY_TASK_ROUTES = {
+    **{f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")},
+    "automations.tasks.execute_run": {"queue": "research"},
+}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm
@@ -350,8 +488,10 @@ AGENT_DEFINITIONS_DIR = BASE_DIR / "agents" / "definitions"
 AI_PROVIDERS: dict[str, str] = {}
 # The provider a request uses when no ProviderConfig row is flagged default.
 AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
-# Fernet keys for provider credentials, the newest first; none derives one from
-# SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`.
+# Fernet keys for provider credentials, distribution's channel credentials,
+# automations' webhook secrets and AIEO's connector credentials, the newest
+# first; none derives one from SECRET_KEY (ai/crypto.py). Rotate with
+# `manage.py rotate_ai_credentials`, which re-encrypts them all.
 AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 
 # ── Books (books/README.md) ─────────────────────────────────────────────────
@@ -360,6 +500,31 @@ AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 # decides its permanent home — and the site key of the site root they live under.
 BOOKS_LIBRARY_DIR = Path(env("BOOKS_LIBRARY_DIR", default=str(REPO_ROOT / "packages" / "books" / "library")))
 BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
+
+# ── Sites (sites/README.md) ─────────────────────────────────────────────────
+# Where checkouts outside this repository may be registered from (one or two
+# levels down, as the Rails fleet CMS discovered them); unset, only the
+# repository's own sites can be.
+SITES_DIR = env("SITES_DIR", default="")
+# ── Distribution (distribution/README.md) ───────────────────────────────────
+# A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
+# channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
+# LinkedIn lane always had), ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
+DISTRIBUTION_ARMED = {
+    kind
+    for kind, variable in (
+        ("linkedin", "ZER0_LINKEDIN_PUBLISH"),
+        ("wordpress", "ZER0_WORDPRESS_PUBLISH"),
+        ("github_pr", "ZER0_GITHUB_PR_PUBLISH"),
+        ("email", "ZER0_EMAIL_PUBLISH"),
+    )
+    if env.bool(variable, default=False)
+}
+# The platform's LinkedIn app (connecting an account, refreshing and introspecting its token), and the address
+# LinkedIn returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/linkedin/.
+LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
+LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
+LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)
@@ -384,6 +549,19 @@ RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 10
 # extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
 RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 
+# ── Automations (automations/README.md) ─────────────────────────────────────
+# How many emails one person's automations may send in an hour, all of them together (recipients counted).
+AUTOMATIONS_EMAILS_PER_HOUR = env.int("AUTOMATIONS_EMAILS_PER_HOUR", default=100)
+
+# ── AIEO (aieo/README.md) ───────────────────────────────────────────────────
+# The visual audit: a screenshot in a headless browser (Playwright, an optional install) whose every request goes
+# through the research fetcher's guard; off unless set.
+AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
+# Seconds a GA4, Search Console or DataForSEO request may take (aieo/connectors.py).
+AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
+# The citability review (the `aieo` agent as a workflow task) passes a page that scores at least this.
+AIEO_REVIEW_MIN_SCORE = env.float("AIEO_REVIEW_MIN_SCORE", default=40.0)
+
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"
 EVENTS_SCHEMA_BASE_URI = "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/"
@@ -391,6 +569,22 @@ EVENTS_SOURCE = "zer0-cms/content"
 EVENTS_STREAM = env("EVENTS_STREAM", default="zer0:content")
 # OUTBOX_RELAY: redis (Redis Streams, PLAN-D6) | memory (tests)
 OUTBOX_RELAY = env("OUTBOX_RELAY", default="redis")
+
+# ── The outbox desk (outboxdesk/README.md, ADR 0007) ─────────────────────────
+# The outbox harness (bamr87/outbox) run from the platform. Its belt lives in files that are the record — each
+# station's outbox and inbox, the relay's ledger.jsonl and dead_letter.jsonl — under OUTBOX_BELT_ROOT; trials and
+# claim checks write their arenas under OUTBOX_OUT_DIR (`runs/<run-id>/`, as the harness's `--out`). Compose keeps
+# both on the `outbox-data` volume. The stations are the belt's (the e2e's by default); a person sends as the
+# editor station, and a page going live is announced by the publisher station to OUTBOX_BELT_PUBLISHED_TO.
+OUTBOX_OUT_DIR = Path(env("OUTBOX_OUT_DIR", default=str(BASE_DIR / "var" / "outbox")))
+OUTBOX_BELT_ROOT = Path(env("OUTBOX_BELT_ROOT", default=str(OUTBOX_OUT_DIR / "belt")))
+OUTBOX_BELT_STATIONS = env.list(
+    "OUTBOX_BELT_STATIONS",
+    default=["scout-a", "scout-b", "wire-scout", "planner", "drafter", "verifier", "editor", "publisher", "learner"],
+)
+OUTBOX_BELT_EDITOR = env("OUTBOX_BELT_EDITOR", default="editor")
+OUTBOX_BELT_PUBLISHER = env("OUTBOX_BELT_PUBLISHER", default="publisher")
+OUTBOX_BELT_PUBLISHED_TO = env.list("OUTBOX_BELT_PUBLISHED_TO", default=["learner", "ledger"])
 
 # ── MCP (mcp_server/README.md) ──────────────────────────────────────────────
 # Origins a browser-based MCP client may call from; a request with any other
@@ -406,6 +600,9 @@ LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 LOG_FORMAT = env("LOG_FORMAT", default="text")
 if LOG_FORMAT not in ("json", "text"):
     LOG_FORMAT = "text"
+# Django's error reports (the technical 500 page, the mails to admins) redact
+# token shapes in frame variables and hide `sensitive_variables` in development too.
+DEFAULT_EXCEPTION_REPORTER_FILTER = "ops.logging.ExceptionReporterFilter"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

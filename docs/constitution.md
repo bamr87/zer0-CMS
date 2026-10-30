@@ -16,8 +16,6 @@ _Source: README.md._
 
 These rules are lifted from the repo's own agent guide; breaking one is grounds to reject a PR.
 
-- Rails never writes content tables. Don't add a third Rails writer. _(AGENTS.md)_
-- Django never reads the Rails database; it receives Rails data as aggregated events (`app.user.interaction`) or through Rails MCP tools. _(AGENTS.md)_
 - Frontends (the Jekyll sites, the theme) and clients (the VS Code extension) are headless: they consume APIs, exported files and stored outputs, never a database. _(AGENTS.md)_
 - Every tool declares `effect` (`read|propose|write|publish`) and `perms`, and runs as an agent Django user (`agent:<slug>`). _(AGENTS.md)_
 - New agents start at policy `suggest`. _(AGENTS.md)_

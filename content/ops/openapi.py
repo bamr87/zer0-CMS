@@ -3,8 +3,10 @@
 drf-spectacular walks a URLconf; this one holds the platform's own REST
 endpoints (`api/urls.py` `urlpatterns`, the AI content layer's router,
 `ai/urls.py`, the ideas and research routers, `ideas/urls.py` and
-`research/urls.py`, the newsroom's, `newsroom/urls.py`, and the books app's,
-`books/urls.py`) and nothing else. Wagtail's
+`research/urls.py`, the newsroom's, `newsroom/urls.py`, the books app's, `books/urls.py`, the outbox desk's,
+`outboxdesk/urls.py`, the site registry's and jobs', `sites/urls.py` and `jobs/urls.py`, distribution's,
+`distribution/urls.py`, the automations', `automations/urls.py`, AIEO's, `aieo/urls.py`, and a person's tokens,
+`accounts/urls.py`) and nothing else — allauth's headless API (`/_allauth/`) documents itself. Wagtail's
 `pages`/`images`/`documents` viewsets build their serializer per request
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
@@ -28,6 +30,13 @@ def __getattr__(name):
             path("api/v2/research/", include("research.urls")),
             path("api/v2/newsroom/", include("newsroom.urls")),
             path("api/v2/books/", include("books.urls")),
+            path("api/v2/outbox/", include("outboxdesk.urls")),
+            path("api/v2/sites/", include("sites.urls")),
+            path("api/v2/jobs/", include("jobs.urls")),
+            path("api/v2/distribution/", include("distribution.urls")),
+            path("api/v2/automations/", include("automations.urls")),
+            path("api/v2/aieo/", include("aieo.urls")),
+            path("api/v2/account/", include("accounts.urls")),
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -45,6 +54,23 @@ class AgentTokenScheme(OpenApiAuthenticationExtension):
             "scheme": "bearer",
             "bearerFormat": "zer0_…",
             "description": "An agent token (`manage.py agent_token <slug> --name …`); the caller acts as that agent user.",
+        }
+
+
+class UserTokenScheme(OpenApiAuthenticationExtension):
+    """How `accounts.auth.UserTokenAuthentication` appears in the document."""
+
+    target_class = "accounts.auth.UserTokenAuthentication"
+    name = "userToken"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "zer0u_…",
+            "description": "A person's token (issued in the studio's account menu, or `manage.py user_token <username> "
+            "--name …`), as the VS Code extension sends it; the caller acts as that person, and a token without the "
+            "`write` scope may only read.",
         }
 
 

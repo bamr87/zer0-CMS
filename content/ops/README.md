@@ -8,11 +8,11 @@ What an operator, a load balancer and a log pipeline need from the platform, and
 | `readiness.py` | The checks `/readyz` runs, each bounded (0.5 s on Redis). | BE-10 |
 | `context.py` | The request id: bound for the request's duration, echoed from `X-Request-Id` when it is safe to log, else a UUID4. | BE-04 |
 | `middleware.py` | `RequestIdMiddleware` (first in `MIDDLEWARE`: `X-Request-Id` and `X-App-Version` on every response), `AccessLogMiddleware` (one line per request, probes excepted), `SecurityHeadersMiddleware` (`Permissions-Policy`, a report-only CSP). | BE-04, OPS-11, OPS-23 |
-| `logging.py` | `JsonFormatter` (`ts level msg logger request_id trace_id app version` + extras), `TextFormatter`, `RedactionFilter` and `ContextFilter`; `redact()` scrubs `sk-ant-`, `ghp_`, `github_pat_`, `AIza`, this platform's `zer0_` tokens and `Authorization` values. `LOG_FORMAT` is `json` or `text`. | OPS-10, OPS-12 |
+| `logging.py` | `JsonFormatter` (`ts level msg logger request_id trace_id app version` + extras), `TextFormatter`, `RedactionFilter` and `ContextFilter`; `redact()` scrubs `sk-ant-`, `ghp_`, `github_pat_`, `AIza`, this platform's `zer0_` (agent) and `zer0u_` (person) tokens and `Authorization` values. `ExceptionReporterFilter` (`DEFAULT_EXCEPTION_REPORTER_FILTER`) redacts the same shapes in the frame variables of Django's error reports and keeps `sensitive_variables` hidden with `DEBUG` on too. `LOG_FORMAT` is `json` or `text`. | OPS-10, OPS-12 |
 | `errors.py` | The envelope and the handlers that produce it (below). | BE-20, BE-21, BE-22 |
 | `throttling.py` | Per anonymous address, per person, per agent token; `429` + `Retry-After`; an empty rate turns a scope off. | BE-05 |
 | `openapi.py` | The document's URLconf (`SERVE_URLCONF`), the envelope's schema and the agent-token security scheme. | BE-12, BE-31 |
-| `sentry.py` | Error reporting when `SENTRY_DSN` is set, release-tagged, request-id-tagged, redacted. | OPS-13 |
+| `sentry.py` | Error reporting when `SENTRY_DSN` is set, release-tagged, request-id-tagged, and redacted: every string in an event — the message, each exception's value, every frame's variables — goes through `redact()`. | OPS-13 |
 | `apps.py` | System check `ops.E001`: `CORS_ALLOW_ALL_ORIGINS` with credentials is refused. | BE-06 |
 
 ## The envelope
@@ -30,9 +30,10 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 |---|---|---|
 | `auth.required` | 401 | no credentials (`WWW-Authenticate: Bearer`) |
 | `auth.invalid_token` | 401 | a bearer token that is unknown, revoked or inactive |
-| `auth.forbidden` | 403 | signed in, not allowed |
-| `auth.csrf_failed` | 403 | a session-authenticated POST without the CSRF token, or a sign-in without it |
-| `auth.invalid_credentials` | 400 | a sign-in (`/api/v2/session/login`) with a wrong username or password |
+| `auth.forbidden` | 403 | signed in, not allowed — and a person's token without the `write` scope on anything but a read |
+| `auth.session_required` | 403 | issuing an API token with a token (`/api/v2/account/tokens/`): only a signed-in session issues one |
+| `auth.csrf_failed` | 403 | a session-authenticated POST without the CSRF token |
+| `token.refused` | 422 | a token that cannot be issued (an agent's, a superuser's not asked for, a scope that is not one) |
 | `request.malformed` | 400 | unparsable body or query |
 | `request.method_not_allowed` | 405 | |
 | `request.unsupported_media_type` | 415 | |
@@ -45,7 +46,7 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 | `upstream.unavailable` | 503 | a dependency the request needed is down |
 | `internal.error` | 500 | |
 
-Two surfaces keep their own protocol's shape and carry the same ids: **GraphQL** keeps its `errors` array and adds `extensions.code` (`graphql.invalid` for a parse or validation error, the resolver's own code or `graphql.error` for an error raised on purpose, `internal.error` for a crash — with the message replaced) and `extensions.request_id`; **MCP** keeps JSON-RPC errors and adds `data.request_id` over HTTP (a crash is `-32603`), and nothing over stdio, where there is no request.
+Two surfaces keep their own protocol's shape and carry the same ids: **GraphQL** keeps its `errors` array and adds `extensions.code` (`graphql.invalid` for a parse or validation error, the resolver's own code or `graphql.error` for an error raised on purpose, `internal.error` for a crash — with the message replaced) and `extensions.request_id`; **MCP** keeps JSON-RPC errors and adds `data.request_id` over HTTP (a crash is `-32603`), and nothing over stdio, where there is no request. Signing in is django-allauth's headless API (`/_allauth/`, accounts/README.md), which answers in its own documented shape (`status`, `data`, `meta`, `errors`), as its clients expect.
 
 ## Origins
 
@@ -54,6 +55,8 @@ Two allowlists on purpose: `CORS_ALLOWED_ORIGINS` decides which browser origins 
 ## The OpenAPI document
 
 `schemas/openapi/openapi.json` is generated and committed, and CI fails when it drifts, like the GraphQL SDL and the agent schema. It covers the platform's own endpoints under `/api/v2/`; Wagtail's `pages`, `images` and `documents` viewsets build their serializer per request and cannot be introspected, so they are documented by Wagtail and listed in the description. The docs UI is at `/api/v2/docs/` where `API_DOCS_ENABLED` is true (development and tests; off in production by default).
+
+It is the same document whichever database generates it, and `content.yml` checks it on SQLite and on Postgres. A ModelSerializer gives a writable integer field the bounds Django reads from the database (`connection.ops.integer_field_range`: 64-bit on SQLite, 16- or 32-bit on Postgres), so a field the API only answers with is read-only (`read_only_fields`), and one it accepts is declared with the bounds the API means; `tests/ops/test_openapi.py` fails on any bound that is a database's integer range.
 
 ```bash
 cd content && python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json

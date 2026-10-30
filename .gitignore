@@ -6,10 +6,6 @@ out
 .DS_Store
 .env
 todo.md
-rails/storage/*.sqlite3
-rails/storage/*.sqlite3-*
-rails/log/*.log
-rails/tmp
 
 # The theme's docs site, fetched by content.yml for the round-trip fixture (ADR 0005).
 .cache/

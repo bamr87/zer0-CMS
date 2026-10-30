@@ -36,11 +36,12 @@ from django.db import transaction
 from django.utils import timezone
 from wagtail.admin.rich_text.converters.editor_html import EditorHTMLConverter
 from wagtail.blocks import RichTextBlock
+from wagtail.log_actions import log
 from wagtail.models import Revision
 
 from agents.schema import META_FIELDS, BlockInvalid, validate_block
 
-from .guard import has_errors, markup_findings, page_findings, text_of
+from .guard import builtin_bans, has_errors, markup_findings, page_findings, site_of, text_of
 from .models import BlockProvenance, Suggestion, target_content_type
 
 IMAGE_META_FIELDS = ("ai_alt", "ai_caption", "ai_tags")
@@ -94,15 +95,17 @@ def clean_meta(field: str, value):
     return value
 
 
-def guard(value, block_type=None, before=None):
+def guard(value, block_type=None, before=None, site=None, builtin=True):
     """The checks every agent-proposed value passes, at propose time and again
     at accept time: the brand guard — on what a replace adds to the block it
-    replaces (`before`), so the author's own words never block it — and,
-    outside a code block, which shows markup rather than running it, no active
-    markup at all."""
+    replaces (`before`), so the author's own words never block it, with the
+    brand rules of the `site` it is for, and the built-in bans unless a book's
+    chapter is exempt from them (`guard.builtin_bans`) — and, outside a code
+    block, which shows markup rather than running it, no active markup at all."""
     text = text_of(value)
     old = None if before is None else text_of(before)
-    findings = page_findings(text, before=old) + ([] if block_type == "code" else markup_findings(text))
+    findings = page_findings(text, before=old, site=site, builtin=builtin)
+    findings += [] if block_type == "code" else markup_findings(text)
     if has_errors(findings):
         raise SuggestionError("brand guard: " + "; ".join(f["message"] for f in findings if f["level"] == "error"))
     return findings
@@ -168,9 +171,10 @@ def validate_proposal(target, op, block_id, payload, field):
         guard(value)
         return {"value": value}
     latest = target.get_latest_revision_as_object()
+    site, builtin = site_of(target), builtin_bans(target)
     if op == Suggestion.META:
         value = clean_meta(field, (payload or {}).get("value"))
-        guard(value)
+        guard(value, site=site, builtin=builtin)
         return {"value": value}
     if op in (Suggestion.REPLACE, Suggestion.DELETE) and block_id not in _block_ids(latest):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
@@ -178,9 +182,8 @@ def validate_proposal(target, op, block_id, payload, field):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
     if op in (Suggestion.INSERT, Suggestion.REPLACE):
         block = clean_block(payload)
-        guard(
-            block["value"], block["type"], before=_block_value(latest, block_id) if op == Suggestion.REPLACE else None
-        )
+        before = _block_value(latest, block_id) if op == Suggestion.REPLACE else None
+        guard(block["value"], block["type"], before=before, site=site, builtin=builtin)
         return block
     if op == Suggestion.DELETE:
         return {}
@@ -207,6 +210,7 @@ def propose(*, target, op, user, run=None, agent=None, block_id="", payload=None
         base_revision=base,
         created_by=user,
     )
+    log(suggestion, "zer0.suggestion.propose", user=user, data=_logged(suggestion))
     emit(
         "content.suggestion.created",
         subject=f"{'page' if isinstance(target, BasePage) else 'image'}:{target.pk}",
@@ -222,6 +226,17 @@ def propose(*, target, op, user, run=None, agent=None, block_id="", payload=None
         },
     )
     return suggestion
+
+
+def _logged(suggestion) -> dict:
+    """What a suggestion's log entry records beside who and when (`wagtail.log_actions.log`)."""
+    return {
+        "target": f"{suggestion.target_ct.model}:{suggestion.target_id}",
+        "op": suggestion.op,
+        "field": suggestion.field or None,
+        "block_id": suggestion.block_id or None,
+        "run_id": suggestion.run_id,
+    }
 
 
 # ── accept / reject ────────────────────────────────────────────────────────
@@ -285,13 +300,14 @@ def accept(suggestions, user):
         # same revision runs after this one and builds on its revision; and a
         # page someone has locked is refused, as for any other writer.
         page = writable(target, user).get_latest_revision_as_object()
+        site, builtin = site_of(target), builtin_bans(target)
         for s in rest:
             payload = s.payload
             if s.op == Suggestion.META:
-                guard(payload.get("value"))
+                guard(payload.get("value"), site=site, builtin=builtin)
             elif s.op in (Suggestion.INSERT, Suggestion.REPLACE):
                 before = _block_value(page, s.block_id) if s.op == Suggestion.REPLACE else None
-                guard(payload.get("value"), payload.get("type"), before=before)
+                guard(payload.get("value"), payload.get("type"), before=before, site=site, builtin=builtin)
             block = apply_op(page, s.op, block_id=s.block_id, payload=payload, field=s.field)
             if block:
                 written.append((s, block))
@@ -319,6 +335,7 @@ def accept(suggestions, user):
         s.decided_at = now
         s.applied_revision = applied
         s.save(update_fields=["status", "decided_by", "decided_at", "applied_revision"])
+        log(s, "zer0.suggestion.accept", user=user, data={**_logged(s), "revision_id": applied.pk if applied else None})
     runs = {s.run for s in suggestions if s.run}
     _record_human_step(
         runs,
@@ -344,6 +361,7 @@ def reject(suggestion, user, reason=""):
     suggestion.decided_at = timezone.now()
     suggestion.error = reason
     suggestion.save(update_fields=["status", "decided_by", "decided_at", "error"])
+    log(suggestion, "zer0.suggestion.reject", user=user, data={**_logged(suggestion), "reason": reason})
     if suggestion.run:
         _record_human_step([suggestion.run], user, "reject", {"suggestion": suggestion.pk}, {"reason": reason})
     return suggestion

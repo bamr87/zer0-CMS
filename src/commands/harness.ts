@@ -1210,7 +1210,7 @@ export function specIdFrom(arg: unknown): string | undefined {
 /** Reveal one of the two tabs, exactly as `fleet.open` does. */
 async function openRoute(shell: Zer0Shell, route: 'harness' | 'workflows'): Promise<void> {
   await shell.context.workspaceState.update(ROUTE_STATE_KEY, route);
-  await vscode.commands.executeCommand('zer0Cms.dashboard');
+  await vscode.commands.executeCommand('zer0Cms.dashboard.files');
 }
 
 export function registerHarnessCommands(shell: Zer0Shell): HarnessActions {

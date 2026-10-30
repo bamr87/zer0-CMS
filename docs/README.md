@@ -36,17 +36,16 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
-| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the five bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS. |
+| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the six bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS… |
 | [`docs/CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`docs/CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, every `zer0Cms.*` setting (generated from `package.json`), the placeholder tokens, and which layer a decision belongs in. |
 | [`docs/constitution.md`](constitution.md) | The rules every change to this repo must satisfy, whoever makes it — a human or an AI agent. Agents read this before [AGENTS.md](../AGENTS.md) conventions, the [PRD](../PRD.md), or the [feature catalog](../features/features.yml). Ratified… |
-| [`docs/DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane — queue, brand guard, human approval, ledger and the reusable workflow — that carries a site's content to LinkedIn and its aggregate response back. |
+| [`docs/DISTRIBUTION.md`](DISTRIBUTION.md) | Distribution on the platform — channels (LinkedIn, WordPress, GitHub pull requests, newsletters), the queue, the brand guard, a person's approval, the ledger and statistics — and the LinkedIn lane a site that is still files runs from its… |
 | [`docs/MONOREPO.md`](MONOREPO.md) | Every project under `packages/`, `sites/` and `apps/` — the sources the platform is absorbing (ADR 0006) — how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs… |
-| [`docs/PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0006, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
-| [`docs/amendments/`](amendments/README.md) | The append-only log of changes to [the constitution](constitution.md). |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0008, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
+| [`docs/amendments/`](amendments/README.md) | The numbered, append-only record of every change to the constitution, with its status. |
 
 ### `schemas/`
 
@@ -67,6 +66,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | --- | --- |
 | [`docs/plan/agent-native-design.md`](plan/agent-native-design.md) | The design note the plan implements ("the note"): agent runs as content-adjacent data — Wagtail revisions, moderation tasks and graph edges — across a Django/Wagtail content plane and a Rails experience plane. |
 | [`docs/plan/PLAN.md`](plan/PLAN.md) | The build plan: ADR 0006's order of work (§ 3), every milestone and phase with what is done, what is blocked and what overtook it, and the open decisions. |
+| [`docs/plan/rails-cms-spec.md`](plan/rails-cms-spec.md) | What the deleted Rails fleet CMS (`rails/`) did that the platform does not do yet — one section per open capability, with what Rails did, where the platform stands and what to build — so the code could go while its behaviour stays… |
 | [`docs/plan/TARGET.md`](plan/TARGET.md) | A comprehensive application for writing articles, creating content, brainstorming ideas, gathering information, operating a news site and writing books — a robust React frontend over a Python and Postgres backend, with AI integrations and… |
 
 <!-- AUTO:docs-index:end -->

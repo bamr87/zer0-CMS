@@ -1,11 +1,11 @@
 // The studio's frame: the navigation over every area, the site switcher, the
-// light/dark switch and sign-out, around whichever area is open.
-import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Select, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
+// light/dark switch and the person's menu (their account, API tokens,
+// sign-out), around whichever area is open.
+import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconMoon, IconSun } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
-import { call, useApi } from '@zer0/ui';
-import { Link, Outlet, useLocation } from 'react-router';
+import { SitePicker } from '@zer0/ui';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { AREAS } from './areas';
 import { useSignOut, type Person } from './auth';
@@ -51,20 +51,8 @@ export function Shell({ person }: { person: Person }) {
 }
 
 function SiteSwitcher() {
-  const api = useApi();
   const { siteId, setSiteId } = useSite();
-  const sites = useQuery({ queryKey: ['sites'], queryFn: () => call(api.GET('/api/v2/sites/')) });
-  return (
-    <Select
-      aria-label="Site"
-      size="xs"
-      w={190}
-      data={[{ value: '', label: 'All sites' }, ...(sites.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))]}
-      value={siteId ? String(siteId) : ''}
-      allowDeselect={false}
-      onChange={(value) => setSiteId(Number(value) || undefined)}
-    />
-  );
+  return <SitePicker value={siteId} onChange={setSiteId} />;
 }
 
 function SchemeToggle() {
@@ -79,6 +67,7 @@ function SchemeToggle() {
 
 function PersonMenu({ person }: { person: Person }) {
   const signOut = useSignOut();
+  const navigate = useNavigate();
   return (
     <Menu position="bottom-end">
       <Menu.Target>
@@ -88,6 +77,8 @@ function PersonMenu({ person }: { person: Person }) {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{person.email || person.username}</Menu.Label>
+        <Menu.Item onClick={() => void navigate('/account')}>Account and security</Menu.Item>
+        <Menu.Item onClick={() => void navigate('/account/tokens')}>API tokens</Menu.Item>
         <Menu.Item onClick={() => signOut.mutate()}>Sign out</Menu.Item>
       </Menu.Dropdown>
     </Menu>

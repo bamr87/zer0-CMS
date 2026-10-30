@@ -3,6 +3,8 @@
 pytest==9.1.1
 pytest-django==4.14.0
 fakeredis==2.40.0
-# Recorded HTTP for the research library's fetcher: no test reaches the web.
+# Recorded HTTP for the research library's fetcher and distribution's channels: no test reaches the web.
 respx==0.23.1
+# PyGithub speaks `requests`, not httpx: its recorded HTTP (distribution's GitHub pull requests).
+responses==0.26.3
 ruff==0.17.1

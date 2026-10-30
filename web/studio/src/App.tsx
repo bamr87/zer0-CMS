@@ -2,31 +2,44 @@
 // under them, and an empty state for each area a later milestone builds.
 // The workspaces themselves are @zer0/ui's; this file only places them, and
 // turns the destinations they ask for (Destination) into paths.
-import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
+  AccountWorkspace,
+  AieoWorkspace,
   BookShelf,
   BookView,
   ChapterWriter,
+  ClaimCheckView,
+  Distribution,
   IdeasWorkspace,
+  JobLog,
   Newsroom,
+  OutboxDesk,
   Overview,
   PageEditor,
   PageList,
   ResearchWorkspace,
+  SitesWorkspace,
+  SiteView,
   SourceView,
   StudioProvider,
   SuggestionInbox,
+  TrialView,
+  type AccountSection,
+  type AieoSection,
+  type AuthHost,
   type Destination,
   type OpenStream,
+  type OutboxTab,
 } from '@zer0/ui';
 import { useCallback, type ReactNode } from 'react';
-import { Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { AiArea } from './ai/AiArea';
 import { CreateArea } from './ai/CreateArea';
 import { AREAS, type Area } from './areas';
-import { SignedIn } from './auth';
+import { browserAuth, SignedIn } from './auth';
 import { Shell } from './Shell';
 import { SiteProvider, useSite } from './site';
 
@@ -72,15 +85,39 @@ export function pathFor(to: Destination): string {
       return `/books/${to.id}`;
     case 'chapter':
       return `/books/${to.book}/chapters/${to.id}`;
+    case 'outbox':
+      return to.tab && to.tab !== 'belt' ? `/outbox/${to.tab}` : '/outbox';
+    case 'trial':
+      return `/outbox/trials/${to.id}`;
+    case 'claim-check':
+      return `/outbox/claims/${to.id}`;
+    case 'sites':
+      return '/sites';
+    case 'site':
+      return `/sites/${to.id}`;
+    case 'job':
+      return `/sites/jobs/${to.id}`;
+    case 'distribution':
+      return to.tab && to.tab !== 'queue' ? `/distribution?tab=${to.tab}` : '/distribution';
+    case 'distribution-post':
+      return `/distribution/posts/${to.id}`;
+    case 'channel':
+      return `/distribution/channels/${to.id}`;
+    case 'automation':
+      return `/ai/automations/${to.id ?? 'new'}`;
+    case 'aieo':
+      return to.section && to.section !== 'audit' ? `/sites/aieo/${to.section}` : '/sites/aieo';
+    case 'account':
+      return to.section && to.section !== 'security' ? `/account/${to.section}` : '/account';
   }
 }
 
-export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
+export function App({ api, stream, auth = browserAuth, leave }: { api: ApiClient; stream: OpenStream; auth?: AuthHost; leave?: (url: string) => void }) {
   const navigate = useNavigate();
   const go = useCallback((to: Destination) => void navigate(pathFor(to)), [navigate]);
   return (
-    <StudioProvider api={api} stream={stream} go={go}>
-      <SignedIn>
+    <StudioProvider api={api} stream={stream} go={go} auth={auth}>
+      <SignedIn leave={leave}>
         {(person) => (
           <SiteProvider>
             <Routes>
@@ -99,6 +136,19 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="books" element={<Books />} />
                 <Route path="books/:id" element={<BookPage />} />
                 <Route path="books/:book/chapters/:id" element={<ChapterPage />} />
+                <Route path="outbox" element={<Outbox />} />
+                <Route path="outbox/:tab" element={<Outbox />} />
+                <Route path="outbox/trials/:id" element={<TrialPage />} />
+                <Route path="outbox/claims/:id" element={<ClaimCheckPage />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="sites/jobs/:id" element={<JobPage />} />
+                <Route path="sites/:id" element={<SitePage />} />
+                <Route path="distribution" element={<DistributionArea />} />
+                <Route path="distribution/posts/:post" element={<DistributionArea />} />
+                <Route path="distribution/channels/:channel" element={<DistributionArea />} />
+                <Route path="sites/aieo/:section?" element={<Aieo />} />
+                <Route path="account/provider/callback" element={<ProviderReturn />} />
+                <Route path="account/:section?" element={<Account />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -109,6 +159,35 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
         )}
       </SignedIn>
     </StudioProvider>
+  );
+}
+
+const ACCOUNT_SECTIONS: readonly AccountSection[] = ['security', 'sessions', 'tokens'];
+
+function Account() {
+  const { section } = useParams();
+  const navigate = useNavigate();
+  const known = ACCOUNT_SECTIONS.find((s) => s === section);
+  if (section && !known) return <Section title="Not found">There is nothing at this address.</Section>;
+  return (
+    <Section title="Your account">
+      <AccountWorkspace section={known ?? 'security'} onSection={(next) => void navigate(pathFor({ to: 'account', section: next }))} />
+    </Section>
+  );
+}
+
+/** Back from an IdP or GitHub while signed in: a provider just connected, or what went wrong. */
+function ProviderReturn() {
+  const [params] = useSearchParams();
+  const error = params.get('error');
+  if (!error) return <Navigate to="/account" replace />;
+  return (
+    <Section title="Your account">
+      <Alert color="red">Connecting the provider did not finish ({error}).</Alert>
+      <Anchor component={Link} to="/account">
+        Back to your account
+      </Anchor>
+    </Section>
   );
 }
 
@@ -214,6 +293,69 @@ function BookPage() {
 function ChapterPage() {
   const { book, id } = useParams();
   return <ChapterWriter key={id} bookId={Number(book)} chapterId={Number(id)} />;
+}
+
+const OUTBOX_TABS: readonly string[] = ['belt', 'trials', 'claims'];
+
+function Outbox() {
+  const { tab } = useParams();
+  return (
+    <Section title="Outbox">
+      <OutboxDesk tab={tab && OUTBOX_TABS.includes(tab) ? (tab as OutboxTab) : 'belt'} />
+    </Section>
+  );
+}
+
+function TrialPage() {
+  const { id = '' } = useParams();
+  return <TrialView key={id} trialId={id} />;
+}
+
+function ClaimCheckPage() {
+  const { id = '' } = useParams();
+  return <ClaimCheckView key={id} checkId={id} />;
+}
+
+function Sites() {
+  return (
+    <Section title="Sites">
+      <SitesWorkspace />
+    </Section>
+  );
+}
+
+function SitePage() {
+  const { id } = useParams();
+  return <SiteView key={id} siteId={Number(id)} />;
+}
+
+function JobPage() {
+  const { id = '' } = useParams();
+  return <JobLog key={id} jobId={id} />;
+}
+
+const DISTRIBUTION_TABS = ['queue', 'channels', 'ledger', 'statistics'] as const;
+
+function DistributionArea() {
+  const { siteId } = useSite();
+  const { post, channel } = useParams();
+  const [params] = useSearchParams();
+  const tab = DISTRIBUTION_TABS.find((t) => t === params.get('tab'));
+  return (
+    <Section title="Distribution">
+      <Distribution siteId={siteId} tab={tab} postId={post} channelId={channel} connecting={params.get('connecting') === '1'} />
+    </Section>
+  );
+}
+
+function Aieo() {
+  const { siteId } = useSite();
+  const { section } = useParams();
+  return (
+    <Section title="AIEO">
+      <AieoWorkspace siteId={siteId} section={(section as AieoSection | undefined) ?? 'audit'} />
+    </Section>
+  );
 }
 
 function Planned({ area }: { area: Area }) {

@@ -43,8 +43,10 @@ from referencing import Registry
 from referencing.exceptions import Unresolvable
 
 # What an adapter can declare: plain completions, streaming, native structured
-# output, the runner's tool calls, a live model catalog, embeddings, web search.
-CAPABILITIES = ("complete", "stream", "structured", "tools", "models", "embed", "search")
+# output, the runner's tool calls, a live model catalog, embeddings, web search,
+# and images in a message (`vision`: a user message's content may be a list of
+# parts, `{"type": "text", "text"}` and `{"type": "image", "media_type", "data"}`).
+CAPABILITIES = ("complete", "stream", "structured", "tools", "models", "embed", "search", "vision")
 FENCED = re.compile(r"^```[\w-]*\s*\n?(.*?)\n?```$", re.DOTALL)
 EFFORT = {"enum": ["low", "medium", "high", "xhigh", "max"]}
 CLIENT_OPTIONS = {
@@ -288,8 +290,27 @@ def openai_messages(system: str, messages: list[dict]) -> list[dict]:
             ]
             wire.append({"role": "assistant", "content": m.get("content") or "", "tool_calls": calls})
         else:
-            wire.append({"role": m["role"], "content": m["content"]})
+            wire.append({"role": m["role"], "content": openai_parts(m["content"])})
     return wire
+
+
+def text_of(content) -> str:
+    """A message's text: the content itself, or its text parts (an adapter that cannot see images drops them)."""
+    if isinstance(content, list):
+        return "\n\n".join(part.get("text", "") for part in content if part.get("type") == "text")
+    return content
+
+
+def openai_parts(content):
+    """A message's parts as chat completions takes them: an image as a data URL."""
+    if not isinstance(content, list):
+        return content
+    return [
+        {"type": "image_url", "image_url": {"url": f"data:{part['media_type']};base64,{part['data']}"}}
+        if part.get("type") == "image"
+        else {"type": "text", "text": part.get("text", "")}
+        for part in content
+    ]
 
 
 def openai_tools(tools) -> list[dict]:

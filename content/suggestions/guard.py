@@ -8,8 +8,10 @@ extension's two deduplications. `page_findings` is what applies to a page:
 the bans (errors) and filler (warnings), without the commentary-only length
 ceiling, fold or hook, which make no sense for an article (the extension's
 guard README says the same). Extra patterns come from the active
-`cms.BrandRules` snippets; a malformed one is skipped, never fatal, like a
-broken `governance.bannedPatternsFile`.
+`cms.BrandRules` snippets, which hold for every site, and — given the site a
+text is for — that site's own (`sites.SiteSettings.banned_patterns`, its brand
+rules); a malformed one is skipped, never fatal, like a broken
+`governance.bannedPatternsFile`.
 
 An accepted suggestion whose text has an error-level finding is refused: the
 guard is a validator in the accept flow (M10), not a report. A suggestion that
@@ -17,6 +19,12 @@ replaces text is judged on what it adds (`before`): a banned phrase the text
 already had is its author's, so it is refused only when the new text uses that
 phrase more often than the old (a novel's character may say "unlocking value";
 an agent continuing the chapter does not get to say it again).
+
+The built-in lists were written for marketing copy, and a novel may need
+"revolutionary" or a satirised "leverage synergies": a book, or a site for all
+its books, may switch them off for its chapters (`builtin_bans`, PLAN P-D7).
+The brand rules' and the site's own patterns still hold there, and so does the
+markup check, which is not the brand's but the page's safety.
 """
 
 import re
@@ -56,29 +64,52 @@ FILLER = [
 ]
 
 
-def extra_patterns() -> list[tuple[str, re.Pattern]]:
+def extra_patterns(site=None) -> list[tuple[str, re.Pattern]]:
+    """The active `BrandRules`' patterns and, given a Wagtail `Site`, that site's own."""
     from cms.models import BrandRules
+    from sites.models import SiteSettings
 
+    entries = [entry for rules in BrandRules.objects.filter(is_active=True) for entry in rules.banned_patterns or []]
+    if site is not None:
+        entries += SiteSettings.objects.filter(site=site).values_list("banned_patterns", flat=True).first() or []
     patterns = []
-    for rules in BrandRules.objects.filter(is_active=True):
-        for entry in rules.banned_patterns or []:
-            if (
-                not isinstance(entry, dict)
-                or not isinstance(entry.get("name"), str)
-                or not isinstance(entry.get("pattern"), str)
-            ):
-                continue
-            flags = re.I if "i" in str(entry.get("flags", "i")) else 0
-            try:
-                patterns.append((entry["name"], re.compile(entry["pattern"], flags)))
-            except re.error:
-                continue  # a broken addition never bricks the guard; the built-in bans still run
+    for entry in entries:
+        if (
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("name"), str)
+            or not isinstance(entry.get("pattern"), str)
+        ):
+            continue
+        flags = re.I if "i" in str(entry.get("flags", "i")) else 0
+        try:
+            patterns.append((entry["name"], re.compile(entry["pattern"], flags)))
+        except re.error:
+            continue  # a broken addition never bricks the guard; the built-in bans still run
     return patterns
 
 
-def _bans(text: str, extra, before: str | None = None) -> tuple[list[dict], set[str]]:
+def site_of(target):
+    """The Wagtail `Site` a page belongs to, for its brand rules; None for anything else."""
+    return target.get_site() if hasattr(target, "get_site") else None
+
+
+def builtin_bans(target) -> bool:
+    """Whether the built-in lists hold for `target`: not on a chapter whose book, or whose site, switched them off.
+    The book's switch is read from its latest revision, which is where the studio saves it."""
+    from cms.models import ChapterPage
+    from sites.models import SiteSettings
+
+    page = getattr(target, "specific", target)
+    if not isinstance(page, ChapterPage):
+        return True
+    book = page.get_parent().specific.get_latest_revision_as_object()
+    site = SiteSettings.objects.filter(site=page.get_site()).values_list("chapter_builtin_bans", flat=True).first()
+    return book.builtin_bans and site is not False
+
+
+def _bans(text: str, extra, before: str | None = None, builtin: bool = True) -> tuple[list[dict], set[str]]:
     findings, errored = [], set()
-    for name, pattern in BANNED_PATTERNS + list(extra):
+    for name, pattern in (BANNED_PATTERNS if builtin else []) + list(extra):
         match = pattern.search(text)
         if match and (before is None or len(pattern.findall(text)) > len(pattern.findall(before))):
             findings.append({"level": "error", "message": f'banned phrase "{match.group(0)}" ({name})'})
@@ -113,11 +144,12 @@ def guard_text(text: str, extra=()) -> list[dict]:
     return findings
 
 
-def page_findings(text: str, extra=None, before: str | None = None) -> list[dict]:
-    """The bans and the filler; given `before` (the text this one replaces), only a ban it adds."""
-    extra = extra_patterns() if extra is None else extra
-    bans, errored = _bans(text or "", extra, before)
-    return bans + _filler(text or "", errored)
+def page_findings(text: str, extra=None, before: str | None = None, site=None, builtin: bool = True) -> list[dict]:
+    """The bans and the filler; given `before` (the text this one replaces), only a ban it adds. Without `extra`,
+    the active brand rules' patterns and `site`'s own; without `builtin` (`builtin_bans`), only those."""
+    extra = extra_patterns(site) if extra is None else extra
+    bans, errored = _bans(text or "", extra, before, builtin)
+    return bans + (_filler(text or "", errored) if builtin else [])
 
 
 # Markup that runs code or loads a frame. Raw HTML stays allowed in a

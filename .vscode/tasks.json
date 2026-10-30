@@ -68,17 +68,6 @@
       "group": "test"
     },
     {
-      "label": "Test: ABC engine",
-      "detail": "Host ruby, stdlib only. The rails/ content engine's tests.",
-      "type": "shell",
-      "command": "ruby -Ilib test/zer0_cms/test_abc_engine.rb",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "group": "test"
-    },
-    {
       "label": "Verify",
       "detail": "Host node. check-types → lint → compile → test, in extension.yml's order.",
       "type": "shell",

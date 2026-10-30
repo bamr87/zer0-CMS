@@ -1,11 +1,22 @@
-"""Admin wiring for suggestions: the review URLs and a "Suggestions" button on
-every page's header."""
+"""Admin wiring for suggestions: the review URLs, a "Suggestions" button on
+every page's header, and the log actions a suggestion's life writes to
+Wagtail's log (proposed by an agent, accepted or rejected by a person)."""
 
 from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.widgets.button import ListingButton
+from wagtail.models import ModelLogEntry
 
 from . import views
+from .models import Suggestion
+
+
+@hooks.register("register_log_actions")
+def suggestion_log_actions(actions):
+    actions.register_model(Suggestion, ModelLogEntry)
+    actions.register_action("zer0.suggestion.propose", "Propose a suggestion", "Suggestion proposed")
+    actions.register_action("zer0.suggestion.accept", "Accept a suggestion", "Suggestion accepted")
+    actions.register_action("zer0.suggestion.reject", "Reject a suggestion", "Suggestion rejected")
 
 
 @hooks.register("register_admin_urls")

@@ -1,6 +1,8 @@
 <!-- kit: governance v0.1.0 -->
 # Amendments — zer0-CMS
 
+> The numbered, append-only record of every change to the constitution, with its status.
+
 The append-only log of changes to [the constitution](../constitution.md). Process: constitution § 8.
 
 - File name: `NNNN-kebab-slug.md`, next free number, never reused. Copy [0000-template.md](0000-template.md).
@@ -10,3 +12,4 @@ The append-only log of changes to [the constitution](../constitution.md). Proces
 | # | Title | Status | Affects |
 | --- | --- | --- | --- |
 | [0001](0001-ratify-constitution.md) | Ratify the constitution | ratified on merge | whole constitution |
+| [0002](0002-retire-the-rails-invariants.md) | Retire the Rails invariants | proposed | constitution §2 |

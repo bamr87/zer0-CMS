@@ -1,5 +1,9 @@
 // A page body, block by block: text blocks in the rich editor, structured
-// blocks (heading, code, quote, image, brief, letter …) as their own fields.
+// blocks (heading, code, quote, image, brief, letter, callout, document …) as
+// their own fields, the two table blocks as a grid (TableFields.tsx), and the
+// blocks a site's build reads verbatim (raw HTML, Liquid, an embed's URL) as
+// source text. A document's file in the library shows as its id: choosing one
+// waits for the studio's media library.
 // Blocks keep their ids, so a pending suggestion and a block's provenance
 // still find it after a save; a new block has none until the platform gives
 // it one. The platform validates every block a person changed
@@ -16,6 +20,7 @@ import { ActionIcon, Badge, Button, Group, NumberInput, Paper, Select, Stack, Te
 import type { Block } from '@zer0/api';
 
 import { RichText } from './RichText';
+import { TableFields } from './TableFields';
 
 type Value = Record<string, unknown>;
 
@@ -24,8 +29,22 @@ const NEW_BLOCKS: Record<string, Block['value']> = {
   heading: { level: '2', text: '' },
   code: { language: '', code: '' },
   quote: { text: '', attribution: '' },
+  callout: { kind: 'note', fold: '', title: '', body: '' },
+  table: { data: [['', ''], ['', '']], first_row_is_table_header: true, first_col_is_header: false, table_caption: '', table_header_choice: 'row' },
+  typed_table: { columns: [{ type: 'text', heading: '' }, { type: 'number', heading: '' }], rows: [{ values: ['', ''] }], caption: '' },
+  embed: '',
+  document: { title: '', href: '', document: null },
+  raw_html: '',
+  liquid: '',
 };
-const LONG = new Set(['code', 'notes', 'text', 'tagline', 'subject']);
+const LONG = new Set(['code', 'notes', 'text', 'tagline', 'subject', 'body']);
+// Blocks the site's build reads as they are: shown and edited as their source.
+const SOURCE = new Set(['raw_html', 'liquid']);
+const FOLDS = [
+  { value: 'none', label: 'Not foldable' },
+  { value: '+', label: 'Foldable, open' },
+  { value: '-', label: 'Foldable, closed' },
+];
 const isRecord = (value: unknown): value is Value => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const clientKeys = new WeakMap<Block, string>();
@@ -116,8 +135,20 @@ function BlockFields({ block, onChange, disabled }: { block: Block; onChange: (v
     );
   }
   const value = block.value;
+  if ((block.type === 'table' || block.type === 'typed_table') && isRecord(value)) {
+    return <TableFields type={block.type} value={value} onChange={onChange} disabled={disabled} />;
+  }
   if (!isRecord(value)) {
-    return <Textarea aria-label={block.type} autosize value={String(value ?? '')} disabled={disabled} onChange={(e) => onChange(e.currentTarget.value)} />;
+    return (
+      <Textarea
+        aria-label={block.type}
+        autosize
+        ff={SOURCE.has(block.type) ? 'monospace' : undefined}
+        value={String(value ?? '')}
+        disabled={disabled}
+        onChange={(e) => onChange(e.currentTarget.value)}
+      />
+    );
   }
   const put = (key: string, next: unknown) => onChange({ ...value, [key]: next });
   return (
@@ -134,6 +165,20 @@ function BlockFields({ block, onChange, disabled }: { block: Block; onChange: (v
               allowDeselect={false}
               data-field={key}
               onChange={(next) => put(key, next)}
+            />
+          );
+        }
+        if (key === 'fold') {
+          return (
+            <Select
+              key={key}
+              label="Fold"
+              data={FOLDS}
+              value={typeof field === 'string' && field ? field : 'none'}
+              disabled={disabled}
+              allowDeselect={false}
+              data-field={key}
+              onChange={(next) => put(key, next && next !== 'none' ? next : '')}
             />
           );
         }

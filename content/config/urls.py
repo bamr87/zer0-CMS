@@ -3,8 +3,11 @@
 /healthz          liveness: the process answers, touching nothing
 /readyz           readiness: database, cache and Redis, 503 when one is down
 /version          name, version, commit, built_at
-/admin/           Wagtail admin (pages, snippets, suggestions, agent runs)
-/django-admin/    Django admin
+/admin/           Wagtail admin (pages, snippets, suggestions, agent runs); its sign-in is the studio's
+/django-admin/    Django admin; its sign-in is the studio's too (accounts/views.py)
+/_allauth/        django-allauth's headless API: sign-in, sign-up, codes, MFA, passkeys, sessions (accounts/README.md)
+/accounts/        allauth's provider endpoints: an OpenID Connect IdP's or GitHub's callback
+/api/v2/account/  a person's API tokens, issued, listed and revoked (accounts/urls.py)
 /api/v2/          Wagtail API v2 + agent runs, graph, suggestions, tools
 /api/v2/ai/       the AI content layer: providers, models, schemas, assistants, pipelines, briefs, conversations
 /api/v2/ideas/    ideas, boards, capture, brainstorm, clusters, promotion
@@ -12,6 +15,12 @@
 /api/v2/newsroom/ the newsroom: desks, stories, authors, fronts, newsletters, issues, subscriptions
 /newsletters/     the pages a newsletter email's links open: confirm, unsubscribe (newsroom/urls.py)
 /api/v2/books/    books: the shelf, a book's overview, chapters, validation, manuscripts, the book assistant
+/api/v2/outbox/   the outbox desk: the harness's belt, arena trials, claim checks and calibration
+/api/v2/sites/   the site registry: settings, findings, and sync, write-back and doctor jobs
+/api/v2/jobs/    background jobs: their logs (also as server-sent events), artifacts, cancel
+/api/v2/distribution/ channels, the publishing queue, the ledger and statistics, LinkedIn's OAuth callback
+/api/v2/automations/ automations: triggers, conditions, actions, runs, YAML, each webhook trigger's endpoint
+/api/v2/aieo/     AIEO: scores, audits, patterns, rewrites, agents, citations, connectors, priorities, reports
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
@@ -30,6 +39,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from accounts.views import django_admin_login, wagtail_admin_login
 from api.studio import studio
 from api.urls import router
 from api.views import ContentGraphQLView
@@ -46,8 +56,13 @@ urlpatterns = [
     path("healthz", healthz, name="healthz"),
     path("readyz", readyz, name="readyz"),
     path("version", version, name="version"),
+    path("django-admin/login/", django_admin_login),
     path("django-admin/", admin.site.urls),
+    path("admin/login/", wagtail_admin_login),
     path("admin/", include(wagtailadmin_urls)),
+    path("_allauth/", include("allauth.headless.urls")),
+    path("accounts/", include("allauth.urls")),
+    path("api/v2/account/", include("accounts.urls")),
     path("documents/", include(wagtaildocs_urls)),
     path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(), name="openapi"),
     path("api/v2/ai/", include("ai.urls")),
@@ -56,6 +71,12 @@ urlpatterns = [
     path("api/v2/newsroom/", include("newsroom.urls")),
     path("newsletters/", include(subscription_pages)),
     path("api/v2/books/", include("books.urls")),
+    path("api/v2/outbox/", include("outboxdesk.urls")),
+    path("api/v2/sites/", include("sites.urls")),
+    path("api/v2/jobs/", include("jobs.urls")),
+    path("api/v2/distribution/", include("distribution.urls")),
+    path("api/v2/automations/", include("automations.urls")),
+    path("api/v2/aieo/", include("aieo.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),

@@ -407,25 +407,16 @@ suite('the Jekyll profile is a transcript of the constants it replaced', () => {
 // ---------------------------------------------------------------------------
 
 suite('reading a site`s own configuration', () => {
-  test('an anchored value is read, and the file still says it uses anchors', () => {
+  test('a config built out of anchors reads whole, with nothing to warn about', () => {
     const text = readFileSync(
       path.join(SITES, 'jekyll-zer0-mistakes', '_config.yml'),
       'utf8',
     );
     const facts = readSiteConfigFacts(JEKYLL_PROFILE, text);
     // `title: &site_title lifehacker.dev` anchors the scalar it is attached
-    // to, so the value is right there and reading it is not a guess. (An
-    // alias, which points at a value defined elsewhere, still is unknown —
-    // see the alias case below.)
+    // to; the YAML package reads anchors, aliases and merge keys as YAML does.
     assert.equal(facts.title, 'lifehacker.dev');
-    assert.ok(
-      !facts.warnings.some((line) => line.includes('`title` is a YAML anchor')),
-      'an anchored scalar warrants no per-key warning',
-    );
-    // The file-level note stays: a config built out of anchors and aliases has
-    // constructs this parser does not resolve, and saying so is honest.
-    assert.ok(facts.warnings.some((line) => line.includes('declares YAML anchors')));
-    // Everything else is read as before.
+    assert.deepEqual(facts.warnings, []);
     assert.equal(facts.url, 'https://lifehacker.dev');
     assert.equal(facts.collectionsDir, 'pages');
     assert.deepEqual(Object.keys(facts.collections), ['posts', 'docs']);
@@ -433,21 +424,21 @@ suite('reading a site`s own configuration', () => {
     assert.equal(facts.collections.posts?.output, true);
   });
 
-  test('a merge key is reported even though nothing read here sits under one', () => {
+  test('a merge key merges, and an alias reads the value it names', () => {
     const facts = readSiteConfigFacts(
       JEKYLL_PROFILE,
-      ['defaults: &base', '  layout: page', 'other:', '  <<: *base', 'url: https://x.dev'].join('\n'),
+      ['defaults: &base', '  layout: page', 'other:', '  <<: *base', 'site: &name x.dev', 'title: *name', 'url: https://x.dev'].join('\n'),
     );
     assert.equal(facts.url, 'https://x.dev');
-    assert.ok(facts.warnings.some((line) => line.includes('merge keys')));
-    assert.ok(facts.warnings.some((line) => line.includes('anchors')));
+    assert.equal(facts.title, 'x.dev');
+    assert.deepEqual(facts.warnings, []);
   });
 
-  test('an aliased scalar is refused by name', () => {
+  test('an alias that names no anchor is unknown, by name, and the rest is read', () => {
     const facts = readSiteConfigFacts(JEKYLL_PROFILE, ['title: *site_title', 'baseurl: /docs'].join('\n'));
     assert.equal(facts.title, null);
     assert.equal(facts.baseurl, '/docs');
-    assert.ok(facts.warnings.some((line) => line.includes('`title` is a YAML alias')));
+    assert.ok(facts.warnings.some((line) => line.includes('*site_title names no anchor')));
   });
 
   test('MkDocs` own vocabulary maps onto the shared fact names', () => {
@@ -736,11 +727,11 @@ suite('the zer0-mistakes overlay and anchored quoted scalars, as the real sites 
     assert.equal(escaped.title, "it's mine");
     assert.equal(escaped.url, 'https://x.dev/');
 
-    // Unquoted stays as it was, and an alias is still unknown.
+    // Unquoted stays as it was, and an alias to no anchor is still unknown.
     assert.equal(readSiteConfigFacts(JEKYLL_PROFILE, 'url: &url https://zer0-mistakes.com').url, 'https://zer0-mistakes.com');
     const aliased = readSiteConfigFacts(JEKYLL_PROFILE, 'title: *title');
     assert.equal(aliased.title, null);
-    assert.ok(aliased.warnings.some((line) => line.includes('`title` is a YAML alias')));
+    assert.ok(aliased.warnings.some((line) => line.includes('*title names no anchor')));
   });
 });
 

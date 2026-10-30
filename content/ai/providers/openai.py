@@ -21,7 +21,7 @@ from .base import (
 class OpenAIProvider(Provider):
     slug = "openai"
     display_name = "OpenAI"
-    capabilities = frozenset({"complete", "stream", "structured", "tools", "models"})
+    capabilities = frozenset({"complete", "stream", "structured", "tools", "models", "vision"})
     credential_env = ("OPENAI_API_KEY",)
     default_model = "gpt-4o-mini"
     static_models = (

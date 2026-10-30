@@ -6,23 +6,20 @@
 # "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
 # commonly missed piece of a VS Code extension pipeline.
 #
-# The Rails half has its own workflows — `abc-engine.yml` (stdlib, no bundler)
-# and `rails-app.yml` (the app, its tests and a boot) — so a TypeScript pull
-# request no longer boots a Ruby toolchain it does not use, and a change to
-# `rails/` or the compose file no longer downloads VS Code: hence the
+# A change to the compose file no longer downloads VS Code: hence the
 # `paths-ignore` below. The same goes for the imported `packages/`, `sites/` and
 # `apps/` trees, the content plane (`content/` and the schemas it owns,
-# gated by content.yml) the React frontend (`web/`, gated by web.yml, including the recordings of each site's Jekyll build in `web/site/fixtures/`, compared by pages.yml),
-# which have workflows of their own (see docs/MONOREPO.md). Until PLAN G10
-# builds the extension's webviews from `web/packages/`, a studio change cannot
-# change the vsix. `main` is not branch-protected, so a skipped run here is not a
-# required check left pending.
+# gated by content.yml), the studio app and the site renderer (`web/studio/` and
+# `web/site/`, gated by web.yml and pages.yml), which have workflows of their own
+# (see docs/MONOREPO.md). `web/packages/` and web's lockfile are NOT ignored: the
+# extension's studio webviews are built from them into dist/studio.js (PLAN G10),
+# so a change there changes the vsix. `main` is not branch-protected, so a
+# skipped run here is not a required check left pending.
 name: extension
 
 on:
   pull_request:
     paths-ignore:
-      - "rails/**"
       - "packages/**"
       - "sites/**"
       - "apps/**"
@@ -31,11 +28,12 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
-      - "web/**"
+      - "schemas/books/**"
+      - "web/studio/**"
+      - "web/site/**"
   push:
     branches: [main]
     paths-ignore:
-      - "rails/**"
       - "packages/**"
       - "sites/**"
       - "apps/**"
@@ -44,7 +42,9 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
-      - "web/**"
+      - "schemas/books/**"
+      - "web/studio/**"
+      - "web/site/**"
 
 permissions:
   contents: read
@@ -69,7 +69,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
 
+      # Installs web/ too (the root postinstall), which dist/studio.js is built from.
       - run: npm ci
 
       - name: Type-check
@@ -100,6 +104,9 @@ jobs:
       # of whatever `.vscodeignore` happens to say today. A packaging change is
       # a diff a person reads; regenerate with:
       #   npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > .vsix-manifest.txt
+      # The list includes dist/THIRD_PARTY_NOTICES.txt — the licence of every
+      # library the bundles inline, which esbuild.js writes from the build's
+      # metafiles and fails without — so a vsix without it fails here.
       - name: Verify the packaged file list
         run: |
           npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > /tmp/vsix-actual.txt

@@ -1,0 +1,3138 @@
+{
+ "analyzers": {
+  "article.md": {
+   "above_fold": {
+    "cta": false,
+    "score": 0,
+    "trust": false,
+    "value_prop": false
+   },
+   "competitor_gap": {
+    "gap_count": 3,
+    "missing_topics": [
+     "pricing",
+     "FAQ",
+     "migration"
+    ],
+    "recommendation": "Add sections for missing high-intent topics."
+   },
+   "cro_checklist": {
+    "checks": {
+     "cta_present": true,
+     "headline": true,
+     "objection_handling": true,
+     "social_proof": false
+    },
+    "passed": 3,
+    "score": 75.0,
+    "total": 4
+   },
+   "cta": {
+    "cta_count": 0,
+    "cta_variants": [],
+    "score": 0
+   },
+   "engagement": {
+    "ctas": 0,
+    "examples": 0,
+    "questions": 4,
+    "score": 32
+   },
+   "humanity": {
+    "humanity": 100,
+    "readability": 100,
+    "score": 100.0,
+    "seo": 100,
+    "specificity": 100,
+    "structure": 100,
+    "word_count": 358
+   },
+   "intent": {
+    "confidence": 60.0,
+    "intent": "informational",
+    "signals": {
+     "commercial": 0,
+     "informational": 3,
+     "navigational": 1,
+     "transactional": 1
+    }
+   },
+   "keywords": {
+    "distribution": {
+     "body": "of outages in 2025 involved storage. Research from Backblaze shows drive failure rates near 1.5 percent a year (source: https://www.backblaze.com/blog/).\n\n## What Should a Backup Include?\n\nA backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites differ in what they store, but each needs all three.\n\n- Site files: themes, uploads and plugins\n- The database: posts, users and settings\n- Configuration: DNS records, TLS certificates and environment variables\n\n## How Often Should You Back Up?\n\nDaily backups suit a site that changes every day. Weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for well under a cent a month, so storage cost rarely decides it.\n\n| Plan | Frequency | Kept for | Typical cost |\n|------|-----------|----------|--------------|\n| Basic | Weekly | 30 days | $1 a month |\n| Standard | Daily | 90 days | $5 a month |\n| Business | Hourly | 1 year | $25 a month |\n\n## Step-by-Step: Your First Backup\n\n1. Step 1: Export the database with mysqldump or pg_dump.\n2. Step 2: Copy the site files with rsync.\n3. Step 3: Upload both to a second location, such as Backblaze B2.\n4. Step 4: Restore the copy to a test server and open the site.\n\n## Frequently Asked Questions\n\n### Is a host's backup enoug",
+     "intro": "# How to Back Up a Small Website in 2026\n\nBackups are the copies of a site that let you restore it after a failure. A backup is defined as a complete, restorable copy of every file and database a site needs, taken on a schedule and kept somewhere else. This matters because most small sites lose data when a single disk fails, and it is essential to test a restore before you need one.\n\nAccording to the Uptime Institute, 40 percent ",
+     "outro": "h?\n\nNo. A host's backup lives on the host's systems, so an account suspension or a billing failure takes it away too. Keep a copy you control.\n\n### How long does a restore take?\n\nA restore of a 2 GB site takes about ten minutes over a home connection. Version 2 of our runbook times every step.\n\nRead more in the [Backblaze guide](https://www.backblaze.com/cloud-backup.html) and our [restore checklist](/guides/restore-checklist/).\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "site",
+     "restore",
+     "backup",
+     "backblaze",
+     "step",
+     "copy",
+     "database",
+     "month",
+     "backups",
+     "failure"
+    ],
+    "primary": {
+     "count": 10,
+     "density": 2.79,
+     "keyword": "backup"
+    },
+    "secondary": [
+     {
+      "count": 7,
+      "density": 1.96,
+      "keyword": "restore"
+     },
+     {
+      "count": 11,
+      "density": 3.07,
+      "keyword": "site"
+     }
+    ],
+    "topic_clusters": [
+     [
+      "site",
+      "restore",
+      "backup",
+      "backblaze",
+      "step"
+     ],
+     [
+      "copy",
+      "database",
+      "month",
+      "backups",
+      "failure"
+     ]
+    ],
+    "word_count": 358
+   },
+   "keywords_none": {
+    "distribution": {
+     "body": "of outages in 2025 involved storage. Research from Backblaze shows drive failure rates near 1.5 percent a year (source: https://www.backblaze.com/blog/).\n\n## What Should a Backup Include?\n\nA backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites differ in what they store, but each needs all three.\n\n- Site files: themes, uploads and plugins\n- The database: posts, users and settings\n- Configuration: DNS records, TLS certificates and environment variables\n\n## How Often Should You Back Up?\n\nDaily backups suit a site that changes every day. Weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for well under a cent a month, so storage cost rarely decides it.\n\n| Plan | Frequency | Kept for | Typical cost |\n|------|-----------|----------|--------------|\n| Basic | Weekly | 30 days | $1 a month |\n| Standard | Daily | 90 days | $5 a month |\n| Business | Hourly | 1 year | $25 a month |\n\n## Step-by-Step: Your First Backup\n\n1. Step 1: Export the database with mysqldump or pg_dump.\n2. Step 2: Copy the site files with rsync.\n3. Step 3: Upload both to a second location, such as Backblaze B2.\n4. Step 4: Restore the copy to a test server and open the site.\n\n## Frequently Asked Questions\n\n### Is a host's backup enoug",
+     "intro": "# How to Back Up a Small Website in 2026\n\nBackups are the copies of a site that let you restore it after a failure. A backup is defined as a complete, restorable copy of every file and database a site needs, taken on a schedule and kept somewhere else. This matters because most small sites lose data when a single disk fails, and it is essential to test a restore before you need one.\n\nAccording to the Uptime Institute, 40 percent ",
+     "outro": "h?\n\nNo. A host's backup lives on the host's systems, so an account suspension or a billing failure takes it away too. Keep a copy you control.\n\n### How long does a restore take?\n\nA restore of a 2 GB site takes about ten minutes over a home connection. Version 2 of our runbook times every step.\n\nRead more in the [Backblaze guide](https://www.backblaze.com/cloud-backup.html) and our [restore checklist](/guides/restore-checklist/).\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "site",
+     "restore",
+     "backup",
+     "backblaze",
+     "step",
+     "copy",
+     "database",
+     "month",
+     "backups",
+     "failure"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": ""
+    },
+    "secondary": [],
+    "topic_clusters": [
+     [
+      "site",
+      "restore",
+      "backup",
+      "backblaze",
+      "step"
+     ],
+     [
+      "copy",
+      "database",
+      "month",
+      "backups",
+      "failure"
+     ]
+    ],
+    "word_count": 358
+   },
+   "landing": {
+    "above_fold": {
+     "cta": false,
+     "score": 0,
+     "trust": false,
+     "value_prop": false
+    },
+    "cta": {
+     "cta_count": 0,
+     "cta_variants": [],
+     "score": 0
+    },
+    "score": 0.0,
+    "trust": {
+     "risk_reversal": 0,
+     "score": 0,
+     "social_proof": 0,
+     "testimonials": 0
+    }
+   },
+   "length": {
+    "competitor_median": 1800,
+    "competitor_p75": 2200,
+    "gap_to_target": 1442,
+    "optimal_target": 2200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 358
+   },
+   "length_custom": {
+    "competitor_median": 900,
+    "competitor_p75": 1200,
+    "gap_to_target": 542,
+    "optimal_target": 1200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 358
+   },
+   "readability": {
+    "average_sentence_length": 10.5,
+    "flesch_kincaid_grade": 5.2,
+    "flesch_reading_ease": 86.8,
+    "passive_voice_ratio": 2.9,
+    "score": 86.8,
+    "sentence_count": 34,
+    "word_count": 358
+   },
+   "seo": {
+    "category_breakdown": {
+     "content": 5,
+     "links": 15,
+     "meta": 0,
+     "readability_structure": 20,
+     "structure": 30
+    },
+    "critical_issues": [],
+    "score": 70,
+    "warnings": []
+   },
+   "trust": {
+    "risk_reversal": 0,
+    "score": 0,
+    "social_proof": 0,
+    "testimonials": 0
+   }
+  },
+  "landing.md": {
+   "above_fold": {
+    "cta": true,
+    "score": 100,
+    "trust": true,
+    "value_prop": true
+   },
+   "competitor_gap": {
+    "gap_count": 3,
+    "missing_topics": [
+     "restore",
+     "FAQ",
+     "migration"
+    ],
+    "recommendation": "Add sections for missing high-intent topics."
+   },
+   "cro_checklist": {
+    "checks": {
+     "cta_present": true,
+     "headline": true,
+     "objection_handling": true,
+     "social_proof": true
+    },
+    "passed": 4,
+    "score": 100.0,
+    "total": 4
+   },
+   "cta": {
+    "cta_count": 4,
+    "cta_variants": [
+     "book",
+     "contact",
+     "start"
+    ],
+    "score": 60
+   },
+   "engagement": {
+    "ctas": 4,
+    "examples": 1,
+    "questions": 2,
+    "score": 74
+   },
+   "humanity": {
+    "humanity": 100,
+    "readability": 100,
+    "score": 90.0,
+    "seo": 50,
+    "specificity": 100,
+    "structure": 100,
+    "word_count": 146
+   },
+   "intent": {
+    "confidence": 60.0,
+    "intent": "transactional",
+    "signals": {
+     "commercial": 1,
+     "informational": 1,
+     "navigational": 0,
+     "transactional": 3
+    }
+   },
+   "keywords": {
+    "distribution": {
+     "body": " credit card needed, cancel anytime.\n\nTrusted by 2,000 customers, from two-person studios to growing companies.\n\n## What You Get\n\n- Monthly reconciliation by a named accountant\n- Payroll and sales tax filings\n- A live dashboard of cash, runway and spend\n\n## What Customers Say\n\n\"Ledgerly gave our team back two days a month.\" — Priya Shah, founder of Northwind Coffee. Read the full case study.\n\nEvery review on G2 gives us four stars or more.\n\n## Pricing\n\nPlans start at $199 a month. Every plan comes with our money-back gu",
+     "intro": "# Bookkeeping for Busy Founders\n\nWhy spend your evenings on receipts? Ledgerly helps small teams close the books in a day, not a week.\n\nStart your free 14-day trial today. No",
+     "outro": "arantee: if the first month's books are not closed on time, we refund it.\n\n## Questions?\n\nBook a demo with our team, or contact us and we will answer within one business day.\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "spend",
+     "your",
+     "ledgerly",
+     "books",
+     "start",
+     "customers",
+     "what",
+     "team",
+     "month",
+     "every"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": "backup"
+    },
+    "secondary": [
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "restore"
+     },
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "site"
+     }
+    ],
+    "topic_clusters": [
+     [
+      "spend",
+      "your",
+      "ledgerly",
+      "books",
+      "start"
+     ],
+     [
+      "customers",
+      "what",
+      "team",
+      "month",
+      "every"
+     ]
+    ],
+    "word_count": 146
+   },
+   "keywords_none": {
+    "distribution": {
+     "body": " credit card needed, cancel anytime.\n\nTrusted by 2,000 customers, from two-person studios to growing companies.\n\n## What You Get\n\n- Monthly reconciliation by a named accountant\n- Payroll and sales tax filings\n- A live dashboard of cash, runway and spend\n\n## What Customers Say\n\n\"Ledgerly gave our team back two days a month.\" — Priya Shah, founder of Northwind Coffee. Read the full case study.\n\nEvery review on G2 gives us four stars or more.\n\n## Pricing\n\nPlans start at $199 a month. Every plan comes with our money-back gu",
+     "intro": "# Bookkeeping for Busy Founders\n\nWhy spend your evenings on receipts? Ledgerly helps small teams close the books in a day, not a week.\n\nStart your free 14-day trial today. No",
+     "outro": "arantee: if the first month's books are not closed on time, we refund it.\n\n## Questions?\n\nBook a demo with our team, or contact us and we will answer within one business day.\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "spend",
+     "your",
+     "ledgerly",
+     "books",
+     "start",
+     "customers",
+     "what",
+     "team",
+     "month",
+     "every"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": ""
+    },
+    "secondary": [],
+    "topic_clusters": [
+     [
+      "spend",
+      "your",
+      "ledgerly",
+      "books",
+      "start"
+     ],
+     [
+      "customers",
+      "what",
+      "team",
+      "month",
+      "every"
+     ]
+    ],
+    "word_count": 146
+   },
+   "landing": {
+    "above_fold": {
+     "cta": true,
+     "score": 100,
+     "trust": true,
+     "value_prop": true
+    },
+    "cta": {
+     "cta_count": 4,
+     "cta_variants": [
+      "book",
+      "contact",
+      "start"
+     ],
+     "score": 60
+    },
+    "score": 86.0,
+    "trust": {
+     "risk_reversal": 3,
+     "score": 100,
+     "social_proof": 4,
+     "testimonials": 2
+    }
+   },
+   "length": {
+    "competitor_median": 1800,
+    "competitor_p75": 2200,
+    "gap_to_target": 1654,
+    "optimal_target": 2200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 146
+   },
+   "length_custom": {
+    "competitor_median": 900,
+    "competitor_p75": 1200,
+    "gap_to_target": 754,
+    "optimal_target": 1200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 146
+   },
+   "readability": {
+    "average_sentence_length": 11.2,
+    "flesch_kincaid_grade": 5.3,
+    "flesch_reading_ease": 85.3,
+    "passive_voice_ratio": 0.0,
+    "score": 85.3,
+    "sentence_count": 13,
+    "word_count": 146
+   },
+   "seo": {
+    "category_breakdown": {
+     "content": 2,
+     "links": 0,
+     "meta": 0,
+     "readability_structure": 20,
+     "structure": 30
+    },
+    "critical_issues": [
+     "Missing key SEO elements"
+    ],
+    "score": 52,
+    "warnings": []
+   },
+   "trust": {
+    "risk_reversal": 3,
+    "score": 100,
+    "social_proof": 4,
+    "testimonials": 2
+   }
+  },
+  "page.html": {
+   "above_fold": {
+    "cta": true,
+    "score": 35,
+    "trust": false,
+    "value_prop": false
+   },
+   "competitor_gap": {
+    "gap_count": 4,
+    "missing_topics": [
+     "pricing",
+     "restore",
+     "FAQ",
+     "migration"
+    ],
+    "recommendation": "Add sections for missing high-intent topics."
+   },
+   "cro_checklist": {
+    "checks": {
+     "cta_present": true,
+     "headline": false,
+     "objection_handling": true,
+     "social_proof": false
+    },
+    "passed": 2,
+    "score": 50.0,
+    "total": 4
+   },
+   "cta": {
+    "cta_count": 4,
+    "cta_variants": [
+     "contact"
+    ],
+    "score": 60
+   },
+   "engagement": {
+    "ctas": 4,
+    "examples": 0,
+    "questions": 2,
+    "score": 64
+   },
+   "humanity": {
+    "humanity": 100,
+    "readability": 100,
+    "score": 91.0,
+    "seo": 100,
+    "specificity": 100,
+    "structure": 55,
+    "word_count": 332
+   },
+   "intent": {
+    "confidence": 50.0,
+    "intent": "informational",
+    "signals": {
+     "commercial": 0,
+     "informational": 1,
+     "navigational": 0,
+     "transactional": 1
+    }
+   },
+   "keywords": {
+    "distribution": {
+     "body": "/about/\">About</a> | <a href=\"/contact/\">Contact</a></nav>\n  <main>\n    <h1>Outsourced Accounting for Colorado Businesses</h1>\n    <p>Sopris Accounting is an outsourced accounting firm founded in 2014 by Bailey Smith, CPA. We serve companies across the Roaring Fork Valley.</p>\n    <h2>Our Offerings</h2>\n    <h3>What is outsourced accounting?</h3>\n    <p>Outsourced accounting refers to a firm keeping your books, closing your month and preparing your reports, so you do not need an in-house team.</p>\n    <ul>\n      <li>Monthly close and reconciliation</li>\n      <li>Accounts payable and receivable</li>\n      <li>Financial statements for lenders</li>\n    </ul>\n    <h3>Retirement Plan Audit Support</h3>\n    <p>According to the U.S. Department of Labor, plans with 100 or more participants need an annual audit. We prepare the records your auditor asks for.</p>\n    <ol>\n      <li>Step 1: We collect the plan documents.</li>\n      <li>Step 2: We reconcile contributions with payroll.</li>\n      <li>Step 3: We answer the auditor's questions.</li>\n    </ol>\n    <table>\n      <tr><th>Service</th><th>Who it is for</th><th>Starts at</th></tr>\n      <tr><td>Outsourced accounting</td><td>Companies without a controller</td><td>$1,200 a month</td></tr>\n      <tr><td>Audit support</td><td>Plans with 100+ participants",
+     "intro": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Sopris Accounting — Outsourced accounting in Colorado</title>\n  <meta name=\"description\" content=\"Outsourced accounting and retirement plan audit support for Colorado businesses.\">\n  <style>body { font-family: sans-serif; }</style>\n  <script>window.dataLayer = [];</script>\n</head>\n<body>\n  <nav><a href=\"/\">Home</a> | <a href=\"/services/\">Services</a> | <a href=\"",
+     "outro": "</td><td>$3,500 a year</td></tr>\n    </table>\n    <h2>Frequently Asked Questions</h2>\n    <h3>Do you work with companies outside Colorado?</h3>\n    <p>Yes. As of 2026, a third of our clients are in Utah and Wyoming.</p>\n    <p>Read the <a href=\"https://www.dol.gov/agencies/ebsa\">DOL guidance</a> or <a href=\"/contact/\">contact us</a>.</p>\n  </main>\n  <footer><p>© 2026 Sopris Accounting. All rights reserved.</p></footer>\n</body>\n</html>\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "accounting",
+     "outsourced",
+     "href",
+     "colorado",
+     "audit",
+     "contact",
+     "your",
+     "with",
+     "html",
+     "sopris"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": "backup"
+    },
+    "secondary": [
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "restore"
+     },
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "site"
+     }
+    ],
+    "topic_clusters": [
+     [
+      "accounting",
+      "outsourced",
+      "href",
+      "colorado",
+      "audit"
+     ],
+     [
+      "contact",
+      "your",
+      "with",
+      "html",
+      "sopris"
+     ]
+    ],
+    "word_count": 332
+   },
+   "keywords_none": {
+    "distribution": {
+     "body": "/about/\">About</a> | <a href=\"/contact/\">Contact</a></nav>\n  <main>\n    <h1>Outsourced Accounting for Colorado Businesses</h1>\n    <p>Sopris Accounting is an outsourced accounting firm founded in 2014 by Bailey Smith, CPA. We serve companies across the Roaring Fork Valley.</p>\n    <h2>Our Offerings</h2>\n    <h3>What is outsourced accounting?</h3>\n    <p>Outsourced accounting refers to a firm keeping your books, closing your month and preparing your reports, so you do not need an in-house team.</p>\n    <ul>\n      <li>Monthly close and reconciliation</li>\n      <li>Accounts payable and receivable</li>\n      <li>Financial statements for lenders</li>\n    </ul>\n    <h3>Retirement Plan Audit Support</h3>\n    <p>According to the U.S. Department of Labor, plans with 100 or more participants need an annual audit. We prepare the records your auditor asks for.</p>\n    <ol>\n      <li>Step 1: We collect the plan documents.</li>\n      <li>Step 2: We reconcile contributions with payroll.</li>\n      <li>Step 3: We answer the auditor's questions.</li>\n    </ol>\n    <table>\n      <tr><th>Service</th><th>Who it is for</th><th>Starts at</th></tr>\n      <tr><td>Outsourced accounting</td><td>Companies without a controller</td><td>$1,200 a month</td></tr>\n      <tr><td>Audit support</td><td>Plans with 100+ participants",
+     "intro": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Sopris Accounting — Outsourced accounting in Colorado</title>\n  <meta name=\"description\" content=\"Outsourced accounting and retirement plan audit support for Colorado businesses.\">\n  <style>body { font-family: sans-serif; }</style>\n  <script>window.dataLayer = [];</script>\n</head>\n<body>\n  <nav><a href=\"/\">Home</a> | <a href=\"/services/\">Services</a> | <a href=\"",
+     "outro": "</td><td>$3,500 a year</td></tr>\n    </table>\n    <h2>Frequently Asked Questions</h2>\n    <h3>Do you work with companies outside Colorado?</h3>\n    <p>Yes. As of 2026, a third of our clients are in Utah and Wyoming.</p>\n    <p>Read the <a href=\"https://www.dol.gov/agencies/ebsa\">DOL guidance</a> or <a href=\"/contact/\">contact us</a>.</p>\n  </main>\n  <footer><p>© 2026 Sopris Accounting. All rights reserved.</p></footer>\n</body>\n</html>\n"
+    },
+    "keyword_stuffing_risk": false,
+    "lsi_keywords": [
+     "accounting",
+     "outsourced",
+     "href",
+     "colorado",
+     "audit",
+     "contact",
+     "your",
+     "with",
+     "html",
+     "sopris"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": ""
+    },
+    "secondary": [],
+    "topic_clusters": [
+     [
+      "accounting",
+      "outsourced",
+      "href",
+      "colorado",
+      "audit"
+     ],
+     [
+      "contact",
+      "your",
+      "with",
+      "html",
+      "sopris"
+     ]
+    ],
+    "word_count": 332
+   },
+   "landing": {
+    "above_fold": {
+     "cta": true,
+     "score": 35,
+     "trust": false,
+     "value_prop": false
+    },
+    "cta": {
+     "cta_count": 4,
+     "cta_variants": [
+      "contact"
+     ],
+     "score": 60
+    },
+    "score": 42.5,
+    "trust": {
+     "risk_reversal": 0,
+     "score": 30,
+     "social_proof": 3,
+     "testimonials": 0
+    }
+   },
+   "length": {
+    "competitor_median": 1800,
+    "competitor_p75": 2200,
+    "gap_to_target": 1468,
+    "optimal_target": 2200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 332
+   },
+   "length_custom": {
+    "competitor_median": 900,
+    "competitor_p75": 1200,
+    "gap_to_target": 568,
+    "optimal_target": 1200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 332
+   },
+   "readability": {
+    "average_sentence_length": 14.4,
+    "flesch_kincaid_grade": 6.2,
+    "flesch_reading_ease": 78.2,
+    "passive_voice_ratio": 4.3,
+    "score": 78.2,
+    "sentence_count": 23,
+    "word_count": 332
+   },
+   "seo": {
+    "category_breakdown": {
+     "content": 5,
+     "links": 15,
+     "meta": 0,
+     "readability_structure": 0,
+     "structure": 0
+    },
+    "critical_issues": [
+     "Missing key SEO elements"
+    ],
+    "score": 20,
+    "warnings": [
+     "Content likely under-optimized for search"
+    ]
+   },
+   "trust": {
+    "risk_reversal": 0,
+    "score": 30,
+    "social_proof": 3,
+    "testimonials": 0
+   }
+  },
+  "thin.md": {
+   "above_fold": {
+    "cta": false,
+    "score": 0,
+    "trust": false,
+    "value_prop": false
+   },
+   "competitor_gap": {
+    "gap_count": 4,
+    "missing_topics": [
+     "pricing",
+     "restore",
+     "FAQ",
+     "migration"
+    ],
+    "recommendation": "Add sections for missing high-intent topics."
+   },
+   "cro_checklist": {
+    "checks": {
+     "cta_present": false,
+     "headline": false,
+     "objection_handling": false,
+     "social_proof": false
+    },
+    "passed": 0,
+    "score": 0.0,
+    "total": 4
+   },
+   "cta": {
+    "cta_count": 0,
+    "cta_variants": [],
+    "score": 0
+   },
+   "engagement": {
+    "ctas": 1,
+    "examples": 0,
+    "questions": 0,
+    "score": 12
+   },
+   "humanity": {
+    "humanity": 56,
+    "readability": 100,
+    "score": 54.8,
+    "seo": 50,
+    "specificity": 13,
+    "structure": 55,
+    "word_count": 22
+   },
+   "intent": {
+    "confidence": 66.7,
+    "intent": "informational",
+    "signals": {
+     "commercial": 0,
+     "informational": 2,
+     "navigational": 1,
+     "transactional": 0
+    }
+   },
+   "keywords": {
+    "distribution": {
+     "body": "team is friendly and we care about quality. Get in touch to learn ",
+     "intro": "We make websites. Our ",
+     "outro": "more about what we do.\n"
+    },
+    "keyword_stuffing_risk": true,
+    "lsi_keywords": [
+     "about",
+     "make",
+     "websites",
+     "team",
+     "friendly",
+     "care",
+     "quality",
+     "touch",
+     "learn",
+     "more"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": "backup"
+    },
+    "secondary": [
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "restore"
+     },
+     {
+      "count": 1,
+      "density": 4.55,
+      "keyword": "site"
+     }
+    ],
+    "topic_clusters": [
+     [
+      "about",
+      "make",
+      "websites",
+      "team",
+      "friendly"
+     ],
+     [
+      "care",
+      "quality",
+      "touch",
+      "learn",
+      "more"
+     ]
+    ],
+    "word_count": 22
+   },
+   "keywords_none": {
+    "distribution": {
+     "body": "team is friendly and we care about quality. Get in touch to learn ",
+     "intro": "We make websites. Our ",
+     "outro": "more about what we do.\n"
+    },
+    "keyword_stuffing_risk": true,
+    "lsi_keywords": [
+     "about",
+     "make",
+     "websites",
+     "team",
+     "friendly",
+     "care",
+     "quality",
+     "touch",
+     "learn",
+     "more"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": ""
+    },
+    "secondary": [],
+    "topic_clusters": [
+     [
+      "about",
+      "make",
+      "websites",
+      "team",
+      "friendly"
+     ],
+     [
+      "care",
+      "quality",
+      "touch",
+      "learn",
+      "more"
+     ]
+    ],
+    "word_count": 22
+   },
+   "landing": {
+    "above_fold": {
+     "cta": false,
+     "score": 0,
+     "trust": false,
+     "value_prop": false
+    },
+    "cta": {
+     "cta_count": 0,
+     "cta_variants": [],
+     "score": 0
+    },
+    "score": 0.0,
+    "trust": {
+     "risk_reversal": 0,
+     "score": 0,
+     "social_proof": 0,
+     "testimonials": 0
+    }
+   },
+   "length": {
+    "competitor_median": 1800,
+    "competitor_p75": 2200,
+    "gap_to_target": 1778,
+    "optimal_target": 2200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 22
+   },
+   "length_custom": {
+    "competitor_median": 900,
+    "competitor_p75": 1200,
+    "gap_to_target": 878,
+    "optimal_target": 1200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 22
+   },
+   "readability": {
+    "average_sentence_length": 7.3,
+    "flesch_kincaid_grade": 4.3,
+    "flesch_reading_ease": 93.9,
+    "passive_voice_ratio": 0.0,
+    "score": 93.9,
+    "sentence_count": 3,
+    "word_count": 22
+   },
+   "seo": {
+    "category_breakdown": {
+     "content": 0,
+     "links": 0,
+     "meta": 0,
+     "readability_structure": 0,
+     "structure": 0
+    },
+    "critical_issues": [
+     "Missing key SEO elements"
+    ],
+    "score": 0,
+    "warnings": [
+     "Content likely under-optimized for search"
+    ]
+   },
+   "trust": {
+    "risk_reversal": 0,
+    "score": 0,
+    "social_proof": 0,
+    "testimonials": 0
+   }
+  },
+  "wall.md": {
+   "above_fold": {
+    "cta": true,
+    "score": 100,
+    "trust": true,
+    "value_prop": true
+   },
+   "competitor_gap": {
+    "gap_count": 4,
+    "missing_topics": [
+     "pricing",
+     "restore",
+     "FAQ",
+     "migration"
+    ],
+    "recommendation": "Add sections for missing high-intent topics."
+   },
+   "cro_checklist": {
+    "checks": {
+     "cta_present": true,
+     "headline": true,
+     "objection_handling": false,
+     "social_proof": false
+    },
+    "passed": 2,
+    "score": 50.0,
+    "total": 4
+   },
+   "cta": {
+    "cta_count": 21,
+    "cta_variants": [
+     "start",
+     "try"
+    ],
+    "score": 100
+   },
+   "engagement": {
+    "ctas": 21,
+    "examples": 0,
+    "questions": 0,
+    "score": 100
+   },
+   "humanity": {
+    "humanity": 92,
+    "readability": 100,
+    "score": 76.4,
+    "seo": 50,
+    "specificity": 85,
+    "structure": 55,
+    "word_count": 1335
+   },
+   "intent": {
+    "confidence": 100.0,
+    "intent": "informational",
+    "signals": {
+     "commercial": 0,
+     "informational": 1,
+     "navigational": 0,
+     "transactional": 0
+    }
+   },
+   "keywords": {
+    "distribution": {
+     "body": "arketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try.\n\nA small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow.\n\nOver time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them.\n\nNone of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region.\n\nWhen a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered.\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n\nGood marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms.\n\nOur marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner.\n\nWe believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try.\n\nA small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow.\n\nOver time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product p",
+     "intro": "# Why Marketing Matters\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n\nGood marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms.\n\nOur marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner.\n\nWe believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start m",
+     "outro": "eople love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them.\n\nNone of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region.\n\nWhen a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered.\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n"
+    },
+    "keyword_stuffing_risk": true,
+    "lsi_keywords": [
+     "marketing",
+     "people",
+     "what",
+     "every",
+     "business",
+     "that",
+     "helps",
+     "campaign",
+     "when",
+     "with"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": "backup"
+    },
+    "secondary": [
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "restore"
+     },
+     {
+      "count": 0,
+      "density": 0.0,
+      "keyword": "site"
+     }
+    ],
+    "topic_clusters": [
+     [
+      "marketing",
+      "people",
+      "what",
+      "every",
+      "business"
+     ],
+     [
+      "that",
+      "helps",
+      "campaign",
+      "when",
+      "with"
+     ]
+    ],
+    "word_count": 1335
+   },
+   "keywords_none": {
+    "distribution": {
+     "body": "arketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try.\n\nA small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow.\n\nOver time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them.\n\nNone of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region.\n\nWhen a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered.\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n\nGood marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms.\n\nOur marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner.\n\nWe believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try.\n\nA small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow.\n\nOver time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product p",
+     "intro": "# Why Marketing Matters\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n\nGood marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms.\n\nOur marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner.\n\nWe believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start m",
+     "outro": "eople love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them.\n\nNone of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region.\n\nWhen a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered.\n\nMarketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.\n"
+    },
+    "keyword_stuffing_risk": true,
+    "lsi_keywords": [
+     "marketing",
+     "people",
+     "what",
+     "every",
+     "business",
+     "that",
+     "helps",
+     "campaign",
+     "when",
+     "with"
+    ],
+    "primary": {
+     "count": 0,
+     "density": 0.0,
+     "keyword": ""
+    },
+    "secondary": [],
+    "topic_clusters": [
+     [
+      "marketing",
+      "people",
+      "what",
+      "every",
+      "business"
+     ],
+     [
+      "that",
+      "helps",
+      "campaign",
+      "when",
+      "with"
+     ]
+    ],
+    "word_count": 1335
+   },
+   "landing": {
+    "above_fold": {
+     "cta": true,
+     "score": 100,
+     "trust": true,
+     "value_prop": true
+    },
+    "cta": {
+     "cta_count": 21,
+     "cta_variants": [
+      "start",
+      "try"
+     ],
+     "score": 100
+    },
+    "score": 100.0,
+    "trust": {
+     "risk_reversal": 0,
+     "score": 100,
+     "social_proof": 11,
+     "testimonials": 0
+    }
+   },
+   "length": {
+    "competitor_median": 1800,
+    "competitor_p75": 2200,
+    "gap_to_target": 465,
+    "optimal_target": 2200,
+    "recommendation": "Expand depth with examples and FAQs.",
+    "word_count": 1335
+   },
+   "length_custom": {
+    "competitor_median": 900,
+    "competitor_p75": 1200,
+    "gap_to_target": -435,
+    "optimal_target": 1200,
+    "recommendation": "Length is competitive.",
+    "word_count": 1335
+   },
+   "readability": {
+    "average_sentence_length": 15.7,
+    "flesch_kincaid_grade": 6.6,
+    "flesch_reading_ease": 75.4,
+    "passive_voice_ratio": 12.9,
+    "score": 75.4,
+    "sentence_count": 85,
+    "word_count": 1335
+   },
+   "seo": {
+    "category_breakdown": {
+     "content": 20,
+     "links": 0,
+     "meta": 0,
+     "readability_structure": 0,
+     "structure": 15
+    },
+    "critical_issues": [
+     "Missing key SEO elements"
+    ],
+    "score": 35,
+    "warnings": [
+     "Content likely under-optimized for search"
+    ]
+   },
+   "trust": {
+    "risk_reversal": 0,
+    "score": 100,
+    "social_proof": 11,
+    "testimonials": 0
+   }
+  }
+ },
+ "documents": {
+  "article.md": {
+   "format": "markdown",
+   "parsed": {
+    "char_count": 2165,
+    "content_hash": "833d1d9bbc4c8c551fed069e2cce545212c6208637260892317b9cb731202b9e",
+    "headers": [
+     {
+      "level": 1,
+      "position": 0,
+      "text": "How to Back Up a Small Website in 2026"
+     },
+     {
+      "level": 2,
+      "position": 1,
+      "text": "What Should a Backup Include?"
+     },
+     {
+      "level": 2,
+      "position": 2,
+      "text": "How Often Should You Back Up?"
+     },
+     {
+      "level": 2,
+      "position": 3,
+      "text": "Step-by-Step: Your First Backup"
+     },
+     {
+      "level": 2,
+      "position": 4,
+      "text": "Frequently Asked Questions"
+     },
+     {
+      "level": 3,
+      "position": 5,
+      "text": "Is a host's backup enough?"
+     },
+     {
+      "level": 3,
+      "position": 6,
+      "text": "How long does a restore take?"
+     }
+    ],
+    "links": [
+     {
+      "text": "Backblaze guide",
+      "url": "https://www.backblaze.com/cloud-backup.html"
+     },
+     {
+      "text": "restore checklist",
+      "url": "/guides/restore-checklist/"
+     }
+    ],
+    "lists": [
+     {
+      "item_count": 3,
+      "items": [
+       "Site files: themes, uploads and plugins",
+       "The database: posts, users and settings",
+       "Configuration: DNS records, TLS certificates and environment variables"
+      ],
+      "type": "unordered"
+     },
+     {
+      "item_count": 4,
+      "items": [
+       "Step 1: Export the database with mysqldump or pg_dump.",
+       "Step 2: Copy the site files with rsync.",
+       "Step 3: Upload both to a second location, such as Backblaze B2.",
+       "Step 4: Restore the copy to a test server and open the site."
+      ],
+      "type": "ordered"
+     }
+    ],
+    "tables": [
+     {
+      "column_count": 4,
+      "row_count": 4,
+      "rows": [
+       [
+        "Plan",
+        "Frequency",
+        "Kept for",
+        "Typical cost"
+       ],
+       [
+        "Basic",
+        "Weekly",
+        "30 days",
+        "$1 a month"
+       ],
+       [
+        "Standard",
+        "Daily",
+        "90 days",
+        "$5 a month"
+       ],
+       [
+        "Business",
+        "Hourly",
+        "1 year",
+        "$25 a month"
+       ]
+      ]
+     }
+    ],
+    "text": "How to Back Up a Small Website in 2026 Backups are the copies of a site that let you restore it after a failure. A backup is defined as a complete, restorable copy of every file and database a site needs, taken on a schedule and kept somewhere else. This matters because most small sites lose data when a single disk fails, and it is essential to test a restore before you need one. According to the Uptime Institute, 40 percent of outages in 2025 involved storage. Research from Backblaze shows drive failure rates near 1.5 percent a year (source: https://www.backblaze.com/blog/). What Should a Backup Include? A backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites differ in what they store, but each needs all three. Site files: themes, uploads and plugins The database: posts, users and settings Configuration: DNS records, TLS certificates and environment variables How Often Should You Back Up? Daily backups suit a site that changes every day. Weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for well under a cent a month, so storage cost rarely decides it. Plan Frequency Kept for Typical cost Basic Weekly 30 days $1 a month Standard Daily 90 days $5 a month Business Hourly 1 year $25 a month Step-by-Step: Your First Backup Step 1: Export the database with mysqldump or pg_dump. Step 2: Copy the site files with rsync. Step 3: Upload both to a second location, such as Backblaze B2. Step 4: Restore the copy to a test server and open the site. Frequently Asked Questions Is a host's backup enough? No. A host's backup lives on the host's systems, so an account suspension or a billing failure takes it away too. Keep a copy you control. How long does a restore take? A restore of a 2 GB site takes about ten minutes over a home connection. Version 2 of our runbook times every step. Read more in the Backblaze guide and our restore checklist .",
+    "word_count": 376
+   },
+   "result": {
+    "anti_pattern_details": {
+     "detected": [],
+     "evidence": []
+    },
+    "anti_pattern_penalties": 20,
+    "content_type": "unknown",
+    "cro": {
+     "checklist": {
+      "checks": {
+       "cta_present": true,
+       "headline": false,
+       "objection_handling": true,
+       "social_proof": false
+      },
+      "passed": 2,
+      "score": 50.0,
+      "total": 4
+     },
+     "landing_page": {
+      "above_fold": {
+       "cta": false,
+       "score": 0,
+       "trust": false,
+       "value_prop": false
+      },
+      "cta": {
+       "cta_count": 0,
+       "cta_variants": [],
+       "score": 0
+      },
+      "score": 0.0,
+      "trust": {
+       "risk_reversal": 0,
+       "score": 0,
+       "social_proof": 0,
+       "testimonials": 0
+      }
+     }
+    },
+    "dimensions": {
+     "aieo": 52.0,
+     "cro": 0.0,
+     "humanity": 100,
+     "readability": 81.8,
+     "seo": 20
+    },
+    "gaps": [
+     {
+      "category": "comparison_tables",
+      "description": "Add comparison tables for key topics.",
+      "id": "gap_comparison_tables",
+      "pattern_max": 15,
+      "pattern_score": 5,
+      "severity": "medium",
+      "weight": 15
+     },
+     {
+      "category": "meta_context",
+      "description": "Explain why your content matters to the reader.",
+      "id": "gap_meta_context",
+      "pattern_max": 10,
+      "pattern_score": 2,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "definitional_precision",
+      "description": "Add explicit definitions for key terms.",
+      "id": "gap_definitional_precision",
+      "pattern_max": 10,
+      "pattern_score": 3,
+      "severity": "low",
+      "weight": 10
+     }
+    ],
+    "grade": "D",
+    "humanity": {
+     "humanity": 100,
+     "readability": 100,
+     "score": 91.0,
+     "seo": 100,
+     "specificity": 100,
+     "structure": 55,
+     "word_count": 346
+    },
+    "keyword_analysis": {
+     "distribution": {
+      "body": "ing to the Uptime Institute, 40 percent of outages in 2025 involved storage. Research from Backblaze shows drive failure rates near 1.5 percent a year (source: https://www.backblaze.com/blog/). What Should a Backup Include? A backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites differ in what they store, but each needs all three. Site files: themes, uploads and plugins The database: posts, users and settings Configuration: DNS records, TLS certificates and environment variables How Often Should You Back Up? Daily backups suit a site that changes every day. Weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for well under a cent a month, so storage cost rarely decides it. Plan Frequency Kept for Typical cost Basic Weekly 30 days $1 a month Standard Daily 90 days $5 a month Business Hourly 1 year $25 a month Step-by-Step: Your First Backup Step 1: Export the database with mysqldump or pg_dump. Step 2: Copy the site files with rsync. Step 3: Upload both to a second location, such as Backblaze B2. Step 4: Restore the copy to a test server and open the site. Frequently",
+      "intro": "How to Back Up a Small Website in 2026 Backups are the copies of a site that let you restore it after a failure. A backup is defined as a complete, restorable copy of every file and database a site needs, taken on a schedule and kept somewhere else. This matters because most small sites lose data when a single disk fails, and it is essential to test a restore before you need one. Accord",
+      "outro": " Asked Questions Is a host's backup enough? No. A host's backup lives on the host's systems, so an account suspension or a billing failure takes it away too. Keep a copy you control. How long does a restore take? A restore of a 2 GB site takes about ten minutes over a home connection. Version 2 of our runbook times every step. Read more in the Backblaze guide and our restore checklist ."
+     },
+     "keyword_stuffing_risk": false,
+     "lsi_keywords": [
+      "site",
+      "restore",
+      "backup",
+      "step",
+      "copy",
+      "database",
+      "backblaze",
+      "month",
+      "backups",
+      "failure"
+     ],
+     "primary": {
+      "count": 0,
+      "density": 0.0,
+      "keyword": ""
+     },
+     "secondary": [],
+     "topic_clusters": [
+      [
+       "site",
+       "restore",
+       "backup",
+       "step",
+       "copy"
+      ],
+      [
+       "database",
+       "backblaze",
+       "month",
+       "backups",
+       "failure"
+      ]
+     ],
+     "word_count": 346
+    },
+    "model": null,
+    "overall_assessment": "Scored with heuristic fallback. Configure an AI API key for contextual analysis.",
+    "pattern_scores": {
+     "citation_hooks": {
+      "detected": true,
+      "evidence": [
+       "4 citation signals (1 external links)"
+      ],
+      "max": 10,
+      "recommendation": "Add source attributions like 'According to [source]...'",
+      "score": 10
+     },
+     "comparison_tables": {
+      "detected": true,
+      "evidence": [
+       "1 tables found"
+      ],
+      "max": 15,
+      "recommendation": "Add comparison tables for key topics.",
+      "score": 5
+     },
+     "definitional_precision": {
+      "detected": true,
+      "evidence": [
+       "1 definitional phrases"
+      ],
+      "max": 10,
+      "recommendation": "Add explicit definitions for key terms.",
+      "score": 3
+     },
+     "entity_density": {
+      "detected": true,
+      "evidence": [
+       "15 entities (4.0 per 100 words)"
+      ],
+      "max": 15,
+      "recommendation": "Add specific names, organizations, and product references.",
+      "score": 15
+     },
+     "faq_injection": {
+      "detected": true,
+      "evidence": [
+       "FAQ section: yes, 4 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add a FAQ section with common questions.",
+      "score": 12
+     },
+     "meta_context": {
+      "detected": true,
+      "evidence": [
+       "1 meta-context signals"
+      ],
+      "max": 10,
+      "recommendation": "Explain why your content matters to the reader.",
+      "score": 2
+     },
+     "procedural_clarity": {
+      "detected": true,
+      "evidence": [
+       "4 step refs, 1 ordered lists"
+      ],
+      "max": 5,
+      "recommendation": "Add numbered step-by-step instructions.",
+      "score": 3.0
+     },
+     "recursive_depth": {
+      "detected": true,
+      "evidence": [
+       "4 questions, 4 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add FAQ sections or question-style headers.",
+      "score": 12.0
+     },
+     "structured_data": {
+      "detected": true,
+      "evidence": [
+       "1 tables, 2 lists, 7 headers"
+      ],
+      "max": 20,
+      "recommendation": "Add tables or lists to organize your content.",
+      "score": 20
+     },
+     "temporal_anchoring": {
+      "detected": true,
+      "evidence": [
+       "2 year references, 2 freshness signals"
+      ],
+      "max": 10,
+      "recommendation": "Add dates, version numbers, or 'as of [date]' markers.",
+      "score": 8
+     }
+    },
+    "provider": null,
+    "readability": {
+     "average_sentence_length": 12.8,
+     "flesch_kincaid_grade": 5.8,
+     "flesch_reading_ease": 81.8,
+     "passive_voice_ratio": 3.7,
+     "score": 81.8,
+     "sentence_count": 27,
+     "word_count": 346
+    },
+    "score": 52.0,
+    "scoring_method": "heuristic",
+    "search_intent": {
+     "confidence": 60.0,
+     "intent": "informational",
+     "signals": {
+      "commercial": 0,
+      "informational": 3,
+      "navigational": 1,
+      "transactional": 1
+     }
+    },
+    "seo_quality": {
+     "category_breakdown": {
+      "content": 5,
+      "links": 15,
+      "meta": 0,
+      "readability_structure": 0,
+      "structure": 0
+     },
+     "critical_issues": [
+      "Missing key SEO elements"
+     ],
+     "score": 20,
+     "warnings": [
+      "Content likely under-optimized for search"
+     ]
+    },
+    "serp_comparison": {
+     "competitor_median": 1800,
+     "competitor_p75": 2200,
+     "gap_to_target": 1454,
+     "optimal_target": 2200,
+     "recommendation": "Expand depth with examples and FAQs.",
+     "word_count": 346
+    },
+    "word_count": 376
+   }
+  },
+  "landing.md": {
+   "format": "markdown",
+   "parsed": {
+    "char_count": 874,
+    "content_hash": "cb853de8e6ca22360ae1a5506319a59e77486f23312b3377031132c67c258398",
+    "headers": [
+     {
+      "level": 1,
+      "position": 0,
+      "text": "Bookkeeping for Busy Founders"
+     },
+     {
+      "level": 2,
+      "position": 1,
+      "text": "What You Get"
+     },
+     {
+      "level": 2,
+      "position": 2,
+      "text": "What Customers Say"
+     },
+     {
+      "level": 2,
+      "position": 3,
+      "text": "Pricing"
+     },
+     {
+      "level": 2,
+      "position": 4,
+      "text": "Questions?"
+     }
+    ],
+    "links": [],
+    "lists": [
+     {
+      "item_count": 3,
+      "items": [
+       "Monthly reconciliation by a named accountant",
+       "Payroll and sales tax filings",
+       "A live dashboard of cash, runway and spend"
+      ],
+      "type": "unordered"
+     }
+    ],
+    "tables": [],
+    "text": "Bookkeeping for Busy Founders Why spend your evenings on receipts? Ledgerly helps small teams close the books in a day, not a week. Start your free 14-day trial today. No credit card needed, cancel anytime. Trusted by 2,000 customers, from two-person studios to growing companies. What You Get Monthly reconciliation by a named accountant Payroll and sales tax filings A live dashboard of cash, runway and spend What Customers Say \"Ledgerly gave our team back two days a month.\" — Priya Shah, founder of Northwind Coffee. Read the full case study. Every review on G2 gives us four stars or more. Pricing Plans start at $199 a month. Every plan comes with our money-back guarantee: if the first month's books are not closed on time, we refund it. Questions? Book a demo with our team, or contact us and we will answer within one business day.",
+    "word_count": 154
+   },
+   "result": {
+    "anti_pattern_details": {
+     "detected": [],
+     "evidence": []
+    },
+    "anti_pattern_penalties": 20,
+    "content_type": "unknown",
+    "cro": {
+     "checklist": {
+      "checks": {
+       "cta_present": true,
+       "headline": false,
+       "objection_handling": true,
+       "social_proof": true
+      },
+      "passed": 3,
+      "score": 75.0,
+      "total": 4
+     },
+     "landing_page": {
+      "above_fold": {
+       "cta": true,
+       "score": 100,
+       "trust": true,
+       "value_prop": true
+      },
+      "cta": {
+       "cta_count": 4,
+       "cta_variants": [
+        "book",
+        "contact",
+        "start"
+       ],
+       "score": 60
+      },
+      "score": 86.0,
+      "trust": {
+       "risk_reversal": 3,
+       "score": 100,
+       "social_proof": 4,
+       "testimonials": 2
+      }
+     }
+    },
+    "dimensions": {
+     "aieo": 11.600000000000001,
+     "cro": 86.0,
+     "humanity": 100,
+     "readability": 85.3,
+     "seo": 2
+    },
+    "gaps": [
+     {
+      "category": "comparison_tables",
+      "description": "Add comparison tables for key topics.",
+      "id": "gap_comparison_tables",
+      "pattern_max": 15,
+      "pattern_score": 0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "faq_injection",
+      "description": "Add a FAQ section with common questions.",
+      "id": "gap_faq_injection",
+      "pattern_max": 15,
+      "pattern_score": 1,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "recursive_depth",
+      "description": "Add FAQ sections or question-style headers.",
+      "id": "gap_recursive_depth",
+      "pattern_max": 15,
+      "pattern_score": 3.5,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "citation_hooks",
+      "description": "Add source attributions like 'According to [source]...'",
+      "id": "gap_citation_hooks",
+      "pattern_max": 10,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "definitional_precision",
+      "description": "Add explicit definitions for key terms.",
+      "id": "gap_definitional_precision",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "meta_context",
+      "description": "Explain why your content matters to the reader.",
+      "id": "gap_meta_context",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "temporal_anchoring",
+      "description": "Add dates, version numbers, or 'as of [date]' markers.",
+      "id": "gap_temporal_anchoring",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "procedural_clarity",
+      "description": "Add numbered step-by-step instructions.",
+      "id": "gap_procedural_clarity",
+      "pattern_max": 5,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 5
+     }
+    ],
+    "grade": "F",
+    "humanity": {
+     "humanity": 100,
+     "readability": 100,
+     "score": 81.0,
+     "seo": 50,
+     "specificity": 100,
+     "structure": 55,
+     "word_count": 146
+    },
+    "keyword_analysis": {
+     "distribution": {
+      "body": "No credit card needed, cancel anytime. Trusted by 2,000 customers, from two-person studios to growing companies. What You Get Monthly reconciliation by a named accountant Payroll and sales tax filings A live dashboard of cash, runway and spend What Customers Say \"Ledgerly gave our team back two days a month.\" — Priya Shah, founder of Northwind Coffee. Read the full case study. Every review on G2 gives us four stars or more. Pricing Plans start at $199 a month. Every plan comes with our money-back gu",
+      "intro": "Bookkeeping for Busy Founders Why spend your evenings on receipts? Ledgerly helps small teams close the books in a day, not a week. Start your free 14-day trial today. ",
+      "outro": "arantee: if the first month's books are not closed on time, we refund it. Questions? Book a demo with our team, or contact us and we will answer within one business day."
+     },
+     "keyword_stuffing_risk": false,
+     "lsi_keywords": [
+      "spend",
+      "your",
+      "ledgerly",
+      "books",
+      "start",
+      "customers",
+      "what",
+      "team",
+      "month",
+      "every"
+     ],
+     "primary": {
+      "count": 0,
+      "density": 0.0,
+      "keyword": ""
+     },
+     "secondary": [],
+     "topic_clusters": [
+      [
+       "spend",
+       "your",
+       "ledgerly",
+       "books",
+       "start"
+      ],
+      [
+       "customers",
+       "what",
+       "team",
+       "month",
+       "every"
+      ]
+     ],
+     "word_count": 146
+    },
+    "model": null,
+    "overall_assessment": "Scored with heuristic fallback. Configure an AI API key for contextual analysis.",
+    "pattern_scores": {
+     "citation_hooks": {
+      "detected": false,
+      "evidence": [
+       "0 citation signals (0 external links)"
+      ],
+      "max": 10,
+      "recommendation": "Add source attributions like 'According to [source]...'",
+      "score": 0.0
+     },
+     "comparison_tables": {
+      "detected": false,
+      "evidence": [
+       "0 tables found"
+      ],
+      "max": 15,
+      "recommendation": "Add comparison tables for key topics.",
+      "score": 0
+     },
+     "definitional_precision": {
+      "detected": false,
+      "evidence": [
+       "0 definitional phrases"
+      ],
+      "max": 10,
+      "recommendation": "Add explicit definitions for key terms.",
+      "score": 0
+     },
+     "entity_density": {
+      "detected": true,
+      "evidence": [
+       "6 entities (3.9 per 100 words)"
+      ],
+      "max": 15,
+      "recommendation": "Add specific names, organizations, and product references.",
+      "score": 15
+     },
+     "faq_injection": {
+      "detected": true,
+      "evidence": [
+       "FAQ section: no, 1 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add a FAQ section with common questions.",
+      "score": 1
+     },
+     "meta_context": {
+      "detected": false,
+      "evidence": [
+       "0 meta-context signals"
+      ],
+      "max": 10,
+      "recommendation": "Explain why your content matters to the reader.",
+      "score": 0
+     },
+     "procedural_clarity": {
+      "detected": false,
+      "evidence": [
+       "0 step refs, 0 ordered lists"
+      ],
+      "max": 5,
+      "recommendation": "Add numbered step-by-step instructions.",
+      "score": 0.0
+     },
+     "recursive_depth": {
+      "detected": true,
+      "evidence": [
+       "2 questions, 1 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add FAQ sections or question-style headers.",
+      "score": 3.5
+     },
+     "structured_data": {
+      "detected": true,
+      "evidence": [
+       "0 tables, 1 lists, 5 headers"
+      ],
+      "max": 20,
+      "recommendation": "Add tables or lists to organize your content.",
+      "score": 20
+     },
+     "temporal_anchoring": {
+      "detected": false,
+      "evidence": [
+       "0 year references, 0 freshness signals"
+      ],
+      "max": 10,
+      "recommendation": "Add dates, version numbers, or 'as of [date]' markers.",
+      "score": 0
+     }
+    },
+    "provider": null,
+    "readability": {
+     "average_sentence_length": 11.2,
+     "flesch_kincaid_grade": 5.3,
+     "flesch_reading_ease": 85.3,
+     "passive_voice_ratio": 0.0,
+     "score": 85.3,
+     "sentence_count": 13,
+     "word_count": 146
+    },
+    "score": 11.600000000000001,
+    "scoring_method": "heuristic",
+    "search_intent": {
+     "confidence": 60.0,
+     "intent": "transactional",
+     "signals": {
+      "commercial": 1,
+      "informational": 1,
+      "navigational": 0,
+      "transactional": 3
+     }
+    },
+    "seo_quality": {
+     "category_breakdown": {
+      "content": 2,
+      "links": 0,
+      "meta": 0,
+      "readability_structure": 0,
+      "structure": 0
+     },
+     "critical_issues": [
+      "Missing key SEO elements"
+     ],
+     "score": 2,
+     "warnings": [
+      "Content likely under-optimized for search"
+     ]
+    },
+    "serp_comparison": {
+     "competitor_median": 1800,
+     "competitor_p75": 2200,
+     "gap_to_target": 1654,
+     "optimal_target": 2200,
+     "recommendation": "Expand depth with examples and FAQs.",
+     "word_count": 146
+    },
+    "word_count": 154
+   }
+  },
+  "page.html": {
+   "format": "html",
+   "parsed": {
+    "char_count": 1376,
+    "content_hash": "bcb21babe4c4f8827f067e0e27507ba7975f03c840884ac7f01872fb0f58a0a7",
+    "headers": [
+     {
+      "level": 1,
+      "position": 0,
+      "text": "Outsourced Accounting for Colorado Businesses"
+     },
+     {
+      "level": 2,
+      "position": 1,
+      "text": "Our Offerings"
+     },
+     {
+      "level": 2,
+      "position": 2,
+      "text": "Frequently Asked Questions"
+     },
+     {
+      "level": 3,
+      "position": 3,
+      "text": "What is outsourced accounting?"
+     },
+     {
+      "level": 3,
+      "position": 4,
+      "text": "Retirement Plan Audit Support"
+     },
+     {
+      "level": 3,
+      "position": 5,
+      "text": "Do you work with companies outside Colorado?"
+     }
+    ],
+    "links": [
+     {
+      "text": "Home",
+      "url": "/"
+     },
+     {
+      "text": "Services",
+      "url": "/services/"
+     },
+     {
+      "text": "About",
+      "url": "/about/"
+     },
+     {
+      "text": "Contact",
+      "url": "/contact/"
+     },
+     {
+      "text": "DOL guidance",
+      "url": "https://www.dol.gov/agencies/ebsa"
+     },
+     {
+      "text": "contact us",
+      "url": "/contact/"
+     }
+    ],
+    "lists": [
+     {
+      "item_count": 3,
+      "items": [
+       "Monthly close and reconciliation",
+       "Accounts payable and receivable",
+       "Financial statements for lenders"
+      ],
+      "type": "unordered"
+     },
+     {
+      "item_count": 3,
+      "items": [
+       "Step 1: We collect the plan documents.",
+       "Step 2: We reconcile contributions with payroll.",
+       "Step 3: We answer the auditor's questions."
+      ],
+      "type": "ordered"
+     }
+    ],
+    "tables": [
+     {
+      "column_count": 3,
+      "row_count": 3,
+      "rows": [
+       [
+        "Service",
+        "Who it is for",
+        "Starts at"
+       ],
+       [
+        "Outsourced accounting",
+        "Companies without a controller",
+        "$1,200 a month"
+       ],
+       [
+        "Audit support",
+        "Plans with 100+ participants",
+        "$3,500 a year"
+       ]
+      ]
+     }
+    ],
+    "text": "Sopris Accounting — Outsourced accounting in Colorado Home | Services | About | Contact Outsourced Accounting for Colorado Businesses Sopris Accounting is an outsourced accounting firm founded in 2014 by Bailey Smith, CPA. We serve companies across the Roaring Fork Valley. Our Offerings What is outsourced accounting? Outsourced accounting refers to a firm keeping your books, closing your month and preparing your reports, so you do not need an in-house team. Monthly close and reconciliation Accounts payable and receivable Financial statements for lenders Retirement Plan Audit Support According to the U.S. Department of Labor, plans with 100 or more participants need an annual audit. We prepare the records your auditor asks for. Step 1: We collect the plan documents. Step 2: We reconcile contributions with payroll. Step 3: We answer the auditor's questions. Service Who it is for Starts at Outsourced accounting Companies without a controller $1,200 a month Audit support Plans with 100+ participants $3,500 a year Frequently Asked Questions Do you work with companies outside Colorado? Yes. As of 2026, a third of our clients are in Utah and Wyoming. Read the DOL guidance or contact us . © 2026 Sopris Accounting. All rights reserved.",
+    "word_count": 202
+   },
+   "result": {
+    "anti_pattern_details": {
+     "detected": [],
+     "evidence": []
+    },
+    "anti_pattern_penalties": 20,
+    "content_type": "unknown",
+    "cro": {
+     "checklist": {
+      "checks": {
+       "cta_present": true,
+       "headline": false,
+       "objection_handling": true,
+       "social_proof": false
+      },
+      "passed": 2,
+      "score": 50.0,
+      "total": 4
+     },
+     "landing_page": {
+      "above_fold": {
+       "cta": true,
+       "score": 35,
+       "trust": false,
+       "value_prop": false
+      },
+      "cta": {
+       "cta_count": 2,
+       "cta_variants": [
+        "contact"
+       ],
+       "score": 30
+      },
+      "score": 32.0,
+      "trust": {
+       "risk_reversal": 0,
+       "score": 30,
+       "social_proof": 3,
+       "testimonials": 0
+      }
+     }
+    },
+    "dimensions": {
+     "aieo": 42.0,
+     "cro": 32.0,
+     "humanity": 100,
+     "readability": 84.9,
+     "seo": 3
+    },
+    "gaps": [
+     {
+      "category": "comparison_tables",
+      "description": "Add comparison tables for key topics.",
+      "id": "gap_comparison_tables",
+      "pattern_max": 15,
+      "pattern_score": 5,
+      "severity": "medium",
+      "weight": 15
+     },
+     {
+      "category": "recursive_depth",
+      "description": "Add FAQ sections or question-style headers.",
+      "id": "gap_recursive_depth",
+      "pattern_max": 15,
+      "pattern_score": 6.0,
+      "severity": "medium",
+      "weight": 15
+     },
+     {
+      "category": "meta_context",
+      "description": "Explain why your content matters to the reader.",
+      "id": "gap_meta_context",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "definitional_precision",
+      "description": "Add explicit definitions for key terms.",
+      "id": "gap_definitional_precision",
+      "pattern_max": 10,
+      "pattern_score": 3,
+      "severity": "low",
+      "weight": 10
+     },
+     {
+      "category": "procedural_clarity",
+      "description": "Add numbered step-by-step instructions.",
+      "id": "gap_procedural_clarity",
+      "pattern_max": 5,
+      "pattern_score": 2.5,
+      "severity": "low",
+      "weight": 5
+     }
+    ],
+    "grade": "F",
+    "humanity": {
+     "humanity": 100,
+     "readability": 100,
+     "score": 81.0,
+     "seo": 50,
+     "specificity": 100,
+     "structure": 55,
+     "word_count": 194
+    },
+    "keyword_analysis": {
+     "distribution": {
+      "body": "the Roaring Fork Valley. Our Offerings What is outsourced accounting? Outsourced accounting refers to a firm keeping your books, closing your month and preparing your reports, so you do not need an in-house team. Monthly close and reconciliation Accounts payable and receivable Financial statements for lenders Retirement Plan Audit Support According to the U.S. Department of Labor, plans with 100 or more participants need an annual audit. We prepare the records your auditor asks for. Step 1: We collect the plan documents. Step 2: We reconcile contributions with payroll. Step 3: We answer the auditor's questions. Service Who it is for Starts at Outsourced accounting Companies without a controller $1,200 a month Audit support Plans with 100",
+      "intro": "Sopris Accounting — Outsourced accounting in Colorado Home | Services | About | Contact Outsourced Accounting for Colorado Businesses Sopris Accounting is an outsourced accounting firm founded in 2014 by Bailey Smith, CPA. We serve companies across ",
+      "outro": "+ participants $3,500 a year Frequently Asked Questions Do you work with companies outside Colorado? Yes. As of 2026, a third of our clients are in Utah and Wyoming. Read the DOL guidance or contact us . © 2026 Sopris Accounting. All rights reserved."
+     },
+     "keyword_stuffing_risk": false,
+     "lsi_keywords": [
+      "accounting",
+      "outsourced",
+      "your",
+      "with",
+      "sopris",
+      "colorado",
+      "companies",
+      "audit",
+      "step",
+      "contact"
+     ],
+     "primary": {
+      "count": 0,
+      "density": 0.0,
+      "keyword": ""
+     },
+     "secondary": [],
+     "topic_clusters": [
+      [
+       "accounting",
+       "outsourced",
+       "your",
+       "with",
+       "sopris"
+      ],
+      [
+       "colorado",
+       "companies",
+       "audit",
+       "step",
+       "contact"
+      ]
+     ],
+     "word_count": 194
+    },
+    "model": null,
+    "overall_assessment": "Scored with heuristic fallback. Configure an AI API key for contextual analysis.",
+    "pattern_scores": {
+     "citation_hooks": {
+      "detected": true,
+      "evidence": [
+       "2 citation signals (1 external links)"
+      ],
+      "max": 10,
+      "recommendation": "Add source attributions like 'According to [source]...'",
+      "score": 10
+     },
+     "comparison_tables": {
+      "detected": true,
+      "evidence": [
+       "1 tables found"
+      ],
+      "max": 15,
+      "recommendation": "Add comparison tables for key topics.",
+      "score": 5
+     },
+     "definitional_precision": {
+      "detected": true,
+      "evidence": [
+       "1 definitional phrases"
+      ],
+      "max": 10,
+      "recommendation": "Add explicit definitions for key terms.",
+      "score": 3
+     },
+     "entity_density": {
+      "detected": true,
+      "evidence": [
+       "12 entities (5.9 per 100 words)"
+      ],
+      "max": 15,
+      "recommendation": "Add specific names, organizations, and product references.",
+      "score": 15
+     },
+     "faq_injection": {
+      "detected": true,
+      "evidence": [
+       "FAQ section: yes, 2 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add a FAQ section with common questions.",
+      "score": 10
+     },
+     "meta_context": {
+      "detected": false,
+      "evidence": [
+       "0 meta-context signals"
+      ],
+      "max": 10,
+      "recommendation": "Explain why your content matters to the reader.",
+      "score": 0
+     },
+     "procedural_clarity": {
+      "detected": true,
+      "evidence": [
+       "3 step refs, 1 ordered lists"
+      ],
+      "max": 5,
+      "recommendation": "Add numbered step-by-step instructions.",
+      "score": 2.5
+     },
+     "recursive_depth": {
+      "detected": true,
+      "evidence": [
+       "2 questions, 2 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add FAQ sections or question-style headers.",
+      "score": 6.0
+     },
+     "structured_data": {
+      "detected": true,
+      "evidence": [
+       "1 tables, 2 lists, 6 headers"
+      ],
+      "max": 20,
+      "recommendation": "Add tables or lists to organize your content.",
+      "score": 20
+     },
+     "temporal_anchoring": {
+      "detected": true,
+      "evidence": [
+       "2 year references, 1 freshness signals"
+      ],
+      "max": 10,
+      "recommendation": "Add dates, version numbers, or 'as of [date]' markers.",
+      "score": 6
+     }
+    },
+    "provider": null,
+    "readability": {
+     "average_sentence_length": 11.4,
+     "flesch_kincaid_grade": 5.4,
+     "flesch_reading_ease": 84.9,
+     "passive_voice_ratio": 5.9,
+     "score": 84.9,
+     "sentence_count": 17,
+     "word_count": 194
+    },
+    "score": 42.0,
+    "scoring_method": "heuristic",
+    "search_intent": {
+     "confidence": 50.0,
+     "intent": "informational",
+     "signals": {
+      "commercial": 0,
+      "informational": 1,
+      "navigational": 0,
+      "transactional": 1
+     }
+    },
+    "seo_quality": {
+     "category_breakdown": {
+      "content": 3,
+      "links": 0,
+      "meta": 0,
+      "readability_structure": 0,
+      "structure": 0
+     },
+     "critical_issues": [
+      "Missing key SEO elements"
+     ],
+     "score": 3,
+     "warnings": [
+      "Content likely under-optimized for search"
+     ]
+    },
+    "serp_comparison": {
+     "competitor_median": 1800,
+     "competitor_p75": 2200,
+     "gap_to_target": 1606,
+     "optimal_target": 2200,
+     "recommendation": "Expand depth with examples and FAQs.",
+     "word_count": 194
+    },
+    "word_count": 202
+   }
+  },
+  "thin.md": {
+   "format": "markdown",
+   "parsed": {
+    "char_count": 111,
+    "content_hash": "f71f6a8a80658d14a5db295d97ece0dbc75ac300dc5e7e2047db1cb97ad2c8a8",
+    "headers": [],
+    "links": [],
+    "lists": [],
+    "tables": [],
+    "text": "We make websites. Our team is friendly and we care about quality. Get in touch to learn more about what we do.",
+    "word_count": 22
+   },
+   "result": {
+    "anti_pattern_details": {
+     "detected": [],
+     "evidence": []
+    },
+    "anti_pattern_penalties": 15,
+    "content_type": "unknown",
+    "cro": {
+     "checklist": {
+      "checks": {
+       "cta_present": false,
+       "headline": false,
+       "objection_handling": false,
+       "social_proof": false
+      },
+      "passed": 0,
+      "score": 0.0,
+      "total": 4
+     },
+     "landing_page": {
+      "above_fold": {
+       "cta": false,
+       "score": 0,
+       "trust": false,
+       "value_prop": false
+      },
+      "cta": {
+       "cta_count": 0,
+       "cta_variants": [],
+       "score": 0
+      },
+      "score": 0.0,
+      "trust": {
+       "risk_reversal": 0,
+       "score": 0,
+       "social_proof": 0,
+       "testimonials": 0
+      }
+     }
+    },
+    "dimensions": {
+     "aieo": 0,
+     "cro": 0.0,
+     "humanity": 56,
+     "readability": 93.9,
+     "seo": 0
+    },
+    "gaps": [
+     {
+      "category": "structured_data",
+      "description": "Add tables or lists to organize your content.",
+      "id": "gap_structured_data",
+      "pattern_max": 20,
+      "pattern_score": 0.0,
+      "severity": "high",
+      "weight": 20
+     },
+     {
+      "category": "comparison_tables",
+      "description": "Add comparison tables for key topics.",
+      "id": "gap_comparison_tables",
+      "pattern_max": 15,
+      "pattern_score": 0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "entity_density",
+      "description": "Add specific names, organizations, and product references.",
+      "id": "gap_entity_density",
+      "pattern_max": 15,
+      "pattern_score": 0.0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "faq_injection",
+      "description": "Add a FAQ section with common questions.",
+      "id": "gap_faq_injection",
+      "pattern_max": 15,
+      "pattern_score": 0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "recursive_depth",
+      "description": "Add FAQ sections or question-style headers.",
+      "id": "gap_recursive_depth",
+      "pattern_max": 15,
+      "pattern_score": 0.0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "citation_hooks",
+      "description": "Add source attributions like 'According to [source]...'",
+      "id": "gap_citation_hooks",
+      "pattern_max": 10,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "definitional_precision",
+      "description": "Add explicit definitions for key terms.",
+      "id": "gap_definitional_precision",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "meta_context",
+      "description": "Explain why your content matters to the reader.",
+      "id": "gap_meta_context",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "temporal_anchoring",
+      "description": "Add dates, version numbers, or 'as of [date]' markers.",
+      "id": "gap_temporal_anchoring",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "procedural_clarity",
+      "description": "Add numbered step-by-step instructions.",
+      "id": "gap_procedural_clarity",
+      "pattern_max": 5,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 5
+     }
+    ],
+    "grade": "F",
+    "humanity": {
+     "humanity": 56,
+     "readability": 100,
+     "score": 54.8,
+     "seo": 50,
+     "specificity": 13,
+     "structure": 55,
+     "word_count": 22
+    },
+    "keyword_analysis": {
+     "distribution": {
+      "body": "team is friendly and we care about quality. Get in touch to learn ",
+      "intro": "We make websites. Our ",
+      "outro": "more about what we do."
+     },
+     "keyword_stuffing_risk": true,
+     "lsi_keywords": [
+      "about",
+      "make",
+      "websites",
+      "team",
+      "friendly",
+      "care",
+      "quality",
+      "touch",
+      "learn",
+      "more"
+     ],
+     "primary": {
+      "count": 0,
+      "density": 0.0,
+      "keyword": ""
+     },
+     "secondary": [],
+     "topic_clusters": [
+      [
+       "about",
+       "make",
+       "websites",
+       "team",
+       "friendly"
+      ],
+      [
+       "care",
+       "quality",
+       "touch",
+       "learn",
+       "more"
+      ]
+     ],
+     "word_count": 22
+    },
+    "model": null,
+    "overall_assessment": "Scored with heuristic fallback. Configure an AI API key for contextual analysis.",
+    "pattern_scores": {
+     "citation_hooks": {
+      "detected": false,
+      "evidence": [
+       "0 citation signals (0 external links)"
+      ],
+      "max": 10,
+      "recommendation": "Add source attributions like 'According to [source]...'",
+      "score": 0.0
+     },
+     "comparison_tables": {
+      "detected": false,
+      "evidence": [
+       "0 tables found"
+      ],
+      "max": 15,
+      "recommendation": "Add comparison tables for key topics.",
+      "score": 0
+     },
+     "definitional_precision": {
+      "detected": false,
+      "evidence": [
+       "0 definitional phrases"
+      ],
+      "max": 10,
+      "recommendation": "Add explicit definitions for key terms.",
+      "score": 0
+     },
+     "entity_density": {
+      "detected": false,
+      "evidence": [
+       "0 entities (0.0 per 100 words)"
+      ],
+      "max": 15,
+      "recommendation": "Add specific names, organizations, and product references.",
+      "score": 0.0
+     },
+     "faq_injection": {
+      "detected": false,
+      "evidence": [
+       "FAQ section: no, 0 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add a FAQ section with common questions.",
+      "score": 0
+     },
+     "meta_context": {
+      "detected": false,
+      "evidence": [
+       "0 meta-context signals"
+      ],
+      "max": 10,
+      "recommendation": "Explain why your content matters to the reader.",
+      "score": 0
+     },
+     "procedural_clarity": {
+      "detected": false,
+      "evidence": [
+       "0 step refs, 0 ordered lists"
+      ],
+      "max": 5,
+      "recommendation": "Add numbered step-by-step instructions.",
+      "score": 0.0
+     },
+     "recursive_depth": {
+      "detected": false,
+      "evidence": [
+       "0 questions, 0 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add FAQ sections or question-style headers.",
+      "score": 0.0
+     },
+     "structured_data": {
+      "detected": false,
+      "evidence": [
+       "0 tables, 0 lists, 0 headers"
+      ],
+      "max": 20,
+      "recommendation": "Add tables or lists to organize your content.",
+      "score": 0.0
+     },
+     "temporal_anchoring": {
+      "detected": false,
+      "evidence": [
+       "0 year references, 0 freshness signals"
+      ],
+      "max": 10,
+      "recommendation": "Add dates, version numbers, or 'as of [date]' markers.",
+      "score": 0
+     }
+    },
+    "provider": null,
+    "readability": {
+     "average_sentence_length": 7.3,
+     "flesch_kincaid_grade": 4.3,
+     "flesch_reading_ease": 93.9,
+     "passive_voice_ratio": 0.0,
+     "score": 93.9,
+     "sentence_count": 3,
+     "word_count": 22
+    },
+    "score": 0,
+    "scoring_method": "heuristic",
+    "search_intent": {
+     "confidence": 66.7,
+     "intent": "informational",
+     "signals": {
+      "commercial": 0,
+      "informational": 2,
+      "navigational": 1,
+      "transactional": 0
+     }
+    },
+    "seo_quality": {
+     "category_breakdown": {
+      "content": 0,
+      "links": 0,
+      "meta": 0,
+      "readability_structure": 0,
+      "structure": 0
+     },
+     "critical_issues": [
+      "Missing key SEO elements"
+     ],
+     "score": 0,
+     "warnings": [
+      "Content likely under-optimized for search"
+     ]
+    },
+    "serp_comparison": {
+     "competitor_median": 1800,
+     "competitor_p75": 2200,
+     "gap_to_target": 1778,
+     "optimal_target": 2200,
+     "recommendation": "Expand depth with examples and FAQs.",
+     "word_count": 22
+    },
+    "word_count": 22
+   }
+  },
+  "wall.md": {
+   "format": "markdown",
+   "parsed": {
+    "char_count": 7781,
+    "content_hash": "e26efdddc93688b5e7f6adfee3beaff9aa190db1f7f812c72372a56fdb27c8f8",
+    "headers": [
+     {
+      "level": 1,
+      "position": 0,
+      "text": "Why Marketing Matters"
+     }
+    ],
+    "links": [],
+    "lists": [],
+    "tables": [],
+    "text": "Why Marketing Matters Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers.",
+    "word_count": 1336
+   },
+   "result": {
+    "anti_pattern_details": {
+     "detected": [],
+     "evidence": []
+    },
+    "anti_pattern_penalties": 30,
+    "content_type": "unknown",
+    "cro": {
+     "checklist": {
+      "checks": {
+       "cta_present": true,
+       "headline": false,
+       "objection_handling": false,
+       "social_proof": false
+      },
+      "passed": 1,
+      "score": 25.0,
+      "total": 4
+     },
+     "landing_page": {
+      "above_fold": {
+       "cta": true,
+       "score": 100,
+       "trust": true,
+       "value_prop": true
+      },
+      "cta": {
+       "cta_count": 21,
+       "cta_variants": [
+        "start",
+        "try"
+       ],
+       "score": 100
+      },
+      "score": 100.0,
+      "trust": {
+       "risk_reversal": 0,
+       "score": 100,
+       "social_proof": 11,
+       "testimonials": 0
+      }
+     }
+    },
+    "dimensions": {
+     "aieo": 0,
+     "cro": 100.0,
+     "humanity": 92,
+     "readability": 75.4,
+     "seo": 20
+    },
+    "gaps": [
+     {
+      "category": "structured_data",
+      "description": "Add tables or lists to organize your content.",
+      "id": "gap_structured_data",
+      "pattern_max": 20,
+      "pattern_score": 3.7,
+      "severity": "high",
+      "weight": 20
+     },
+     {
+      "category": "comparison_tables",
+      "description": "Add comparison tables for key topics.",
+      "id": "gap_comparison_tables",
+      "pattern_max": 15,
+      "pattern_score": 0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "entity_density",
+      "description": "Add specific names, organizations, and product references.",
+      "id": "gap_entity_density",
+      "pattern_max": 15,
+      "pattern_score": 0.4,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "faq_injection",
+      "description": "Add a FAQ section with common questions.",
+      "id": "gap_faq_injection",
+      "pattern_max": 15,
+      "pattern_score": 0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "recursive_depth",
+      "description": "Add FAQ sections or question-style headers.",
+      "id": "gap_recursive_depth",
+      "pattern_max": 15,
+      "pattern_score": 0.0,
+      "severity": "high",
+      "weight": 15
+     },
+     {
+      "category": "citation_hooks",
+      "description": "Add source attributions like 'According to [source]...'",
+      "id": "gap_citation_hooks",
+      "pattern_max": 10,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "definitional_precision",
+      "description": "Add explicit definitions for key terms.",
+      "id": "gap_definitional_precision",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "meta_context",
+      "description": "Explain why your content matters to the reader.",
+      "id": "gap_meta_context",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "temporal_anchoring",
+      "description": "Add dates, version numbers, or 'as of [date]' markers.",
+      "id": "gap_temporal_anchoring",
+      "pattern_max": 10,
+      "pattern_score": 0,
+      "severity": "medium",
+      "weight": 10
+     },
+     {
+      "category": "procedural_clarity",
+      "description": "Add numbered step-by-step instructions.",
+      "id": "gap_procedural_clarity",
+      "pattern_max": 5,
+      "pattern_score": 0.0,
+      "severity": "medium",
+      "weight": 5
+     }
+    ],
+    "grade": "F",
+    "humanity": {
+     "humanity": 92,
+     "readability": 100,
+     "score": 76.4,
+     "seo": 50,
+     "specificity": 85,
+     "structure": 55,
+     "word_count": 1335
+    },
+    "keyword_analysis": {
+     "distribution": {
+      "body": "keting with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product p",
+      "intro": "Why Marketing Matters Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers. Over time the marketing grows into email, social posts, events and partnerships with other local firms. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start mar",
+      "outro": "eople love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. None of that marketing replaces a product people love, but it helps the right people hear about it sooner. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. When a campaign ends we look at what changed and decide what the next round of marketing should try. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. Marketing matters for every business that wants to grow. Good marketing tells people what you do and why it helps them. Our marketing team writes, plans and measures every campaign we run for clients across the region. We believe marketing works best when it is honest, simple and repeated often enough to be remembered. A small business can start marketing with nothing more than a clear offer and a list of customers."
+     },
+     "keyword_stuffing_risk": true,
+     "lsi_keywords": [
+      "marketing",
+      "people",
+      "what",
+      "every",
+      "business",
+      "that",
+      "helps",
+      "campaign",
+      "when",
+      "with"
+     ],
+     "primary": {
+      "count": 0,
+      "density": 0.0,
+      "keyword": ""
+     },
+     "secondary": [],
+     "topic_clusters": [
+      [
+       "marketing",
+       "people",
+       "what",
+       "every",
+       "business"
+      ],
+      [
+       "that",
+       "helps",
+       "campaign",
+       "when",
+       "with"
+      ]
+     ],
+     "word_count": 1335
+    },
+    "model": null,
+    "overall_assessment": "Scored with heuristic fallback. Configure an AI API key for contextual analysis.",
+    "pattern_scores": {
+     "citation_hooks": {
+      "detected": false,
+      "evidence": [
+       "0 citation signals (0 external links)"
+      ],
+      "max": 10,
+      "recommendation": "Add source attributions like 'According to [source]...'",
+      "score": 0.0
+     },
+     "comparison_tables": {
+      "detected": false,
+      "evidence": [
+       "0 tables found"
+      ],
+      "max": 15,
+      "recommendation": "Add comparison tables for key topics.",
+      "score": 0
+     },
+     "definitional_precision": {
+      "detected": false,
+      "evidence": [
+       "0 definitional phrases"
+      ],
+      "max": 10,
+      "recommendation": "Add explicit definitions for key terms.",
+      "score": 0
+     },
+     "entity_density": {
+      "detected": false,
+      "evidence": [
+       "1 entities (0.1 per 100 words)"
+      ],
+      "max": 15,
+      "recommendation": "Add specific names, organizations, and product references.",
+      "score": 0.4
+     },
+     "faq_injection": {
+      "detected": false,
+      "evidence": [
+       "FAQ section: no, 0 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add a FAQ section with common questions.",
+      "score": 0
+     },
+     "meta_context": {
+      "detected": false,
+      "evidence": [
+       "0 meta-context signals"
+      ],
+      "max": 10,
+      "recommendation": "Explain why your content matters to the reader.",
+      "score": 0
+     },
+     "procedural_clarity": {
+      "detected": false,
+      "evidence": [
+       "0 step refs, 0 ordered lists"
+      ],
+      "max": 5,
+      "recommendation": "Add numbered step-by-step instructions.",
+      "score": 0.0
+     },
+     "recursive_depth": {
+      "detected": false,
+      "evidence": [
+       "0 questions, 0 question headers"
+      ],
+      "max": 15,
+      "recommendation": "Add FAQ sections or question-style headers.",
+      "score": 0.0
+     },
+     "structured_data": {
+      "detected": false,
+      "evidence": [
+       "0 tables, 0 lists, 1 headers"
+      ],
+      "max": 20,
+      "recommendation": "Add tables or lists to organize your content.",
+      "score": 3.7
+     },
+     "temporal_anchoring": {
+      "detected": false,
+      "evidence": [
+       "0 year references, 0 freshness signals"
+      ],
+      "max": 10,
+      "recommendation": "Add dates, version numbers, or 'as of [date]' markers.",
+      "score": 0
+     }
+    },
+    "provider": null,
+    "readability": {
+     "average_sentence_length": 15.7,
+     "flesch_kincaid_grade": 6.6,
+     "flesch_reading_ease": 75.4,
+     "passive_voice_ratio": 12.9,
+     "score": 75.4,
+     "sentence_count": 85,
+     "word_count": 1335
+    },
+    "score": 0,
+    "scoring_method": "heuristic",
+    "search_intent": {
+     "confidence": 100.0,
+     "intent": "informational",
+     "signals": {
+      "commercial": 0,
+      "informational": 1,
+      "navigational": 0,
+      "transactional": 0
+     }
+    },
+    "seo_quality": {
+     "category_breakdown": {
+      "content": 20,
+      "links": 0,
+      "meta": 0,
+      "readability_structure": 0,
+      "structure": 0
+     },
+     "critical_issues": [
+      "Missing key SEO elements"
+     ],
+     "score": 20,
+     "warnings": [
+      "Content likely under-optimized for search"
+     ]
+    },
+    "serp_comparison": {
+     "competitor_median": 1800,
+     "competitor_p75": 2200,
+     "gap_to_target": 465,
+     "optimal_target": 2200,
+     "recommendation": "Expand depth with examples and FAQs.",
+     "word_count": 1335
+    },
+    "word_count": 1336
+   }
+  }
+ },
+ "opportunity": [
+  {
+   "input": {
+    "business_priority": 0.5,
+    "ctr": 0.08,
+    "impressions": 12000,
+    "position": 3.2,
+    "trend_delta": 0.0
+   },
+   "output": {
+    "components": {
+     "business_priority": 50.0,
+     "ctr_gap": 92.0,
+     "impressions": 100,
+     "position": 96.8,
+     "trend": 50.0
+    },
+    "score": 84.9
+   }
+  },
+  {
+   "input": {
+    "business_priority": 1.0,
+    "ctr": 0.01,
+    "impressions": 900,
+    "position": 14.0,
+    "trend_delta": 12.0
+   },
+   "output": {
+    "components": {
+     "business_priority": 100,
+     "ctr_gap": 99.0,
+     "impressions": 9.0,
+     "position": 86.0,
+     "trend": 62.0
+    },
+    "score": 67.2
+   }
+  },
+  {
+   "input": {
+    "business_priority": 0.2,
+    "ctr": 0.0,
+    "impressions": 40,
+    "position": 48.5,
+    "trend_delta": -30.0
+   },
+   "output": {
+    "components": {
+     "business_priority": 20.0,
+     "ctr_gap": 100,
+     "impressions": 0.4,
+     "position": 51.5,
+     "trend": 20.0
+    },
+    "score": 40.5
+   }
+  },
+  {
+   "input": {
+    "business_priority": 2.0,
+    "ctr": 1.5,
+    "impressions": 15000000,
+    "position": 120.0,
+    "trend_delta": 90.0
+   },
+   "output": {
+    "components": {
+     "business_priority": 100,
+     "ctr_gap": 0,
+     "impressions": 100,
+     "position": 0,
+     "trend": 100
+    },
+    "score": 50.0
+   }
+  }
+ ],
+ "patterns": [
+  {
+   "body": "## What to Evaluate\n\nIdentify explicit source attributions, evidence markers, and credibility signals that make AI engines confident enough to cite the content. Content with clear attribution chains is preferentially cited because AIs can verify and attribute claims.\n\n## Scoring Criteria\n\n- **Source attributions** (0-4 points): Phrases like \"according to [source]\", \"research from [institution]\", \"published in [journal]\", \"[Expert name] states\". Award more for specific, verifiable attributions.\n- **Evidence markers** (0-3 points): Data points, statistics, study references, methodology descriptions that signal factual rigor.\n- **External references** (0-3 points): Links to authoritative sources, bibliographies, footnotes, \"Sources:\" sections.\n\n## High Score Examples\n\n- \"According to a 2024 Gartner report, 65% of enterprises will adopt AI-native tools by 2026.\"\n- \"Dr. Sarah Chen, Director of AI Research at Stanford, explains that...\"\n- Content with a \"Sources\" or \"References\" section with real, verifiable links\n\n## Low Score Indicators\n\n- Unsourced claims: \"Studies show that...\" (which studies?)\n- No external links or references\n- All claims are opinion without evidence markers\n\n## Context Sensitivity\n\n- Personal blogs sharing experiences don't need heavy citations — score relative to claims made\n- Technical documentation should cite standards, RFCs, or official docs\n- Marketing claims about \"best\" or \"leading\" should be supported with evidence\n- Distinguish real citations from fake \"according to experts\" padding",
+   "display_name": "Citation Hooks",
+   "max_score": 10,
+   "name": "citation_hooks",
+   "weight": 10
+  },
+  {
+   "body": "## What to Evaluate\n\nAssess whether the content provides structured comparisons — tables, side-by-side analyses, or systematic pro/con evaluations — that AI engines can directly extract and present when users ask \"X vs Y\" or \"which is better\" queries.\n\n## Scoring Criteria\n\n- **Comparison tables** (0-8 points): Tables that explicitly compare two or more items across multiple dimensions. Award more for tables with clear headers, consistent criteria, and balanced coverage.\n- **Structured pros/cons** (0-4 points): Explicit \"Pros\" and \"Cons\" sections, advantage/disadvantage lists, or \"strengths and weaknesses\" breakdowns.\n- **Comparative language** (0-3 points): Direct comparative analysis (\"X is faster but Y is more affordable\", \"Unlike X, Y provides...\") — but only award if it adds real analytical value, not just incidental use of comparison words.\n\n## High Score Examples\n\n- A hosting providers page with a feature comparison matrix (price, storage, support, uptime)\n- \"Pros and Cons of Remote Work\" with bulleted, balanced lists\n- Side-by-side analysis: \"React vs Vue: When to Choose Each\"\n\n## Low Score Indicators\n\n- No comparison elements despite comparing things in prose\n- Incidental use of words like \"better\" or \"versus\" without actual comparative structure\n- One-sided comparison that only presents one option favorably\n\n## Context Sensitivity\n\n- Not all content needs comparisons — a company's \"About Us\" page is not a comparison. Award 0 points without penalty for non-comparative content types.\n- Product/service pages benefit from \"how we compare\" sections\n- Tutorial content comparing approaches or tools should score high\n- Don't award points for incidental comparison words in non-comparative content",
+   "display_name": "Comparison Tables",
+   "max_score": 15,
+   "name": "comparison_tables",
+   "weight": 15
+  },
+  {
+   "body": "## What to Evaluate\n\nCheck whether the content provides explicit, precise definitions for key terms, concepts, or jargon. AI engines heavily favor content with clear definitions because they can directly extract and quote these in response to \"What is X?\" queries.\n\n## Scoring Criteria\n\n- **Explicit definitions** (0-5 points): Clear \"X is defined as...\", \"X refers to...\", \"X means...\" constructions for key terms. Must be genuine definitions, not incidental use of \"is a\" in normal sentences.\n- **Glossary/terminology sections** (0-3 points): Dedicated sections explaining domain-specific terms.\n- **Contextual clarity** (0-2 points): Key terms are explained in context even without formal definitions — the reader never encounters unexplained jargon.\n\n## High Score Examples\n\n- \"AIEO (AI Engine Optimization) is the practice of structuring content to maximize its likelihood of being cited by AI engines.\"\n- A \"Key Terms\" sidebar or glossary section\n- Technical content where each new concept is defined on first use\n\n## Low Score Indicators\n\n- Jargon used without explanation\n- Incidental \"is a\" sentences that aren't actual definitions (e.g., \"This is a great opportunity\")\n- Acronyms introduced without expansion\n\n## Context Sensitivity\n\n- Technical and educational content should have high definitional precision\n- Personal narratives don't need formal definitions\n- Industry content can assume standard terminology but should define niche terms\n- Only evaluate genuine definitions — \"She is a teacher\" is not a definitional statement about the concept of teaching",
+   "display_name": "Definitional Precision",
+   "max_score": 10,
+   "name": "definitional_precision",
+   "weight": 10
+  },
+  {
+   "body": "## What to Evaluate\n\nMeasure the density of named entities — specific people, organizations, products, locations, dates, and technical terms — that make content uniquely identifiable and citable by AI engines. AI engines cite content with high entity specificity because it provides concrete, verifiable facts.\n\n## Scoring Criteria\n\n- **Named people/organizations** (0-5 points): Specific names (e.g., \"Marie Curie\", \"Anthropic\", \"Sopris Accounting\") vs. generic references (\"a company\", \"researchers\")\n- **Products/technologies** (0-5 points): Specific product names, versions, standards (e.g., \"GPT-4\", \"TLS 1.3\", \"React 18\") vs. vague references (\"the latest version\")\n- **Locations and dates** (0-5 points): Specific geographic references and temporal markers that ground the content in reality\n\n## Target Density\n\n- Excellent: 3+ unique entities per 100 words\n- Good: 1.5-3 unique entities per 100 words\n- Weak: <1 entity per 100 words\n\n## High Score Examples\n\n- \"Anthropic released Claude 3.5 Sonnet in June 2024, achieving state-of-the-art performance on the MMLU benchmark with 88.7% accuracy.\"\n- \"Located in Carbondale, Colorado, Sopris Accounting serves small businesses across the Roaring Fork Valley.\"\n\n## Low Score Indicators\n\n- \"Our company provides great services to customers in the area.\" (zero entities)\n- \"The product was updated recently with new features.\" (no specifics)\n\n## Context Sensitivity\n\n- Service/about pages SHOULD be entity-rich (who, where, what specifically)\n- Opinion pieces may naturally have fewer entities — score relative to content type\n- Don't count boilerplate navigation entities (menu items, footer links)",
+   "display_name": "Entity Density",
+   "max_score": 15,
+   "name": "entity_density",
+   "weight": 15
+  },
+  {
+   "body": "## What to Evaluate\n\nDetermine whether the content includes FAQ (Frequently Asked Questions) formatting — explicit question-answer pairs that AI engines can directly match to user queries. FAQ-structured content is among the most citable because AI engines can map user questions directly to content answers.\n\n## Scoring Criteria\n\n- **Dedicated FAQ section** (0-8 points): An explicit \"Frequently Asked Questions\", \"FAQ\", or \"Common Questions\" section with Q&A pairs. Award more for questions that reflect real user queries (not marketing fluff questions like \"Why are we the best?\").\n- **Question headers** (0-4 points): H2/H3 headers phrased as questions (e.g., \"How much does it cost?\", \"What browsers are supported?\"). These are strong citation hooks even outside a formal FAQ.\n- **Q&A density** (0-3 points): Ratio of genuine questions answered throughout the content — not just in a FAQ section.\n\n## High Score Examples\n\n- Dedicated FAQ section: \"Q: How long does shipping take? A: Standard shipping takes 5-7 business days...\"\n- Article with question headers: \"## What is AIEO?\", \"## How Does AIEO Differ from SEO?\", \"## Should I Optimize for AI Engines?\"\n- Service page with \"Common Questions\" addressing real concerns\n\n## Low Score Indicators\n\n- No questions anywhere in the content\n- Only rhetorical questions that aren't answered\n- \"FAQ\" section with self-serving questions (\"Q: Why should I choose us?\" \"A: Because we're the best!\")\n\n## Context Sensitivity\n\n- FAQ sections are most valuable on service pages, product pages, and documentation\n- Blog posts benefit from question-style headers even without formal FAQ sections\n- Academic or technical content naturally uses \"Research Questions\" — count these similarly\n- Award partial credit for question-driven structure even without explicit \"FAQ\" label",
+   "display_name": "FAQ Injection",
+   "max_score": 15,
+   "name": "faq_injection",
+   "weight": 15
+  },
+  {
+   "body": "## What to Evaluate\n\nAssess whether the content explains WHY information matters — providing the broader context, significance, and implications that help AI engines understand the importance and relevance of the content for various queries.\n\n## Scoring Criteria\n\n- **Importance framing** (0-4 points): Explicit statements about why the topic matters, who it affects, and what's at stake. \"This matters because...\", \"The significance of X is...\", \"Understanding X is critical for...\"\n- **Audience context** (0-3 points): Clear identification of who this content is for and why they should care. \"If you're a small business owner...\", \"For developers working with...\"\n- **Broader implications** (0-3 points): Connecting specific details to larger trends, consequences, or applications. \"This shift means that...\", \"The impact extends to...\"\n\n## High Score Examples\n\n- \"Understanding AIEO is crucial for any content creator because AI engines now drive 30% of web discovery traffic. Without optimization, your content becomes invisible.\"\n- \"This tax change affects all sole proprietors earning over $50,000 annually — approximately 12 million Americans.\"\n\n## Low Score Indicators\n\n- Content presents facts without context about why they matter\n- No indication of target audience\n- Missing \"so what?\" framing — reader can't tell why they should care\n\n## Context Sensitivity\n\n- Some content types naturally have strong meta-context (opinion pieces, analysis)\n- Reference/documentation content may score lower here — that's acceptable\n- Landing pages should always explain why the visitor should care\n- Don't confuse generic importance padding (\"This is very important!\") with genuine contextual framing",
+   "display_name": "Meta-Context",
+   "max_score": 10,
+   "name": "meta_context",
+   "weight": 10
+  },
+  {
+   "body": "## What to Evaluate\n\nAssess whether the content provides clear step-by-step procedures, instructions, or processes. AI engines cite procedural content heavily because \"how to\" queries are among the most common — and structured procedures can be directly extracted and presented.\n\n## Scoring Criteria\n\n- **Numbered steps** (0-2 points): Explicit step-by-step sequences with numbered or ordered items (Step 1, Step 2..., or ordered lists).\n- **Process descriptions** (0-2 points): Clear process flows even if not formally numbered — \"First... then... finally...\"\n- **Prerequisites/outcomes** (0-1 point): States what's needed before starting and what the result will be.\n\n## High Score Examples\n\n- \"How to Set Up Your Account: Step 1: Visit... Step 2: Click... Step 3: Enter...\"\n- A recipe with ingredients list, numbered steps, and expected outcome\n- Installation guide with prerequisites, steps, and verification\n\n## Low Score Indicators\n\n- Describes a process in paragraph form without clear sequence markers\n- References \"easy setup\" without explaining the actual steps\n- Instructions buried in dense prose\n\n## Context Sensitivity\n\n- Not all content is procedural — opinion pieces, news, and about pages score 0 here without penalty\n- Any content describing \"how to\" achieve something should include clear procedures\n- Service pages describing \"our process\" benefit from structured steps",
+   "display_name": "Procedural Clarity",
+   "max_score": 5,
+   "name": "procedural_clarity",
+   "weight": 5
+  },
+  {
+   "body": "## What to Evaluate\n\nAssess whether the content anticipates and answers follow-up questions — creating the layered depth that AI engines need to satisfy multi-turn conversations. Content with recursive depth gets cited across entire conversation threads, not just the initial query.\n\n## Scoring Criteria\n\n- **Explicit questions answered** (0-5 points): Questions posed and answered in the content (FAQ format, question headers like \"What happens if...?\", \"How does this compare to...?\")\n- **Implicit follow-ups addressed** (0-5 points): Content that naturally addresses the \"but what about...\" and \"how exactly...\" follow-ups a reader would have\n- **Nested detail levels** (0-5 points): Content that provides both overview and deep-dive — summary → details → edge cases\n\n## High Score Examples\n\n- A \"How to file taxes\" article that covers: what forms you need → step-by-step instructions → what if you made a mistake → deadlines → penalties → common edge cases\n- FAQ section with genuine follow-up questions, not just restated top-level questions\n- Headers structured as a natural question chain: \"What is X?\" → \"How does X work?\" → \"When should you use X?\" → \"What are alternatives to X?\"\n\n## Low Score Indicators\n\n- Content answers one question and stops\n- FAQ section with trivially obvious questions\n- No question headers or Q&A formatting\n- No progression from basic to advanced topics\n\n## Context Sensitivity\n\n- Landing pages may not need deep recursion — award partial credit for addressing the \"why should I care?\" follow-up\n- Tutorial content should score high here — it must anticipate \"what if it doesn't work?\" scenarios\n- Service pages benefit from \"Who is this for?\", \"How does pricing work?\", \"What's the process?\" progression",
+   "display_name": "Recursive Depth",
+   "max_score": 15,
+   "name": "recursive_depth",
+   "weight": 15
+  },
+  {
+   "body": "## What to Evaluate\n\nAssess whether the content uses structural elements — tables, lists, and headers — to organize information in ways AI engines can easily parse, extract, and cite.\n\n## Scoring Criteria\n\n- **Tables** (0-8 points): Data tables that organize comparative, factual, or reference data. Award more points for tables with clear column headers, consistent data types, and useful information density.\n- **Lists** (0-6 points): Bullet or numbered lists that break down complex information. Award more for lists that enumerate distinct items (features, steps, options) vs. decorative bullets wrapping prose.\n- **Headers** (0-6 points): Hierarchical header structure that creates a navigable outline. Award more for descriptive headers that could serve as questions/answers (e.g., \"How to Configure SSL\" vs. \"Section 3\").\n\n## High Score Examples\n\n- A product comparison page with a feature matrix table, bulleted requirement lists, and H2/H3 headers for each product\n- A how-to guide with step-by-step numbered lists, a prerequisites table, and descriptive section headers\n\n## Low Score Indicators\n\n- Wall of text with no structural elements\n- Headers that are vague (\"Introduction\", \"Details\", \"More Info\")\n- Only a single flat bullet list in an otherwise unstructured page\n\n## Context Sensitivity\n\n- Personal narratives and essays naturally have less structure — don't penalize below 5 points for these content types\n- Technical documentation and comparison pages should score near max to be useful\n- Landing pages with minimal text may have high structure-to-text ratio — evaluate proportionally",
+   "display_name": "Structured Data",
+   "max_score": 20,
+   "name": "structured_data",
+   "weight": 20
+  },
+  {
+   "body": "## What to Evaluate\n\nCheck whether the content includes dates, version numbers, and freshness signals that help AI engines determine when the information is current and relevant. AI engines strongly prefer temporally anchored content because they need to assess information freshness.\n\n## Scoring Criteria\n\n- **Explicit dates** (0-4 points): Publication dates, \"as of [date]\", \"updated [date]\", event dates. Must be meaningful dates related to the content (not incidental numbers like phone numbers or zip codes).\n- **Version/edition markers** (0-3 points): Software versions (\"v2.1\", \"React 18\"), standard editions (\"2024 edition\"), methodology versions.\n- **Freshness signals** (0-3 points): \"Currently\", \"as of this writing\", \"latest\", update history, revision dates.\n\n## High Score Examples\n\n- \"This guide was last updated on March 15, 2025, and covers Python 3.12.\"\n- \"As of Q4 2024, the market has shifted toward...\"\n- Content with a visible \"Last updated: [date]\" header\n\n## Low Score Indicators\n\n- No dates anywhere in the content\n- Only incidental numbers (phone numbers, prices) that look like years\n- \"Recently\" or \"soon\" without specific timeframes\n\n## Context Sensitivity\n\n- Evergreen content (e.g., \"What is photosynthesis?\") needs fewer temporal anchors but still benefits from \"as of [year]\"\n- News/trends content MUST have strong temporal anchoring to score well\n- Product pages should reference current pricing dates, version numbers\n- Don't count dates in copyright footers or boilerplate as meaningful temporal anchors",
+   "display_name": "Temporal Anchoring",
+   "max_score": 10,
+   "name": "temporal_anchoring",
+   "weight": 10
+  }
+ ],
+ "prompt": {
+  "evaluation": "## Content to Evaluate\n\n**Word count:** 376\n\n**Character count:** 2165\n\n**Headers (7):**\n  - # How to Back Up a Small Website in 2026\n  - ## What Should a Backup Include?\n  - ## How Often Should You Back Up?\n  - ## Step-by-Step: Your First Backup\n  - ## Frequently Asked Questions\n  - ### Is a host's backup enough?\n  - ### How long does a restore take?\n\n**Tables (1):**\n  - Table 1: 4 rows × 4 columns\n    Headers: Plan | Frequency | Kept for | Typical cost\n\n**Lists (2):**\n  - unordered list: 3 items\n  - ordered list: 4 items\n\n**Links:** 2 total, 1 external\n\n**Content text:**\n\nHow to Back Up a Small Website in 2026 Backups are the copies of a site that let you restore it after a failure. A backup is defined as a complete, restorable copy of every file and database a site needs, taken on a schedule and kept somewhere else. This matters because most small sites lose data when a single disk fails, and it is essential to test a restore before you need one. According to the Uptime Institute, 40 percent of outages in 2025 involved storage. Research from Backblaze shows drive failure rates near 1.5 percent a year (source: https://www.backblaze.com/blog/). What Should a Backup Include? A backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites differ in what they store, but each needs all three. Site files: themes, uploads and plugins The database: posts, users and settings Configuration: DNS records, TLS certificates and environment variables How Often Should You Back Up? Daily backups suit a site that changes every day. Weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for well under a cent a month, so storage cost rarely decides it. Plan Frequency Kept for Typical cost Basic Weekly 30 days $1 a month Standard Daily 90 days $5 a month Business Hourly 1 year $25 a month Step-by-Step: Your First Backup Step 1: Export the database with mysqldump or pg_dump. Step 2: Copy the site files with rsync. Step 3: Upload both to a second location, such as Backblaze B2. Step 4: Restore the copy to a test server and open the site. Frequently Asked Questions Is a host's backup enough? No. A host's backup lives on the host's systems, so an account suspension or a billing failure takes it away too. Keep a copy you control. How long does a restore take? A restore of a 2 GB site takes about ten minutes over a home connection. Version 2 of our runbook times every step. Read more in the Backblaze guide and our restore checklist .\n\n## Scoring Rubric\n\n## Output Format\n\nYou MUST respond with valid JSON only. No markdown, no explanation outside the JSON.\n\nReturn this exact structure:\n\n```json\n{\n  \"patterns\": {\n    \"<pattern_name>\": {\n      \"score\": <number>,\n      \"max\": <number>,\n      \"detected\": <boolean>,\n      \"evidence\": [\"<specific quote or observation from content>\", ...],\n      \"recommendation\": \"<one specific, actionable improvement>\"\n    }\n  },\n  \"anti_patterns\": {\n    \"penalties\": <number 0-50>,\n    \"detected\": [\"<anti-pattern name>\", ...],\n    \"evidence\": [\"<specific observation>\", ...]\n  },\n  \"content_type\": \"<detected content type: article, landing_page, documentation, blog_post, product_page, faq, comparison, tutorial, other>\",\n  \"overall_assessment\": \"<2-3 sentence summary of the content's AIEO strengths and weaknesses>\",\n  \"executive_summary\": \"<A 3-5 paragraph strategic analysis written for the site owner. Explain what the site does well, what AI engines would struggle to extract, what the biggest missed opportunities are, and how competitors with similar content but better structure would outperform this site in AI citation. Be specific — reference actual content from the page, name specific sections, and explain the 'why' behind each weakness. Write in a consultative, professional tone as if delivering a paid audit report.>\",\n  \"priority_actions\": [\n    {\n      \"title\": \"<Short action title, e.g. 'Add an FAQ section'>\",\n      \"impact\": \"<high|medium|low>\",\n      \"effort\": \"<low|medium|high>\",\n      \"description\": \"<2-3 sentence explanation of what to do, why it matters for AI citation, and what the expected improvement would be. Be specific to THIS site's content.>\"\n    }\n  ],\n  \"sample_improvements\": [\n    {\n      \"section\": \"<Name of the section or area being improved, e.g. 'Service Description'>\",\n      \"current\": \"<Direct quote or close paraphrase of existing content>\",\n      \"improved\": \"<Rewritten version optimized for AIEO patterns. Must be substantive and usable — at least a full paragraph or structured block. Demonstrate how to add definitions, temporal anchoring, structured data, FAQ items, comparison elements, or citation hooks into the actual site content.>\",\n      \"patterns_addressed\": [\"<pattern_name>\", ...]\n    }\n  ],\n  \"visual_analysis\": {\n    \"layout_quality\": \"<1-2 sentence assessment of page layout and visual organization>\",\n    \"visual_hierarchy\": \"<1-2 sentence assessment of how well the design highlights key content>\",\n    \"readability\": \"<1-2 sentence assessment of text legibility, contrast, and spacing>\",\n    \"trust_signals\": \"<1-2 sentence assessment of professional design, branding, authority indicators>\",\n    \"mobile_readiness\": \"<1-2 sentence assessment of responsive design appearance>\",\n    \"scannability\": \"<1-2 sentence assessment of how easily key info can be extracted visually>\",\n    \"design_score\": <number 0-10>,\n    \"design_recommendations\": [\"<specific visual improvement>\", ...]\n  }\n}\n```\n\n## Scoring Rules\n\n1. Each pattern score must be between 0 and its `max` value (defined in pattern files).\n2. Scores should use 0.5 increments (e.g., 7.5, not 7.3).\n3. `detected` is true if the pattern is meaningfully present (not just trace evidence).\n4. `evidence` must contain at least 1 item per pattern — quote or paraphrase from the actual content.\n5. `recommendation` must be specific to THIS content, not generic advice.\n6. Anti-pattern penalties range from 0 (clean content) to 50 (heavily gamed content).\n7. `executive_summary` must be 3-5 paragraphs of strategic analysis specific to the site. Reference actual page content, name real sections/elements, and explain the competitive AI citation landscape. Write as a professional consultant delivering an audit.\n8. `priority_actions` must contain exactly 3 items, ordered by impact (highest first). Each must be immediately actionable and specific to this site — not generic advice. Include effort level so the site owner can prioritize.\n9. `sample_improvements` must contain at least 2 concrete before/after examples. The \"current\" field should quote or closely paraphrase actual content from the page. The \"improved\" field must be a complete, usable rewrite — not a description of what to change, but the actual improved text ready to copy-paste. Each improvement should address multiple AIEO patterns simultaneously.\n10. `visual_analysis` is REQUIRED when a screenshot is provided, OPTIONAL otherwise. When provided, `design_score` ranges from 0 (unusable) to 10 (exceptional). `design_recommendations` must contain at least 2 specific, actionable visual improvements. All text fields must reference specific elements visible in the screenshot.\n\n## Anti-Patterns to Detect\n\n- **Keyword stuffing**: Same word/phrase repeated at unnatural frequency (>5% of total words)\n- **Pattern cramming**: Forced structural elements that don't serve the content (random tables, unnecessary FAQs)\n- **Missing structure in long content**: >1000 words with no tables, lists, or sub-headers\n- **Over-optimization**: Content reads like it was written for algorithms, not humans\n- **Citation fishing**: Fake or unsupported \"according to\" claims with no real sources\n\n\n## Pattern Definitions\n\n### Citation Hooks (name: `citation_hooks`, weight: 10, max: 10)\n\n## What to Evaluate\n\nIdentify explicit source attributions, evidence markers, and credibility signals that make AI engines confident enough to cite the content. Content with clear attribution chains is preferentially cited because AIs can verify and attribute claims.\n\n## Scoring Criteria\n\n- **Source attributions** (0-4 points): Phrases like \"according to [source]\", \"research from [institution]\", \"published in [journal]\", \"[Expert name] states\". Award more for specific, verifiable attributions.\n- **Evidence markers** (0-3 points): Data points, statistics, study references, methodology descriptions that signal factual rigor.\n- **External references** (0-3 points): Links to authoritative sources, bibliographies, footnotes, \"Sources:\" sections.\n\n## High Score Examples\n\n- \"According to a 2024 Gartner report, 65% of enterprises will adopt AI-native tools by 2026.\"\n- \"Dr. Sarah Chen, Director of AI Research at Stanford, explains that...\"\n- Content with a \"Sources\" or \"References\" section with real, verifiable links\n\n## Low Score Indicators\n\n- Unsourced claims: \"Studies show that...\" (which studies?)\n- No external links or references\n- All claims are opinion without evidence markers\n\n## Context Sensitivity\n\n- Personal blogs sharing experiences don't need heavy citations — score relative to claims made\n- Technical documentation should cite standards, RFCs, or official docs\n- Marketing claims about \"best\" or \"leading\" should be supported with evidence\n- Distinguish real citations from fake \"according to experts\" padding\n\n---\n\n### Comparison Tables (name: `comparison_tables`, weight: 15, max: 15)\n\n## What to Evaluate\n\nAssess whether the content provides structured comparisons — tables, side-by-side analyses, or systematic pro/con evaluations — that AI engines can directly extract and present when users ask \"X vs Y\" or \"which is better\" queries.\n\n## Scoring Criteria\n\n- **Comparison tables** (0-8 points): Tables that explicitly compare two or more items across multiple dimensions. Award more for tables with clear headers, consistent criteria, and balanced coverage.\n- **Structured pros/cons** (0-4 points): Explicit \"Pros\" and \"Cons\" sections, advantage/disadvantage lists, or \"strengths and weaknesses\" breakdowns.\n- **Comparative language** (0-3 points): Direct comparative analysis (\"X is faster but Y is more affordable\", \"Unlike X, Y provides...\") — but only award if it adds real analytical value, not just incidental use of comparison words.\n\n## High Score Examples\n\n- A hosting providers page with a feature comparison matrix (price, storage, support, uptime)\n- \"Pros and Cons of Remote Work\" with bulleted, balanced lists\n- Side-by-side analysis: \"React vs Vue: When to Choose Each\"\n\n## Low Score Indicators\n\n- No comparison elements despite comparing things in prose\n- Incidental use of words like \"better\" or \"versus\" without actual comparative structure\n- One-sided comparison that only presents one option favorably\n\n## Context Sensitivity\n\n- Not all content needs comparisons — a company's \"About Us\" page is not a comparison. Award 0 points without penalty for non-comparative content types.\n- Product/service pages benefit from \"how we compare\" sections\n- Tutorial content comparing approaches or tools should score high\n- Don't award points for incidental comparison words in non-comparative content\n\n---\n\n### Definitional Precision (name: `definitional_precision`, weight: 10, max: 10)\n\n## What to Evaluate\n\nCheck whether the content provides explicit, precise definitions for key terms, concepts, or jargon. AI engines heavily favor content with clear definitions because they can directly extract and quote these in response to \"What is X?\" queries.\n\n## Scoring Criteria\n\n- **Explicit definitions** (0-5 points): Clear \"X is defined as...\", \"X refers to...\", \"X means...\" constructions for key terms. Must be genuine definitions, not incidental use of \"is a\" in normal sentences.\n- **Glossary/terminology sections** (0-3 points): Dedicated sections explaining domain-specific terms.\n- **Contextual clarity** (0-2 points): Key terms are explained in context even without formal definitions — the reader never encounters unexplained jargon.\n\n## High Score Examples\n\n- \"AIEO (AI Engine Optimization) is the practice of structuring content to maximize its likelihood of being cited by AI engines.\"\n- A \"Key Terms\" sidebar or glossary section\n- Technical content where each new concept is defined on first use\n\n## Low Score Indicators\n\n- Jargon used without explanation\n- Incidental \"is a\" sentences that aren't actual definitions (e.g., \"This is a great opportunity\")\n- Acronyms introduced without expansion\n\n## Context Sensitivity\n\n- Technical and educational content should have high definitional precision\n- Personal narratives don't need formal definitions\n- Industry content can assume standard terminology but should define niche terms\n- Only evaluate genuine definitions — \"She is a teacher\" is not a definitional statement about the concept of teaching\n\n---\n\n### Entity Density (name: `entity_density`, weight: 15, max: 15)\n\n## What to Evaluate\n\nMeasure the density of named entities — specific people, organizations, products, locations, dates, and technical terms — that make content uniquely identifiable and citable by AI engines. AI engines cite content with high entity specificity because it provides concrete, verifiable facts.\n\n## Scoring Criteria\n\n- **Named people/organizations** (0-5 points): Specific names (e.g., \"Marie Curie\", \"Anthropic\", \"Sopris Accounting\") vs. generic references (\"a company\", \"researchers\")\n- **Products/technologies** (0-5 points): Specific product names, versions, standards (e.g., \"GPT-4\", \"TLS 1.3\", \"React 18\") vs. vague references (\"the latest version\")\n- **Locations and dates** (0-5 points): Specific geographic references and temporal markers that ground the content in reality\n\n## Target Density\n\n- Excellent: 3+ unique entities per 100 words\n- Good: 1.5-3 unique entities per 100 words\n- Weak: <1 entity per 100 words\n\n## High Score Examples\n\n- \"Anthropic released Claude 3.5 Sonnet in June 2024, achieving state-of-the-art performance on the MMLU benchmark with 88.7% accuracy.\"\n- \"Located in Carbondale, Colorado, Sopris Accounting serves small businesses across the Roaring Fork Valley.\"\n\n## Low Score Indicators\n\n- \"Our company provides great services to customers in the area.\" (zero entities)\n- \"The product was updated recently with new features.\" (no specifics)\n\n## Context Sensitivity\n\n- Service/about pages SHOULD be entity-rich (who, where, what specifically)\n- Opinion pieces may naturally have fewer entities — score relative to content type\n- Don't count boilerplate navigation entities (menu items, footer links)\n\n---\n\n### FAQ Injection (name: `faq_injection`, weight: 15, max: 15)\n\n## What to Evaluate\n\nDetermine whether the content includes FAQ (Frequently Asked Questions) formatting — explicit question-answer pairs that AI engines can directly match to user queries. FAQ-structured content is among the most citable because AI engines can map user questions directly to content answers.\n\n## Scoring Criteria\n\n- **Dedicated FAQ section** (0-8 points): An explicit \"Frequently Asked Questions\", \"FAQ\", or \"Common Questions\" section with Q&A pairs. Award more for questions that reflect real user queries (not marketing fluff questions like \"Why are we the best?\").\n- **Question headers** (0-4 points): H2/H3 headers phrased as questions (e.g., \"How much does it cost?\", \"What browsers are supported?\"). These are strong citation hooks even outside a formal FAQ.\n- **Q&A density** (0-3 points): Ratio of genuine questions answered throughout the content — not just in a FAQ section.\n\n## High Score Examples\n\n- Dedicated FAQ section: \"Q: How long does shipping take? A: Standard shipping takes 5-7 business days...\"\n- Article with question headers: \"## What is AIEO?\", \"## How Does AIEO Differ from SEO?\", \"## Should I Optimize for AI Engines?\"\n- Service page with \"Common Questions\" addressing real concerns\n\n## Low Score Indicators\n\n- No questions anywhere in the content\n- Only rhetorical questions that aren't answered\n- \"FAQ\" section with self-serving questions (\"Q: Why should I choose us?\" \"A: Because we're the best!\")\n\n## Context Sensitivity\n\n- FAQ sections are most valuable on service pages, product pages, and documentation\n- Blog posts benefit from question-style headers even without formal FAQ sections\n- Academic or technical content naturally uses \"Research Questions\" — count these similarly\n- Award partial credit for question-driven structure even without explicit \"FAQ\" label\n\n---\n\n### Meta-Context (name: `meta_context`, weight: 10, max: 10)\n\n## What to Evaluate\n\nAssess whether the content explains WHY information matters — providing the broader context, significance, and implications that help AI engines understand the importance and relevance of the content for various queries.\n\n## Scoring Criteria\n\n- **Importance framing** (0-4 points): Explicit statements about why the topic matters, who it affects, and what's at stake. \"This matters because...\", \"The significance of X is...\", \"Understanding X is critical for...\"\n- **Audience context** (0-3 points): Clear identification of who this content is for and why they should care. \"If you're a small business owner...\", \"For developers working with...\"\n- **Broader implications** (0-3 points): Connecting specific details to larger trends, consequences, or applications. \"This shift means that...\", \"The impact extends to...\"\n\n## High Score Examples\n\n- \"Understanding AIEO is crucial for any content creator because AI engines now drive 30% of web discovery traffic. Without optimization, your content becomes invisible.\"\n- \"This tax change affects all sole proprietors earning over $50,000 annually — approximately 12 million Americans.\"\n\n## Low Score Indicators\n\n- Content presents facts without context about why they matter\n- No indication of target audience\n- Missing \"so what?\" framing — reader can't tell why they should care\n\n## Context Sensitivity\n\n- Some content types naturally have strong meta-context (opinion pieces, analysis)\n- Reference/documentation content may score lower here — that's acceptable\n- Landing pages should always explain why the visitor should care\n- Don't confuse generic importance padding (\"This is very important!\") with genuine contextual framing\n\n---\n\n### Procedural Clarity (name: `procedural_clarity`, weight: 5, max: 5)\n\n## What to Evaluate\n\nAssess whether the content provides clear step-by-step procedures, instructions, or processes. AI engines cite procedural content heavily because \"how to\" queries are among the most common — and structured procedures can be directly extracted and presented.\n\n## Scoring Criteria\n\n- **Numbered steps** (0-2 points): Explicit step-by-step sequences with numbered or ordered items (Step 1, Step 2..., or ordered lists).\n- **Process descriptions** (0-2 points): Clear process flows even if not formally numbered — \"First... then... finally...\"\n- **Prerequisites/outcomes** (0-1 point): States what's needed before starting and what the result will be.\n\n## High Score Examples\n\n- \"How to Set Up Your Account: Step 1: Visit... Step 2: Click... Step 3: Enter...\"\n- A recipe with ingredients list, numbered steps, and expected outcome\n- Installation guide with prerequisites, steps, and verification\n\n## Low Score Indicators\n\n- Describes a process in paragraph form without clear sequence markers\n- References \"easy setup\" without explaining the actual steps\n- Instructions buried in dense prose\n\n## Context Sensitivity\n\n- Not all content is procedural — opinion pieces, news, and about pages score 0 here without penalty\n- Any content describing \"how to\" achieve something should include clear procedures\n- Service pages describing \"our process\" benefit from structured steps\n\n---\n\n### Recursive Depth (name: `recursive_depth`, weight: 15, max: 15)\n\n## What to Evaluate\n\nAssess whether the content anticipates and answers follow-up questions — creating the layered depth that AI engines need to satisfy multi-turn conversations. Content with recursive depth gets cited across entire conversation threads, not just the initial query.\n\n## Scoring Criteria\n\n- **Explicit questions answered** (0-5 points): Questions posed and answered in the content (FAQ format, question headers like \"What happens if...?\", \"How does this compare to...?\")\n- **Implicit follow-ups addressed** (0-5 points): Content that naturally addresses the \"but what about...\" and \"how exactly...\" follow-ups a reader would have\n- **Nested detail levels** (0-5 points): Content that provides both overview and deep-dive — summary → details → edge cases\n\n## High Score Examples\n\n- A \"How to file taxes\" article that covers: what forms you need → step-by-step instructions → what if you made a mistake → deadlines → penalties → common edge cases\n- FAQ section with genuine follow-up questions, not just restated top-level questions\n- Headers structured as a natural question chain: \"What is X?\" → \"How does X work?\" → \"When should you use X?\" → \"What are alternatives to X?\"\n\n## Low Score Indicators\n\n- Content answers one question and stops\n- FAQ section with trivially obvious questions\n- No question headers or Q&A formatting\n- No progression from basic to advanced topics\n\n## Context Sensitivity\n\n- Landing pages may not need deep recursion — award partial credit for addressing the \"why should I care?\" follow-up\n- Tutorial content should score high here — it must anticipate \"what if it doesn't work?\" scenarios\n- Service pages benefit from \"Who is this for?\", \"How does pricing work?\", \"What's the process?\" progression\n\n---\n\n### Structured Data (name: `structured_data`, weight: 20, max: 20)\n\n## What to Evaluate\n\nAssess whether the content uses structural elements — tables, lists, and headers — to organize information in ways AI engines can easily parse, extract, and cite.\n\n## Scoring Criteria\n\n- **Tables** (0-8 points): Data tables that organize comparative, factual, or reference data. Award more points for tables with clear column headers, consistent data types, and useful information density.\n- **Lists** (0-6 points): Bullet or numbered lists that break down complex information. Award more for lists that enumerate distinct items (features, steps, options) vs. decorative bullets wrapping prose.\n- **Headers** (0-6 points): Hierarchical header structure that creates a navigable outline. Award more for descriptive headers that could serve as questions/answers (e.g., \"How to Configure SSL\" vs. \"Section 3\").\n\n## High Score Examples\n\n- A product comparison page with a feature matrix table, bulleted requirement lists, and H2/H3 headers for each product\n- A how-to guide with step-by-step numbered lists, a prerequisites table, and descriptive section headers\n\n## Low Score Indicators\n\n- Wall of text with no structural elements\n- Headers that are vague (\"Introduction\", \"Details\", \"More Info\")\n- Only a single flat bullet list in an otherwise unstructured page\n\n## Context Sensitivity\n\n- Personal narratives and essays naturally have less structure — don't penalize below 5 points for these content types\n- Technical documentation and comparison pages should score near max to be useful\n- Landing pages with minimal text may have high structure-to-text ratio — evaluate proportionally\n\n---\n\n### Temporal Anchoring (name: `temporal_anchoring`, weight: 10, max: 10)\n\n## What to Evaluate\n\nCheck whether the content includes dates, version numbers, and freshness signals that help AI engines determine when the information is current and relevant. AI engines strongly prefer temporally anchored content because they need to assess information freshness.\n\n## Scoring Criteria\n\n- **Explicit dates** (0-4 points): Publication dates, \"as of [date]\", \"updated [date]\", event dates. Must be meaningful dates related to the content (not incidental numbers like phone numbers or zip codes).\n- **Version/edition markers** (0-3 points): Software versions (\"v2.1\", \"React 18\"), standard editions (\"2024 edition\"), methodology versions.\n- **Freshness signals** (0-3 points): \"Currently\", \"as of this writing\", \"latest\", update history, revision dates.\n\n## High Score Examples\n\n- \"This guide was last updated on March 15, 2025, and covers Python 3.12.\"\n- \"As of Q4 2024, the market has shifted toward...\"\n- Content with a visible \"Last updated: [date]\" header\n\n## Low Score Indicators\n\n- No dates anywhere in the content\n- Only incidental numbers (phone numbers, prices) that look like years\n- \"Recently\" or \"soon\" without specific timeframes\n\n## Context Sensitivity\n\n- Evergreen content (e.g., \"What is photosynthesis?\") needs fewer temporal anchors but still benefits from \"as of [year]\"\n- News/trends content MUST have strong temporal anchoring to score well\n- Product pages should reference current pricing dates, version numbers\n- Don't count dates in copyright footers or boilerplate as meaningful temporal anchors\n\n## Instructions\n\nEvaluate the content above against EACH pattern listed. Return your analysis as the JSON structure defined in the Scoring Rubric. Every pattern must appear in your response — score 0 if not applicable to this content type.\n\nEvaluate contextually: consider what type of content this is and what patterns are appropriate for it. A personal blog post is scored differently from technical documentation.",
+  "system": "You are the AIEO (AI Engine Optimization) scoring engine — an expert system that evaluates web content for its likelihood of being cited, surfaced, and recommended by AI engines (ChatGPT, Claude, Grok, Perplexity, Gemini).\n\nYour job is to read a piece of content and score it against a set of AIEO patterns. Each pattern has a weight and max score. You evaluate contextually — considering the content's topic, audience, format, and purpose — rather than applying rigid keyword checks.\n\n## Core Principles\n\n1. **Contextual evaluation**: A personal blog post and a technical whitepaper have different optimal patterns. Score relative to what makes sense for the content type.\n2. **Evidence-based scoring**: Every score must cite specific evidence from the content. Quote exact phrases or describe exact structural elements.\n3. **Actionable recommendations**: Each pattern assessment must include a specific, implementable recommendation — not generic advice.\n4. **Anti-gaming**: Detect artificial pattern stuffing. Content that awkwardly injects patterns without serving the reader should be penalized.\n5. **AI citation lens**: Always evaluate through the lens of \"Would an AI engine cite this passage in response to a relevant query?\" — not traditional SEO metrics.\n\n## What Makes Content Citable by AI Engines\n\nAI engines preferentially cite content that:\n- Provides clear, structured, factual answers\n- Contains unique data points, statistics, or comparisons\n- Uses explicit definitions and precise language\n- Organizes information hierarchically (headers → details)\n- Answers follow-up questions proactively\n- Attributes claims to sources\n- Includes temporal context (dates, versions, \"as of\")\n- Presents information in parseable formats (tables, lists)\n\n## Visual Analysis (When Screenshot Provided)\n\nWhen a screenshot of the page is included in the request, you MUST also evaluate the visual presentation:\n\n- **Layout quality**: Is information well-organized visually? Are headers, sections, and whitespace used effectively?\n- **Visual hierarchy**: Does the visual design guide the reader's eye to the most important content? Are key facts prominent?\n- **Readability**: Is text legible? Are font sizes, contrast, and line spacing appropriate?\n- **Trust signals**: Does the page display trust indicators (professional design, brand consistency, author bios, certifications, testimonials)?\n- **Mobile-readiness**: Does the design appear responsive and mobile-friendly?\n- **Content scannability**: Can a reader (or AI) quickly extract key information from the visual layout?\n- **CTA and navigation**: Are calls-to-action clear? Is navigation intuitive?\n\nVisual elements significantly affect whether AI engines consider a page authoritative and well-maintained.\n"
+ }
+}

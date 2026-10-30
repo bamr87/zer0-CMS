@@ -43,3 +43,21 @@ charset-normalizer==3.5.2
 beautifulsoup4==4.15.0
 # The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
 django-anymail==15.2
+# The outbox harness (bamr87/outbox, stdlib only, Python 3.11+): the belt, arena trials and the claim desk the outbox
+# desk runs (outboxdesk/README.md). It has no release tags, so it installs from git, pinned to a commit on its `main`:
+# the merge of bamr87/outbox#10, which added outbox/belt.py and outbox/claimdesk.py (ADR 0007 decision 1).
+outbox @ git+https://github.com/bamr87/outbox.git@ec82031c3f4d6f16a14fdef6e792dc5110bd733f
+# Distribution (distribution/README.md): pull requests to a site's repository (barodybroject's client), and a
+# site's zer0.json — JSONC, comments and trailing commas — read by the LinkedIn lane's CLI.
+PyGithub==2.10.0
+json5==0.17.3
+# Automations' conditions (automations/README.md): JMESPath expressions over a trigger's payload, evaluated by the
+# maintained library rather than an evaluator of our own. Schedules use Celery's own crontab, above.
+jmespath==1.1.0
+# AIEO's GA4 and Search Console connectors (aieo/README.md): a Google service account's signed JWT, traded for a token.
+PyJWT==2.12.1
+# Accounts (accounts/README.md, PLAN G3): sign-in, sign-up, codes, OpenID Connect IdPs and GitHub, TOTP, recovery codes,
+# passkeys and the session list, served headless to the studio — configured, never hand-rolled. 65.21 supports Django 5.2
+# (Wagtail 7.4's). The extras bring what those use: requests and oauthlib (providers), PyJWT (ID tokens), fido2 (WebAuthn)
+# and qrcode.
+django-allauth[headless,mfa,socialaccount]==65.21.0

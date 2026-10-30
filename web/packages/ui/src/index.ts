@@ -3,21 +3,58 @@
 // webviews in PLAN G10. A host wraps them in <StudioProvider> (its client,
 // its event streams, its navigation), Mantine and TanStack Query, and imports
 // '@zer0/ui/ui.css' after Mantine's core styles.
+export { AccountWorkspace, Tokens } from './account/Account';
+export {
+  AuthError,
+  authData,
+  authResult,
+  flowsOf,
+  needsReauthentication,
+  pendingFlow,
+  type AuthConfig,
+  type AuthFlow,
+  type AuthHost,
+  type AuthMethod,
+  type AuthResponse,
+  type AuthUser,
+} from './account/allauth';
+export { SignInScreen, useAuthConfig, type Arrival } from './account/SignIn';
 export * from './ai';
+export * from './automations';
+export * from './aieo';
 export { BodyEditor } from './BodyEditor';
 export { BookAssist } from './books/BookAssist';
 export { BookShelf, PremiseToBook } from './books/BookShelf';
 export { BookView } from './books/BookView';
 export { ChapterWriter } from './books/ChapterWriter';
 export { ApiError, call, errorText } from './call';
-export { StudioProvider, useApi, useGo, useStream, type AiSection, type Destination, type Host, type OpenStream } from './context';
+export {
+  StudioProvider,
+  useApi,
+  useAuthHost,
+  useGo,
+  useStream,
+  type AccountSection,
+  type AieoSection,
+  type AiSection,
+  type Destination,
+  type Host,
+  type OpenStream,
+  type OutboxTab,
+} from './context';
+export type { DistributionTab } from './context';
 export { CreatePage } from './CreatePage';
 export { DiffView } from './DiffView';
+export { Distribute } from './distribution/Compose';
+export { Distribution } from './distribution/Distribution';
 export { FieldsPanel, fromLocalInput, toLocalInput, type FieldValues } from './FieldsPanel';
 export { CaptureIdea } from './ideas/CaptureIdea';
 export { IdeasWorkspace } from './ideas/IdeasWorkspace';
 export { Newsroom } from './newsroom/Newsroom';
 export { StoryPanel } from './newsroom/StoryPanel';
+export { ClaimCheckView } from './outbox/ClaimCheckView';
+export { OutboxDesk } from './outbox/OutboxDesk';
+export { TrialView } from './outbox/TrialView';
 export { Overview } from './Overview';
 export { PageEditor, type PageAction } from './PageEditor';
 export { PageList } from './PageList';
@@ -27,5 +64,10 @@ export { SourceView } from './research/SourceView';
 export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
 export { RunList, RunStatus, RunTimeline, useLiveRun } from './RunTimeline';
+export { SitePicker } from './SitePicker';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
+export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
+export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
+export { SiteView } from './sites/SiteView';
 export { SuggestionInbox } from './SuggestionInbox';
+export { HOME, WORKSPACES, workspaceFor, type Workspace, type WorkspaceId, type WorkspaceProps } from './workspaces';

@@ -31,6 +31,7 @@ def test_the_check_command_agrees(capsys):
 def test_the_schema_covers_every_page_type_and_block():
     document = export()
     assert set(document["pages"]) == {
+        "aieo.LandingPage",
         "cms.ArticlePage",
         "cms.BookPage",
         "cms.ChapterPage",
@@ -48,7 +49,19 @@ def test_the_schema_covers_every_page_type_and_block():
         "page_link",
         "brief",
         "letter",
+        "embed",
+        "document",
+        "table",
+        "typed_table",
+        "raw_html",
+        "liquid",
+        "callout",
     }
+    blocks = document["$defs"]["blocks"]
+    assert blocks["table"]["properties"]["data"]["items"]["type"] == "array"
+    assert blocks["typed_table"]["properties"]["columns"]["items"]["properties"]["type"]["enum"] == ["text", "number"]
+    assert blocks["embed"]["format"] == "uri"
+    assert blocks["document"]["properties"]["document"]["type"] == ["integer", "null"]
     heading = document["$defs"]["blocks"]["heading"]
     assert heading["properties"]["level"]["enum"] == ["2", "3", "4", "5", "6"]
     assert "description" in document["$defs"]["blocks"]["markdown"]
@@ -57,6 +70,11 @@ def test_the_schema_covers_every_page_type_and_block():
 
 def test_validate_block_uses_the_blocks_own_rules():
     assert validate_block("heading", {"level": "3", "text": "Fine"})["text"] == "Fine"
+    with pytest.raises(BlockInvalid, match="number"):
+        validate_block("typed_table", {"columns": [{"type": "number", "heading": "n"}], "rows": [{"values": ["ten"]}]})
+    with pytest.raises(BlockInvalid, match="table"):
+        validate_block("table", "| a |")
+    assert validate_block("embed", "https://www.youtube.com/watch?v=7_LPdttKXPc").url.endswith("7_LPdttKXPc")
     with pytest.raises(BlockInvalid, match="level"):
         validate_block("heading", {"level": "9", "text": "x"})
     with pytest.raises(BlockInvalid, match="text"):

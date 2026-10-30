@@ -1,0 +1,3798 @@
+{
+ "_recorded": "rails/lib/zer0_cms/{linkedin,distribution} on ruby:3.3, 2026-10-22, clock 2026-09-14T12:00:00Z, over tests/distribution/fixtures/site and the sites/ in the repository",
+ "default_commentary": "A standard plug between the assistant your team uses and the systems your business runs on\n\n#MCP #AI #Integration",
+ "draft_file": "---\ntype: article\nstatus: pending\nsource: pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md\ntitle: MCP for the back office\nurl: https://example.test/posts/2026/07/06/mcp-for-the-back-office/\n---\n\nA standard plug between the assistant your team uses and the systems your business runs on\n\n#MCP #AI #Integration\n",
+ "draft_relative": "drafts/linkedin/2026-09-14-mcp-for-the-back-office.md",
+ "hashtags": [
+  [
+   [
+    "mcp",
+    "back-office",
+    "ai",
+    "extra"
+   ],
+   3,
+   "#MCP #BackOffice #AI"
+  ],
+  [
+   [
+    "SaaS tools",
+    "erp_crm",
+    "Ünicode word"
+   ],
+   3,
+   "#SAASTools #ERPCRM #ÜnicodeWord"
+  ],
+  [
+   [
+    "a",
+    "b",
+    "c",
+    "d"
+   ],
+   2,
+   "#A #B"
+  ],
+  [
+   [],
+   3,
+   ""
+  ]
+ ],
+ "little_text": [
+  [
+   "a(b) [c] {d} <e> f|g h*i j_k l~m n\\o C# @home",
+   "a\\(b\\) \\[c\\] \\{d\\} \\<e\\> f\\|g h\\*i j\\_k l\\~m n\\\\o C\\# \\@home"
+  ],
+  [
+   "#SmallBusiness and #AI2026",
+   "#SmallBusiness and #AI2026"
+  ],
+  [
+   "Thanks @[Acme Co](urn:li:organization:123) (really)",
+   "Thanks @[Acme Co](urn:li:organization:123) \\(really\\)"
+  ],
+  [
+   "@[x](https://evil.test)",
+   "\\@\\[x\\]\\(https://evil.test\\)"
+  ],
+  [
+   "Read (this)",
+   "Read \\(this\\)"
+  ],
+  [
+   "Price: $5 * 2 = ~10 #deal_of_the_day C#_sharp mail@x.test",
+   "Price: $5 \\* 2 = \\~10 #deal\\_of\\_the\\_day C\\#\\_sharp mail\\@x.test"
+  ],
+  [
+   "Ünïcödé #Café 東京 #東京 (ok)",
+   "Ünïcödé #Café 東京 #東京 \\(ok\\)"
+  ],
+  [
+   "Line one\nLine (two) #tag\n\n#Final",
+   "Line one\nLine \\(two\\) #tag\n\n#Final"
+  ]
+ ],
+ "permalinks": {
+  "about.md": "/about/",
+  "pages/_docs/guides/setup.md": "/guides/setup/",
+  "pages/_docs/intro.md": "/docs/intro.html",
+  "pages/_posts/2000-01-01-index.md": "/news/",
+  "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md": "/posts/2026/07/06/mcp-for-the-back-office/",
+  "pages/_posts/tech/2026-07-10-moved.md": "/news/moved-elsewhere/",
+  "pages/_posts/tech/2026-08-01-not-yet.md": "/posts/2026/08/01/not-yet/"
+ },
+ "plan": {
+  "calls": [
+   {
+    "host": "www.linkedin.com",
+    "id": "token",
+    "path": "/oauth/v2/accessToken",
+    "purpose": "exchange an authorization code, or a refresh token, for an access token",
+    "returns": "this app's own access token for the member who consented",
+    "scopes": [],
+    "verb": "POST",
+    "write": false
+   },
+   {
+    "host": "www.linkedin.com",
+    "id": "introspect",
+    "path": "/oauth/v2/introspectToken",
+    "purpose": "check whether a token is active, when it expires and what it may do",
+    "returns": "the status, expiry and scopes of this app's own token",
+    "scopes": [],
+    "verb": "POST",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "userinfo",
+    "path": "/v2/userinfo",
+    "purpose": "learn which member authorized the app, to name their own person URN",
+    "returns": "the authenticated member's own id and name",
+    "scopes": [
+     "openid",
+     "profile"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "organization_acls",
+    "path": "/rest/organizationAcls",
+    "purpose": "list the pages the member may post to",
+    "returns": "the authenticated member's own page roles",
+    "scopes": [
+     "r_organization_admin",
+     "rw_organization_admin"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "organization",
+    "path": "/rest/organizations/{id}",
+    "purpose": "show a page's name next to its URN",
+    "returns": "the own public name of a page the member administers",
+    "scopes": [
+     "r_organization_admin",
+     "rw_organization_admin"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "posts_create",
+    "path": "/rest/posts",
+    "purpose": "publish an approved draft as its author",
+    "returns": "the id of the author's own new post",
+    "scopes": [
+     "w_organization_social",
+     "w_member_social"
+    ],
+    "verb": "POST",
+    "write": true
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "posts_get",
+    "path": "/rest/posts/{urn}",
+    "purpose": "confirm a post published",
+    "returns": "the author's own post, as published",
+    "scopes": [
+     "r_organization_social",
+     "rw_organization_admin",
+     "r_member_social"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "posts_by_author",
+    "path": "/rest/posts",
+    "purpose": "list what the configured author already published",
+    "returns": "the configured author's own recent posts",
+    "scopes": [
+     "r_organization_social",
+     "rw_organization_admin",
+     "r_member_social"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "posts_delete",
+    "path": "/rest/posts/{urn}",
+    "purpose": "withdraw a post the author published",
+    "returns": "nothing; it removes the author's own post",
+    "scopes": [
+     "w_organization_social",
+     "w_member_social"
+    ],
+    "verb": "DELETE",
+    "write": true
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "images_initialize",
+    "path": "/rest/images",
+    "purpose": "reserve an upload for a link card's thumbnail",
+    "returns": "an upload slot for the author's own image",
+    "scopes": [
+     "w_organization_social",
+     "w_member_social"
+    ],
+    "verb": "POST",
+    "write": true
+   },
+   {
+    "host": "upload",
+    "id": "images_upload",
+    "path": "{uploadUrl}",
+    "purpose": "send the thumbnail's bytes to the slot LinkedIn returned",
+    "returns": "nothing; it stores the author's own image",
+    "scopes": [
+     "w_organization_social",
+     "w_member_social"
+    ],
+    "verb": "PUT",
+    "write": true
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "images_get",
+    "path": "/rest/images/{urn}",
+    "purpose": "wait for an uploaded thumbnail to finish processing",
+    "returns": "the processing status of the author's own image",
+    "scopes": [
+     "w_organization_social"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "organization_share_statistics",
+    "path": "/rest/organizationalEntityShareStatistics",
+    "purpose": "read how the page's published posts performed",
+    "returns": "aggregate counts for the page's own posts",
+    "scopes": [
+     "r_organization_admin",
+     "rw_organization_admin"
+    ],
+    "verb": "GET",
+    "write": false
+   },
+   {
+    "host": "api.linkedin.com",
+    "id": "member_post_statistics",
+    "path": "/rest/memberCreatorPostAnalytics",
+    "purpose": "read how a member's published post performed",
+    "returns": "aggregate counts for the member's own post",
+    "scopes": [
+     "r_member_postAnalytics"
+    ],
+    "verb": "GET",
+    "write": false
+   }
+  ],
+  "describe": "LinkedIn calls this CMS can make, and nothing else:\n\n  POST   www.linkedin.com/oauth/v2/accessToken\n    to        exchange an authorization code, or a refresh token, for an access token\n    scopes    (app credentials)\n    returns   this app's own access token for the member who consented\n\n  POST   www.linkedin.com/oauth/v2/introspectToken\n    to        check whether a token is active, when it expires and what it may do\n    scopes    (app credentials)\n    returns   the status, expiry and scopes of this app's own token\n\n  GET    api.linkedin.com/v2/userinfo\n    to        learn which member authorized the app, to name their own person URN\n    scopes    openid | profile\n    returns   the authenticated member's own id and name\n\n  GET    api.linkedin.com/rest/organizationAcls\n    to        list the pages the member may post to\n    scopes    r_organization_admin | rw_organization_admin\n    returns   the authenticated member's own page roles\n\n  GET    api.linkedin.com/rest/organizations/{id}\n    to        show a page's name next to its URN\n    scopes    r_organization_admin | rw_organization_admin\n    returns   the own public name of a page the member administers\n\n  POST   api.linkedin.com/rest/posts   [write]\n    to        publish an approved draft as its author\n    scopes    w_organization_social | w_member_social\n    returns   the id of the author's own new post\n\n  GET    api.linkedin.com/rest/posts/{urn}\n    to        confirm a post published\n    scopes    r_organization_social | rw_organization_admin | r_member_social\n    returns   the author's own post, as published\n\n  GET    api.linkedin.com/rest/posts\n    to        list what the configured author already published\n    scopes    r_organization_social | rw_organization_admin | r_member_social\n    returns   the configured author's own recent posts\n\n  DELETE api.linkedin.com/rest/posts/{urn}   [write]\n    to        withdraw a post the author published\n    scopes    w_organization_social | w_member_social\n    returns   nothing; it removes the author's own post\n\n  POST   api.linkedin.com/rest/images   [write]\n    to        reserve an upload for a link card's thumbnail\n    scopes    w_organization_social | w_member_social\n    returns   an upload slot for the author's own image\n\n  PUT    <upload slot on linkedin.com>   [write]\n    to        send the thumbnail's bytes to the slot LinkedIn returned\n    scopes    w_organization_social | w_member_social\n    returns   nothing; it stores the author's own image\n\n  GET    api.linkedin.com/rest/images/{urn}\n    to        wait for an uploaded thumbnail to finish processing\n    scopes    w_organization_social\n    returns   the processing status of the author's own image\n\n  GET    api.linkedin.com/rest/organizationalEntityShareStatistics\n    to        read how the page's published posts performed\n    scopes    r_organization_admin | rw_organization_admin\n    returns   aggregate counts for the page's own posts\n\n  GET    api.linkedin.com/rest/memberCreatorPostAnalytics\n    to        read how a member's published post performed\n    scopes    r_member_postAnalytics\n    returns   aggregate counts for the member's own post\n\nNo member profiles, connections, followers, feeds or messages. No record of who\nengaged with a post — aggregate counts only, for the author's own posts."
+ },
+ "preview": {
+  "blockers": [
+   {
+    "kind": "status_not_accepted",
+    "message": "draft status is pending (accepted here: approved)"
+   },
+   {
+    "kind": "publish_disabled",
+    "message": "publishing is not armed (ZER0_LINKEDIN_PUBLISH=1 in the environment, and a live run)"
+   },
+   {
+    "kind": "no_credential",
+    "message": "no LinkedIn credential (LINKEDIN_ACCESS_TOKEN, or a refresh token with the app credentials)"
+   }
+  ],
+  "commentary": "A standard plug between the assistant your team uses and the systems your business runs on\n\n#MCP #AI #Integration",
+  "commentary_length": 113,
+  "draft": "drafts/linkedin/2026-09-14-mcp-for-the-back-office.md",
+  "fold": 140,
+  "guard": [
+   {
+    "level": "info",
+    "message": "fold at 140 chars: \"A standard plug between the assistant your team uses and the systems your business runs on\n\n#MCP #AI #Integration\""
+   }
+  ],
+  "key": "https://example.test/posts/2026/07/06/mcp-for-the-back-office/",
+  "notes": [],
+  "payload": {
+   "author": "urn:li:organization:64517157",
+   "commentary": "A standard plug between the assistant your team uses and the systems your business runs on\n\n#MCP #AI #Integration",
+   "content": {
+    "article": {
+     "description": "What the Model Context Protocol changes for the systems that close your books",
+     "source": "https://example.test/posts/2026/07/06/mcp-for-the-back-office/",
+     "title": "MCP for the back office"
+    }
+   },
+   "distribution": {
+    "feedDistribution": "MAIN_FEED",
+    "targetEntities": [],
+    "thirdPartyDistributionChannels": []
+   },
+   "isReshareDisabledByAuthor": false,
+   "lifecycleState": "PUBLISHED",
+   "visibility": "PUBLIC"
+  },
+  "source": "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md",
+  "status": "pending",
+  "thumbnail": "assets/images/previews/mcp-for-the-back-office.png",
+  "type": "article"
+ },
+ "sites": {
+  "2005": {
+   "README.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/knowledge-index/"
+   },
+   "TIMELINE.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/TIMELINE/"
+   },
+   "_posts/arts-culture/2005-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/"
+   },
+   "_posts/arts-culture/2005-03-24-the-office-us-premiere.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/the-office-us-premiere/"
+   },
+   "_posts/arts-culture/2005-05-19-star-wars-episode-iii.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/star-wars-episode-iii/"
+   },
+   "_posts/arts-culture/2005-05-22-lenfant-cannes-palme-dor.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/lenfant-cannes-palme-dor/"
+   },
+   "_posts/arts-culture/2005-06-06-coldplay-x-y.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/coldplay-x-y/"
+   },
+   "_posts/arts-culture/2005-06-15-batman-begins.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/batman-begins/"
+   },
+   "_posts/arts-culture/2005-07-02-live-8-concerts.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/live-8-concerts/"
+   },
+   "_posts/arts-culture/2005-07-16-harry-potter-half-blood-prince.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/harry-potter-half-blood-prince/"
+   },
+   "_posts/arts-culture/2005-08-30-kanye-west-late-registration.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/kanye-west-late-registration/"
+   },
+   "_posts/arts-culture/2005-10-17-colbert-report-premiere.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/colbert-report-premiere/"
+   },
+   "_posts/arts-culture/2005-12-09-brokeback-mountain.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/brokeback-mountain/"
+   },
+   "_posts/arts-culture/2005-12-09-narnia-lion-witch-wardrobe.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/arts-culture/narnia-lion-witch-wardrobe/"
+   },
+   "_posts/history-politics/2005-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/"
+   },
+   "_posts/history-politics/2005-01-20-george-w-bush-2005-agenda.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/george-w-bush-2005-agenda/"
+   },
+   "_posts/history-politics/2005-01-30-iraqi-elections-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/iraqi-elections-2005/"
+   },
+   "_posts/history-politics/2005-02-14-hariri-assassination-cedar-revolution.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/hariri-assassination-cedar-revolution/"
+   },
+   "_posts/history-politics/2005-02-25-darfur-genocide-escalation.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/darfur-genocide-escalation/"
+   },
+   "_posts/history-politics/2005-03-24-tulip-revolution-kyrgyzstan.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/tulip-revolution-kyrgyzstan/"
+   },
+   "_posts/history-politics/2005-04-02-pope-john-paul-ii-death.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/pope-john-paul-ii-death/"
+   },
+   "_posts/history-politics/2005-04-09-prince-charles-camilla-wedding.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/prince-charles-camilla-wedding/"
+   },
+   "_posts/history-politics/2005-04-19-pope-benedict-xvi-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/pope-benedict-xvi-2005/"
+   },
+   "_posts/history-politics/2005-05-05-uk-general-election-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/uk-general-election-2005/"
+   },
+   "_posts/history-politics/2005-06-24-ahmadinejad-elected-president-iran.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/ahmadinejad-elected-president-iran/"
+   },
+   "_posts/history-politics/2005-07-06-g8-gleneagles-summit.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/g8-gleneagles-summit/"
+   },
+   "_posts/history-politics/2005-07-07-77-london-bombings.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/77-london-bombings/"
+   },
+   "_posts/history-politics/2005-07-28-ira-ends-armed-campaign.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/ira-ends-armed-campaign/"
+   },
+   "_posts/history-politics/2005-08-06-camp-casey-protest.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/camp-casey-protest/"
+   },
+   "_posts/history-politics/2005-08-15-gaza-disengagement-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/gaza-disengagement-2005/"
+   },
+   "_posts/history-politics/2005-09-18-angela-merkel-chancellor.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/angela-merkel-chancellor/"
+   },
+   "_posts/history-politics/2005-09-29-john-roberts-chief-justice.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/john-roberts-chief-justice/"
+   },
+   "_posts/history-politics/2005-10-19-saddam-hussein-trial-begins.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/saddam-hussein-trial-begins/"
+   },
+   "_posts/history-politics/2005-10-31-samuel-alito-supreme-court-nomination.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/samuel-alito-supreme-court-nomination/"
+   },
+   "_posts/history-politics/2005-12-23-lech-kaczynski-elected-president-poland.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/history-politics/lech-kaczynski-elected-president-poland/"
+   },
+   "_posts/people/2005-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/"
+   },
+   "_posts/people/2005-01-09-mahmoud-abbas-elected-pa-president.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/mahmoud-abbas-elected-pa-president/"
+   },
+   "_posts/people/2005-01-26-condoleezza-rice-secretary-of-state.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/condoleezza-rice-secretary-of-state/"
+   },
+   "_posts/people/2005-02-21-hunter-s-thompson-dies.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/hunter-s-thompson-dies/"
+   },
+   "_posts/people/2005-05-31-deep-throat-revealed.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/deep-throat-revealed/"
+   },
+   "_posts/people/2005-06-13-michael-jackson-trial-verdict.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/michael-jackson-trial-verdict/"
+   },
+   "_posts/people/2005-07-24-lance-armstrong-tour-de-france.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/lance-armstrong-tour-de-france/"
+   },
+   "_posts/people/2005-08-07-peter-jennings-dies.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/peter-jennings-dies/"
+   },
+   "_posts/people/2005-10-24-rosa-parks-dies.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/rosa-parks-dies/"
+   },
+   "_posts/people/2005-11-23-ellen-johnson-sirleaf-elected.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/ellen-johnson-sirleaf-elected/"
+   },
+   "_posts/people/2005-12-18-evo-morales-elected-president-bolivia.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/people/evo-morales-elected-president-bolivia/"
+   },
+   "_posts/science-technology/2005-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/"
+   },
+   "_posts/science-technology/2005-01-14-huygens-titan-landing.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/huygens-titan-landing/"
+   },
+   "_posts/science-technology/2005-02-08-google-maps-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/google-maps-launch/"
+   },
+   "_posts/science-technology/2005-02-14-youtube-founded.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/youtube-founded/"
+   },
+   "_posts/science-technology/2005-02-16-kyoto-protocol-enters-force.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/kyoto-protocol-enters-force/"
+   },
+   "_posts/science-technology/2005-03-18-wikipedia-500000-articles.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/wikipedia-500000-articles/"
+   },
+   "_posts/science-technology/2005-03-24-psp-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/psp-launch/"
+   },
+   "_posts/science-technology/2005-04-27-airbus-a380-first-flight.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/airbus-a380-first-flight/"
+   },
+   "_posts/science-technology/2005-06-27-grokster-decision-p2p-liability.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/grokster-decision-p2p-liability/"
+   },
+   "_posts/science-technology/2005-07-04-deep-impact-mission.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/deep-impact-mission/"
+   },
+   "_posts/science-technology/2005-07-26-sts-114-return-to-flight.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/sts-114-return-to-flight/"
+   },
+   "_posts/science-technology/2005-07-29-eris-discovery.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/eris-discovery/"
+   },
+   "_posts/science-technology/2005-08-22-bluray-hddvd-format-war.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/bluray-hddvd-format-war/"
+   },
+   "_posts/science-technology/2005-09-23-motorola-razr-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/motorola-razr-launch/"
+   },
+   "_posts/science-technology/2005-10-12-ipod-nano-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/ipod-nano-launch/"
+   },
+   "_posts/science-technology/2005-10-12-shenzhou-6-mission.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/shenzhou-6-mission/"
+   },
+   "_posts/science-technology/2005-10-31-sony-bmg-rootkit-scandal.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/sony-bmg-rootkit-scandal/"
+   },
+   "_posts/science-technology/2005-11-08-guitar-hero-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/guitar-hero-launch/"
+   },
+   "_posts/science-technology/2005-11-22-xbox-360-launch.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/xbox-360-launch/"
+   },
+   "_posts/science-technology/2005-11-27-first-face-transplant.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/first-face-transplant/"
+   },
+   "_posts/science-technology/2005-12-15-hwang-woo-suk-stem-cell-fraud.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/hwang-woo-suk-stem-cell-fraud/"
+   },
+   "_posts/science-technology/2005-12-20-dover-intelligent-design-trial.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/science-technology/dover-intelligent-design-trial/"
+   },
+   "_posts/society-economics/2005-01-01-avian-flu-h5n1-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/avian-flu-h5n1-2005/"
+   },
+   "_posts/society-economics/2005-01-01-digital-music-revolution.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/digital-music-revolution/"
+   },
+   "_posts/society-economics/2005-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/"
+   },
+   "_posts/society-economics/2005-02-06-super-bowl-xxxix.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/super-bowl-xxxix/"
+   },
+   "_posts/society-economics/2005-03-17-baseball-steroid-hearings.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/baseball-steroid-hearings/"
+   },
+   "_posts/society-economics/2005-03-31-terri-schiavo-case.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/terri-schiavo-case/"
+   },
+   "_posts/society-economics/2005-04-02-cricket-world-cup-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/cricket-world-cup-2005/"
+   },
+   "_posts/society-economics/2005-07-03-same-sex-marriage-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/same-sex-marriage-2005/"
+   },
+   "_posts/society-economics/2005-07-06-london-wins-2012-olympic-bid.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/london-wins-2012-olympic-bid/"
+   },
+   "_posts/society-economics/2005-08-29-hurricane-katrina.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/hurricane-katrina/"
+   },
+   "_posts/society-economics/2005-09-24-hurricane-rita-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/hurricane-rita-2005/"
+   },
+   "_posts/society-economics/2005-10-08-kashmir-earthquake-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/kashmir-earthquake-2005/"
+   },
+   "_posts/society-economics/2005-10-24-hurricane-wilma-2005.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/hurricane-wilma-2005/"
+   },
+   "_posts/society-economics/2005-10-27-2005-french-riots.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/society-economics/2005-french-riots/"
+   },
+   "index.html": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "news.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/news/"
+   }
+  },
+  "drsai": {
+   "index.html": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "pages/_books/dodge-and-reena/01-january.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/january/"
+   },
+   "pages/_books/dodge-and-reena/02-february.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/february/"
+   },
+   "pages/_books/dodge-and-reena/03-march.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/march/"
+   },
+   "pages/_books/dodge-and-reena/04-april.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/april/"
+   },
+   "pages/_books/dodge-and-reena/05-may.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/may/"
+   },
+   "pages/_books/dodge-and-reena/06-june.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/june/"
+   },
+   "pages/_books/dodge-and-reena/07-july.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/july/"
+   },
+   "pages/_books/dodge-and-reena/08-august.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/august/"
+   },
+   "pages/_books/dodge-and-reena/09-september.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/september/"
+   },
+   "pages/_books/dodge-and-reena/10-october.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/october/"
+   },
+   "pages/_books/dodge-and-reena/11-november.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/november/"
+   },
+   "pages/_books/dodge-and-reena/12-december.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/december/"
+   },
+   "pages/_books/dodge-and-reena/index.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/dodge-and-reena/"
+   },
+   "pages/_books/it-alphabet/index.md": {
+    "collection": "books",
+    "kind": "document",
+    "live": true,
+    "url": "/books/it-alphabet/index/"
+   },
+   "pages/about.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/about/"
+   }
+  },
+  "irony-works": {
+   "404.html": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/404.html"
+   },
+   "compost.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/compost/"
+   },
+   "entries.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/entries/"
+   },
+   "figures.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/figures/"
+   },
+   "forms.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/forms/"
+   },
+   "futures.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/futures/"
+   },
+   "how-it-grows.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/how-it-grows/"
+   },
+   "index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "instances.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/instances/"
+   },
+   "mirrors.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/mirrors/"
+   },
+   "nursery.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/nursery/"
+   },
+   "paradoxes.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/paradoxes/"
+   },
+   "works.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/works/"
+   }
+  },
+  "wargames": {
+   "index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "overthewire/abraxas/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/abraxas/"
+   },
+   "overthewire/bandit/bandit0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit0/"
+   },
+   "overthewire/bandit/bandit1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit1/"
+   },
+   "overthewire/bandit/bandit10.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit10/"
+   },
+   "overthewire/bandit/bandit11.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit11/"
+   },
+   "overthewire/bandit/bandit12.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit12/"
+   },
+   "overthewire/bandit/bandit13.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit13/"
+   },
+   "overthewire/bandit/bandit14.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit14/"
+   },
+   "overthewire/bandit/bandit15.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit15/"
+   },
+   "overthewire/bandit/bandit16.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit16/"
+   },
+   "overthewire/bandit/bandit17.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit17/"
+   },
+   "overthewire/bandit/bandit18.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit18/"
+   },
+   "overthewire/bandit/bandit19.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit19/"
+   },
+   "overthewire/bandit/bandit2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit2/"
+   },
+   "overthewire/bandit/bandit20.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit20/"
+   },
+   "overthewire/bandit/bandit21.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit21/"
+   },
+   "overthewire/bandit/bandit22.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit22/"
+   },
+   "overthewire/bandit/bandit23.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit23/"
+   },
+   "overthewire/bandit/bandit24.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit24/"
+   },
+   "overthewire/bandit/bandit25.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit25/"
+   },
+   "overthewire/bandit/bandit26.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit26/"
+   },
+   "overthewire/bandit/bandit27.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit27/"
+   },
+   "overthewire/bandit/bandit28.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit28/"
+   },
+   "overthewire/bandit/bandit29.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit29/"
+   },
+   "overthewire/bandit/bandit3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit3/"
+   },
+   "overthewire/bandit/bandit30.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit30/"
+   },
+   "overthewire/bandit/bandit31.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit31/"
+   },
+   "overthewire/bandit/bandit32.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit32/"
+   },
+   "overthewire/bandit/bandit33.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit33/"
+   },
+   "overthewire/bandit/bandit34.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit34/"
+   },
+   "overthewire/bandit/bandit4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit4/"
+   },
+   "overthewire/bandit/bandit5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit5/"
+   },
+   "overthewire/bandit/bandit6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit6/"
+   },
+   "overthewire/bandit/bandit7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit7/"
+   },
+   "overthewire/bandit/bandit8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit8/"
+   },
+   "overthewire/bandit/bandit9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/bandit9/"
+   },
+   "overthewire/bandit/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/bandit/"
+   },
+   "overthewire/behemoth/behemoth0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth0/"
+   },
+   "overthewire/behemoth/behemoth1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth1/"
+   },
+   "overthewire/behemoth/behemoth2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth2/"
+   },
+   "overthewire/behemoth/behemoth3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth3/"
+   },
+   "overthewire/behemoth/behemoth4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth4/"
+   },
+   "overthewire/behemoth/behemoth5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth5/"
+   },
+   "overthewire/behemoth/behemoth6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth6/"
+   },
+   "overthewire/behemoth/behemoth7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth7/"
+   },
+   "overthewire/behemoth/behemoth8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/behemoth8/"
+   },
+   "overthewire/behemoth/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/behemoth/"
+   },
+   "overthewire/blacksun/blacksun0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/blacksun0/"
+   },
+   "overthewire/blacksun/blacksun1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/blacksun1/"
+   },
+   "overthewire/blacksun/blacksun2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/blacksun2/"
+   },
+   "overthewire/blacksun/blacksun3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/blacksun3/"
+   },
+   "overthewire/blacksun/blacksun4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/blacksun4/"
+   },
+   "overthewire/blacksun/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/"
+   },
+   "overthewire/blacksun/reading_material.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/blacksun/reading_material/"
+   },
+   "overthewire/drifter/drifter0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter0/"
+   },
+   "overthewire/drifter/drifter1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter1/"
+   },
+   "overthewire/drifter/drifter10.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter10/"
+   },
+   "overthewire/drifter/drifter11.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter11/"
+   },
+   "overthewire/drifter/drifter12.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter12/"
+   },
+   "overthewire/drifter/drifter13.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter13/"
+   },
+   "overthewire/drifter/drifter14.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter14/"
+   },
+   "overthewire/drifter/drifter15.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter15/"
+   },
+   "overthewire/drifter/drifter2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter2/"
+   },
+   "overthewire/drifter/drifter3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter3/"
+   },
+   "overthewire/drifter/drifter4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter4/"
+   },
+   "overthewire/drifter/drifter5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter5/"
+   },
+   "overthewire/drifter/drifter6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter6/"
+   },
+   "overthewire/drifter/drifter7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter7/"
+   },
+   "overthewire/drifter/drifter8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter8/"
+   },
+   "overthewire/drifter/drifter9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/drifter9/"
+   },
+   "overthewire/drifter/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/drifter/"
+   },
+   "overthewire/formulaone/formulaone0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone0/"
+   },
+   "overthewire/formulaone/formulaone1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone1/"
+   },
+   "overthewire/formulaone/formulaone2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone2/"
+   },
+   "overthewire/formulaone/formulaone3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone3/"
+   },
+   "overthewire/formulaone/formulaone4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone4/"
+   },
+   "overthewire/formulaone/formulaone5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone5/"
+   },
+   "overthewire/formulaone/formulaone6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/formulaone6/"
+   },
+   "overthewire/formulaone/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/formulaone/"
+   },
+   "overthewire/hes2010/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/hes2010/"
+   },
+   "overthewire/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/"
+   },
+   "overthewire/kishi/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/kishi/"
+   },
+   "overthewire/krypton/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/"
+   },
+   "overthewire/krypton/krypton0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton0/"
+   },
+   "overthewire/krypton/krypton1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton1/"
+   },
+   "overthewire/krypton/krypton2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton2/"
+   },
+   "overthewire/krypton/krypton3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton3/"
+   },
+   "overthewire/krypton/krypton4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton4/"
+   },
+   "overthewire/krypton/krypton5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton5/"
+   },
+   "overthewire/krypton/krypton6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/krypton/krypton6/"
+   },
+   "overthewire/leviathan/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/"
+   },
+   "overthewire/leviathan/leviathan0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan0/"
+   },
+   "overthewire/leviathan/leviathan1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan1/"
+   },
+   "overthewire/leviathan/leviathan2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan2/"
+   },
+   "overthewire/leviathan/leviathan3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan3/"
+   },
+   "overthewire/leviathan/leviathan4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan4/"
+   },
+   "overthewire/leviathan/leviathan5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan5/"
+   },
+   "overthewire/leviathan/leviathan6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan6/"
+   },
+   "overthewire/leviathan/leviathan7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/leviathan/leviathan7/"
+   },
+   "overthewire/manpage/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/"
+   },
+   "overthewire/manpage/manpage0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage0/"
+   },
+   "overthewire/manpage/manpage1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage1/"
+   },
+   "overthewire/manpage/manpage2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage2/"
+   },
+   "overthewire/manpage/manpage3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage3/"
+   },
+   "overthewire/manpage/manpage4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage4/"
+   },
+   "overthewire/manpage/manpage5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage5/"
+   },
+   "overthewire/manpage/manpage6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage6/"
+   },
+   "overthewire/manpage/manpage7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/manpage/manpage7/"
+   },
+   "overthewire/maze/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/"
+   },
+   "overthewire/maze/maze0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze0/"
+   },
+   "overthewire/maze/maze1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze1/"
+   },
+   "overthewire/maze/maze2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze2/"
+   },
+   "overthewire/maze/maze3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze3/"
+   },
+   "overthewire/maze/maze4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze4/"
+   },
+   "overthewire/maze/maze5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze5/"
+   },
+   "overthewire/maze/maze6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze6/"
+   },
+   "overthewire/maze/maze7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze7/"
+   },
+   "overthewire/maze/maze8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze8/"
+   },
+   "overthewire/maze/maze9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/maze/maze9/"
+   },
+   "overthewire/monxla/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/monxla/"
+   },
+   "overthewire/narnia/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/"
+   },
+   "overthewire/narnia/narnia0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia0/"
+   },
+   "overthewire/narnia/narnia1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia1/"
+   },
+   "overthewire/narnia/narnia2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia2/"
+   },
+   "overthewire/narnia/narnia3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia3/"
+   },
+   "overthewire/narnia/narnia4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia4/"
+   },
+   "overthewire/narnia/narnia5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia5/"
+   },
+   "overthewire/narnia/narnia6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia6/"
+   },
+   "overthewire/narnia/narnia7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia7/"
+   },
+   "overthewire/narnia/narnia8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia8/"
+   },
+   "overthewire/narnia/narnia9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/narnia/narnia9/"
+   },
+   "overthewire/natas/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/"
+   },
+   "overthewire/natas/natas0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas0/"
+   },
+   "overthewire/natas/natas1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas1/"
+   },
+   "overthewire/natas/natas10.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas10/"
+   },
+   "overthewire/natas/natas11.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas11/"
+   },
+   "overthewire/natas/natas12.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas12/"
+   },
+   "overthewire/natas/natas13.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas13/"
+   },
+   "overthewire/natas/natas14.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas14/"
+   },
+   "overthewire/natas/natas15.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas15/"
+   },
+   "overthewire/natas/natas16.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas16/"
+   },
+   "overthewire/natas/natas17.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas17/"
+   },
+   "overthewire/natas/natas18.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas18/"
+   },
+   "overthewire/natas/natas19.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas19/"
+   },
+   "overthewire/natas/natas2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas2/"
+   },
+   "overthewire/natas/natas20.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas20/"
+   },
+   "overthewire/natas/natas21.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas21/"
+   },
+   "overthewire/natas/natas22.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas22/"
+   },
+   "overthewire/natas/natas23.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas23/"
+   },
+   "overthewire/natas/natas24.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas24/"
+   },
+   "overthewire/natas/natas25.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas25/"
+   },
+   "overthewire/natas/natas26.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas26/"
+   },
+   "overthewire/natas/natas27.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas27/"
+   },
+   "overthewire/natas/natas28.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas28/"
+   },
+   "overthewire/natas/natas29.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas29/"
+   },
+   "overthewire/natas/natas3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas3/"
+   },
+   "overthewire/natas/natas30.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas30/"
+   },
+   "overthewire/natas/natas31.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas31/"
+   },
+   "overthewire/natas/natas32.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas32/"
+   },
+   "overthewire/natas/natas33.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas33/"
+   },
+   "overthewire/natas/natas34.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas34/"
+   },
+   "overthewire/natas/natas4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas4/"
+   },
+   "overthewire/natas/natas5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas5/"
+   },
+   "overthewire/natas/natas6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas6/"
+   },
+   "overthewire/natas/natas7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas7/"
+   },
+   "overthewire/natas/natas8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas8/"
+   },
+   "overthewire/natas/natas9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/natas/natas9/"
+   },
+   "overthewire/semtex/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/"
+   },
+   "overthewire/semtex/semtex0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex0/"
+   },
+   "overthewire/semtex/semtex1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex1/"
+   },
+   "overthewire/semtex/semtex10.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex10/"
+   },
+   "overthewire/semtex/semtex11.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex11/"
+   },
+   "overthewire/semtex/semtex12.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex12/"
+   },
+   "overthewire/semtex/semtex2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex2/"
+   },
+   "overthewire/semtex/semtex3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex3/"
+   },
+   "overthewire/semtex/semtex4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex4/"
+   },
+   "overthewire/semtex/semtex5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex5/"
+   },
+   "overthewire/semtex/semtex6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex6/"
+   },
+   "overthewire/semtex/semtex7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex7/"
+   },
+   "overthewire/semtex/semtex8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex8/"
+   },
+   "overthewire/semtex/semtex9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/semtex/semtex9/"
+   },
+   "overthewire/utumno/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/"
+   },
+   "overthewire/utumno/utumno0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno0/"
+   },
+   "overthewire/utumno/utumno1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno1/"
+   },
+   "overthewire/utumno/utumno2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno2/"
+   },
+   "overthewire/utumno/utumno3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno3/"
+   },
+   "overthewire/utumno/utumno4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno4/"
+   },
+   "overthewire/utumno/utumno5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno5/"
+   },
+   "overthewire/utumno/utumno6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno6/"
+   },
+   "overthewire/utumno/utumno7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno7/"
+   },
+   "overthewire/utumno/utumno8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/utumno/utumno8/"
+   },
+   "overthewire/vortex/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/"
+   },
+   "overthewire/vortex/vortex0.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex0/"
+   },
+   "overthewire/vortex/vortex1.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex1/"
+   },
+   "overthewire/vortex/vortex10.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex10/"
+   },
+   "overthewire/vortex/vortex11.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex11/"
+   },
+   "overthewire/vortex/vortex12.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex12/"
+   },
+   "overthewire/vortex/vortex13.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex13/"
+   },
+   "overthewire/vortex/vortex14.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex14/"
+   },
+   "overthewire/vortex/vortex15.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex15/"
+   },
+   "overthewire/vortex/vortex16.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex16/"
+   },
+   "overthewire/vortex/vortex17.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex17/"
+   },
+   "overthewire/vortex/vortex18.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex18/"
+   },
+   "overthewire/vortex/vortex19.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex19/"
+   },
+   "overthewire/vortex/vortex2.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex2/"
+   },
+   "overthewire/vortex/vortex20.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex20/"
+   },
+   "overthewire/vortex/vortex21.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex21/"
+   },
+   "overthewire/vortex/vortex22.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex22/"
+   },
+   "overthewire/vortex/vortex23.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex23/"
+   },
+   "overthewire/vortex/vortex24.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex24/"
+   },
+   "overthewire/vortex/vortex25.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex25/"
+   },
+   "overthewire/vortex/vortex26.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex26/"
+   },
+   "overthewire/vortex/vortex3.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex3/"
+   },
+   "overthewire/vortex/vortex4.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex4/"
+   },
+   "overthewire/vortex/vortex5.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex5/"
+   },
+   "overthewire/vortex/vortex6.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex6/"
+   },
+   "overthewire/vortex/vortex7.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex7/"
+   },
+   "overthewire/vortex/vortex8.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex8/"
+   },
+   "overthewire/vortex/vortex9.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/docs/wargames/vortex/vortex9/"
+   },
+   "tags.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/tags/"
+   }
+  },
+  "zer0-demo-cookbook": {
+   "index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "pages/_about/index.md": {
+    "collection": "about",
+    "kind": "document",
+    "live": true,
+    "url": "/about/"
+   },
+   "pages/_posts/2026-09-08-the-pot-matters-more-than-the-recipe.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/posts/the-pot-matters-more-than-the-recipe/"
+   },
+   "pages/_posts/2026-09-08-welcome.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/posts/welcome/"
+   },
+   "pages/_posts/2026-09-08-what-braising-actually-does.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/posts/what-braising-actually-does/"
+   },
+   "pages/_recipes/beef-shin-ragu.md": {
+    "collection": "recipes",
+    "kind": "document",
+    "live": true,
+    "url": "/recipes/beef-shin-ragu/"
+   },
+   "pages/_recipes/chicken-preserved-lemon.md": {
+    "collection": "recipes",
+    "kind": "document",
+    "live": true,
+    "url": "/recipes/chicken-preserved-lemon/"
+   },
+   "pages/_recipes/starter-recipe.md": {
+    "collection": "recipes",
+    "kind": "document",
+    "live": true,
+    "url": "/recipes/starter-recipe/"
+   },
+   "pages/_recipes/white-beans-fennel.md": {
+    "collection": "recipes",
+    "kind": "document",
+    "live": true,
+    "url": "/recipes/white-beans-fennel/"
+   },
+   "pages/posts.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/posts/"
+   },
+   "pages/recipes.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/recipes/"
+   }
+  },
+  "zer0-demo-garden": {
+   "index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "pages/_about/index.md": {
+    "collection": "about",
+    "kind": "document",
+    "live": true,
+    "url": "/about/"
+   },
+   "pages/_notes/backlinks-change-what-you-write.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/backlinks-change-what-you-write/"
+   },
+   "pages/_notes/evergreen-notes.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/evergreen-notes/"
+   },
+   "pages/_notes/notes-should-be-atomic.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/notes-should-be-atomic/"
+   },
+   "pages/_notes/posts-and-notes-do-different-jobs.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/posts-and-notes-do-different-jobs/"
+   },
+   "pages/_notes/welcome-note.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/welcome-note/"
+   },
+   "pages/_notes/why-gardens-beat-blogs.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/why-gardens-beat-blogs/"
+   },
+   "pages/_posts/2026-09-08-six-months-of-gardening.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/posts/six-months-of-gardening/"
+   },
+   "pages/_posts/2026-09-08-welcome.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/posts/welcome/"
+   },
+   "pages/notes.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/notes/"
+   },
+   "pages/posts.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/posts/"
+   }
+  },
+  "zer0-pages": {
+   "pages/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/SCHEMA/"
+   },
+   "pages/_docs/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/SCHEMA/"
+   },
+   "pages/_docs/analytics/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/analytics/SCHEMA/"
+   },
+   "pages/_docs/analytics/google-analytics.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/analytics/google-analytics/"
+   },
+   "pages/_docs/analytics/google-tag-manager.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/analytics/google-tag-manager/"
+   },
+   "pages/_docs/analytics/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/analytics/"
+   },
+   "pages/_docs/bootstrap/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/bootstrap/SCHEMA/"
+   },
+   "pages/_docs/bootstrap/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/bootstrap/"
+   },
+   "pages/_docs/customization/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/SCHEMA/"
+   },
+   "pages/_docs/customization/author-profiles.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/author-profiles/"
+   },
+   "pages/_docs/customization/includes.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/includes/"
+   },
+   "pages/_docs/customization/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/"
+   },
+   "pages/_docs/customization/layouts.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/layouts/"
+   },
+   "pages/_docs/customization/navigation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/navigation/"
+   },
+   "pages/_docs/customization/styles.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/customization/styles/"
+   },
+   "pages/_docs/deployment/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/SCHEMA/"
+   },
+   "pages/_docs/deployment/build-overlay.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/build-overlay/"
+   },
+   "pages/_docs/deployment/custom-domain.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/custom-domain/"
+   },
+   "pages/_docs/deployment/github-pages.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/github-pages/"
+   },
+   "pages/_docs/deployment/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/"
+   },
+   "pages/_docs/deployment/netlify.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/netlify/"
+   },
+   "pages/_docs/deployment/remote-theme-checklist.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/deployment/remote-theme-checklist/"
+   },
+   "pages/_docs/development/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/SCHEMA/"
+   },
+   "pages/_docs/development/agents.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/agents/"
+   },
+   "pages/_docs/development/ci-cd.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/ci-cd/"
+   },
+   "pages/_docs/development/dependency-updates.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/dependency-updates/"
+   },
+   "pages/_docs/development/devcontainer.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/devcontainer/"
+   },
+   "pages/_docs/development/docker-publishing.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/docker-publishing/"
+   },
+   "pages/_docs/development/documentation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/documentation/"
+   },
+   "pages/_docs/development/frontmatter-validation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/frontmatter-validation/"
+   },
+   "pages/_docs/development/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/"
+   },
+   "pages/_docs/development/prd.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/prd/"
+   },
+   "pages/_docs/development/release-management.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/release-management/"
+   },
+   "pages/_docs/development/scripts.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/scripts/"
+   },
+   "pages/_docs/development/security.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/security/"
+   },
+   "pages/_docs/development/testing.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/testing/"
+   },
+   "pages/_docs/development/vendor-assets.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/vendor-assets/"
+   },
+   "pages/_docs/development/version-bump.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/development/version-bump/"
+   },
+   "pages/_docs/docker/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/docker/SCHEMA/"
+   },
+   "pages/_docs/docker/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/docker/"
+   },
+   "pages/_docs/features/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/SCHEMA/"
+   },
+   "pages/_docs/features/admin-dashboard.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/admin-dashboard/"
+   },
+   "pages/_docs/features/ai-chat-assistant.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/ai-chat-assistant/"
+   },
+   "pages/_docs/features/auto-hide-nav.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/auto-hide-nav/"
+   },
+   "pages/_docs/features/back-to-top.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/back-to-top/"
+   },
+   "pages/_docs/features/breadcrumbs.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/breadcrumbs/"
+   },
+   "pages/_docs/features/code-copy.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/code-copy/"
+   },
+   "pages/_docs/features/color-modes.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/color-modes/"
+   },
+   "pages/_docs/features/cookie-consent.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/cookie-consent/"
+   },
+   "pages/_docs/features/copilot-integration.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/copilot-integration/"
+   },
+   "pages/_docs/features/dynamic-navigation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/dynamic-navigation/"
+   },
+   "pages/_docs/features/giscus-comments.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/giscus-comments/"
+   },
+   "pages/_docs/features/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/"
+   },
+   "pages/_docs/features/jupyter-notebooks.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/jupyter-notebooks/"
+   },
+   "pages/_docs/features/keyboard-navigation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/keyboard-navigation/"
+   },
+   "pages/_docs/features/mathjax-math.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/mathjax-math/"
+   },
+   "pages/_docs/features/mermaid-diagrams.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/mermaid-diagrams/"
+   },
+   "pages/_docs/features/mobile-toc.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/mobile-toc/"
+   },
+   "pages/_docs/features/navigation-architecture.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/navigation-architecture/"
+   },
+   "pages/_docs/features/particles-background.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/particles-background/"
+   },
+   "pages/_docs/features/posthog-analytics.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/posthog-analytics/"
+   },
+   "pages/_docs/features/preview-image-generator.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/preview-image-generator/"
+   },
+   "pages/_docs/features/sidebar-navigation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/sidebar-navigation/"
+   },
+   "pages/_docs/features/site-search.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/site-search/"
+   },
+   "pages/_docs/features/skip-to-content.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/skip-to-content/"
+   },
+   "pages/_docs/features/smart-404.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/smart-404/"
+   },
+   "pages/_docs/features/statistics-dashboard.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/statistics-dashboard/"
+   },
+   "pages/_docs/features/theme-version.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/theme-version/"
+   },
+   "pages/_docs/features/toc.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/toc/"
+   },
+   "pages/_docs/features/vendored-assets.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/features/vendored-assets/"
+   },
+   "pages/_docs/front-matter.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/front-matter/"
+   },
+   "pages/_docs/getting-started/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/getting-started/SCHEMA/"
+   },
+   "pages/_docs/getting-started/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/getting-started/"
+   },
+   "pages/_docs/getting-started/quick-start.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/getting-started/quick-start/"
+   },
+   "pages/_docs/getting-started/theme-guide.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/getting-started/theme-guide/"
+   },
+   "pages/_docs/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/"
+   },
+   "pages/_docs/installation.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/installation/"
+   },
+   "pages/_docs/jekyll/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/jekyll/SCHEMA/"
+   },
+   "pages/_docs/jekyll/code-highlighting.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/jekyll/code-highlighting/"
+   },
+   "pages/_docs/jekyll/collections.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/jekyll/collections/"
+   },
+   "pages/_docs/jekyll/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/jekyll/"
+   },
+   "pages/_docs/jekyll/pagination.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/jekyll/pagination/"
+   },
+   "pages/_docs/liquid/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/liquid/SCHEMA/"
+   },
+   "pages/_docs/liquid/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/liquid/"
+   },
+   "pages/_docs/obsidian/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/SCHEMA/"
+   },
+   "pages/_docs/obsidian/authoring-workflow.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/authoring-workflow/"
+   },
+   "pages/_docs/obsidian/getting-started.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/getting-started/"
+   },
+   "pages/_docs/obsidian/graph.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/graph/"
+   },
+   "pages/_docs/obsidian/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/"
+   },
+   "pages/_docs/obsidian/performance.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/performance/"
+   },
+   "pages/_docs/obsidian/syntax-reference.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/syntax-reference/"
+   },
+   "pages/_docs/obsidian/troubleshooting.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/obsidian/troubleshooting/"
+   },
+   "pages/_docs/quickstart/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/quickstart/SCHEMA/"
+   },
+   "pages/_docs/quickstart/bare-minimum.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/quickstart/bare-minimum/"
+   },
+   "pages/_docs/quickstart/fork-and-deploy.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/quickstart/fork-and-deploy/"
+   },
+   "pages/_docs/quickstart/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/quickstart/"
+   },
+   "pages/_docs/ruby-101.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/ruby-101/"
+   },
+   "pages/_docs/ruby/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/ruby/SCHEMA/"
+   },
+   "pages/_docs/ruby/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/ruby/"
+   },
+   "pages/_docs/seo/SCHEMA.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/seo/SCHEMA/"
+   },
+   "pages/_docs/seo/aieo.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/seo/aieo/"
+   },
+   "pages/_docs/seo/index.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/seo/"
+   },
+   "pages/_docs/seo/meta-tags.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/seo/meta-tags/"
+   },
+   "pages/_docs/seo/sitemap.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/seo/sitemap/"
+   },
+   "pages/_docs/troubleshooting.md": {
+    "collection": "docs",
+    "kind": "document",
+    "live": true,
+    "url": "/docs/troubleshooting/"
+   },
+   "pages/_moc/Docs.md": {
+    "collection": "moc",
+    "kind": "document",
+    "live": true,
+    "url": "/moc/Docs/"
+   },
+   "pages/_moc/Home.md": {
+    "collection": "moc",
+    "kind": "document",
+    "live": true,
+    "url": "/moc/Home/"
+   },
+   "pages/_moc/Notes.md": {
+    "collection": "moc",
+    "kind": "document",
+    "live": true,
+    "url": "/moc/Notes/"
+   },
+   "pages/_moc/Posts.md": {
+    "collection": "moc",
+    "kind": "document",
+    "live": true,
+    "url": "/moc/Posts/"
+   },
+   "pages/_moc/SCHEMA.md": {
+    "collection": "moc",
+    "kind": "document",
+    "live": true,
+    "url": "/moc/SCHEMA/"
+   },
+   "pages/_notes/SCHEMA.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/SCHEMA/"
+   },
+   "pages/_notes/bash-shortcuts.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/bash-shortcuts/"
+   },
+   "pages/_notes/claude-obsidian-cheatsheet.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/claude-obsidian-cheatsheet/"
+   },
+   "pages/_notes/docker-commands.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/docker-commands/"
+   },
+   "pages/_notes/git-cheatsheet.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/git-cheatsheet/"
+   },
+   "pages/_notes/jekyll-front-matter.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/jekyll-front-matter/"
+   },
+   "pages/_notes/markdown-tips.md": {
+    "collection": "notes",
+    "kind": "document",
+    "live": true,
+    "url": "/notes/markdown-tips/"
+   },
+   "pages/_posts/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/news/"
+   },
+   "pages/_posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/technology/development/ethics/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/"
+   },
+   "pages/_posts/2025-01-01-getting-started-jekyll.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/tutorial/development/2025/01/01/getting-started-jekyll/"
+   },
+   "pages/_posts/2025-01-05-web-accessibility-guide.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/development/technology/2025/01/05/web-accessibility-guide/"
+   },
+   "pages/_posts/2025-01-10-bootstrap-5-components.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/tutorial/2025/01/10/bootstrap-5-components/"
+   },
+   "pages/_posts/2025-01-15-docker-jekyll-guide.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/development/tutorial/2025/01/15/docker-jekyll-guide/"
+   },
+   "pages/_posts/2026-06-16-favicon-ico-unlocked-door-to-collapse.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/security/2026/06/16/favicon-ico-unlocked-door-to-collapse/"
+   },
+   "pages/_posts/2026-06-17-bayesian-modeled-my-coffee-and-wept-with-joy.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/data%20science/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/"
+   },
+   "pages/_posts/2026-06-18-trailing-slash-that-could-end-your-company.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/security/2026/06/18/trailing-slash-that-could-end-your-company/"
+   },
+   "pages/_posts/2026-06-19-umap-found-14-hidden-dimensions-in-404-logs.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/data%20science/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/"
+   },
+   "pages/_posts/business/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/business/"
+   },
+   "pages/_posts/business/2025-01-20-startup-funding-guide.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/business/2025/01/20/startup-funding-guide/"
+   },
+   "pages/_posts/business/2026-04-28-customer-onboarding-scorecards.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/business/2026/04/28/customer-onboarding-scorecards/"
+   },
+   "pages/_posts/business/2026-04-28-scenario-planning-for-small-teams.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/business/2026/04/28/scenario-planning-for-small-teams/"
+   },
+   "pages/_posts/development/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/development/"
+   },
+   "pages/_posts/development/2025-01-22-git-workflow-best-practices.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/development/2025/01/22/git-workflow-best-practices/"
+   },
+   "pages/_posts/development/2026-04-28-feature-flags-continuous-delivery.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/development/2026/04/28/feature-flags-continuous-delivery/"
+   },
+   "pages/_posts/development/2026-04-28-observability-for-small-apps.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/development/2026/04/28/observability-for-small-apps/"
+   },
+   "pages/_posts/development/2026-07-05-inside-the-zer0-pages-engine.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/development/2026/07/05/inside-the-zer0-pages-engine/"
+   },
+   "pages/_posts/science/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/news/science/"
+   },
+   "pages/_posts/science/2025-01-18-quantum-computing-explained.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/science/2025/01/18/quantum-computing-explained/"
+   },
+   "pages/_posts/science/2026-04-28-climate-data-dashboards.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/science/2026/04/28/climate-data-dashboards/"
+   },
+   "pages/_posts/science/2026-04-28-climate-data-primer.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/science/2026/04/28/climate-data-primer/"
+   },
+   "pages/_posts/technology/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/technology/"
+   },
+   "pages/_posts/technology/2025-01-25-ai-tools-productivity.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/2025/01/25/ai-tools-productivity/"
+   },
+   "pages/_posts/technology/2026-04-07-ai-adoption-from-awareness-to-action.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/2026/04/07/ai-adoption-from-awareness-to-action/"
+   },
+   "pages/_posts/technology/2026-04-07-ai-adoption-imperative-mid-market-manufacturers.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/2026/04/07/ai-adoption-imperative-mid-market-manufacturers/"
+   },
+   "pages/_posts/technology/2026-04-07-ai-adoption-map-function-by-function.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/technology/2026/04/07/ai-adoption-map-function-by-function/"
+   },
+   "pages/_posts/technology/2026-04-28-building-ai-ready-knowledge-base.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/2026/04/28/building-ai-ready-knowledge-base/"
+   },
+   "pages/_posts/technology/2026-04-28-edge-ai-practical-patterns.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/technology/2026/04/28/edge-ai-practical-patterns/"
+   },
+   "pages/_posts/tutorial/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/news/tutorial/"
+   },
+   "pages/_posts/tutorial/2025-01-23-css-grid-mastery.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/tutorial/2025/01/23/css-grid-mastery/"
+   },
+   "pages/_posts/tutorial/2026-04-28-accessible-form-patterns.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/tutorial/2026/04/28/accessible-form-patterns/"
+   },
+   "pages/_posts/tutorial/2026-04-28-responsive-documentation-card-grid.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/tutorial/2026/04/28/responsive-documentation-card-grid/"
+   },
+   "pages/_posts/world/2000-01-01-index.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": false,
+    "url": "/news/world/"
+   },
+   "pages/_posts/world/2025-01-21-remote-work-revolution.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/world/2025/01/21/remote-work-revolution/"
+   },
+   "pages/_posts/world/2026-04-28-local-resilience-networks.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/world/2026/04/28/local-resilience-networks/"
+   },
+   "pages/_posts/world/2026-04-28-urban-resilience-extreme-heat.md": {
+    "collection": "posts",
+    "kind": "post",
+    "live": true,
+    "url": "/climate%20adaptation/cooling%20strategiesenvironmental%20sustainability/extreme%20heat/heat%20vulnerability/infrastructure%20planning/neighborhood%20equity/public%20health/urban%20planning/urban%20resilience/2026/04/28/urban-resilience-extreme-heat/"
+   },
+   "pages/archives.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/archives/"
+   },
+   "pages/assets/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/SCHEMA/"
+   },
+   "pages/assets/backgrounds/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/backgrounds/SCHEMA/"
+   },
+   "pages/assets/backgrounds/noise/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/backgrounds/noise/SCHEMA/"
+   },
+   "pages/assets/css/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/css/SCHEMA/"
+   },
+   "pages/assets/images/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/SCHEMA/"
+   },
+   "pages/assets/images/authors/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/authors/SCHEMA/"
+   },
+   "pages/assets/images/docs/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/docs/SCHEMA/"
+   },
+   "pages/assets/images/docs/author-profiles/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/docs/author-profiles/SCHEMA/"
+   },
+   "pages/assets/images/docs/features/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/docs/features/SCHEMA/"
+   },
+   "pages/assets/images/docs/quickstart/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/docs/quickstart/SCHEMA/"
+   },
+   "pages/assets/images/quickstart/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/images/quickstart/SCHEMA/"
+   },
+   "pages/assets/js/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/assets/js/SCHEMA/"
+   },
+   "pages/categories.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/categories/"
+   },
+   "pages/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   },
+   "pages/notes.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/notes/"
+   },
+   "pages/posts.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/posts/"
+   },
+   "pages/tags.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/tags/"
+   },
+   "pages/wiki/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/SCHEMA/"
+   },
+   "pages/wiki/concepts/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/SCHEMA/"
+   },
+   "pages/wiki/concepts/ai-content-engine.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/ai-content-engine/"
+   },
+   "pages/wiki/concepts/algorithmic-accountability.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/algorithmic-accountability/"
+   },
+   "pages/wiki/concepts/esg-investing.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/esg-investing/"
+   },
+   "pages/wiki/concepts/ethical-engineering.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/ethical-engineering/"
+   },
+   "pages/wiki/concepts/github-pages-deployment.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/github-pages-deployment/"
+   },
+   "pages/wiki/concepts/impact-weighted-accounting.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/impact-weighted-accounting/"
+   },
+   "pages/wiki/concepts/jekyll-obsidian-dual-rendering.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/jekyll-obsidian-dual-rendering/"
+   },
+   "pages/wiki/concepts/prd-machine.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/prd-machine/"
+   },
+   "pages/wiki/concepts/radical-transparency.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/radical-transparency/"
+   },
+   "pages/wiki/concepts/stakeholder-capitalism.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/concepts/stakeholder-capitalism/"
+   },
+   "pages/wiki/entities/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/SCHEMA/"
+   },
+   "pages/wiki/entities/b-corp.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/b-corp/"
+   },
+   "pages/wiki/entities/claude-obsidian.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/claude-obsidian/"
+   },
+   "pages/wiki/entities/fairlearn.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/fairlearn/"
+   },
+   "pages/wiki/entities/gleif.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/gleif/"
+   },
+   "pages/wiki/entities/hbs-impact-weighted-accounts.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/hbs-impact-weighted-accounts/"
+   },
+   "pages/wiki/entities/sec-edgar.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/sec-edgar/"
+   },
+   "pages/wiki/entities/zer0-mistakes.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/zer0-mistakes/"
+   },
+   "pages/wiki/entities/zer0-pages.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/entities/zer0-pages/"
+   },
+   "pages/wiki/hot.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/hot/"
+   },
+   "pages/wiki/index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/"
+   },
+   "pages/wiki/log.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/log/"
+   },
+   "pages/wiki/meta/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/meta/SCHEMA/"
+   },
+   "pages/wiki/meta/conventions.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/meta/conventions/"
+   },
+   "pages/wiki/overview.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/overview/"
+   },
+   "pages/wiki/sources/SCHEMA.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/sources/SCHEMA/"
+   },
+   "pages/wiki/sources/wizard-topples-capitalist-dominance.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/sources/wizard-topples-capitalist-dominance/"
+   },
+   "pages/wiki/sources/zer0-pages-prd.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/wiki/sources/zer0-pages-prd/"
+   }
+  },
+  "zer0-pages-remote": {
+   "index.md": {
+    "collection": "pages",
+    "kind": "page",
+    "live": true,
+    "url": "/"
+   }
+  }
+ },
+ "slug": "mcp-for-the-back-office",
+ "sources": [
+  {
+   "collection": "posts",
+   "date": "2026-07-10",
+   "linkedin_urn": null,
+   "path": "pages/_posts/tech/2026-07-10-moved.md",
+   "title": "Moved",
+   "url": "https://example.test/news/moved-elsewhere/"
+  },
+  {
+   "collection": "posts",
+   "date": "2026-07-06 10:00:00 UTC",
+   "linkedin_urn": null,
+   "path": "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md",
+   "title": "MCP for the back office",
+   "url": "https://example.test/posts/2026/07/06/mcp-for-the-back-office/"
+  }
+ ],
+ "status": {
+  "accept_statuses": [
+   "approved"
+  ],
+  "api_version": "202608",
+  "api_version_status": "ok",
+  "armed": false,
+  "author": "urn:li:organization:64517157",
+  "author_type": "organization",
+  "configured": true,
+  "credentials": {
+   "LINKEDIN_ACCESS_TOKEN": false,
+   "LINKEDIN_CLIENT_ID": false,
+   "LINKEDIN_CLIENT_SECRET": false,
+   "LINKEDIN_REFRESH_TOKEN": false
+  },
+  "drafts": {
+   "approved": 0,
+   "pending": 1,
+   "published": 0
+  },
+  "errors": [],
+  "ledger": ".github/linkedin-log.json",
+  "ledger_readable": true,
+  "merged": false,
+  "performance": ".cms/distribution/performance.json",
+  "publishable_statuses": [
+   "approved"
+  ],
+  "published": 0,
+  "queue": "drafts/linkedin",
+  "site_url": "https://example.test",
+  "warnings": []
+ },
+ "update_preview": {
+  "blockers": [
+   {
+    "kind": "status_not_accepted",
+    "message": "draft status is pending (accepted here: approved)"
+   },
+   {
+    "kind": "publish_disabled",
+    "message": "publishing is not armed (ZER0_LINKEDIN_PUBLISH=1 in the environment, and a live run)"
+   },
+   {
+    "kind": "no_credential",
+    "message": "no LinkedIn credential (LINKEDIN_ACCESS_TOKEN, or a refresh token with the app credentials)"
+   }
+  ],
+  "commentary": "A plain update (with parens) that says a real thing.",
+  "commentary_length": 54,
+  "draft": "drafts/linkedin/2026-09-14-note.md",
+  "fold": 140,
+  "guard": [
+   {
+    "level": "info",
+    "message": "fold at 140 chars: \"A plain update (with parens) that says a real thing.\""
+   }
+  ],
+  "key": "draft:drafts/linkedin/2026-09-14-note.md",
+  "notes": [],
+  "payload": {
+   "author": "urn:li:organization:64517157",
+   "commentary": "A plain update \\(with parens\\) that says a real thing.",
+   "distribution": {
+    "feedDistribution": "MAIN_FEED",
+    "targetEntities": [],
+    "thirdPartyDistributionChannels": []
+   },
+   "isReshareDisabledByAuthor": false,
+   "lifecycleState": "PUBLISHED",
+   "visibility": "PUBLIC"
+  },
+  "source": null,
+  "status": "pending",
+  "thumbnail": null,
+  "type": "update"
+ }
+}

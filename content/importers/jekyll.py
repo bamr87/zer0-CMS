@@ -11,30 +11,51 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | `_books/<book>/<chapter>.md`                | `ChapterPage` under its book                 |
 | any other document or page with front matter | `StandardPage`                              |
 | `title`, `description`, `seo_title`        | `title`, `search_description`, `seo_title`   |
-| `preview` / `image`                         | a Wagtail image in the site's collection     |
+| `preview` / `image`                         | a Wagtail image (SVG too) in the site's collection, the file found where Jekyll serves it (`preview_file`) |
+| `canonical_url`, `og_title`, `og_description`, `image`, `noindex` | the SEO fields (cms/seo.py), left null: the page says what its file says until a person sets one |
 | every other front-matter key                | `front_matter`, in source order              |
 | the body                                    | StreamField blocks (importers/markdown.py)   |
 
-The reader follows the parts of Jekyll's that decide *which* files are
-content: `source:` and `collections_dir:`, `exclude:` (plus Jekyll's own
-defaults), underscore and dot directories, and front matter — a file without
-a leading `---` fence is a static file, not a page. It is deliberately less
-than the Rails catalog's transcription of Jekyll's reader (rails/lib), which
-remains the authority on edge cases; the round-trip test is what proves this
-reader on the real sites in this repository.
+An ABC book's spec sidecar (`_data/abc_books/<book>.json`, books/abc.py) is
+read with its page and kept on its `ImportedSource`, for the exporter to write
+the two together; a sync refreshes it while the page has not changed here.
+
+Which files are content is the platform's one Jekyll reader's answer
+(sites/catalog.py, Jekyll 4.4's reader rules, held to Jekyll's own lists by
+tests/sites/test_catalog.py): pages with front matter (Markdown and HTML),
+posts and drafts, the documents of each declared collection, and `include:`d
+files. A file the reader marks as unreadable (not UTF-8, front matter that does
+not parse) is reported as an error and the rest of the site still imports.
+
+**Live exactly when the catalog says the site builds the file** (`Entry.live`,
+the reader's rules, which the write-back also reads before it marks a file
+`published: false`), so an unchanged file never gains a marker on export.
+Pages are published, as `legacy:import`, except: a file never built as it
+stands — a draft in `_drafts/`, `published: false` (the boolean: a quoted
+"false" is true to Ruby, and Jekyll builds it), `draft: true` or
+`status: draft` — is a draft, never published; and a file held back only by a
+date in the future (the front matter's, or a post's file name's) is scheduled
+for that date (`go_live_at`; Wagtail holds the revision until cms/tasks.py's
+sweep publishes it) — unless `_config.yml` sets `future:`, when Jekyll builds
+it now and it is published now. The markers stay in the page's `front_matter`.
 
 **Idempotent.** A file whose digest has not changed is skipped. A changed file
 updates its page — unless an editor changed that page in Wagtail since the
-last import, in which case it is reported as a conflict and left alone
-(`--force` overrides). Pages are published, as `legacy:import`, unless the
-front matter says `published: false` or `draft: true`. Links are indexed in a
-second pass, once every page of the site exists.
+last import (`ImportedSource.unchanged`: its content, or the path and
+front-matter order of a page whose file a person edits), in which case it is
+reported as a conflict and left alone (`--force` overrides). A new file at a
+path a page made or moved in the platform already has (cms/files.py) is that
+page's export, not a new page: it is skipped. An updated page takes the state
+its file now has: a live page whose file is held back comes down (and a
+draft's schedule is cancelled, `cms.services.take_down`), so a re-import of an
+unchanged file never flips a page, and a changed one moves it with the file.
+Links are indexed in a second pass, once every page of the site exists.
 """
 
-import fnmatch
 import hashlib
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -45,29 +66,17 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from agents.principals import ensure_legacy_import_user
+from books import abc
+from cms import seo
+from cms.files import holder_of
 from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
-from cms.services import publish, save_draft
+from cms.services import publish, save_draft, take_down
+from sites import catalog, writer
 
 from . import frontmatter
 from .markdown import to_blocks
 from .models import ImportedSource
 
-MARKDOWN = (".md", ".markdown")
-DEFAULT_EXCLUDE = [
-    "_site",
-    ".sass-cache",
-    ".jekyll-cache",
-    ".jekyll-metadata",
-    "gemfiles",
-    "Gemfile",
-    "Gemfile.lock",
-    "node_modules",
-    "vendor",
-    "vendor/bundle",
-    "vendor/cache",
-    "vendor/gems",
-    "vendor/ruby",
-]
 DATED_POST = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
 LETTER_KEYS = ("letter", "word", "tagline", "alt", "subject")
 
@@ -80,6 +89,13 @@ class Document:
     front_matter: dict
     body: str
     text: str
+    kind: str = "page"  # the catalog's: page | post | draft | document
+    # The catalog's `Entry.live`, split in two: never built as it stands (a draft
+    # in `_drafts/`, `published: false`, `draft: true`, `status: draft`) …
+    draft: bool = False
+    # … or held back only by its date (the front matter's, or a post's file
+    # name's), which the scan found in the future: when it is built.
+    future: datetime | None = None
 
 
 @dataclass
@@ -112,66 +128,33 @@ def read_config(root: Path) -> dict:
     return data or {}
 
 
-def collection_names(config: dict) -> list[str]:
-    raw = config.get("collections") or {}
-    names = list(raw.keys()) if isinstance(raw, dict) else [str(n) for n in raw]
-    return ["posts"] + [n for n in names if n != "posts"]
-
-
-def _excluded(rel: str, patterns: list[str]) -> bool:
-    parts = rel.split("/")
-    for pattern in patterns:
-        pattern = pattern.rstrip("/")
-        if fnmatch.fnmatch(rel, pattern) or fnmatch.fnmatch(parts[-1], pattern):
-            return True
-        if any("/".join(parts[: i + 1]) == pattern for i in range(len(parts))):
-            return True
-    return False
-
-
-def documents(root: Path, config: dict) -> list[Document]:
-    root = root.resolve()
-    source = (root / str(config.get("source", "."))).resolve()
-    if not str(source).startswith(str(root)):
-        raise ValueError(f"source {config.get('source')!r} escapes the site root")
-    collections_dir = str(config.get("collections_dir", "") or "").strip("/")
-    exclude = DEFAULT_EXCLUDE + [str(p) for p in (config.get("exclude") or [])]
-    collections = {name: (source / collections_dir / f"_{name}") for name in collection_names(config)}
+def documents(root: Path, config: dict | None = None, errors: list | None = None) -> list[Document]:
+    """The site's content files, as the catalog reads them. A file it cannot
+    read as front matter and Markdown is appended to `errors` (when given)."""
     found: list[Document] = []
-    seen: set[Path] = set()
-
-    def add(path: Path, collection):
-        if path in seen or path.suffix not in MARKDOWN or not path.is_file() or path.is_symlink():
-            return
-        rel_source = path.relative_to(source).as_posix()
-        if _excluded(rel_source, exclude):
-            return
-        text = path.read_text(encoding="utf-8")
-        data, body = frontmatter.split(text)
-        if data is None:
-            return
-        seen.add(path)
+    for entry in catalog.scan(root).entries:
+        try:
+            if entry.error:
+                raise ValueError(entry.error)
+            text = Path(entry.path).read_bytes().decode("utf-8")  # bytes, so CRLF stays CRLF
+            data, body = frontmatter.split(text)
+        except (ValueError, yaml.YAMLError) as e:
+            if errors is not None:
+                errors.append(f"{entry.relative}: {e}".replace("\n", " "))
+            continue
         found.append(
             Document(
-                path=path,
-                rel=path.relative_to(root).as_posix(),
-                collection=collection,
-                front_matter=data,
+                path=Path(entry.path),
+                rel=entry.relative,
+                collection=None if entry.kind == "page" else entry.collection,
+                front_matter=data or {},
                 body=body,
                 text=text,
+                kind=entry.kind,
+                draft=entry.draft or not entry.published or entry.status == "draft",
+                future=entry.date if entry.future else None,
             )
         )
-
-    for name, directory in collections.items():
-        if directory.is_dir():
-            for path in sorted(directory.rglob("*")):
-                if not any(part.startswith(".") for part in path.relative_to(directory).parts):
-                    add(path, name)
-    for path in sorted(source.rglob("*")):
-        rel_parts = path.relative_to(source).parts
-        if any(p.startswith(("_", ".")) for p in rel_parts[:-1]) or rel_parts[-1].startswith(("_", ".")):
-            continue
-        add(path, None)
     return found
 
 
@@ -232,6 +215,8 @@ def apply_document(page, doc: Document, images: dict):
     page.search_description = str(fm.get("description", "") or "")
     page.legacy_path = doc.rel
     page.front_matter = fm
+    for name in seo.FIELDS:  # the file decides them again
+        setattr(page, name, None)
     blocks = to_blocks(doc.body)
     if isinstance(page, BookPage):
         layout = fm.get("layout")
@@ -268,28 +253,55 @@ def _filename_date(doc: Document):
     return frontmatter.parse_date(match.group(1)) if match else None
 
 
-def _is_draft(fm: dict) -> bool:
-    return fm.get("published") is False or str(fm.get("published")).lower() == "false" or fm.get("draft") is True
+def goes_live_at(doc: Document, config: dict) -> datetime | None:
+    """When a file the catalog holds back only by its date is built: that date —
+    unless the site's `_config.yml` sets `future:` (any value Ruby reads as
+    true), when Jekyll builds it now. None for a draft or a file built now."""
+    if doc.draft or config.get("future") not in (None, False):
+        return None
+    return doc.future
 
 
 # ── images ─────────────────────────────────────────────────────────────────
 
 
+def preview_file(root: Path, source: str, value: str) -> Path | None:
+    """The file a front-matter `preview`/`image` value names, looked up where
+    the site serves it from (rails.assets-terms): `<source>/<value>`, then
+    `<source>/assets/<value>` — the image engine writes `/images/previews/x.png`
+    for a file in `assets/images/previews/`, and the theme adds the prefix —
+    then `<root>/<value>`, without the value's query or fragment. `source` is
+    the source directory relative to the root ("" when it is the root). Every
+    candidate is confined like any other disk path (sites/writer.py): a plain
+    path, no symlink at any component, its realpath inside the root. None for
+    an external URL or a file that is not in the site."""
+    if "://" in value:
+        return None
+    path = value.split("#", 1)[0].split("?", 1)[0].lstrip("/")
+    prefix = f"{source}/" if source else ""
+    for candidate in dict.fromkeys((f"{prefix}{path}", f"{prefix}assets/{path}", path)):
+        try:
+            return writer.confined_file(root, candidate)
+        except writer.Refused:  # NotFound included: try the next place the site serves it from
+            continue
+    return None
+
+
 def import_images(root: Path, config: dict, docs: list[Document], collection: Collection) -> dict:
-    """Front-matter preview images that exist on disk → Wagtail images, one per
-    distinct file, in the site's collection. Returns {front-matter path: image}."""
-    source = (root / str(config.get("source", "."))).resolve()
+    """Front-matter preview images that exist in the site → Wagtail images, one
+    per distinct file, in the site's collection; an SVG is one too (Willow reads
+    it with defusedxml). Returns {front-matter value: image}."""
+    real_root = writer.root_of(root)
+    source = catalog.confine(real_root, real_root, config.get("source"), "source")
+    source = "" if source == real_root else source.relative_to(real_root).as_posix()
     Image = get_image_model()
     out = {}
     for doc in docs:
         value = doc.front_matter.get("preview") or doc.front_matter.get("image")
-        if not isinstance(value, str) or value in out or "://" in value:
+        if not isinstance(value, str) or value in out:
             continue
-        for base in (source, root):
-            path = (base / value.lstrip("/")).resolve()
-            if str(path).startswith(str(root.resolve())) and path.is_file() and not path.is_symlink():
-                break
-        else:
+        path = preview_file(real_root, source, value)
+        if path is None:
             continue
         data = path.read_bytes()
         digest = hashlib.sha256(data).hexdigest()
@@ -297,8 +309,8 @@ def import_images(root: Path, config: dict, docs: list[Document], collection: Co
         if image is None:
             with path.open("rb") as fh:
                 image = Image(title=path.stem, collection=collection, content_hash=digest)
-                image.file = ImageFile(fh, name=path.name)
                 try:
+                    image.file = ImageFile(fh, name=path.name)  # reads the dimensions: a broken file raises here
                     image.save()
                 except Exception:  # noqa: BLE001 — an unreadable image is skipped, the page still imports
                     continue
@@ -389,8 +401,8 @@ def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
     root = Path(root)
     repo_root = Path(repo_root or settings.REPO_ROOT)
     config = read_config(root)
-    docs = documents(root, config)
     report = Report(site_key=site_key)
+    docs = documents(root, config, report.errors)
     importer = ensure_legacy_import_user()
     with transaction.atomic():
         site_root = ensure_site_root(site_key, root, config, repo_root)
@@ -404,7 +416,9 @@ def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
         for doc in ordered:
             try:
                 with transaction.atomic():
-                    _import_document(doc, site_key, site_root, collections, books, images, importer, force, report)
+                    _import_document(
+                        doc, site_key, site_root, collections, books, images, importer, force, report, config
+                    )
             except Exception as e:  # noqa: BLE001 — one bad file is reported; the rest of the site still imports
                 report.errors.append(f"{doc.rel}: {type(e).__name__}: {e}")
         from graph.services import index_page
@@ -416,7 +430,7 @@ def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
     return report
 
 
-def _import_document(doc, site_key, site_root, collections, books, images, importer, force, report):
+def _import_document(doc, site_key, site_root, collections, books, images, importer, force, report, config):
     digest = hashlib.sha256(doc.text.encode()).hexdigest()
     source = ImportedSource.objects.filter(site_key=site_key, legacy_path=doc.rel).select_related("page").first()
     cls = page_class(doc)
@@ -425,18 +439,28 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         if isinstance(page, BookPage):
             books[Path(doc.rel).parent.as_posix()] = page
         if source.source_digest == digest:
+            sidecars = _sidecars(doc, page)
+            if sidecars != source.sidecars and (
+                not source.sidecars or source.unchanged(page.get_latest_revision_as_object())
+            ):
+                source.sidecars = sidecars
+                source.save(update_fields=["sidecars"])
             report.unchanged.append(doc.rel)
             return
         current = page.get_latest_revision_as_object()
-        if current.compute_content_hash() != source.import_hash and not force:
+        if not source.unchanged(current) and not force:
             report.conflicts.append(f"{doc.rel}: changed in Wagtail since the last import (pass --force to overwrite)")
             return
         apply_document(current, doc, images)
-        _save(current, doc, importer)
+        _save(current, doc, importer, goes_live_at(doc, config))
         source.source_text, source.source_digest = doc.text, digest
         source.import_hash = current.compute_content_hash()
+        source.sidecars = _sidecars(doc, current)
         source.save()
         report.updated.append(doc.rel)
+        return
+    if holder_of(doc.rel, site_root):  # a page made or moved here writes this file: the platform's, not a new page
+        report.unchanged.append(doc.rel)
         return
     parent = _container(site_root, doc, collections, books)
     page = cls(slug="")
@@ -444,7 +468,7 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
     page.slug = _unique_slug(parent, page.slug)
     page.live = False
     parent.add_child(instance=page)
-    _save(page, doc, importer)
+    _save(page, doc, importer, goes_live_at(doc, config))
     page.refresh_from_db()
     page = page.specific
     if isinstance(page, BookPage):
@@ -456,12 +480,40 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         source_text=doc.text,
         source_digest=digest,
         import_hash=page.get_latest_revision_as_object().compute_content_hash(),
+        sidecars=_sidecars(doc, page),
     )
     report.created.append(doc.rel)
 
 
-def _save(page, doc, importer):
-    if _is_draft(doc.front_matter):
+def _sidecars(doc: Document, page) -> dict:
+    """The files read with the document's: an ABC book's spec sidecar, at
+    `_data/abc_books/<book>.json` under the site root, when it has one —
+    {path: text}. Read through the confined reader, so a symlink or a path
+    that leaves the site is never followed."""
+    if not (isinstance(page, BookPage) and page.profile == "abc"):
+        return {}
+    rel = abc.sidecar_path(doc.front_matter.get("book"))
+    if rel is None:
+        return {}
+    root = doc.path.parents[len(Path(doc.rel).parts) - 1]
+    try:
+        data = writer.read_bytes(root, rel)
+        return {} if data is None else {rel: data.decode("utf-8")}
+    except (writer.Refused, UnicodeDecodeError):
+        return {}  # not a file the platform reads: the book exports without it, as before
+
+
+def _save(page, doc, importer, go_live_at):
+    """The file decides the page's state. A file built now publishes the page
+    (as `legacy:import`); one built only from its date schedules it for then
+    (Wagtail holds the revision until cms/tasks.py's sweep publishes it); one
+    never built as it stands is a draft revision, never published. A page whose
+    file is held back is taken down first — its live version and any schedule —
+    so a changed file moves its page with it."""
+    page.go_live_at = go_live_at
+    if doc.draft or go_live_at is not None:
+        take_down(page, importer)
+    if doc.draft:
         save_draft(page, user=importer)
     else:
         publish(page, user=importer)

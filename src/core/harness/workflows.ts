@@ -7,17 +7,20 @@
  * truth — the workflow — and records the facts the other six are supposed to
  * agree with.
  *
- * ## Why this is regex over `parseYamlSubset`, and not a YAML parser
+ * ## Why this is mostly line scans
  *
- * `dist/mcp-server.js` is built with an empty bare-import allow-list (decision
- * D14), so nothing reachable from the core barrel may import `yaml` or
- * `@bamr87/fleet-engines`. `src/core/fleet/inspect.ts` solves the same problem
- * by taking the engines as *data*; that works for the extension host, which can
- * inject them, and not at all for the MCP server, which cannot. So this module
- * is deliberately **engines-free**: `parseYamlSubset` for the shapes it can
- * read, and line scans for everything a GitHub Actions file does that the
- * subset cannot (anchors, merge keys, multi-line flow collections, `${{ }}`
- * expressions inside quoted scalars).
+ * Nothing reachable from the core barrel may import `@bamr87/fleet-engines`,
+ * because the barrel is what `dist/mcp-server.js` bundles (decision D14).
+ * `src/core/fleet/inspect.ts` solves that by taking the engines as *data*;
+ * that works for the extension host, which can inject them, and not at all
+ * for the MCP server, which cannot. So this module is deliberately
+ * **engines-free**. It was written when core read YAML with a hand-rolled
+ * subset that could not follow a GitHub Actions file (anchors, merge keys,
+ * multi-line flow collections, `${{ }}` inside quoted scalars), so it reads
+ * those shapes with line scans. Core now reads YAML with the `yaml` package
+ * (ADR 0006 decision 9), which can; moving these scans onto the parsed
+ * document is a later change that `harness.test.ts` will hold to the same
+ * answers.
  *
  * That is a real duplication of *reading*, but not of *answers*: `inspect.ts`
  * reports the engines' `WorkflowFacts` and its 15-rule audit; this reports the
@@ -55,7 +58,7 @@
  * not say", which is a different answer from `false`.
  */
 
-import { parseYamlSubset } from '../content/frontmatter';
+import { parseYaml } from '../content/frontmatter';
 import type { RunnerShape, WorkflowRecord } from '../shared/types';
 import type { HarnessIo } from './agents';
 
@@ -166,10 +169,10 @@ function reset(pattern: RegExp): RegExp {
  * column-zero line. An inline form (`on: [push, pull_request]`) yields the
  * remainder of the key line as its single entry.
  *
- * Written as a line scan rather than through `parseYamlSubset` because a
- * workflow's `on:` block routinely carries multi-line flow collections and
- * `${{ }}` inside quoted scalars, both of which the subset reads wrong. A
- * region of raw lines is something later scans can be honest about.
+ * A line scan rather than `parseYaml` (see the module doc): a workflow's
+ * `on:` block routinely carries multi-line flow collections and `${{ }}`
+ * inside quoted scalars, which the old subset read wrong. A region of raw
+ * lines is something later scans can be honest about.
  */
 export function topLevelBlock(text: string, key: string): string[] {
   const lines = text.split('\n');
@@ -878,17 +881,16 @@ export function isGeneratedByGitFactory(text: string, filePath: string): boolean
  * record whose lists are empty and whose tristates are `null`, which is a
  * finding for a caller to report rather than an exception for it to catch.
  *
- * `parseYamlSubset` is consulted for exactly one thing — whether the document
+ * `parseYaml` is consulted for exactly one thing — whether the document
  * parses as a mapping at all — so that a caller can tell "no jobs" from
- * "unreadable". Everything else is a line scan, because everything else is a
- * shape the subset gets wrong.
+ * "unreadable". Everything else is a line scan (see the module doc).
  */
 export function scanWorkflow(filePath: string, text: string): WorkflowRecord {
   const runnerShape = classifyRunnerShape(text);
   const events = readEvents(text);
   const switches = readSwitches(text);
   const { crons, dormantCrons } = readCrons(text);
-  const parsed = parseYamlSubset(text);
+  const parsed = parseYaml(text);
   const jobs = parsed['jobs'];
   const hasJobs = typeof jobs === 'object' && jobs !== null && !Array.isArray(jobs);
 

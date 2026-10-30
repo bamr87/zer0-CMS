@@ -27,12 +27,16 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { currentConfig, hasProjectConfig, settingsPublishAllow } from '../config';
-import type { PageEntry } from '../core';
+import { tokenKey, type PageEntry } from '../core';
 import { contentTargetPath } from '../dashboard/dashboardPanel';
 import { mcpPublishAllowed } from '../mcpRegistration';
 import { emptySnapshot, type Snapshot } from '../store';
 import { SETTING_IDS } from '../config';
 import { ALL_CONTEXT_KEYS, CONTEXT_KEYS, UiState, type ContextKey } from '../uiState';
+import { Studio } from '../studio/studio';
+import { PanelProvider } from '../panel/panelProvider';
+import type { GovernanceActions } from '../commands/governance';
+import type { Zer0Shell } from '../extension';
 
 const EXTENSION_ID = 'bamr87.zer0-cms';
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -42,6 +46,7 @@ const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.init',
   'zer0Cms.dashboard',
   'zer0Cms.dashboard.close',
+  'zer0Cms.dashboard.files',
   'zer0Cms.refresh',
   'zer0Cms.cache.clear',
   'zer0Cms.showOutput',
@@ -93,6 +98,8 @@ const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.fleet.openInGitFactory',
   'zer0Cms.fleet.importHubRoster',
   'zer0Cms.monitor.open',
+  'zer0Cms.platform.setToken',
+  'zer0Cms.platform.clearToken',
 ];
 
 /** The four trees, plus the webview view, all in the `zer0-cms` container. */
@@ -187,12 +194,12 @@ suite('extension: activation and contributions', function () {
   });
 
   test('all 38 contributed commands are registered', () => {
-    assert.strictEqual(ALL_COMMANDS.length, 54, 'the expected list itself is 54 long');
+    assert.strictEqual(ALL_COMMANDS.length, 57, 'the expected list itself is 57 long');
     const missing = ALL_COMMANDS.filter((command) => !commands.includes(command));
     assert.deepStrictEqual(missing, [], 'contributed but never registered');
   });
 
-  test('package.json contributes exactly those 54 and nothing else', () => {
+  test('package.json contributes exactly those 57 and nothing else', () => {
     // Catches both directions: a command registered but never contributed is
     // invisible in the palette, and a command contributed but dropped from the
     // list above would otherwise slip past the test that precedes this one.
@@ -300,7 +307,7 @@ suite('extension: the contribution surface', function () {
 
   test('the manifest contributes exactly the settings src/config.ts declares', () => {
     const contributed = contributedSettingIds(readPackageJson());
-    assert.strictEqual(contributed.length, 44, 'the manifest should contribute 44 settings');
+    assert.strictEqual(contributed.length, 45, 'the manifest should contribute 45 settings');
     assert.deepStrictEqual(
       contributed,
       [...SETTING_IDS],
@@ -308,10 +315,10 @@ suite('extension: the contribution surface', function () {
     );
   });
 
-  test('the settings are grouped into eleven titled, ordered sections', () => {
+  test('the settings are grouped into twelve titled, ordered sections', () => {
     const config = readPackageJson().contributes.configuration;
     assert.ok(Array.isArray(config), 'configuration should be an array of sections');
-    assert.strictEqual(config.length, 11);
+    assert.strictEqual(config.length, 12);
     for (const section of config) {
       assert.ok(
         typeof section.title === 'string' && section.title.length > 0,
@@ -345,6 +352,8 @@ suite('extension: the contribution surface', function () {
       'zer0Cms.fleet.dispatchAllow',
       'zer0Cms.fleet.scaffoldAllow',
       'zer0Cms.agent.enabled',
+      // Where the person's platform token is sent (PLAN G10).
+      'zer0Cms.platform.url',
     ]) {
       assert.ok(restricted.has(id), `${id} can arm or aim an execution and is not restricted`);
     }
@@ -823,5 +832,205 @@ suite('extension: a folderless window', function () {
       `folderless activation did not reach the end:\n${output.slice(-4000)}`,
     );
     assert.strictEqual(code, 0, `folderless window exited ${code}:\n${output.slice(-4000)}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The studio in the webviews (PLAN G10)
+// ---------------------------------------------------------------------------
+
+/**
+ * With `zer0Cms.platform.url` set, the views render the studio's workspaces
+ * (`dist/studio.js`, built from `web/packages/`) and their requests go out
+ * through the host. What is worth asking here is what only a real editor
+ * answers: the commands switch surfaces while the file dashboard stays one
+ * command away, the Metadata view edits a page as a page and every other
+ * file as a file, the page view is told the open file's path from its folder,
+ * and the token comes out of SecretStorage into a request to that platform and
+ * nowhere else. The gates themselves are proved in `webview.test.ts`; the
+ * workspaces rendering, in web/packages/webview.
+ */
+suite('extension: the studio in the webviews, once a platform is configured (G10)', function () {
+  this.timeout(60000);
+
+  const ORIGIN = 'https://cms.test';
+  const TOKEN = 'zer0u_integration';
+  const section = (): vscode.WorkspaceConfiguration => vscode.workspace.getConfiguration('zer0Cms');
+  const setPlatform = (url: string | undefined): Thenable<void> =>
+    section().update('platform.url', url, vscode.ConfigurationTarget.Global);
+  const tabLabels = (): string[] => vscode.window.tabGroups.all.flatMap((group) => group.tabs.map((tab) => tab.label));
+
+  async function until(condition: () => boolean, what: string): Promise<void> {
+    for (let i = 0; i < 100 && !condition(); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.ok(condition(), `timed out waiting for ${what}`);
+  }
+
+  /** The members of a webview the host uses, with every post recorded. */
+  function fakeWebview() {
+    const inbound = new vscode.EventEmitter<unknown>();
+    const posted: Record<string, unknown>[] = [];
+    const webview = {
+      options: {},
+      html: '',
+      cspSource: 'vscode-webview://studio-test',
+      asWebviewUri: (uri: vscode.Uri) => uri,
+      onDidReceiveMessage: inbound.event,
+      postMessage: (message: unknown) => {
+        posted.push(message as Record<string, unknown>);
+        return Promise.resolve(true);
+      },
+    };
+    return { webview, posted, send: (message: unknown) => inbound.fire(message) };
+  }
+
+  function fakeSecrets() {
+    const values = new Map<string, string>();
+    return {
+      get: (key: string) => Promise.resolve(values.get(key)),
+      store: (key: string, value: string) => Promise.resolve(void values.set(key, value)),
+      delete: (key: string) => Promise.resolve(void values.delete(key)),
+      keys: () => Promise.resolve([...values.keys()]),
+      onDidChange: new vscode.EventEmitter<vscode.SecretStorageChangeEvent>().event,
+    };
+  }
+
+  suiteTeardown(async () => {
+    await setPlatform(undefined);
+  });
+
+  test('the dashboard and agent commands open the studio panels, and close them when the platform goes', async () => {
+    await setPlatform(ORIGIN);
+    await vscode.commands.executeCommand('zer0Cms.dashboard');
+    await vscode.commands.executeCommand('zer0Cms.agent.open');
+    await until(() => tabLabels().includes('zer0 studio') && tabLabels().includes('zer0 AI'), 'the studio panels');
+    assert.ok(!tabLabels().includes('zer0-CMS Dashboard'), 'the file-mode dashboard opened instead');
+
+    // The file-mode dashboard is still one command away, platform or not.
+    await vscode.commands.executeCommand('zer0Cms.dashboard.files');
+    await until(() => tabLabels().includes('zer0-CMS Dashboard'), 'the file-mode dashboard');
+    await vscode.commands.executeCommand('zer0Cms.dashboard.close');
+
+    await setPlatform(undefined);
+    await until(() => !tabLabels().includes('zer0 studio') && !tabLabels().includes('zer0 AI'), 'the panels to close');
+  });
+
+  test('the Metadata view edits a page on the platform as a page, and any other file as a file', async () => {
+    await setPlatform(ORIGIN);
+    const secrets = fakeSecrets();
+    await secrets.store(tokenKey(ORIGIN), TOKEN);
+    let found = 0;
+    let reachable = true;
+    const asked: string[] = [];
+    const context = {
+      extensionUri: vscode.Uri.file(REPO_ROOT),
+      extensionMode: vscode.ExtensionMode.Test,
+      secrets,
+    } as unknown as vscode.ExtensionContext;
+    const studio = new Studio(context, (url) => {
+      asked.push(url);
+      return reachable
+        ? Promise.resolve(new Response(JSON.stringify({ count: found, results: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+        : Promise.reject(new Error('offline'));
+    });
+    const changed = new vscode.EventEmitter<void>();
+    const store = { onDidChange: changed.event, current: () => Promise.resolve(emptySnapshot(currentConfig())), refresh: () => Promise.resolve() };
+    const panel = new PanelProvider({ context, studio, store } as unknown as Zer0Shell, {} as GovernanceActions);
+    const disposed = new vscode.EventEmitter<void>();
+    const { webview } = fakeWebview();
+    const view = {
+      webview,
+      title: '',
+      visible: true,
+      show: () => undefined,
+      onDidDispose: disposed.event,
+      onDidChangeVisibility: new vscode.EventEmitter<void>().event,
+    };
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(folder);
+    const open = async (...parts: string[]) =>
+      vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.joinPath(folder.uri, ...parts)));
+    try {
+      // A site still on files: the platform has no page for the file, so it is edited as a file.
+      await open('pages', '_posts', 'tech', '2026-07-06-mcp-for-the-back-office.md');
+      panel.resolveWebviewView(view as unknown as vscode.WebviewView);
+      await until(() => webview.html.includes('dist/panel.js'), 'file mode for a file the platform has no page for');
+      assert.equal(asked.length, 1);
+      // The folder's name goes first: it is what tells two sites' identical paths apart.
+      assert.ok(asked[0]?.endsWith('?source=workspace%2Fpages%2F_posts%2Ftech%2F2026-07-06-mcp-for-the-back-office.md'), asked[0]);
+
+      // A file the platform imported: the studio's page editor, in the same view.
+      found = 1;
+      await open('pages', '_posts', 'corp', '2026-07-08-governed-publishing.md');
+      await until(() => webview.html.includes('dist/studio.js'), 'the page editor for a page on the platform');
+
+      // A platform that cannot be reached leaves the file a file, rather than an error.
+      reachable = false;
+      await open('pages', '_posts', 'tech', '2026-07-06-mcp-for-the-back-office.md');
+      await until(() => webview.html.includes('dist/panel.js'), 'file mode while the platform is unreachable');
+
+      // No platform: file mode, and nothing asked.
+      reachable = true;
+      found = 1;
+      await setPlatform(undefined);
+      const before = asked.length;
+      await open('pages', '_posts', 'corp', '2026-07-08-governed-publishing.md');
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      assert.ok(webview.html.includes('dist/panel.js'));
+      assert.equal(asked.length, before, 'a request went out with no platform configured');
+    } finally {
+      disposed.fire();
+      panel.dispose();
+      studio.dispose();
+      await setPlatform(undefined);
+    }
+  });
+
+  test('the page view is told the open file, and the host sends the token to the platform and nowhere else', async () => {
+    await setPlatform(`${ORIGIN}/studio/`);
+    const secrets = fakeSecrets();
+    await secrets.store(tokenKey(ORIGIN), TOKEN);
+    const sent: Array<{ url: string; init: RequestInit }> = [];
+    const context = { extensionUri: vscode.Uri.file(REPO_ROOT), secrets } as unknown as vscode.ExtensionContext;
+    const studio = new Studio(context, (url, init) => {
+      sent.push({ url, init });
+      return Promise.resolve(new Response('{"count":0,"results":[]}', { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    });
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(folder);
+    const file = vscode.Uri.joinPath(folder.uri, 'pages', '_posts', 'tech', '2026-07-06-mcp-for-the-back-office.md');
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+
+    const { webview, posted, send } = fakeWebview();
+    const attached = studio.attachView({ webview } as unknown as vscode.WebviewView);
+    try {
+      assert.match(webview.html, /default-src 'none'/);
+      assert.match(webview.html, /dist\/studio\.js/);
+      assert.ok(!webview.html.includes(TOKEN));
+
+      send({ type: 'ready' });
+      await until(() => posted.length > 0, 'the open file');
+      assert.deepEqual(posted[0], {
+        type: 'file',
+        file: { path: 'workspace/pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md', name: '2026-07-06-mcp-for-the-back-office.md' },
+      });
+
+      send({ type: 'api', id: 1, method: 'GET', path: '/api/v2/content/pages/?source=pages%2F_posts%2Ftech%2Fa.md' });
+      await until(() => posted.length > 1, 'the reply');
+      assert.equal(sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=pages%2F_posts%2Ftech%2Fa.md`);
+      assert.equal((sent[0]?.init.headers as Record<string, string>).Authorization, `Bearer ${TOKEN}`);
+      assert.deepEqual(posted[1], { type: 'api', id: 1, status: 200, body: '{"count":0,"results":[]}', headers: { 'Content-Type': 'application/json' } });
+
+      send({ type: 'api', id: 2, method: 'GET', path: '/admin/' });
+      await until(() => posted.length > 2, 'the refusal');
+      assert.equal(posted[2]?.status, 403);
+      assert.equal(sent.length, 1, 'a refused request reached the network');
+      assert.ok(!JSON.stringify(posted).includes(TOKEN), 'the token reached the webview');
+    } finally {
+      attached.dispose();
+      studio.dispose();
+      await setPlatform(undefined);
+    }
   });
 });

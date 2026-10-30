@@ -137,7 +137,7 @@ features:
     evidence: []
   - id: ZER0-013
     title: "Jekyll sites imported and exported byte for byte"
-    description: "An operator imports a Jekyll site into the platform (idempotent, never overwriting an editor's change) and exports it back, unchanged pages byte for byte, so the files stay the source of truth until a site cuts over."
+    description: "An operator imports a Jekyll site into the platform (idempotent, never overwriting an editor's change) and exports it back, unchanged pages byte for byte and every other page at its file path — one a person authored or moved in the platform included — so the files stay the source of truth until a site cuts over."
     implemented: true
     surface: cli
     link: content/importers/jekyll.py
@@ -145,6 +145,7 @@ features:
     tags: [platform, jekyll, import, export]
     tests:
       - content/tests/importers/test_jekyll.py
+      - content/tests/api/test_page_files.py
     scenarios: []
     evidence: []
 
@@ -182,7 +183,7 @@ features:
   # ── The studio (web/, ADR 0006, PLAN P4) ──────────────────────────────────
   - id: ZER0-040
     title: "The studio: write, create and publish"
-    description: "An editor signs in to the studio at /studio/, browses every site's pages in any status with filters and the tree, creates a page of a type its parent allows, edits its blocks (Markdown in a rich editor that never rewrites what it cannot reproduce), fields and SEO, saves a draft, and publishes, unpublishes, or schedules a time to go live and a time to come down. A page someone has locked opens read-only and says why."
+    description: "An editor signs in to the studio at /studio/, browses every site's pages in any status with filters and the tree, creates a page of a type its parent allows, edits its blocks (Markdown in a rich editor that never rewrites what it cannot reproduce), fields and SEO — and, for a post or a page that is a file of its site, that file's path and raw front matter (the File tab) — saves a draft, and publishes, unpublishes, or schedules a time to go live and a time to come down. A page someone has locked opens read-only and says why."
     implemented: true
     surface: ui
     link: /studio/write
@@ -194,7 +195,10 @@ features:
       - content/tests/api/test_session.py
       - content/tests/api/test_studio.py
       - content/tests/cms/test_tasks.py
+      - content/tests/api/test_page_files.py
+      - content/tests/cms/test_files.py
       - web/packages/ui/test/editor.test.tsx
+      - web/packages/ui/test/pagefile.test.tsx
       - web/packages/ui/test/create.test.tsx
       - web/packages/ui/test/richtext.test.tsx
       - web/studio/test/app.test.tsx
@@ -281,6 +285,24 @@ features:
     evidence:
       - test/evidence/studio-ai-brief/
       - test/evidence/studio-ai-chat/
+
+  - id: ZER0-045
+    title: "The studio's Outbox desk: the belt, arena trials and the claim desk"
+    description: "An editor operates the outbox harness from the studio's Outbox area: reads the belt of handoffs between pipeline stations (its numbers, messages filtered by kind, station and trace, a piece of work's journey, each message's CloudEvent, the dead letters), sends an idea, an approval or a signal as the editor station and runs the relay now; runs an arena trial from a task card and follows it to its scored result and ledger; checks a draft's claims against their sources' timeline, reads a verdict per claim, resolves the check against the truth and reads calibration per verifier and per author. A page that goes live is announced on the belt from the transactional outbox's event. Blocked from landing until the harness is pinned (ADR 0007)."
+    implemented: true
+    surface: ui
+    link: /studio/outbox
+    docs: content/outboxdesk/README.md
+    tags: [studio, web, outbox, belt, claim-desk, pipelines]
+    date: 2026-10-27
+    tests:
+      - content/tests/outboxdesk/test_belt.py
+      - content/tests/outboxdesk/test_runs.py
+      - content/tests/outboxdesk/test_publish.py
+      - web/packages/ui/test/outbox.test.tsx
+      - web/studio/test/app.test.tsx
+    scenarios: []
+    evidence: []
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030

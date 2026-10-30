@@ -17,8 +17,7 @@ zer0-CMS (Rails wizard)  ──▶  ABC Book Spec  ──▶  drsai (books colle
 for ABC illustration styles (`isometric-tech-toy`, `chalkboard-doodle`, `soft-plush`, `crayon-primary`, `paper-cutout`, `watercolor-storybook`) and the option knobs (palette / background / lettering / mood). Each style `id` is a cross-repo contract: zer0-CMS writes it into book front matter and the zer0-mistakes theme maps it to a `abc-style--<id>` CSS skin. zer0-CMS carries a **byte-identical vendored copy**; re-sync it whenever this file changes:
 
   ```bash
-  diff lib/zer0_image_generator/abc/art_styles.yml \
-       ../zer0-CMS/rails/lib/zer0_cms/data/abc_art_styles.yml
+  bin/zer0 vendor --write   # from the zer0-CMS root: re-copies content/books/data/abc_art_styles.yml
   ```
 
 - **`Zer0ImageGenerator::Abc::StylePack`** — loads the catalog and composes one

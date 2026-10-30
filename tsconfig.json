@@ -16,5 +16,5 @@
     "outDir": "out"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", ".vscode-test", "dist", "out", "rails", "tools"]
+  "exclude": ["node_modules", ".vscode-test", "dist", "out", "tools"]
 }

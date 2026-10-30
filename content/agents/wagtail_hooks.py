@@ -8,6 +8,7 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
+from wagtail.models import ModelLogEntry
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
@@ -31,6 +32,14 @@ class MemoryViewSet(SnippetViewSet):
 
 register_snippet(AgentDefinitionViewSet)
 register_snippet(MemoryViewSet)
+
+
+@hooks.register("register_log_actions")
+def run_log_actions(actions):
+    """A run started (by whom, from where) and finished (how), in Wagtail's log."""
+    actions.register_model(AgentRun, ModelLogEntry)
+    actions.register_action("zer0.run.start", "Start an agent run", "Agent run started")
+    actions.register_action("zer0.run.finish", "Finish an agent run", "Agent run finished")
 
 
 @hooks.register("before_publish")

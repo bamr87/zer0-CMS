@@ -61,6 +61,6 @@ The parity suite reads **seven** committed manifests: the six above plus `src/te
 `claude setup-token`.'
 ```
 
-The `yaml` package throws on that, so `@bamr87/fleet-engines`' `parseFleetManifest` returns an **empty** manifest — with `skipped: 0`, so a caller cannot even tell it failed. This repository's own tolerant `parseYamlSubset`-based reader parses all seven. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
+The `yaml` package throws on that, so `@bamr87/fleet-engines`' `parseFleetManifest` returns an **empty** manifest — with `skipped: 0`, so a caller cannot even tell it failed. This repository's own reader (`parseYaml`, the same `yaml` package's `parseDocument`, which keeps what it could read) parses all seven. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
 
 **lifehacker's `content-factory` lane says `opens_pull_requests: false` and the workflow opens pull requests.** The workflow file is checked in here beside the manifest that misdescribes it, so the drift row the console shows is derived from the real bytes rather than asserted from a comment.

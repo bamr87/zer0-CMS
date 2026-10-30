@@ -12,7 +12,7 @@
 
 zer0-CMS is becoming a comprehensive application for content work — writing articles, creating content, brainstorming ideas, gathering information, operating a news site and writing books — with AI integrations and pipelines and workflows throughout ([ADR 0006](docs/adr/0006-one-python-platform.md)). It is being rebuilt into one Python platform with a React frontend: a complete, modern CMS on established libraries; an AI content layer (provider adapters, assistants, pipelines, output schemas, briefs, conversations) that helps create and develop content; a loop that manages, monitors and improves the sites it serves, with AIEO's citability scoring in it; the VS Code extension at parity with the studio; and every repository merged here — parodynews (barodybroject), aieo, books, the image generator, the Rails fleet CMS and the nine sites — absorbed with its content and capabilities, with content in the database and generated static files, zer0-mistakes kept only as an option to render and deploy a site with that theme through Jekyll, and no Ruby left. The target is [`docs/plan/TARGET.md`](docs/plan/TARGET.md), the order of work [`docs/plan/PLAN.md`](docs/plan/PLAN.md) § 3, and the per-capability progress [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) (`python3 tools/check_absorption.py --report`). What follows describes the code as it runs today.
 
-zer0-CMS turns a repository of markdown into something you can actually operate. Edit front matter as real controls, let agents propose changes you accept as revisions, browse every site in one admin, and publish through a gate a human has to walk through. The platform runs on 127.0.0.1:8000, the Rails fleet CMS on 127.0.0.1:3001, and the extension has zero runtime dependencies.
+zer0-CMS turns a repository of markdown into something you can actually operate. Edit front matter as real controls, let agents propose changes you accept as revisions, manage every site from one studio, and publish through a gate a human has to walk through. The platform runs on 127.0.0.1:8000, and the extension has zero runtime dependencies.
 
 It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
@@ -20,10 +20,9 @@ The repository holds four products of its own and the rest of the zer0 stack:
 
 | Path | What it is |
 |---|---|
-| `content/` | The **platform** — zer0-CMS itself ([ADR 0004](docs/adr/0004-one-platform.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share — and the system of record for every site and every API, with its operational baseline (probes, request ids, one error envelope, JSON logs, throttling, OpenAPI) in `content/ops/`. It imports the Jekyll sites and exports them back byte for byte, so a site's files stay its source of truth until it cuts over. [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) |
-| `web/` | The **studio** — the React frontend for writing, creating and reviewing content and following agent runs, served at `/studio/`; the extension will render its workspaces too (ADR 0006). [`web/README.md`](web/README.md) |
+| `content/` | The **platform** — zer0-CMS itself ([ADR 0004](docs/adr/0004-one-platform.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share — and the system of record for every site and every API, with its operational baseline (probes, request ids, one error envelope, JSON logs, throttling, OpenAPI) in `content/ops/`. It imports the Jekyll sites and exports them back byte for byte, so a site's files stay its source of truth until it cuts over; it registers, syncs and writes back those sites and runs `zer0 doctor` on them (PLAN G4); and it distributes: a site's content to LinkedIn, WordPress, a GitHub pull request or a newsletter under a person's approval, with the LinkedIn lane a site that is still files runs from its CI (`manage.py linkedin`, the `zer0-linkedin.yml` workflow, PLAN G5). [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
+| `web/` | The **studio** — the React frontend for writing, creating and reviewing content and following agent runs, served at `/studio/`; the extension's webviews render its workspaces too, once a platform is configured (ADR 0006, PLAN G10). [`web/README.md`](web/README.md) |
 | `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*; the platform's client once a platform URL is configured (PLAN G10). This README. |
-| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered Jekyll site and writes edits back into its files (git stays the source of truth), draws missing previews, runs `zer0 doctor`, carries content to LinkedIn under a human gate, and hosts the ABC book wizard. Being absorbed by the platform (PLAN Phase G), then deleted. [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
 | `packages/`, `sites/`, `apps/` | The image generator, the books app, the zer0 sites and the parodynews and aieo apps, imported with their full history: sources being absorbed into the platform (ADR 0006). The zer0-mistakes theme the sites build with is developed in [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes), with its Rails theme studio, and consumed as the gem or `remote_theme` each site declares ([ADR 0005](docs/adr/0005-theme-goes-home.md)). One registry, [`workspace.yml`](workspace.yml), describes every project, and `bin/zer0` lists, checks, tests and builds them all. [`docs/MONOREPO.md`](docs/MONOREPO.md) lists each one and what still runs from the original repositories. |
 
 How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
@@ -37,7 +36,8 @@ How this repository, the zer0-mistakes theme and zer0-image-generator fit togeth
 - a **front-matter audit** of every page against the site's own schema, whose fixes you see as a diff before any of them lands,
 - **platform profiles** — Jekyll (with the zer0-mistakes theme as an overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback — so a site is read the way its own generator reads it,
 - **many sites in one window**, each with its own configuration, draft queue and MCP server,
-- and a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs.
+- a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs,
+- and, pointed at a zer0-CMS platform (`zer0Cms.platform.url`, with your token in the editor's secret storage), the **studio's own workspaces** in its webviews — the dashboard, the page behind the open file, the AI view — built from the same React code as the studio, with every request sent by the extension host so the token never reaches a page.
 
 ## Quick start
 
@@ -46,12 +46,11 @@ npm install
 npm run compile          # check-types + lint + all five bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
-SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
-docker compose --profile content up -d --wait db redis content worker research-worker beat relay  # the platform → http://localhost:8000/studio/
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay belt-publisher events  # the platform → http://localhost:8000/studio/
 bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
 
-Every port is published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the Rails CMS anywhere else. The platform answers `/healthz`, `/readyz` and `/version`. `SITES_DIR=$HOME/github docker compose --profile imagegen up --build` adds zer0-image-generator on :3000.
+Every port is published on 127.0.0.1 only. The platform answers `/healthz`, `/readyz` and `/version`. `SITES_DIR=$HOME/github docker compose --profile imagegen up --build` adds zer0-image-generator on :3000.
 
 ## Usage
 
@@ -160,14 +159,13 @@ The `src/core` boundary is load-bearing, not stylistic: it is why the same publi
 
 ## Documentation
 
-[`docs/README.md`](docs/README.md) indexes every document in the repository, one line each. Start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (the extension), [`docs/PLATFORM.md`](docs/PLATFORM.md) (the fleet CMS), [`docs/CONFIG.md`](docs/CONFIG.md) (every configuration key) and [`docs/MONOREPO.md`](docs/MONOREPO.md) (the imported projects).
+[`docs/README.md`](docs/README.md) indexes every document in the repository, one line each. Start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (the extension), [`docs/CONFIG.md`](docs/CONFIG.md) (every configuration key) and [`docs/MONOREPO.md`](docs/MONOREPO.md) (the imported projects).
 
 ## Project structure
 
 | Path | Holds |
 |---|---|
 | `src/`, `media/`, `schemas/` | The VS Code extension, its stylesheets and templates, and the `zer0.json` schema. |
-| `rails/` | The fleet CMS and the stdlib-only zer0 library. |
 | `content/` | The platform: Django + Wagtail, with its operational baseline in `content/ops/`. |
 | `packages/`, `sites/`, `apps/` | The imported sources being absorbed: image generator, books, sites, apps. |
 | `bin/`, `tools/`, `workspace.yml` | `bin/zer0`, its registry, and the repository's gates. |
@@ -182,7 +180,7 @@ npm run check-types && npm run lint   # the type and lint gates on their own
 npx @vscode/vsce package              # build the .vsix
 ```
 
-The commands for the platform, the studio, the Rails app and every imported project, and the rules every change follows (the layering gate behind `Could not resolve "vscode"` among them), are in [`AGENTS.md`](AGENTS.md).
+The commands for the platform, the studio and every imported project, and the rules every change follows (the layering gate behind `Could not resolve "vscode"` among them), are in [`AGENTS.md`](AGENTS.md).
 
 ## Contributing
 

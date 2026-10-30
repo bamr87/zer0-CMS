@@ -1,0 +1,41 @@
+/*
+ * The editor's theme on the zer0 design tokens (PLAN G10). The extension links
+ * media/tokens.css before this bundle; it maps VS Code's theme — light, dark,
+ * high contrast, and every change while a webview is open — onto its --z-*
+ * tokens and is the one file that names VS Code's variables. This file points
+ * each --zer0-* token @zer0/ui reads at one of those, so the studio's
+ * workspaces wear the editor's theme with no colour of their own. It loads
+ * after @zer0/tokens' :root block, so these declarations are the ones that hold.
+ */
+:root {
+  font-size: var(--z-font-size, 13px);
+
+  --zer0-bg: var(--z-bg);
+  --zer0-bg-raised: var(--z-bg-input);
+  --zer0-bg-inset: var(--z-bg-hover);
+  --zer0-border: var(--z-border);
+  --zer0-border-strong: var(--z-focus);
+  --zer0-text: var(--z-fg);
+  --zer0-text-dim: var(--z-fg-description);
+  --zer0-text-faint: var(--z-fg-disabled);
+  --zer0-accent: var(--z-link);
+  --zer0-accent-strong: var(--z-btn-bg);
+  --zer0-ok: var(--z-ok);
+  --zer0-warn: var(--z-warn);
+  --zer0-err: var(--z-fg-error);
+  --zer0-shadow: 0 2px 8px var(--z-shadow);
+  --zer0-radius: var(--z-radius);
+  --zer0-radius-sm: var(--z-radius);
+  --zer0-sans: var(--z-font);
+  --zer0-mono: var(--z-mono);
+}
+
+/* The sidebar's page view sits on the sidebar's colour, not the editor's. */
+:root[data-surface='sidebar'] {
+  --zer0-bg: var(--z-bg-sidebar);
+}
+
+/* A filled button takes the editor's button text colour with its background. */
+.mantine-Button-root[data-variant='filled'] {
+  --button-color: var(--z-btn-fg);
+}

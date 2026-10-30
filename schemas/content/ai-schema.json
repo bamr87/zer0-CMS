@@ -24,6 +24,36 @@
         ],
         "type": "object"
       },
+      "callout": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "The callout's Markdown, without the > quoting.",
+            "type": "string"
+          },
+          "fold": {
+            "description": "Empty: not foldable.",
+            "enum": [
+              "+",
+              "-"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "description": "note, tip, warning, quote … as written, e.g. NOTE.",
+            "pattern": "^[A-Za-z][\\w-]*$",
+            "type": "string"
+          },
+          "title": {
+            "description": "The callout's title; empty uses its kind.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "code": {
         "additionalProperties": false,
         "properties": {
@@ -41,6 +71,38 @@
           "code"
         ],
         "type": "object"
+      },
+      "document": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "description": "The file in the document library, when it is there.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "href": {
+            "description": "Where the site serves the file, e.g. /assets/files/report.pdf, or its full URL.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "title": {
+            "description": "The link text.",
+            "maxLength": 250,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "href"
+        ],
+        "type": "object"
+      },
+      "embed": {
+        "description": "The address of a video, post or other page to embed, e.g. a YouTube URL.",
+        "format": "uri",
+        "type": "string"
       },
       "heading": {
         "additionalProperties": false,
@@ -134,6 +196,10 @@
         ],
         "type": "object"
       },
+      "liquid": {
+        "description": "A Liquid template — an include, a loop, a capture — verbatim: the site's build evaluates it.",
+        "type": "string"
+      },
       "markdown": {
         "description": "A chunk of Markdown kept verbatim: paragraphs, lists, tables, Liquid tags, includes, raw HTML and [[wikilinks]] are all allowed and are never rewritten.",
         "type": "string"
@@ -178,12 +244,421 @@
           "text"
         ],
         "type": "object"
+      },
+      "raw_html": {
+        "description": "An HTML block, verbatim: the site's build renders it.",
+        "type": "string"
+      },
+      "table": {
+        "description": "A Markdown pipe table: `data` is its rows of cells, the first row its header.",
+        "properties": {
+          "data": {
+            "items": {
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "first_col_is_header": {
+            "type": "boolean"
+          },
+          "first_row_is_table_header": {
+            "type": "boolean"
+          },
+          "table_caption": {
+            "type": "string"
+          },
+          "table_header_choice": {
+            "enum": [
+              "row",
+              "col",
+              "both",
+              "neither"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "table_header_choice"
+        ],
+        "type": "object"
+      },
+      "typed_table": {
+        "additionalProperties": false,
+        "description": "A table whose columns each hold text or numbers; written as a Markdown pipe table.",
+        "properties": {
+          "caption": {
+            "type": "string"
+          },
+          "columns": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "heading": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "text",
+                    "number"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "heading"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "rows": {
+            "description": "One value per column, in column order.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "values"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns",
+          "rows"
+        ],
+        "type": "object"
       }
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Block JSON an agent proposes must match this schema and is then validated by the blocks themselves. A body is a list of {type, value} blocks; `id` is assigned by the CMS.",
   "pages": {
+    "aieo.LandingPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "A conversion page: the copy AIEO's landing-page workflow drafts, researches and CRO-audits, with the one action it asks a reader to take.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
     "cms.ArticlePage": {
       "body": {
         "items": {
@@ -339,6 +814,125 @@
                 "value"
               ],
               "title": "letter",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
               "type": "object"
             }
           ]
@@ -530,6 +1124,125 @@
               ],
               "title": "letter",
               "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
+              "type": "object"
             }
           ]
         },
@@ -719,6 +1432,125 @@
                 "value"
               ],
               "title": "letter",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
               "type": "object"
             }
           ]
@@ -910,6 +1742,125 @@
               ],
               "title": "letter",
               "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
+              "type": "object"
             }
           ]
         },
@@ -1099,6 +2050,125 @@
                 "value"
               ],
               "title": "letter",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
               "type": "object"
             }
           ]
@@ -1290,6 +2360,125 @@
               ],
               "title": "letter",
               "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "embed"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/embed"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "embed",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "document"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/document"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "document",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "typed_table"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/typed_table"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "typed_table",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "raw_html"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/raw_html"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "raw_html",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "liquid"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/liquid"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "liquid",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "callout"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/callout"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "callout",
+              "type": "object"
             }
           ]
         },
@@ -1326,5 +2515,5 @@
     }
   },
   "title": "zer0-CMS content schema for agents",
-  "version": "54d76119aed3"
+  "version": "7bc94d148b5d"
 }

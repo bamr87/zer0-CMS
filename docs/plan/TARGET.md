@@ -32,7 +32,7 @@ The platform also keeps everything the merged repositories did ([`capabilities.y
 | Contracts | `schemas/` | The committed OpenAPI document, GraphQL schema, agent block schema and event schemas. Clients are generated from them; CI fails when they drift. | JSON |
 | Tooling | `tools/`, `bin/zer0` | The workspace tool and the repository's gates. | Python |
 
-Nothing else remains at the end: `rails/`, `apps/`, `packages/` and the Jekyll parts of `sites/` are sources being absorbed.
+Nothing else remains at the end: `apps/`, `packages/` and the Jekyll parts of `sites/` are sources being absorbed (`rails/` is already gone: what it did that the platform does not yet do is in [`rails-cms-spec.md`](rails-cms-spec.md)).
 
 ## Content in the database, files generated
 
@@ -55,13 +55,13 @@ The full list, with each capability's surfaces and status, is the `platform:` se
 | Media | image and document library, focal points, renditions, AI alt text; preview and social image generation, compositions, the SVG studio, sourced images — the image generator rewritten | Wagtail images and documents; the engine in Python (`content/media/`), its studio views in TypeScript |
 | Delivery | REST + OpenAPI, GraphQL, MCP, server-sent events, webhooks, outbox events, redirects, forms and submissions | DRF, drf-spectacular, django-filter, the existing GraphQL schema, Wagtail redirects and forms |
 | AI content layer | provider adapters, model catalog, assistants, pipelines, output schemas, briefs, conversations, tool-using agents, suggestions, evals, usage and budgets | `anthropic`, `openai`, `claude-agent-sdk`, `litellm`, `jsonschema`; the existing agent runtime |
-| Pipelines and workflows | AI pipelines, editorial and newsroom workflows, automations (trigger → condition → action) with run history | Celery and Celery beat, the outbox, Wagtail workflows |
+| Pipelines and workflows | AI pipelines, editorial and newsroom workflows, automations (trigger → condition → action) with run history | Celery and Celery beat (an automation's cron line read by Celery's own `crontab`), the outbox, Wagtail workflows, `jmespath` for automations' conditions |
 | Sites | registry and settings, generated file trees, render (React by default, or the Jekyll-theme option), deploy, doctor | Celery jobs; the renderer; a Jekyll server for the option (GitHub Pages' builder or a pinned container) |
 | Monitoring | uptime, broken links, performance and Core Web Vitals, accessibility, SEO, analytics, AIEO scores, alerts | `httpx`; PageSpeed Insights/CrUX; axe-core under Playwright in a browser worker; GA4 Data API, Search Console API, DataForSEO |
 | Improvement | the editorial plan, improvement proposals, measured outcomes | the agent runtime, Suggestions |
 | AIEO | the analyzers and five-dimension scoring, patterns, audits of pages, URLs and crawled sites, citation tracking, the AIEO agents, connectors, reports, the `aieo_*` MCP tools | absorbed from `apps/aieo/`; Qdrant replaced by pgvector |
 | Distribution | channels (LinkedIn, WordPress, GitHub pull request, email), a queue with approval, the ledger keyed by canonical URL, statistics | `httpx`, PyGithub, django-anymail |
-| Books | books, parts and chapters, outline, characters, continuity, style guide, manuscripts, the ABC wizard, story generators | absorbed from `packages/books/`, `rails/lib` and drsai's engine |
+| Books | books, parts and chapters, outline, characters, continuity, style guide, manuscripts, the ABC wizard, story generators | absorbed from `packages/books/`, the Rails ABC generator ([`rails-cms-spec.md`](rails-cms-spec.md)) and drsai's engine |
 | Accounts and access | email sign-up and login by code, OIDC SSO, GitHub login, MFA (TOTP, passkeys), sessions, personal and agent tokens, roles and per-site permissions, ownership and sharing | django-allauth (account, socialaccount, mfa, usersessions, headless), Wagtail groups and permissions |
 | Operations | install and bootstrap, jobs with live logs, audit log, notifications and email, error reporting (Sentry, GitHub issues), probes, logs, metrics, traces, backups, deploy | Celery, Wagtail log entries, django-anymail, sentry-sdk, OpenTelemetry, compose and Helm |
 
