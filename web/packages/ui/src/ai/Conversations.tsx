@@ -298,7 +298,7 @@ function Composer({ conversation }: { conversation: Conversation }) {
   const assistants = useAssistants();
   const [text, setText] = useState('');
   const [assistant, setAssistant] = useState<string | null>(null);
-  const [pipelineRun, setPipelineRun] = useState<number | null>(null);
+  const [pipelineRun, setPipelineRun] = useState<string | null>(null);
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai', 'messages', conversation.id] });
   const at = (key: string) => ({ params: { path: { public_id: conversation.id }, header: once(key) } });
   const send = useMutation({

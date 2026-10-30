@@ -44,10 +44,11 @@ function fakeHost(routes: Record<string, Handler>) {
   return { port, sent, deliver };
 }
 
+const RUN = '7d1c5e3a-2b4f-4c6d-8e9f-0a1b2c3d4e5f'; // a run's public id, read as its first eight characters
 const list = (results: unknown[]) => ({ count: results.length, next: null, previous: null, results });
 const summary = (id: number, title: string) => ({ ...pageDetail({ id, title }), fields: undefined, body: undefined });
 const run = (status: string) => ({
-  id: 7,
+  id: RUN,
   agent: 'seo',
   status,
   is_final: status !== 'running',
@@ -62,11 +63,11 @@ const run = (status: string) => ({
   schema_version: '1',
   created_at: '2026-10-21T09:00:00Z',
   finished_at: null,
-  links: { self: '/api/v2/agent-runs/7/', stream: '/api/v2/agent-runs/7/stream/' },
+  links: { self: `/api/v2/agent-runs/${RUN}/`, stream: `/api/v2/agent-runs/${RUN}/stream/` },
   steps: [],
 });
 const suggestion = {
-  id: 1,
+  id: 's1',
   op: 'meta',
   block_id: '',
   field: 'seo_title',
@@ -74,7 +75,7 @@ const suggestion = {
   rationale: 'Clearer for search.',
   status: 'pending',
   agent: 'seo',
-  run_id: 7,
+  run_id: RUN,
   created_at: '2026-10-21T09:00:00Z',
   target: { type: 'page', id: 5, title: 'Nightly backups' },
   change: { kind: 'field', label: 'seo_title', before: 'Backups', after: 'Nightly backups, explained', stale: false },
@@ -84,7 +85,7 @@ const PLATFORM: Record<string, Handler> = {
   'GET /api/v2/sites/': () => [{ id: 1, name: 'Test site', hostname: 'test.localhost', port: 80, is_default: true, root_page_id: 3 }],
   'GET /api/v2/review/suggestions/': () => list([suggestion]),
   'GET /api/v2/agent-runs/': () => list([run('succeeded')]),
-  'GET /api/v2/agent-runs/7/': () => run('running'),
+  [`GET /api/v2/agent-runs/${RUN}/`]: () => run('running'),
   'GET /api/v2/content/types/': () => [{ type: 'cms.ArticlePage', label: 'Article page' }],
   'GET /api/v2/content/pages/': ({ url }) => {
     const source = url.searchParams.get('source');
@@ -106,7 +107,7 @@ const PLATFORM: Record<string, Handler> = {
     changed: ['title'],
   }),
   'POST /api/v2/content/pages/5/revisions/41/revert/': () => pageDetail({ status: 'changed' }),
-  'POST /api/v2/suggestions/1/accept/': () => ({ ...suggestion, status: 'accepted' }),
+  'POST /api/v2/suggestions/s1/accept/': () => ({ ...suggestion, status: 'accepted' }),
 };
 
 function open(view: View) {
@@ -184,7 +185,7 @@ describe('the extension webviews', () => {
     expect(document.querySelector('ins')?.textContent).toContain('explained');
 
     await userEvent.click(screen.getByRole('tab', { name: 'AI' }));
-    expect(await screen.findByRole('button', { name: '#7' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '7d1c5e3a' })).toBeInTheDocument();
 
     // Every request names a method, a path and a body: no host, no header, no credential.
     const requests = host.sent.filter((m) => m.type === 'api');
@@ -264,7 +265,7 @@ describe('the extension webviews', () => {
     const dashboard = open('dashboard');
     await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
-    await waitFor(() => expect(dashboard.sent).toContainEqual(expect.objectContaining({ type: 'api', method: 'POST', path: '/api/v2/suggestions/1/accept/' })));
+    await waitFor(() => expect(dashboard.sent).toContainEqual(expect.objectContaining({ type: 'api', method: 'POST', path: '/api/v2/suggestions/s1/accept/' })));
   });
 
   it('opens the destination the host hands the dashboard', async () => {
@@ -300,19 +301,19 @@ describe('the extension webviews', () => {
     // The AI area's own sections, and no workspace tabs: the agent view is the one workspace.
     expect(screen.queryByRole('tablist', { name: 'Workspaces' })).toBeNull();
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Runs', 'Assistants', 'Pipelines', 'Output schemas', 'Conversations', 'Providers', 'Models', 'Automations']);
-    await userEvent.click(await screen.findByRole('button', { name: '#7' }));
-    expect(await screen.findByText(/Run #7/)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: '7d1c5e3a' }));
+    expect(await screen.findByText(/Run 7d1c5e3a/)).toBeInTheDocument();
     const stream = host.sent.find((m) => m.type === 'stream');
-    expect(stream).toMatchObject({ path: '/api/v2/agent-runs/7/stream/', events: ['step', 'status', 'end'] });
+    expect(stream).toMatchObject({ path: `/api/v2/agent-runs/${RUN}/stream/`, events: ['step', 'status', 'end'] });
     await host.deliver({ type: 'event', id: stream?.id, event: 'step', data: JSON.stringify({ idx: 0, kind: 'tool', name: 'content.get_page', args: {}, result: {}, error: '', latency_ms: 3, tokens: 0 }) });
     expect(await screen.findByText('tool · content.get_page')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Review its suggestions' }));
-    expect(host.sent).toContainEqual({ type: 'go', to: { to: 'review', runId: 7 } });
+    expect(host.sent).toContainEqual({ type: 'go', to: { to: 'review', runId: RUN } });
   });
 
   it('sends an Idempotency-Key with a run, refuses an upload, and reads the headers the host passes on', async () => {
-    const host = fakeHost({ 'POST /api/v2/ai/pipelines/p-1/run/': () => new Reply(202, { run: 7 }) });
+    const host = fakeHost({ 'POST /api/v2/ai/pipelines/p-1/run/': () => new Reply(202, { run: { id: RUN, status: 'queued' } }) });
     const { api } = connect(host.port);
     const started = await api.POST('/api/v2/ai/pipelines/{public_id}/run/', {
       params: { path: { public_id: 'p-1' }, header: { 'Idempotency-Key': 'k-1' } },

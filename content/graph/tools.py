@@ -125,8 +125,8 @@ def upsert_edge(ctx, page_id, rel, dst, confidence, rationale):
     policy = page.effective_policy(ctx.policy) if hasattr(page, "effective_policy") else ctx.policy
     try:
         if confidence >= services.threshold() and POLICY_ORDER.index(policy) >= POLICY_ORDER.index(POLICY_DRAFT):
-            edge = services.upsert_edge(page, payload, source="agent", run=ctx.run)
-            return {"written": True, "edge_id": edge.pk}
+            services.upsert_edge(page, payload, source="agent", run=ctx.run)
+            return {"written": True}  # the edge is its page, rel and dst; its integer key stays internal (P-D6)
         s = propose(
             target=page,
             op=Suggestion.EDGE,
@@ -138,4 +138,4 @@ def upsert_edge(ctx, page_id, rel, dst, confidence, rationale):
         )
     except (services.GraphError, SuggestionError) as e:
         raise ToolError("invalid_args", str(e)) from e
-    return {"written": False, "suggestion_id": s.pk}
+    return {"written": False, "suggestion_id": str(s.public_id)}

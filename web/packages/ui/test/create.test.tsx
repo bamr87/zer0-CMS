@@ -15,7 +15,7 @@ function platform() {
     'GET /api/v2/content/pages/': () => ({ count: 1, next: null, previous: null, results: [SECTION] }),
     'GET /api/v2/content/pages/3/types/': () => [{ type: 'cms.ArticlePage', label: 'Article page' }],
     'POST /api/v2/content/pages/': () => pageDetail({ id: 12, status: 'draft' }),
-    'POST /api/v2/agent-runs/': () => ({ id: 30, agent: 'drafter', status: 'queued', is_final: false }),
+    'POST /api/v2/agent-runs/': () => ({ id: 'r30', agent: 'drafter', status: 'queued', is_final: false }),
   });
 }
 
@@ -44,7 +44,7 @@ describe('<CreatePage>', () => {
     await userEvent.type(screen.getByLabelText('Brief: what is it about?'), 'Backups');
     await userEvent.click(screen.getByLabelText(/Draft with the drafter agent/));
     await userEvent.click(screen.getByRole('button', { name: 'Create and draft' }));
-    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'run', id: 30 }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'run', id: 'r30' }));
     expect(posted(calls)).toEqual(['/api/v2/content/pages/', '/api/v2/agent-runs/']);
     expect(calls.at(-1)?.body).toEqual({ agent: 'drafter', page_id: 12 });
   });

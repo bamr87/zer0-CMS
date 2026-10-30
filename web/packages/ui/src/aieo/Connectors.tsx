@@ -2,8 +2,10 @@
 // DataForSEO (search results for its keywords) — configured by people with
 // `aieo.change_connector` who edit the site: the credential is typed once,
 // sent once and never shown again (only whether one is set); a sync runs in
-// a worker and keeps its rows. Priorities read Search Console's last rows.
-import { Alert, Badge, Button, Group, Paper, PasswordInput, SimpleGrid, Stack, Switch, Table, Text, TextInput, Title } from '@mantine/core';
+// a worker and keeps its rows, which open here. Priorities read Search
+// Console's last rows. A card is drawn once the site's connectors are known,
+// and drawn afresh when its row changes, so its form starts from what is saved.
+import { Alert, Badge, Button, Group, Loader, Paper, PasswordInput, ScrollArea, SimpleGrid, Stack, Switch, Table, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AieoConnector, AieoConnectorKind } from '@zer0/api';
@@ -27,12 +29,15 @@ export function Connectors({ siteId }: { siteId?: number }) {
     refetchInterval: (query) => ((query.state.data ?? []).some((c) => c.status === 'syncing') ? 2000 : false),
   });
   if (siteId === undefined) return <Alert color="gray">Choose a site in the header to connect it.</Alert>;
+  if (connectors.isError) return <Alert color="red">{errorText(connectors.error)}</Alert>;
+  if (!connectors.data) return <Loader size="sm" aria-label="Loading the connectors" />;
+  const rows = connectors.data;
   return (
     <SimpleGrid cols={{ base: 1, lg: 3 }}>
-      {connectors.isError ? <Alert color="red">{errorText(connectors.error)}</Alert> : null}
-      {KINDS.map((spec) => (
-        <ConnectorCard key={spec.kind} siteId={siteId} spec={spec} row={(connectors.data ?? []).find((c) => c.kind === spec.kind)} />
-      ))}
+      {KINDS.map((spec) => {
+        const row = rows.find((c) => c.kind === spec.kind);
+        return <ConnectorCard key={`${spec.kind}:${row?.id ?? 'new'}:${row?.updated_at ?? ''}`} siteId={siteId} spec={spec} row={row} />;
+      })}
     </SimpleGrid>
   );
 }
@@ -48,6 +53,7 @@ function ConnectorCard({ siteId, spec, row }: { siteId: number; spec: (typeof KI
   const [enabled, setEnabled] = useState(row?.enabled ?? true);
   const [option, setOption] = useState(optionText(row, spec.option));
   const [credential, setCredential] = useState('');
+  const [shown, setShown] = useState(false);
   const refresh = () => void qc.invalidateQueries({ queryKey: ['aieo', 'connectors'] });
   const value = spec.option === 'keywords' ? option.split(',').map((k) => k.trim()).filter(Boolean) : option.trim();
   const options = { ...((row?.options as Record<string, unknown> | undefined) ?? {}), [spec.option]: value };
@@ -96,12 +102,54 @@ function ConnectorCard({ siteId, spec, row }: { siteId: number; spec: (typeof KI
         {sync.isError ? <Alert color="red">{errorText(sync.error)}</Alert> : null}
         {row?.error ? <Alert color="red">{row.error}</Alert> : null}
         {row?.last_synced_at ? (
-          <Text size="xs" c="dimmed">
-            {row.rows ?? 0} rows · synced {new Date(row.last_synced_at).toLocaleString()}
-          </Text>
+          <Group gap="xs">
+            <Text size="xs" c="dimmed">
+              {row.rows ?? 0} rows · synced {new Date(row.last_synced_at).toLocaleString()}
+            </Text>
+            <Button size="compact-xs" variant="subtle" onClick={() => setShown((open) => !open)}>
+              {shown ? 'Hide the rows' : 'Show the rows'}
+            </Button>
+          </Group>
         ) : null}
+        {shown && row ? <SyncedRows id={row.id} title={spec.title} /> : null}
       </Stack>
     </Paper>
+  );
+}
+
+/** The rows a connector's last sync fetched, a column per field (the first 100). */
+function SyncedRows({ id, title }: { id: string; title: string }) {
+  const api = useApi();
+  const data = useQuery({
+    queryKey: ['aieo', 'connector-data', id],
+    queryFn: () => call(api.GET('/api/v2/aieo/connectors/{public_id}/data/', { params: { path: { public_id: id } } })),
+  });
+  if (data.isError) return <Alert color="red">{errorText(data.error)}</Alert>;
+  if (!data.data) return <Loader size="xs" />;
+  const rows = data.data.rows.slice(0, 100) as Record<string, unknown>[];
+  if (!rows.length) return <Text size="xs" c="dimmed">The last sync found no rows.</Text>;
+  const columns = Object.keys(rows[0] ?? {});
+  return (
+    <ScrollArea.Autosize mah={320}>
+      <Table striped aria-label={`${title} rows`}>
+        <Table.Thead>
+          <Table.Tr>
+            {columns.map((c) => (
+              <Table.Th key={c}>{c.replace(/_/g, ' ')}</Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {rows.map((r, i) => (
+            <Table.Tr key={i}>
+              {columns.map((c) => (
+                <Table.Td key={c}>{String(r[c] ?? '')}</Table.Td>
+              ))}
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
+    </ScrollArea.Autosize>
   );
 }
 

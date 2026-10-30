@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { DistributionPostDetail } from '@zer0/api';
 import { useState } from 'react';
 
+import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
@@ -86,7 +87,7 @@ export function ComposeForm({ pageId, storyId, siteId, onDone }: Target & { onDo
         <Button
           disabled={!channel || (kind === 'article' && !page && !storyId) || (kind === 'update' && !commentary.trim())}
           loading={compose.isPending}
-          onClick={() => compose.mutate()}
+          onClick={oneClick(() => compose.mutate())}
         >
           Draft the post
         </Button>

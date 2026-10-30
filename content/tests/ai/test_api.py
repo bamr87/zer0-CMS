@@ -44,7 +44,7 @@ def ran(response):
         "self": f"/api/v2/agent-runs/{run['id']}/",
         "stream": f"/api/v2/agent-runs/{run['id']}/stream/",
     }
-    return AgentRun.objects.get(pk=run["id"])
+    return AgentRun.objects.get(public_id=run["id"])
 
 
 @pytest.mark.django_db
@@ -206,9 +206,9 @@ def test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it(
         response = api(bob).post(url, {"prompt": "hi"}, format="json", HTTP_IDEMPOTENCY_KEY="k-1")
     run = ran(response)
     assert run.status == "succeeded" and run.output["text"] == "Brief answer." and run.started_by == bob
-    detail = api(bob).get(f"/api/v2/agent-runs/{run.pk}/").json()
+    detail = api(bob).get(f"/api/v2/agent-runs/{run.public_id}/").json()
     assert detail["agent"] == "assistant" and detail["steps"][0]["kind"] == "llm"
-    stream = api(bob).get(f"/api/v2/agent-runs/{run.pk}/stream/")
+    stream = api(bob).get(f"/api/v2/agent-runs/{run.public_id}/stream/")
     assert b'"status": "succeeded"' in b"".join(stream.streaming_content)
     again = api(bob).post(url, {"prompt": "hi"}, format="json", HTTP_IDEMPOTENCY_KEY="k-1")
     assert again.status_code == 202 and again.json() == response.json() and again["Idempotent-Replayed"] == "true"
@@ -216,11 +216,14 @@ def test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it(
     changed = api(bob).post(url, {"prompt": "other"}, format="json", HTTP_IDEMPOTENCY_KEY="k-1")
     assert changed.status_code == 409 and changed.json()["error"]["code"] == "request.idempotency"
     other_person = api(alice).post(url, {"prompt": "hi"}, format="json", HTTP_IDEMPOTENCY_KEY="k-1")
-    assert other_person.status_code == 202 and other_person.json()["run"]["id"] != run.pk
+    assert other_person.status_code == 202 and other_person.json()["run"]["id"] != str(run.public_id)
     assert api(bob).post(url, {}, format="json").status_code == 422
     IdempotencyKey.objects.filter(user=bob).update(created_at=timezone.now() - timedelta(days=2))
     expired = api(bob).post(url, {"prompt": "other"}, format="json", HTTP_IDEMPOTENCY_KEY="k-1")
-    assert expired.status_code == 202 and expired.json()["run"]["id"] not in (run.pk, other_person.json()["run"]["id"])
+    assert expired.status_code == 202 and expired.json()["run"]["id"] not in (
+        str(run.public_id),
+        other_person.json()["run"]["id"],
+    )
     assert IdempotencyKey.objects.filter(user=bob, key="k-1").count() == 1  # the expired answer is gone
 
 
@@ -283,7 +286,7 @@ def test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions(
     assert applied.status_code == 201, applied.content
     page_id, suggestions = applied.json()["page_id"], applied.json()["suggestions"]
     assert applied.json()["brief"]["status"] == "applied" and applied.json()["brief"]["page"] == page_id
-    assert Suggestion.objects.filter(pk__in=suggestions, status="pending").count() == len(suggestions) == 4
+    assert Suggestion.objects.filter(public_id__in=suggestions, status="pending").count() == len(suggestions) == 4
     from wagtail.models import Page
 
     page = Page.objects.get(pk=page_id)
@@ -338,7 +341,7 @@ def test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one(
     assert applied.status_code == 201, applied.content
     post = Page.objects.get(pk=applied.json()["page_id"])
     assert post.title == "Cats Rule the Sofa" and not post.live  # the draft post, its front matter from the model
-    assert Suggestion.objects.filter(pk__in=applied.json()["suggestions"], field="search_description").exists()
+    assert Suggestion.objects.filter(public_id__in=applied.json()["suggestions"], field="search_description").exists()
     other = Assistant.objects.create(owner=alice, name="Other")
     assigned = api(alice).patch(
         f"{BASE}/messages/{note}/", {"assistant": str(other.public_id), "text": "ignored"}, format="json"
@@ -472,14 +475,14 @@ def test_an_assistants_tools_read_only_pages_the_person_running_it_may_edit(
     fake.script += [read, {"text": "Nothing to see."}]
     with django_capture_on_commit_callbacks(execute=True):
         run = ran(api(bob).post(url, {"prompt": "What is in the draft?"}, format="json"))
-    detail = api(bob).get(f"/api/v2/agent-runs/{run.pk}/")
+    detail = api(bob).get(f"/api/v2/agent-runs/{run.public_id}/")
     assert "TOP-SECRET-DRAFT-BODY" not in detail.content.decode()
     assert [s["result"]["error"] for s in detail.json()["steps"] if s["kind"] == "tool"] == ["permission_denied"]
     Assistant.objects.filter(public_id=created.json()["id"]).update(visibility=Visibility.SHARED)
     fake.script += [read, {"text": "A secret."}]
     with django_capture_on_commit_callbacks(execute=True):
         run = ran(api(alice).post(url, {"prompt": "What is in the draft?"}, format="json"))  # alice edits it
-    assert "TOP-SECRET-DRAFT-BODY" in api(alice).get(f"/api/v2/agent-runs/{run.pk}/").content.decode()
+    assert "TOP-SECRET-DRAFT-BODY" in api(alice).get(f"/api/v2/agent-runs/{run.public_id}/").content.decode()
 
 
 @pytest.mark.django_db
@@ -518,5 +521,5 @@ def test_the_generic_runs_api_meets_the_same_provider_checks(
         with django_capture_on_commit_callbacks(execute=True):
             created = api(alice).post("/api/v2/agent-runs/", body, format="json")
         assert created.status_code == 201, created.content
-        run = AgentRun.objects.get(pk=created.json()["id"])
+        run = AgentRun.objects.get(public_id=created.json()["id"])
         assert run.status == "failed" and why in run.error and fake.calls == [], change

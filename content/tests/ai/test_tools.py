@@ -38,8 +38,8 @@ def test_an_agent_runs_a_shared_assistant_and_gets_the_run_to_follow(ctx, alice,
     shared = Assistant.objects.create(owner=alice, name="Ours", visibility=Visibility.SHARED)
     fake.script.append({"text": "An answer."})
     result = worker(registry.call, "ai.run_assistant", {"assistant": str(shared.public_id), "prompt": "hi"}, ctx)
-    run = AgentRun.objects.get(pk=result["run_id"])
-    assert result["stream"] == f"/api/v2/agent-runs/{run.pk}/stream/"
+    run = AgentRun.objects.get(public_id=result["run_id"])
+    assert result["stream"] == f"/api/v2/agent-runs/{run.public_id}/stream/"
     assert run.status == "succeeded" and run.output["text"] == "An answer." and run.trigger == "mcp"
     assert run.started_by.username == "agent:drafter"
 
@@ -117,6 +117,6 @@ def test_an_mcp_client_whose_agent_lists_the_tool_runs_an_assistant(alice, fake,
     with django_capture_on_commit_callbacks(execute=True):
         reply = rpc(raw, "tools/call", {"name": "ai.run_assistant", "arguments": arguments})
     result = json.loads(reply.json()["result"]["content"][0]["text"])
-    run = AgentRun.objects.get(pk=result["run_id"])
+    run = AgentRun.objects.get(public_id=result["run_id"])
     assert run.status == "succeeded" and run.output["text"] == "Over MCP." and run.trigger == "mcp"
     assert run.parent_run.agent.slug == "drafter"  # the audited MCP call is its parent

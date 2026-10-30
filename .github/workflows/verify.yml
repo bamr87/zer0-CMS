@@ -44,6 +44,12 @@ concurrency:
 
 jobs:
   verify:
+    # `labeled` is in the trigger list only so that adding `verify` turns the
+    # Claude pass on for a pull request already open. Every other label — and
+    # this repository labels a lot — used to re-run the whole scenario pass for
+    # nothing. (`timeout-minutes` cannot be set on a job that is a `uses:`; the
+    # cap lives in fleet-verify.yml.)
+    if: github.event.action != 'labeled' || github.event.label.name == 'verify'
     uses: bamr87/bamr87/.github/workflows/fleet-verify.yml@main
     permissions:
       contents: read

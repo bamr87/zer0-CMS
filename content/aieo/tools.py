@@ -32,7 +32,8 @@ from .models import Audit, Pattern, library
 from .prompts import AGENTS
 
 UUID = {"type": "string", "format": "uuid"}
-CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}
+CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}  # read in a run, in a worker
+NOW = {"type": "string", "minLength": 1, "maxLength": services.NOW_MAX}  # scored at once, inside the call
 FORMAT = {"type": "string", "enum": ["markdown", "html"], "default": "markdown"}
 METHOD = {"type": "string", "enum": ["heuristic", "ai"], "default": "ai"}
 URL = {"type": "string", "minLength": 1, "maxLength": 2000}
@@ -44,7 +45,7 @@ def _refused(e: ApiError) -> ToolError:
 
 
 def _run(run) -> dict:
-    return {"run_id": run.pk, "status": run.status, "stream": f"/api/v2/agent-runs/{run.pk}/stream/"}
+    return {"run_id": str(run.public_id), "status": run.status, "stream": run.links["stream"]}
 
 
 def _audit(row: Audit) -> dict:
@@ -74,9 +75,10 @@ def _calling(fn, *args, **kwargs):
     description=(
         "Score content (Markdown or HTML) for AI citability with AIEO's heuristics: a 0-100 score and grade, each "
         "pattern's score with evidence and a recommendation, the gaps, anti-pattern penalties and the five "
-        "dimensions (aieo, seo, readability, humanity, cro). Nothing is recorded."
+        "dimensions (aieo, seo, readability, humanity, cro). Nothing is recorded. A text longer than "
+        f"{services.NOW_MAX} characters is audited instead (aieo.audit_text)."
     ),
-    input_schema=obj({"content": CONTENT, "format": FORMAT}, required=["content"]),
+    input_schema=obj({"content": NOW, "format": FORMAT}, required=["content"]),
     rate="120/m",
 )
 def score_text(ctx, content, format="markdown"):
@@ -91,7 +93,7 @@ def _analysis(key: str, about: str):
         f"aieo.{key}",
         effect="read",
         description=f"{about} of the content (Markdown), as AIEO's analyzers compute it.",
-        input_schema=obj({"content": CONTENT}, required=["content"]),
+        input_schema=obj({"content": NOW}, required=["content"]),
         rate="120/m",
     )(analyze)
 
@@ -109,7 +111,7 @@ _analysis("search_intent", "The search intent (informational, navigational, tran
     "aieo.landing_audit",
     effect="read",
     description="The landing-page CRO score of copy: above the fold, calls to action and trust signals, as AIEO.",
-    input_schema=obj({"content": CONTENT}, required=["content"]),
+    input_schema=obj({"content": NOW}, required=["content"]),
     rate="120/m",
 )
 def landing_audit(ctx, content):
@@ -159,6 +161,31 @@ def get_pattern(ctx, pattern_name):
 
 
 # ── audits ─────────────────────────────────────────────────────────────────
+
+
+@tool(
+    "aieo.audit_text",
+    effect="propose",
+    description=(
+        "Audit a text (Markdown or HTML) of any length for AI citability, in a run: scored by a model's evaluation "
+        "with the heuristics as the fallback (method ai) or the heuristics alone. Returns the audit and the run to "
+        "follow; read it with aieo.get_audit."
+    ),
+    input_schema=obj({"content": CONTENT, "format": FORMAT, "method": METHOD}, required=["content"]),
+    rate="30/m",
+)
+def audit_text(ctx, content, format="markdown", method="ai"):
+    row = _calling(
+        services.audit,
+        ctx.user,
+        kind=Audit.TEXT,
+        content=content,
+        format=format,
+        method=method,
+        origin="mcp",
+        trigger=ctx.trigger,
+    )
+    return _audit(row)
 
 
 @tool(
@@ -321,7 +348,7 @@ def apply_pattern(ctx, pattern_name, content):
     "aieo.run_agent",
     effect="propose",
     description=(
-        "Run one of the AIEO agents on a text or a page, with the site's brand context: "
+        "Run one of the AIEO agents on a text or a page, with the brand context of a site you edit: "
         + ", ".join(key.removeprefix("aieo-") for key in AGENTS)
         + ". Returns the run; its structured answer is a proposal."
     ),
@@ -340,6 +367,8 @@ def apply_pattern(ctx, pattern_name, content):
 )
 def run_agent(ctx, agent, content="", page_id=None, site=None, inputs=None):
     where = Site.objects.filter(pk=site).first() if site else None
+    if site and where is None:
+        raise ToolError("not_found", f"no site {site}")
     run = _calling(
         services.run_agent,
         ctx.user,
@@ -389,14 +418,14 @@ def research(ctx, topic):
 @tool(
     "aieo.priorities",
     effect="read",
-    description="A site's ranked content-update queue and quick wins, from its last Search Console sync.",
+    description="The ranked content-update queue and quick wins of a site you edit, from its last Search Console sync.",
     input_schema=obj({"site": {"type": "integer"}}, required=["site"]),
 )
 def priorities(ctx, site):
     found = Site.objects.filter(pk=site).first()
     if found is None:
         raise ToolError("not_found", f"no site {site}")
-    data = services.priorities(found)
+    data = _calling(services.priorities, ctx.user, found)  # a site the agent edits, as REST asks of a person
     return {**data, "fetched_at": data["fetched_at"].isoformat() if data["fetched_at"] else None}
 
 

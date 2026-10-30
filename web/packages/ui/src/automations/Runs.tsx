@@ -13,6 +13,7 @@ import type { ReactNode } from 'react';
 import { JsonView } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
+import { shortId } from '../RunTimeline';
 
 const COLOR: Record<AutomationRunStatus, string> = {
   queued: 'blue',
@@ -128,7 +129,7 @@ function Made({ result }: { result: AutomationRun['outcomes'][number]['result'] 
     </Anchor>
   );
   const { run, brief, idea, story } = result;
-  if (run !== undefined) links.push(link(`Run #${run}`, () => go({ to: 'run', id: run })));
+  if (run) links.push(link(`Run ${shortId(run)}`, () => go({ to: 'run', id: run })));
   if (brief) links.push(link('The brief', () => go({ to: 'brief', id: brief })));
   if (idea) links.push(link('The idea', () => go({ to: 'ideas' })));
   if (story) links.push(link(`The story${result.status ? ` (${result.status})` : ''}`, () => go({ to: 'story', id: story })));

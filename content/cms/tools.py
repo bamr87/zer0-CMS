@@ -166,7 +166,7 @@ def propose_edit(ctx, page_id, op, rationale, block_id="", block=None, field="",
         )
     except SuggestionError as e:
         raise ToolError("invalid_args", str(e)) from e
-    return {"suggestion_id": s.pk, "status": s.status, "op": s.op}
+    return {"suggestion_id": str(s.public_id), "status": s.status, "op": s.op}
 
 
 @tool(
@@ -307,4 +307,4 @@ def propose_alt(ctx, image_id, field, value, rationale):
         )
     except SuggestionError as e:
         raise ToolError("invalid_args", str(e)) from e
-    return {"suggestion_id": s.pk, "status": s.status}
+    return {"suggestion_id": str(s.public_id), "status": s.status}

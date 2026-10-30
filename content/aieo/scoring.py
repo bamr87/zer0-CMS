@@ -29,7 +29,8 @@ import yaml
 
 from . import analyzers, parser
 
-PROMPTS = Path(__file__).resolve().parent / "data" / "prompts"
+DATA = Path(__file__).resolve().parent / "data"
+PROMPTS = DATA / "prompts"
 FRONT_MATTER = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
 GRADES = ((90, "A+"), (80, "A"), (70, "B"), (60, "C"), (50, "D"))
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -171,26 +172,19 @@ def _result(pattern_scores, penalty, parsed, patterns, *, keywords, competitor_t
 
 
 def heuristic(parsed: dict, patterns=None, *, keywords=(), competitor_topics=()) -> dict:
-    """The deterministic score: each pattern's check, then the anti-pattern penalties."""
+    """The deterministic score: each pattern's check, then the anti-pattern penalties. A pattern with no check — one a
+    person added to the library — is a model's to score: left out here and named (`model_only`), where AIEO scored it
+    0 and weighed it in, so adding one lowered every heuristic score."""
     patterns = list(patterns if patterns is not None else bundled_patterns())
-    pattern_scores = {}
-    for p in patterns:
-        check = HEURISTICS.get(p["name"])
-        if check is not None:
-            pattern_scores[p["name"]] = check(parsed, p["max_score"])
-        else:
-            pattern_scores[p["name"]] = {
-                "score": 0,
-                "max": p["max_score"],
-                "detected": False,
-                "evidence": [],
-                "recommendation": f"Configure AI API key for {p['name']} scoring.",
-            }
+    checked = [p for p in patterns if p["name"] in HEURISTICS]
+    pattern_scores = {p["name"]: HEURISTICS[p["name"]](parsed, p["max_score"]) for p in checked}
+    unchecked = [p["name"] for p in patterns if p["name"] not in HEURISTICS]
     return _result(
         pattern_scores,
         anti_patterns(parsed),
         parsed,
-        patterns,
+        checked,
+        **({"model_only": unchecked} if unchecked else {}),
         keywords=keywords,
         competitor_topics=competitor_topics,
         anti_pattern_details={"detected": [], "evidence": []},
@@ -303,10 +297,19 @@ def summary(parsed: dict) -> str:
     return "\n\n".join(sections)
 
 
+@cache
+def bundled_evaluation() -> dict:
+    """The bundled `aieo-evaluation` schema (data/bundled.yaml)."""
+    spec = yaml.safe_load((DATA / "bundled.yaml").read_text(encoding="utf-8"))
+    return next(item["schema"] for item in spec["schemas"] if item["key"] == "aieo-evaluation")
+
+
 def evaluation_schema(base: dict, patterns) -> dict:
-    """The bundled evaluation schema with one required property per pattern of the library as it is now, so a
-    pattern added or switched off changes what the model must answer."""
-    schema = copy.deepcopy(base)
+    """The evaluator's schema — the bundled one when a person left it without one that answers per pattern — with
+    one required property per pattern of the library as it is now, so a pattern added or switched off changes what
+    the model must answer."""
+    answers = (base or {}).get("properties", {}).get("patterns", {}).get("properties")
+    schema = copy.deepcopy(base if isinstance(answers, dict) and answers else bundled_evaluation())
     one = next(iter(schema["properties"]["patterns"]["properties"].values()))  # every pattern answers alike
     schema["properties"]["patterns"] = {
         "type": "object",
@@ -382,13 +385,16 @@ def _citation_hooks(parsed, max_score):
 
 
 def _recursive_depth(parsed, max_score):
-    questions = re.findall(r"[^.!?\n]+\?", parsed["text"])
+    # AIEO counted `re.findall(r"[^.!?\n]+\?", text)`, whose time grows with the square of a long run with no stop or
+    # newline. Each of its matches ends at a "?" right after a character that is none of those, so counting those
+    # question marks is the same number in linear time.
+    questions = len(re.findall(r"(?<=[^.!?\n])\?", parsed["text"]))
     headed = [h for h in parsed["headers"] if "?" in h["text"]]
     return _pattern(
-        min(max_score, len(questions) * 0.5 + len(headed) * 2.5),
+        min(max_score, questions * 0.5 + len(headed) * 2.5),
         max_score,
-        len(questions) > 0,
-        f"{len(questions)} questions, {len(headed)} question headers",
+        questions > 0,
+        f"{questions} questions, {len(headed)} question headers",
         "Add FAQ sections or question-style headers.",
     )
 

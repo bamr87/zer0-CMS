@@ -32,6 +32,8 @@ jobs:
   unit:
     name: Bridge + graph index (Python)
     runs-on: ubuntu-latest
+    # Capped so a wedged step cannot run to the six-hour default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -48,6 +50,8 @@ jobs:
     defaults:
       run:
         working-directory: sites/zer0-pages
+    # Capped so a wedged step cannot run to the six-hour default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:

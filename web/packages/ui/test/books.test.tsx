@@ -81,7 +81,7 @@ const TASKS = [
 ];
 
 const run = (status: string, output: unknown = {}) => ({
-  id: 77,
+  id: 'r77',
   agent: 'books',
   status,
   is_final: status === 'succeeded' || status === 'failed',
@@ -96,7 +96,7 @@ const run = (status: string, output: unknown = {}) => ({
   schema_version: '1',
   created_at: '2026-10-22T09:00:00Z',
   finished_at: null,
-  links: { self: '/api/v2/agent-runs/77/', stream: '/api/v2/agent-runs/77/stream/' },
+  links: { self: '/api/v2/agent-runs/r77/', stream: '/api/v2/agent-runs/r77/stream/' },
 });
 
 const BOOK_FIELDS = {
@@ -270,8 +270,8 @@ describe('<BookView>', () => {
   it('offers the outliner’s proposal as a diff, and saves it only when the person does', async () => {
     const proposal = '# The Impairment\n\nNew plan.\n';
     const { api, calls } = platform({
-      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
-      'GET /api/v2/agent-runs/77/': () => run('succeeded', { task: 'outline', markdown: proposal, json: {} }),
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 'r77', status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/r77/': () => run('succeeded', { task: 'outline', markdown: proposal, json: {} }),
     });
     renderUi(<BookView bookId={20} />, { api });
     await userEvent.click(await screen.findByRole('tab', { name: 'Outline' }));
@@ -290,8 +290,8 @@ describe('<BookAssist> beside a chapter', () => {
   it('drafts the chapter as suggestions to review', async () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/books/tasks/': () => TASKS,
-      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
-      'GET /api/v2/agent-runs/77/': () => run('succeeded', { task: 'draft', markdown: 'Ana sat.', suggestions: [501] }),
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 'r77', status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/r77/': () => run('succeeded', { task: 'draft', markdown: 'Ana sat.', suggestions: ['s501'] }),
     });
     const { go } = renderUi(<BookAssist bookId={20} chapterId={31} />, { api });
     await userEvent.type(await screen.findByLabelText(/^Instruction/), 'Keep it short.');
@@ -299,14 +299,14 @@ describe('<BookAssist> beside a chapter', () => {
     expect(await screen.findByText('1 suggestion to review')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ task: 'draft', chapter: 31, instruction: 'Keep it short.', selection: '' });
     await userEvent.click(screen.getByRole('button', { name: 'Review this run' }));
-    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 77 });
+    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 'r77' });
   });
 
   it('asks for the passage to revise, and shows a failed run’s reason', async () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/books/tasks/': () => TASKS,
-      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
-      'GET /api/v2/agent-runs/77/': () => run('failed'),
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 'r77', status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/r77/': () => run('failed'),
     });
     renderUi(<BookAssist bookId={20} chapterId={31} />, { api });
     await userEvent.click(await screen.findByRole('radio', { name: 'Revise' }));
@@ -325,8 +325,8 @@ describe('<BookAssist> beside a chapter', () => {
     };
     const { api } = fakePlatform({
       'GET /api/v2/books/tasks/': () => TASKS,
-      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
-      'GET /api/v2/agent-runs/77/': () => run('succeeded', { task: 'check', markdown: '', json: findings }),
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 'r77', status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/r77/': () => run('succeeded', { task: 'check', markdown: '', json: findings }),
       'GET /api/v2/books/20/context/': () => ({ text: '# Book brief: The Impairment' }),
     });
     renderUi(<BookAssist bookId={20} chapterId={31} />, { api });
@@ -364,8 +364,8 @@ describe('<ChapterWriter>', () => {
         { level: 'warning', code: 'nav-missing', message: 'no link to the next chapter', path: 'impairment/chapters/ch01.md', line: null },
         { level: 'error', code: 'placeholder', message: 'unresolved placeholder [Company Name] left in the file', path: 'impairment/chapters/ch02.md', line: 38 },
       ],
-      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
-      'GET /api/v2/agent-runs/77/': () => run('succeeded', { task: 'draft', markdown: 'Kareem sat.', suggestions: [501, 502] }),
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 'r77', status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/r77/': () => run('succeeded', { task: 'draft', markdown: 'Kareem sat.', suggestions: ['s501', 's502'] }),
     });
     renderUi(<ChapterWriter bookId={20} chapterId={31} />, { api });
     expect(await screen.findByLabelText(/^Point of view/)).toHaveValue('First person'); // the page editor's fields

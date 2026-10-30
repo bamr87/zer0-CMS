@@ -5,7 +5,9 @@
 // or after its time limit; a live run's stream is opened again after a short
 // pause, and one that broke after a pause that grows with each failure.
 // A finished run links to its suggestions. `useLiveRun` is that following, for
-// every screen that starts a run and shows it working (the AI workspaces).
+// every screen that starts a run and shows it working (the AI workspaces). A
+// run is addressed by its public id, a UUID (P-D6); `shortId` is how a screen
+// names one to a person, as a short commit hash names a commit.
 import { Alert, Anchor, Badge, Button, Code, Group, Loader, Stack, Table, Text, Timeline, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Step } from '@zer0/api';
@@ -23,6 +25,9 @@ const isStep = (data: unknown): data is Step =>
   typeof data === 'object' && data !== null && typeof (data as { idx?: unknown }).idx === 'number';
 const isFinal = (data: unknown) => typeof data === 'object' && data !== null && (data as { is_final?: unknown }).is_final === true;
 
+/** A run's public id as a person reads it: its first eight characters (every address uses the whole id). */
+export const shortId = (id: string) => id.slice(0, 8);
+
 export function RunStatus({ status }: { status: string }) {
   return (
     <Badge color={COLOR[status] ?? 'blue'} variant="light">
@@ -37,13 +42,13 @@ export function RunStatus({ status }: { status: string }) {
  * reads the run again, and a stream that ended or broke on a live run is
  * opened again after a pause.
  */
-export function useLiveRun(runId: number) {
+export function useLiveRun(runId: string) {
   const api = useApi();
   const stream = useStream();
   const qc = useQueryClient();
   const run = useQuery({
     queryKey: ['run', runId],
-    queryFn: () => call(api.GET('/api/v2/agent-runs/{id}/', { params: { path: { id: runId } } })),
+    queryFn: () => call(api.GET('/api/v2/agent-runs/{public_id}/', { params: { path: { public_id: runId } } })),
   });
   const [arrived, setArrived] = useState<Step[]>([]);
   const [round, setRound] = useState(0);
@@ -79,7 +84,7 @@ export function useLiveRun(runId: number) {
   return { run, steps, final };
 }
 
-export function RunTimeline({ runId }: { runId: number }) {
+export function RunTimeline({ runId }: { runId: string }) {
   const go = useGo();
   const { run, steps, final } = useLiveRun(runId);
 
@@ -91,7 +96,7 @@ export function RunTimeline({ runId }: { runId: number }) {
       <Group justify="space-between">
         <Group gap="xs">
           <Title order={3}>
-            Run #{run.data.id} · {run.data.agent}
+            Run {shortId(run.data.id)} · {run.data.agent}
           </Title>
           <RunStatus status={run.data.status} />
           {final ? null : <Loader size="xs" aria-label="Running" />}
@@ -151,8 +156,8 @@ export function RunList() {
         {runs.data.results.map((r) => (
           <Table.Tr key={r.id}>
             <Table.Td>
-              <Anchor component="button" type="button" onClick={() => go({ to: 'run', id: r.id })}>
-                #{r.id}
+              <Anchor component="button" type="button" ff="monospace" title={r.id} onClick={() => go({ to: 'run', id: r.id })}>
+                {shortId(r.id)}
               </Anchor>
             </Table.Td>
             <Table.Td>{r.agent}</Table.Td>

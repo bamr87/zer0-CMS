@@ -1,4 +1,4 @@
-type SiteRootPage implements PageInterface {
+type LandingPage implements PageInterface {
   id: ID
   path: String!
   depth: Int
@@ -29,7 +29,8 @@ type SiteRootPage implements PageInterface {
   body: [StreamFieldInterface]
   legacyPath: String
   previewImage: ContentImage
-  siteKey: String
+  ctaText: String
+  ctaUrl: String
   pageType: String
   url: String
   parent: PageInterface
@@ -406,6 +407,203 @@ GraphQL scalar value that could be:
 String, Boolean, Int, Float, List or Object.
 """
 scalar GenericScalar
+
+type SiteRootPage implements PageInterface {
+  id: ID
+  path: String!
+  depth: Int
+  numchild: Int!
+  translationKey: UUID!
+  live: Boolean!
+  hasUnpublishedChanges: Boolean!
+  firstPublishedAt: DateTime
+  lastPublishedAt: DateTime
+  goLiveAt: DateTime
+  expireAt: DateTime
+  expired: Boolean!
+  locked: Boolean
+  lockedAt: DateTime
+  title: String!
+  draftTitle: String!
+  slug: String!
+  contentType: String!
+  urlPath: String!
+  seoTitle: String!
+  showInMenus: Boolean!
+  searchDescription: String
+  latestRevisionCreatedAt: DateTime
+  aliasOf: Page
+  agentPolicy: String
+  aiSummary: String
+  contentHash: String
+  body: [StreamFieldInterface]
+  legacyPath: String
+  previewImage: ContentImage
+  siteKey: String
+  pageType: String
+  url: String
+  parent: PageInterface
+  children(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  siblings(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  nextSiblings(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  previousSiblings(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  descendants(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  ancestors(
+    """
+    Filter pages by Page.show_in_menus property. That is, the 'show in menus' checkbox is checked in the page editor.
+    """
+    inMenu: Boolean
+
+    """Limit a number of resulting objects."""
+    limit: PositiveInt
+
+    """Number of records skipped from the beginning of the results set."""
+    offset: PositiveInt
+
+    """Use the Django queryset order format."""
+    order: String
+
+    """Filter the results using Wagtail's search."""
+    searchQuery: String
+
+    """
+    Specify search operator (and/or), see: https://docs.wagtail.org/en/stable/topics/search/searching.html#search-operator
+    """
+    searchOperator: SearchOperatorEnum = AND
+
+    """Filter by ID"""
+    id: ID
+  ): [PageInterface!]!
+  searchScore: Float
+
+  """The body as StreamField JSON: [{type, value, id}]."""
+  bodyJson: GenericScalar
+}
 
 type CollectionPage implements PageInterface {
   id: ID
@@ -1438,6 +1636,7 @@ type Page implements PageInterface {
   standardpage: StandardPage
   bookpage: BookPage
   chapterpage: ChapterPage
+  landingpage: LandingPage
   pageType: String
   url: String
   parent: PageInterface
@@ -2182,7 +2381,7 @@ type Query {
   related(pageId: Int!, first: Int = 5, kind: String): [Hit]
   entities(pageId: Int!): [EntityType]
   suggestions(pageId: Int!): [SuggestionType]
-  agentRun(id: Int!): AgentRunType
+  agentRun(id: UUID!): AgentRunType
   aiSchema: GenericScalar
 }
 
@@ -2195,7 +2394,7 @@ type Redirect {
   isPermanent: Boolean!
 }
 
-union Search = SiteRootPage | CollectionPage | ArticlePage | StandardPage | BookPage | ChapterPage | Page | ContentImage | ContentRendition | Category | BrandRules | ArticlePageTag
+union Search = LandingPage | SiteRootPage | CollectionPage | ArticlePage | StandardPage | BookPage | ChapterPage | Page | ContentImage | ContentRendition | Category | BrandRules | ArticlePageTag
 
 type Hit {
   page: PageInterface
@@ -2212,7 +2411,7 @@ type EntityType {
 }
 
 type SuggestionType {
-  id: Int
+  id: UUID
   op: String
   blockId: String
   field: String
@@ -2220,11 +2419,11 @@ type SuggestionType {
   rationale: String
   status: String
   agent: String
-  runId: Int
+  runId: UUID
 }
 
 type AgentRunType {
-  id: Int
+  id: UUID
   agent: String
   status: String
   trigger: String
@@ -2246,12 +2445,12 @@ type StepType {
 
 type Mutation {
   requestAgentRun(agent: String!, input: GenericScalar, pageId: Int): RequestAgentRun
-  acceptSuggestion(id: Int, ids: [Int]): AcceptSuggestion
-  rejectSuggestion(id: Int!, reason: String): RejectSuggestion
+  acceptSuggestion(id: UUID, ids: [UUID]): AcceptSuggestion
+  rejectSuggestion(id: UUID!, reason: String): RejectSuggestion
 }
 
 type RequestAgentRun {
-  runId: Int
+  runId: UUID
   status: String
   traceId: String
 }
@@ -2259,7 +2458,7 @@ type RequestAgentRun {
 type AcceptSuggestion {
   ok: Boolean
   revisionId: Int
-  accepted: [Int]
+  accepted: [UUID]
 }
 
 type RejectSuggestion {

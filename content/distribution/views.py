@@ -12,7 +12,6 @@ right the person lacks, 409 with every blocker for a post that may not go now.
 import time
 
 from django.conf import settings
-from django.db import transaction
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -22,17 +21,16 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from wagtail.models import Page
 
 from api.pages import IsPerson, service_errors
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from cms.services import visible_pages
+from ops.errors import Forbidden, NotFound
 from ops.openapi import ERROR_RESPONSES
 
 from . import serializers as s
 from . import services
 from .linkedin import oauth
 from .models import LEDGER_STATES, Channel, DistributionPost, LedgerEntry, Statistic
-from .tasks import check_channel, ingest_statistics
 
 SESSION_KEY = "distribution_oauth"
 
@@ -79,13 +77,7 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
             serializer.save()
 
     def perform_destroy(self, channel):
-        if not services.may_manage(self.request.user):
-            raise Forbidden("removing a channel needs the right to manage channels")
-        if channel.ledger.exclude(urn="").exists():
-            raise Conflict(
-                "this channel has published posts, and its ledger is what keeps them from going twice: disconnect it instead"
-            )
-        channel.delete()
+        services.delete_channel(channel, self.request.user)
 
     @extend_schema(
         request=None,
@@ -117,23 +109,22 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
     @extend_schema(
         request=None,
         responses={202: s.DistributionChannelSerializer, **ERROR_RESPONSES},
-        summary="Ask the target whether the credential works (on the worker); follow the channel",
+        summary="Ask the target whether the credential works (on the worker; people who manage channels)",
     )
     @action(detail=True, methods=["post"])
     def check(self, request, public_id=None):
         channel = self.get_object()
-        transaction.on_commit(lambda: check_channel.delay(channel.pk))
+        services.ask_target(channel, request.user, "check")
         return Response(self.get_serializer(channel).data, status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(
         request=None,
         responses={202: None, **ERROR_RESPONSES},
-        summary="Read the channel's post statistics now (on the worker)",
+        summary="Read the channel's post statistics now (on the worker; people who manage channels)",
     )
     @action(detail=True, methods=["post"])
     def statistics(self, request, public_id=None):
-        channel = self.get_object()
-        transaction.on_commit(lambda: ingest_statistics.delay(channel.pk))
+        services.ask_target(self.get_object(), request.user, "statistics")
         return Response(status=status.HTTP_202_ACCEPTED)
 
     @extend_schema(
@@ -181,8 +172,9 @@ def linkedin_callback(request):
         raise NotFound("no such channel")
     target = f"/studio/distribution/channels/{channel.public_id}"
     if request.query_params.get("error"):
-        reason = request.query_params.get("error_description") or request.query_params["error"]
-        Channel.objects.filter(pk=channel.pk).update(last_error=f"LinkedIn: {reason}"[:1000])
+        services.connect_refused(
+            channel, request.query_params.get("error_description") or request.query_params["error"]
+        )
         return HttpResponseRedirect(target)
     with service_errors():
         services.finish_connect(
@@ -218,7 +210,7 @@ class PostFilter(filters.FilterSet):
         responses={201: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
     ),
     partial_update=extend_schema(
-        summary="Change a post's text; an approved one goes back to draft",
+        summary="Change a post's text; an approved or failed one goes back to draft for a person to approve",
         request=s.DistributionPostEditSerializer,
         responses={200: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
     ),
@@ -255,10 +247,10 @@ class DistributionPostViewSet(
         body.is_valid(raise_exception=True)
         data = body.validated_data
         page = None
-        if data.get("page") is not None:
-            page = Page.objects.filter(pk=data["page"]).first()
+        if data.get("page") is not None:  # a page the person cannot find is a 404, never named
+            page = visible_pages(request.user).filter(pk=data["page"]).first()
             if page is None:
-                raise Invalid("no such page", details=[{"field": "page", "code": "invalid", "message": "unknown"}])
+                raise NotFound(f"no page {data['page']}")
         with service_errors():
             post = services.compose(
                 data["channel"],
@@ -280,11 +272,7 @@ class DistributionPostViewSet(
         return self.respond(post)
 
     def perform_destroy(self, post):
-        if post.status not in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED):
-            raise Conflict(f"a {post.status} post stays in the record; only a draft or a rejected post is deleted")
-        if not services.may_compose(post, self.request.user):
-            raise Forbidden("you may not edit this page, so you may not delete its posts")
-        post.delete()
+        services.delete_post(post, self.request.user)
 
     @extend_schema(
         request=None,
@@ -311,7 +299,10 @@ class DistributionPostViewSet(
     @extend_schema(
         request=s.DistributionPublishSerializer,
         responses={202: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
-        summary="Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go",
+        summary=(
+            "Publish an approved post: 202, the worker sends it — or, for an attempt that is over without its worker "
+            "saying so, the post as it ended; 409 while it is queued or being sent, or with every blocker"
+        ),
     )
     @action(detail=True, methods=["post"])
     def publish(self, request, public_id=None):
@@ -361,7 +352,7 @@ class DistributionLedgerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     filterset_class = LedgerFilter
 
     def get_queryset(self):
-        rows = LedgerEntry.objects.filter(channel__in=Channel.objects.visible_to(self.request.user))
+        rows = LedgerEntry.objects.visible_to(self.request.user)
         order = "posted_at" if self.request.query_params.get("ordering") == "posted_at" else "-posted_at"
         return (
             rows.select_related("channel", "post")

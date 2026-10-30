@@ -8,7 +8,7 @@ Definitions, runs and the one tool registry every surface dispatches through (no
 
 | File | What |
 |---|---|
-| `models.py` | `AgentDefinition` (a snippet with revisions and a draft/live state), `AgentRun`, `AgentStep`, `Memory`, `EvalCase`, `EvalResult`, `AgentToken` |
+| `models.py` | `AgentDefinition` (a snippet with revisions and a draft/live state), `AgentRun` (named everywhere by its UUID `public_id`, its integer key internal — P-D6), `AgentStep`, `Memory`, `EvalCase`, `EvalResult`, `AgentToken` |
 | `principals.py` | `agent:<slug>` users, the `Agents` group and each agent's own group with its Wagtail page and collection permissions |
 | `registry.py` | `@tool`, `Registry.call()` and the six checks it runs on every call — for a call that acts for a person (`ToolContext.on_behalf_of`, set by the AI content layer's runs), a page the tool targets must also be one that person may edit; `Registry.check()` asks the same questions but the rate without calling, for a surface that queues work ending in a call (the AI layer's runs on a page, whose answers it proposes with `content.propose_edit` as the `assistant` agent) |
 | `llm.py` | the model client the runner uses (`get_llm`, `use_llm`): a thin front over the provider registry in `ai/providers/`, which `LLM_BACKEND` names a slug of (`recorded`, `fake`, `litellm`, `anthropic`, `openai`, `claude_code`) — the definitions' LiteLLM-style ids (`anthropic/claude-sonnet-5-5`) reach a vendor adapter bare, and `claude_code`, which has no tool calls, refuses a definition that uses tools; `RecordingLLM` |

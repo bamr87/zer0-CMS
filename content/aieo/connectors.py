@@ -3,12 +3,13 @@ site (in AIEO they returned placeholder rows).
 
 Each is a small client of the vendor's documented REST API over httpx, run only in a worker (aieo/tasks.py), and
 each result is kept as a `ConnectorData` row, which is what priorities and the performance agent read — a sync is
-a cache, as AIEO's `.cache/` files were. The hosts are fixed (Google's and DataForSEO's), never a URL a person gave.
-The credentials are the connector's, decrypted only here and never logged:
+a cache, as AIEO's `.cache/` files were. The hosts are fixed — every URL is a constant of this module, Google's or
+DataForSEO's — never a URL a person gave. The credentials are the connector's, decrypted only here and never logged:
 
 * GA4 and Search Console take a Google service account's JSON key; the client signs a JWT (PyJWT, RS256) and
-  trades it for an access token (`google_token`) — the service account must be added as a user of the GA4
-  property or the Search Console site;
+  trades it for an access token at Google's token endpoint (`google_token`) — always `TOKEN_URI`, whatever the
+  key's own `token_uri` says, since the key is what a person pasted — and the service account must be added as a
+  user of the GA4 property or the Search Console site;
 * DataForSEO takes `login:password` (HTTP basic auth).
 
 Tests answer every request with recorded HTTP (respx).
@@ -66,7 +67,8 @@ def service_account(credential: str) -> dict:
 
 
 def google_token(credential: str, scope: str, client: httpx.Client) -> str:
-    """An access token for a service account: a signed JWT assertion traded at Google's token endpoint."""
+    """An access token for a service account: a signed JWT assertion traded at Google's token endpoint — `TOKEN_URI`,
+    never the key's `token_uri` (the assertion's audience is `TOKEN_URI` in any case)."""
     key = service_account(credential)
     now = int(time.time())
     claims = {"iss": key["client_email"], "scope": scope, "aud": TOKEN_URI, "iat": now, "exp": now + 3600}
@@ -75,9 +77,7 @@ def google_token(credential: str, scope: str, client: httpx.Client) -> str:
     except (ValueError, jwt.PyJWTError) as e:
         raise ConnectorError("the service account's private key cannot sign") from e
     grant = {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": assertion}
-    return _answer(client.post(key.get("token_uri") or TOKEN_URI, data=grant), "Google's token endpoint")[
-        "access_token"
-    ]
+    return _answer(client.post(TOKEN_URI, data=grant), "Google's token endpoint")["access_token"]
 
 
 def _window(options: dict) -> tuple[str, str]:

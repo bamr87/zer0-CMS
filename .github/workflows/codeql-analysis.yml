@@ -8,12 +8,68 @@
 # and Java, so it did nothing for either language here.
 name: "CodeQL"
 
+# `build-mode: none` means CodeQL extracts straight from the source files of the
+# two languages below and nothing else, so a change touching none of them
+# produces a byte-identical analysis to the run before it. Half of this
+# repository's pull requests are exactly that — the content plane is Python,
+# which is not a language scanned here, and the docs, schemas and recordings are
+# not code at all — so the event triggers are filtered to the extensions the two
+# extractors read. The weekly `schedule:` below is the backstop: it scans the
+# whole tree regardless of what changed, so nothing stays unscanned for longer
+# than seven days even if this list is ever incomplete. The two lists are
+# written out twice because GitHub's workflow parser does not accept YAML
+# anchors; keep them identical, and keep both in step with the matrix — a new
+# language needs its extensions added.
 on:
   push:
     branches: [main]
+    paths:
+      # javascript-typescript
+      - "**/*.js"
+      - "**/*.cjs"
+      - "**/*.mjs"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.jsx"
+      - "**/*.vue"
+      - "**/*.html"
+      - "**/package.json"
+      - "**/package-lock.json"
+      # ruby
+      - "**/*.rb"
+      - "**/*.erb"
+      - "**/*.rake"
+      - "**/*.gemspec"
+      - "**/Gemfile"
+      - "**/Gemfile.lock"
+      - "**/Rakefile"
+      # and the gate itself
+      - ".github/workflows/codeql-analysis.yml"
   pull_request:
     # The branches below must be a subset of the branches above.
     branches: [main]
+    paths:
+      # javascript-typescript
+      - "**/*.js"
+      - "**/*.cjs"
+      - "**/*.mjs"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.jsx"
+      - "**/*.vue"
+      - "**/*.html"
+      - "**/package.json"
+      - "**/package-lock.json"
+      # ruby
+      - "**/*.rb"
+      - "**/*.erb"
+      - "**/*.rake"
+      - "**/*.gemspec"
+      - "**/Gemfile"
+      - "**/Gemfile.lock"
+      - "**/Rakefile"
+      # and the gate itself
+      - ".github/workflows/codeql-analysis.yml"
   schedule:
     - cron: "24 14 * * 5"
 
@@ -28,6 +84,9 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    # Each language analyses in about a minute; anything approaching this is a
+    # wedged extractor, not a slow scan, and the default is six hours.
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read

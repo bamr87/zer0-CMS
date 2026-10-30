@@ -6,18 +6,22 @@ GitHub repository as a pull request, and a newsroom newsletter by email.
   user's application password, as a draft unless the channel says otherwise,
   with the Yoast title and meta description AIEO's plugin exposes
   (`yoast_title`, `yoast_metadesc`). The site's address is a person's input, so
-  every request goes through the research library's SSRF guard
-  (`research.fetch.pinned`: public addresses only, the connection pinned to
-  the address checked) and follows no redirect.
+  every request goes through the research library's fetcher (`research.fetch.
+  send`: public addresses only, the connection pinned to the address checked,
+  one deadline, a size cap, no redirect followed), and only over https — the
+  application password is a credential.
 * **GitHub pull request** (absorbed from barodybroject's
   `push_to_github_and_create_pr`): the page exported as its Jekyll file
   (`exporters.jekyll`) onto a branch, and a pull request — with PyGithub, and a
-  sentence a person can act on for a 401, 403, 404, 422 and a pull request that
-  is already open. Only a 404 means "not there yet": anything else is reported
-  as itself, never answered with a second, unrelated write.
+  sentence a person can act on for a 401, 403, 404, 422, a pull request that
+  is already open and a request GitHub never answered (PyGithub lets
+  `requests`' own errors through). Only a 404 means "not there yet": anything
+  else is reported as itself, never answered with a second, unrelated write.
 * **Email**: the newsroom's newsletters (`newsroom.services`, django-anymail)
   — an issue of the channel's newsletter carrying the story, sent as the
-  newsroom sends every issue. Nothing about sending mail is duplicated here.
+  newsroom sends every issue; the post follows the issue until the newsroom
+  has sent it, and publishing again resumes the same issue. Nothing about
+  sending mail is duplicated here.
 
 Each raises `TransportError`, whose message is safe to show; `doubt` says the
 target may have acted anyway (a 5xx or a dropped connection after a write), so
@@ -26,18 +30,21 @@ the ledger marks the attempt unconfirmed.
 
 import base64
 import functools
+import json
+from contextlib import contextmanager
+from http import HTTPStatus
 
 import httpx
 import markdown
-from django.conf import settings
+import requests
 
-from exporters.jekyll import path_for, render
+from exporters.jekyll import file_of
 from importers.markdown import from_blocks
-from importers.models import ImportedSource
 from research import fetch
 
-TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 WP_STATUSES = ("draft", "pending", "private", "publish")
+# Failures before a request could be written: nothing reached the target, so nothing may have been published.
+NEVER_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout, httpx.UnsupportedProtocol)
 
 
 class TransportError(Exception):
@@ -51,32 +58,36 @@ class TransportError(Exception):
 
 def _wordpress(channel, credentials, method: str, path: str, body=None) -> dict:
     base = str(channel.setting("url")).rstrip("/")
+    if not base.startswith("https://"):
+        raise TransportError(
+            f"WordPress at {base} is not https: an application password never travels in the clear — set the "
+            "channel's https address"
+        )
     url = f"{base}/wp-json/wp/v2/{path}"
     try:
-        target, host, name = fetch.pinned(url)
+        fetch.pinned(url)  # the guard first: an address it refuses is never reached, so nothing is in doubt
     except fetch.FetchError as e:
         raise TransportError(f"WordPress at {base} cannot be reached: {e}") from e
     user = f"{channel.setting('username')}:{credentials.get('application_password', '')}"
-    headers = {
-        "Host": host,
-        "Accept": "application/json",
-        "User-Agent": settings.RESEARCH_USER_AGENT,
-        "Authorization": "Basic " + base64.b64encode(user.encode()).decode(),
-    }
+    headers = {"Accept": "application/json", "Authorization": "Basic " + base64.b64encode(user.encode()).decode()}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
     try:
-        with httpx.Client(trust_env=False, follow_redirects=False, timeout=TIMEOUT) as http:
-            response = http.request(method, target, json=body, headers=headers, extensions={"sni_hostname": name})
-    except httpx.HTTPError as e:
-        raise TransportError(f"WordPress at {base} did not answer ({type(e).__name__})", doubt=method != "GET") from e
+        response = fetch.send(method, url, body=json.dumps(body).encode() if body is not None else b"", headers=headers)
+    except fetch.FetchError as e:
+        # A write whose request may have reached WordPress may have published; one whose connection never opened
+        # did not.
+        doubt = method != "GET" and not isinstance(e.__cause__, NEVER_SENT)
+        raise TransportError(f"WordPress at {base} did not answer: {e}", doubt=doubt) from e
     try:
-        data = response.json()
+        data = json.loads(response.body or b"null")
     except ValueError:
         data = {}
-    if response.is_success:
+    status = response.status
+    if 200 <= status < 300:
         return data if isinstance(data, dict) else {}
-    said = (data.get("message") if isinstance(data, dict) else "") or response.reason_phrase
-    status = response.status_code
-    if response.has_redirect_location:
+    said = (data.get("message") if isinstance(data, dict) else "") or _phrase(status)
+    if 300 <= status < 400 and response.headers.get("location"):
         raise TransportError(
             f"WordPress answered with a redirect to {response.headers['location']}: set the channel's address to it"
         )
@@ -86,6 +97,13 @@ def _wordpress(channel, credentials, method: str, path: str, body=None) -> dict:
         404: f"There is no WordPress REST API at {base}/wp-json/ (404): check the site's address.",
     }
     raise TransportError(messages.get(status, f"WordPress refused the post ({status}): {said}"), doubt=status >= 500)
+
+
+def _phrase(status: int) -> str:
+    try:
+        return HTTPStatus(status).phrase
+    except ValueError:
+        return f"HTTP {status}"
 
 
 def page_html(page) -> str:
@@ -142,22 +160,15 @@ def _github_message(exc, *, action: str, repo: str, base: str) -> str:
     return f"Could not {action}: GitHub returned an error ({status}). {_github_detail(exc)}"
 
 
-def exported_file(page) -> tuple[str, str]:
-    """(path in the site, text): the stored source of an unchanged imported page, byte for byte, else the page
-    rendered — what `export_jekyll` writes for it."""
-    from cms.models import SiteRootPage
-    from newsroom.services import with_front_matter
-
-    page = page.specific
-    root = page.get_ancestors(inclusive=True).type(SiteRootPage).last()
-    if root is None:
-        raise TransportError("the page is not in a site that exports to Jekyll files")
-    root = root.specific
-    source = ImportedSource.objects.filter(page_id=page.pk).first()
-    unchanged = source is not None and page.compute_content_hash() == source.import_hash
-    if unchanged and page.pk not in with_front_matter():
-        return path_for(page, root), source.source_text
-    return path_for(page, root), render(page)
+@contextmanager
+def _answered(action: str, *, doubt: bool = False):
+    """A request GitHub never answered — PyGithub lets `requests`' own errors (a dropped connection, a timeout)
+    through — as a sentence. Only the pull request is the publish, so only it is doubted: the branch is the post's
+    own (`distribute/<post>`), so writing it again is harmless."""
+    try:
+        yield
+    except requests.RequestException as e:
+        raise TransportError(f"Could not {action}: GitHub did not answer ({type(e).__name__}).", doubt=doubt) from e
 
 
 def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
@@ -167,41 +178,46 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
     base = str(channel.setting("branch", "main"))
     directory = str(channel.setting("directory")).strip("/")
     describe = functools.partial(_github_message, repo=repo_name, base=base)
-    path, text = exported_file(page)
+    try:
+        file = file_of(page.specific)  # what a write-back writes for it
+    except ValueError as e:
+        raise TransportError(str(e)) from e
+    path, text = file.rel, file.text
     repo_path = f"{directory}/{path}" if directory else path
     branch = f"distribute/{post.public_id.hex[:12]}"
 
     hub = Github(auth=Auth.Token(credentials.get("token", "")), retry=None, timeout=20)
-    try:
-        repo = hub.get_repo(repo_name)
-        head = repo.get_branch(base)
-    except GithubException as e:
-        raise TransportError(describe(e, action=f"open the repository {repo_name}")) from e
-    try:
-        repo.get_branch(branch)
-    except GithubException as e:
-        # Only a 404 means "the branch is not there yet": a 401 or a rate-limit 403 must not be answered by
-        # creating one.
-        if e.status != 404:
-            raise TransportError(describe(e, action=f"look up the branch {branch}")) from e
+    with _answered(f"write {repo_path} to the branch {branch} of {repo_name}"):
         try:
-            repo.create_git_ref(ref=f"refs/heads/{branch}", sha=head.commit.sha)
-        except GithubException as create_error:
-            raise TransportError(describe(create_error, action=f"create the branch {branch}")) from create_error
-    try:
-        existing = repo.get_contents(repo_path, ref=branch)
-    except GithubException as e:
-        if e.status != 404:
-            raise TransportError(describe(e, action=f"read {repo_path} in {repo_name}")) from e
-        existing = None
-    message = f"{'Update' if existing else 'Add'} {post.title or path}"
-    try:
-        if existing is None:
-            repo.create_file(path=repo_path, message=message, content=text, branch=branch)
-        else:
-            repo.update_file(path=repo_path, message=message, content=text, sha=existing.sha, branch=branch)
-    except GithubException as e:
-        raise TransportError(describe(e, action=f"write {repo_path} in {repo_name}")) from e
+            repo = hub.get_repo(repo_name)
+            head = repo.get_branch(base)
+        except GithubException as e:
+            raise TransportError(describe(e, action=f"open the repository {repo_name}")) from e
+        try:
+            repo.get_branch(branch)
+        except GithubException as e:
+            # Only a 404 means "the branch is not there yet": a 401 or a rate-limit 403 must not be answered by
+            # creating one.
+            if e.status != 404:
+                raise TransportError(describe(e, action=f"look up the branch {branch}")) from e
+            try:
+                repo.create_git_ref(ref=f"refs/heads/{branch}", sha=head.commit.sha)
+            except GithubException as create_error:
+                raise TransportError(describe(create_error, action=f"create the branch {branch}")) from create_error
+        try:
+            existing = repo.get_contents(repo_path, ref=branch)
+        except GithubException as e:
+            if e.status != 404:
+                raise TransportError(describe(e, action=f"read {repo_path} in {repo_name}")) from e
+            existing = None
+        message = f"{'Update' if existing else 'Add'} {post.title or path}"
+        try:
+            if existing is None:
+                repo.create_file(path=repo_path, message=message, content=text, branch=branch)
+            else:
+                repo.update_file(path=repo_path, message=message, content=text, sha=existing.sha, branch=branch)
+        except GithubException as e:
+            raise TransportError(describe(e, action=f"write {repo_path} in {repo_name}")) from e
     body = "\n\n".join(
         p
         for p in (
@@ -212,7 +228,8 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
         if p
     )
     try:
-        pull = repo.create_pull(title=post.title or f"Publish {path}", body=body, head=branch, base=base)
+        with _answered(f"open the pull request for {branch}", doubt=True):
+            pull = repo.create_pull(title=post.title or f"Publish {path}", body=body, head=branch, base=base)
     except GithubException as e:
         if e.status == 422:
             url = _open_pull(repo, branch, base)
@@ -235,7 +252,7 @@ def _open_pull(repo, branch: str, base: str) -> str | None:
 
     try:
         return next((p.html_url for p in repo.get_pulls(state="open", base=base) if p.head.ref == branch), None)
-    except GithubException:
+    except (GithubException, requests.RequestException):
         return None
 
 
@@ -245,9 +262,10 @@ def github_check(channel, credentials: dict) -> dict:
     repo_name = str(channel.setting("repo"))
     hub = Github(auth=Auth.Token(credentials.get("token", "")), retry=None, timeout=20)
     try:
-        login = hub.get_user().login
-        repo = hub.get_repo(repo_name)
-        can_push = bool(getattr(repo.permissions, "push", False))
+        with _answered(f"read {repo_name}"):
+            login = hub.get_user().login
+            repo = hub.get_repo(repo_name)
+            can_push = bool(getattr(repo.permissions, "push", False))
     except GithubException as e:
         raise TransportError(_github_message(e, action=f"read {repo_name}", repo=repo_name, base="")) from e
     problems = [] if can_push else [f"{login} may not push to {repo_name}: pull requests cannot be opened"]
@@ -257,7 +275,11 @@ def github_check(channel, credentials: dict) -> dict:
 # ── email: a newsroom newsletter ────────────────────────────────────────────
 
 
-def email_publish(channel, post, user) -> tuple[str, str]:
+def email_publish(channel, post, user):
+    """The post as an issue of the channel's newsletter, handed to the newsroom to send (its worker marks the issue
+    sent or failed, and sends a failed one again only to those who have not had it). The issue is linked to the post
+    before it can go, so the post follows it whatever happens next; publishing again resumes the same issue, with
+    the post's approved text while nobody has had it yet."""
     from newsroom import services as newsroom
     from newsroom.models import Issue
     from ops.errors import ApiError
@@ -268,13 +290,25 @@ def email_publish(channel, post, user) -> tuple[str, str]:
         raise TransportError(
             "email goes out as a newsletter issue, which carries newsroom stories: this is not a story"
         )
-    issue = Issue.objects.create(
-        newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
-    )
+    issue, made = post.issue, post.issue is None
+    if not made and issue.status == Issue.Status.SENT:
+        return issue  # it went: the post follows it
+    if made:
+        issue = Issue.objects.create(
+            newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
+        )
+    elif not issue.deliveries.exists():  # nobody has had it: it carries the text a person approved last
+        issue.subject, issue.intro = post.title[:200], post.commentary
+        issue.save(update_fields=["subject", "intro", "updated_at"])
     try:
-        newsroom.set_issue_stories(issue, [post.story])
+        if made:
+            newsroom.set_issue_stories(issue, [post.story])
         newsroom.send_issue(issue, user=user)
     except ApiError as e:
-        issue.delete()
+        if made:
+            issue.delete()
         raise TransportError(f"The newsletter refused the issue: {e.message}") from e
-    return str(issue.public_id), ""
+    if made:
+        post.issue = issue
+        post.save(update_fields=["issue", "updated_at"])
+    return issue

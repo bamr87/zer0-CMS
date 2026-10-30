@@ -160,12 +160,11 @@ services:
       # the worker, which runs their sync and write-back jobs, mounts it writable.
       SITES_DIR: /sites
       # Distribution (content/distribution/README.md): the LinkedIn app lets a
-      # person connect a channel, LINKEDIN_ACCESS_TOKEN serves a LinkedIn
-      # channel with no token of its own, and nothing goes out to a kind unless
-      # its switch is 1 here and a person armed the channel.
+      # person connect a channel (each publishes with its own token), and
+      # nothing goes out to a kind unless its switch is 1 here and a person
+      # armed the channel.
       LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
       LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
-      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
       ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
       ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
       ZER0_WORDPRESS_PUBLISH: ${ZER0_WORDPRESS_PUBLISH:-}
@@ -278,8 +277,9 @@ services:
   # that drafts automatically (distribution/consumers.py), and an event fires the automations waiting for it
   # (content/automations/README.md). Whichever process reads an event first runs every handler for it, once
   # (outbox/consumers.py), the outbox desk's included, so this one mounts the belt as belt-publisher does: a handoff
-  # written anywhere else is lost. Restarted if it stops: without it, event automations are accepted and enabled but
-  # never fire.
+  # written anywhere else is lost. A draft post is keyed by the URL Jekyll gives its page, read from the site's
+  # _config.yml, so it mounts the sites read-only as the content service does. Restarted if it stops: without it,
+  # event automations are accepted and enabled but never fire.
   events:
     profiles: ["content"]
     build: *content-build
@@ -287,6 +287,7 @@ services:
     restart: unless-stopped
     environment: *content-env
     volumes:
+      - ${SITES_DIR:-.}:/sites:ro
       - outbox-data:/app/content/var/outbox
     labels: *content-labels
     logging: *fleet-logging

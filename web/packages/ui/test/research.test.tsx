@@ -17,7 +17,7 @@ import { ResearchBrief } from '../src/research/ResearchBrief';
 import { fakePlatform, renderUi, type Call } from '../../../test/harness';
 
 const page = (results: unknown[]) => ({ next: null, previous: null, results });
-const run = (id: number, status = 'queued') => ({ id, status, links: { self: `/api/v2/agent-runs/${id}/`, stream: `/api/v2/agent-runs/${id}/stream/` } });
+const run = (id: string, status = 'queued') => ({ id, status, links: { self: `/api/v2/agent-runs/${id}/`, stream: `/api/v2/agent-runs/${id}/stream/` } });
 const owned = { owner: 'editor', site: null, visibility: 'private', created_at: '2026-10-22T09:00:00Z', updated_at: '2026-10-22T09:00:00Z' };
 
 const source = (rest: Record<string, unknown> = {}) => ({
@@ -40,7 +40,7 @@ const source = (rest: Record<string, unknown> = {}) => ({
   summary: 'Nightly backups save small sites.',
   entities: [{ name: 'Ada Lovelace', kind: 'person' }],
   highlights: ['A nightly backup to a second disk costs almost nothing.'],
-  summary_run: run(30, 'succeeded'),
+  summary_run: run('r30', 'succeeded'),
   feed: null,
   ...rest,
 });
@@ -146,8 +146,8 @@ describe('<CaptureSource>', () => {
     const { api, calls } = fakePlatform({
       'POST /api/v2/research/sources/': () => source({ status: 'pending' }),
       'POST /api/v2/research/sources/upload/': () => source({ kind: 'document' }),
-      'POST /api/v2/research/sources/search/': () => ({ run: run(41) }),
-      'GET /api/v2/agent-runs/41/': () => ({ id: 41, status: 'succeeded', is_final: true, output: {}, error: '' }),
+      'POST /api/v2/research/sources/search/': () => ({ run: run('r41') }),
+      'GET /api/v2/agent-runs/r41/': () => ({ id: 'r41', status: 'succeeded', is_final: true, output: {}, error: '' }),
     });
     const { container } = renderUi(<CaptureSource collection="c1" />, { api });
     await userEvent.type(screen.getByLabelText('Page address'), 'https://example.com/backups');
@@ -169,7 +169,7 @@ describe('<CaptureSource>', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Search the web' }));
     await userEvent.type(screen.getByLabelText('Search for'), 'nightly backups');
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
-    await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/agent-runs/41/')).toBe(true));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/agent-runs/r41/')).toBe(true));
     expect(posts(calls).at(-1)?.body).toEqual({ query: 'nightly backups', max_results: 5, collection: 'c1' });
   });
 });
@@ -201,7 +201,7 @@ describe('<SourceView>', () => {
       'GET /api/v2/research/quotes/': () => page([]),
       'GET /api/v2/research/citations/': () => page([{ id: 'x1', source: 's1', source_title: 'Backups explained', source_url: '', quote: null, page: 5, page_title: 'Nightly backups', brief: null, note: '', created_by: 'editor', created_at: '' }]),
       'GET /api/v2/content/pages/': () => ({ count: 0, next: null, previous: null, results: [] }),
-      'POST /api/v2/research/sources/s1/summarize/': () => ({ source: source(), run: run(31) }),
+      'POST /api/v2/research/sources/s1/summarize/': () => ({ source: source(), run: run('r31') }),
       'POST /api/v2/research/quotes/': () => ({ id: 'q1', source: 's1', text: 'A nightly backup', note: '', location: '', owner: 'editor', created_at: '' }),
     });
     const { go } = renderUi(<SourceView sourceId="s1" />, { api });
@@ -232,11 +232,11 @@ describe('<AskPanel>', () => {
       ],
       status: 'ready',
       error: '',
-      run: run(33, 'succeeded'),
+      run: run('r33', 'succeeded'),
     };
     const { api, calls } = fakePlatform({
       'GET /api/v2/research/questions/': () => page([answered]),
-      'POST /api/v2/research/questions/': () => ({ question: { ...answered, status: 'pending', answer: '' }, run: run(34) }),
+      'POST /api/v2/research/questions/': () => ({ question: { ...answered, status: 'pending', answer: '' }, run: run('r34') }),
     });
     const { go } = renderUi(<AskPanel collection="c1" />, { api });
     const card = await screen.findByRole('article', { name: 'How often should we back up?' });
@@ -255,11 +255,11 @@ describe('<ResearchBrief>', () => {
   it('writes a research brief from a collection as a run, shows it, and keeps it as a note', async () => {
     let final = false;
     const { api, calls } = fakePlatform({
-      'POST /api/v2/research/collections/c1/research-brief/': () => ({ run: run(50) }),
-      'GET /api/v2/agent-runs/50/': () =>
+      'POST /api/v2/research/collections/c1/research-brief/': () => ({ run: run('r50') }),
+      'GET /api/v2/agent-runs/r50/': () =>
         final
-          ? { id: 50, status: 'succeeded', is_final: true, output: { markdown: '## Target intent\n\nRestore with confidence.' }, error: '' }
-          : { id: 50, status: 'running', is_final: false, output: {}, error: '' },
+          ? { id: 'r50', status: 'succeeded', is_final: true, output: { markdown: '## Target intent\n\nRestore with confidence.' }, error: '' }
+          : { id: 'r50', status: 'running', is_final: false, output: {}, error: '' },
       'POST /api/v2/research/sources/': () => source({ kind: 'note' }),
     });
     renderUi(<ResearchBrief collection="c1" />, { api });
@@ -290,15 +290,15 @@ describe('<PageResearch>', () => {
       collection: null,
       summary: 'One claim is wrong.',
       findings: [
-        { block: 'b1', claim: 'Back up weekly', verdict: 'contradicted', explanation: 'The guide says nightly.', find: 'weekly', replace: 'nightly', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 77, error: '' },
-        { block: 'b1', claim: 'Keep one copy', verdict: 'contradicted', explanation: 'It says two.', find: 'one copy', replace: 'two copies', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 77, error: '' },
+        { block: 'b1', claim: 'Back up weekly', verdict: 'contradicted', explanation: 'The guide says nightly.', find: 'weekly', replace: 'nightly', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 's77', error: '' },
+        { block: 'b1', claim: 'Keep one copy', verdict: 'contradicted', explanation: 'It says two.', find: 'one copy', replace: 'two copies', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 's77', error: '' },
         { block: 'b2', claim: 'Keep two copies', verdict: 'supported', explanation: 'It says so.', find: '', replace: '', sources: [], suggestion: null, error: '' },
       ],
       sources: [{ id: 's1', title: 'Backups explained', cited: true }],
       left_out: 3,
       status: 'ready',
       error: '',
-      run: run(9, 'succeeded'),
+      run: run('r9', 'succeeded'),
     };
     const { api, calls } = fakePlatform({
       'GET /api/v2/research/citations/': () => page([]),
@@ -306,7 +306,7 @@ describe('<PageResearch>', () => {
       'GET /api/v2/research/collections/': () => page([]),
       'GET /api/v2/research/fact-checks/': () => page([check]),
       'POST /api/v2/research/citations/': () => ({ id: 'x1', source: 's1', source_title: 'Backups explained', source_url: '', quote: null, page: 5, page_title: 'Nightly backups', brief: null, note: '', created_by: 'editor', created_at: '' }),
-      'POST /api/v2/research/fact-checks/': () => ({ fact_check: { ...check, status: 'pending', findings: [] }, run: run(10) }),
+      'POST /api/v2/research/fact-checks/': () => ({ fact_check: { ...check, status: 'pending', findings: [] }, run: run('r10') }),
     });
     const { go } = renderUi(<PageResearch pageId={5} pageTitle="Nightly backups" />, { api });
     const findings = await screen.findByLabelText('Findings');
@@ -314,7 +314,7 @@ describe('<PageResearch>', () => {
     expect(within(findings).getByText('Suggested: “weekly” → “nightly”')).toBeInTheDocument();
     expect(within(findings).getByLabelText('Sources read')).toHaveTextContent('Read 1 source (1 cited by the draft): Backups explained. 3 more were left out');
     await userEvent.click(within(findings).getByRole('button', { name: 'Review 1 suggested correction' }));
-    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 9 });
+    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 'r9' });
     await userEvent.click(screen.getByLabelText('Cite a source', { selector: 'input' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Backups explained' }));
     await userEvent.click(screen.getByRole('button', { name: 'Cite' }));

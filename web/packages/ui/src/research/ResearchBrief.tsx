@@ -14,7 +14,7 @@ export function ResearchBrief({ collection }: { collection: string }) {
   const api = useApi();
   const qc = useQueryClient();
   const [topic, setTopic] = useState('');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const run = useRun(runId);
   const markdown = String(field(run.data?.output, 'markdown') ?? '');
   const write = useMutation({

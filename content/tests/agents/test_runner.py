@@ -80,7 +80,7 @@ def test_a_finished_run_emits_agent_run_completed_with_its_trace(agent, article)
     with trace("4bf92f3577b34da6a3ce929d0e0e4736"):
         run = run_with(FakeLLM([Completion(text="nothing to do")]), agent("seo"), article)
     assert run.trace_id == "4bf92f3577b34da6a3ce929d0e0e4736"
-    event = OutboxEvent.objects.get(type="agent.run.completed", subject=f"run:{run.pk}")
+    event = OutboxEvent.objects.get(type="agent.run.completed", subject=f"run:{run.public_id}")
     assert event.data["status"] == "succeeded" and event.trace_id == run.trace_id
     assert event.envelope()["traceparent"].split("-")[1] == run.trace_id
 

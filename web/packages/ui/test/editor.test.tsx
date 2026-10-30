@@ -125,7 +125,7 @@ describe('<PageEditor>', () => {
       previous: null,
       results: [
         {
-          id: 1,
+          id: 's1',
           op: 'meta',
           block_id: '',
           field: 'seo_title',
@@ -133,7 +133,7 @@ describe('<PageEditor>', () => {
           rationale: '',
           status: 'pending',
           agent: 'seo',
-          run_id: 7,
+          run_id: '7d1c5e3a-2b4f-4c6d-8e9f-0a1b2c3d4e5f',
           created_at: '2026-10-21T09:00:00Z',
           target: { type: 'page', id: 5, title: 'Nightly backups' },
           change: { kind: 'field', label: 'seo_title', before: '', after: 'Backups', stale: false },
@@ -149,7 +149,7 @@ describe('<PageEditor>', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Suggestions (1)' }));
     expect(await screen.findByText(/save them before accepting/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Accept all 1 shown of run #7' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Accept all 1 shown of run 7d1c5e3a' })).toBeDisabled();
   });
 
   it('takes down a live page on a schedule without a go-live time', async () => {

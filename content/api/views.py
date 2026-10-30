@@ -14,7 +14,8 @@ traceback in the log, never in the response.
 `/api/v2/agents/<slug>/runs` is the note's per-agent alias (§7);
 `/api/v2/graph/{neighbors,path,related,search}/` read the graph;
 `/api/v2/suggestions/` lists, accepts and rejects; `/api/v2/tools/` lists the
-registry. Each view calls the same service functions as GraphQL and the admin,
+registry. A run and a suggestion are named by their UUID public ids, in a path,
+a body and an answer alike; their integer keys never leave the platform (P-D6). Each view calls the same service functions as GraphQL and the admin,
 reads rows through the one scope (`AgentRun.objects.visible_to`,
 `Suggestion.objects.visible_to`), and raises every failure (`ops.errors`) so
 the one envelope answers it. The studio's endpoints live beside these:
@@ -156,7 +157,7 @@ class ContentGraphQLView(GraphQLView):
 
 def run_json(run: AgentRun, steps=False) -> dict:
     data = {
-        "id": run.pk,
+        "id": str(run.public_id),
         "agent": run.agent.slug,
         "status": run.status,
         "is_final": run.is_final,
@@ -171,7 +172,7 @@ def run_json(run: AgentRun, steps=False) -> dict:
         "schema_version": run.schema_version,
         "created_at": run.created_at.isoformat(),
         "finished_at": run.finished_at.isoformat() if run.finished_at else None,
-        "links": {"self": f"/api/v2/agent-runs/{run.pk}/", "stream": f"/api/v2/agent-runs/{run.pk}/stream/"},
+        "links": run.links,
     }
     if steps:
         data["steps"] = [step_json(s) for s in run.steps.all()]
@@ -246,8 +247,13 @@ def agent_runs_for(request, slug):
     return _create_run(request, slug)
 
 
-def _readable_run(request, pk):
-    return AgentRun.objects.visible_to(request.user).select_related("agent", "target_ct").filter(pk=pk).first()
+def _readable_run(request, public_id):
+    return (
+        AgentRun.objects.visible_to(request.user)
+        .select_related("agent", "target_ct")
+        .filter(public_id=public_id)
+        .first()
+    )
 
 
 @extend_schema(
@@ -257,8 +263,8 @@ def _readable_run(request, pk):
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def agent_run(request, pk):
-    run = _readable_run(request, pk)
+def agent_run(request, public_id):
+    run = _readable_run(request, public_id)
     if run is None:
         raise NotFound("not found")
     return Response(run_json(run, steps=True))
@@ -274,9 +280,9 @@ def agent_run(request, pk):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 @renderer_classes([JSONRenderer, EventStreamRenderer])
-def agent_run_stream(request, pk):
+def agent_run_stream(request, public_id):
     """Server-sent events: each step as it lands, then the final status."""
-    run = _readable_run(request, pk)
+    run = _readable_run(request, public_id)
     if run is None:
         raise NotFound("not found")
     timeout = min(float(request.query_params.get("timeout", 60)), 300)
@@ -292,7 +298,7 @@ def agent_run_stream(request, pk):
                 yield f"event: step\ndata: {json.dumps(step_json(step), default=str)}\n\n"
             if current.is_final or time.monotonic() > deadline:
                 status = {
-                    "id": current.pk,
+                    "id": str(current.public_id),
                     "status": current.status,
                     "is_final": current.is_final,
                     "error": current.error,
@@ -423,7 +429,7 @@ def graph_search(request):
 
 def suggestion_json(s: Suggestion) -> dict:
     return {
-        "id": s.pk,
+        "id": str(s.public_id),
         "op": s.op,
         "block_id": s.block_id,
         "field": s.field,
@@ -431,7 +437,7 @@ def suggestion_json(s: Suggestion) -> dict:
         "rationale": s.rationale,
         "status": s.status,
         "agent": s.agent.slug if s.agent else None,
-        "run_id": s.run_id,
+        "run_id": str(s.run.public_id) if s.run else None,
     }
 
 
@@ -455,7 +461,7 @@ def suggestions(request):
     request=inline_serializer(
         "SuggestionDecision",
         {
-            "with": serializers.ListField(child=serializers.IntegerField(), required=False),
+            "with": serializers.ListField(child=serializers.UUIDField(), required=False),
             "reason": serializers.CharField(required=False, allow_blank=True),
         },
     ),
@@ -473,15 +479,15 @@ def suggestions(request):
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def suggestion_decide(request, pk, decision):
+def suggestion_decide(request, public_id, decision):
     visible = Suggestion.objects.visible_to(request.user)
-    suggestion = visible.filter(pk=pk).first()
+    suggestion = visible.filter(public_id=public_id).first()
     if suggestion is None or decision not in ("accept", "reject"):
         raise NotFound("not found")
     with service_errors(), transaction.atomic():
         if decision == "accept":
-            wanted = set(request.data.get("with", []))
-            extra = list(visible.filter(pk__in=wanted))
+            wanted = {str(i) for i in request.data.get("with", [])}  # not a UUID: 422, from service_errors
+            extra = list(visible.filter(public_id__in=wanted))
             if len(extra) != len(wanted):
                 raise NotFound("not found")
             result = accept([suggestion, *extra], request.user)

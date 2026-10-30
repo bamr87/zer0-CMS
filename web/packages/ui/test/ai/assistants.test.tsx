@@ -8,9 +8,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { AssistantEditor, AssistantList } from '../../src';
+import { AssistantEditor, AssistantList, shortId } from '../../src';
 import { fakePlatform, renderUi } from '../../../../test/harness';
-import { agentRun, assistant, EMPTY, liveStream, page, runRef, schema } from './fixtures';
+import { agentRun, assistant, EMPTY, liveStream, page, RUN, runRef, schema } from './fixtures';
 
 const lists = {
   'GET /api/v2/ai/providers/': () => EMPTY,
@@ -84,14 +84,14 @@ describe('<AssistantEditor>', () => {
     const { api, calls } = fakePlatform({
       ...lists,
       'GET /api/v2/ai/assistants/a1/': () => assistant(),
-      'POST /api/v2/ai/assistants/a1/run/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () =>
+      'POST /api/v2/ai/assistants/a1/run/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () =>
         agentRun(status, { text: '{"headline": "Cats win"}', markdown: '## Cats win\n\nThe sofa is theirs.', json: { headline: 'Cats win' }, provider: 'fake', model: 'fake-1' }),
     });
     renderUi(<AssistantEditor id="a1" />, { api, stream });
     await userEvent.type(await screen.findByLabelText('Prompt'), 'cats');
     await userEvent.click(screen.getByRole('button', { name: 'Run' }));
-    expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
+    expect(await screen.findByRole('status', { name: `Run ${shortId(RUN)}` })).toHaveTextContent('running');
     expect(calls.find((c) => c.path === '/api/v2/ai/assistants/a1/run/')?.body).toEqual({ prompt: 'cats', suggest: false, block_id: '', selection: '' });
     expect(calls.find((c) => c.path === '/api/v2/ai/assistants/a1/run/')?.idempotencyKey).toBeTruthy();
     await waitFor(() => expect(stream).toHaveBeenCalled());

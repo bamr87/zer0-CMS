@@ -29,6 +29,7 @@ jobs:
   engine:
     name: Story engine (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -52,6 +53,7 @@ jobs:
   content:
     name: ABC books match their spec
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: sites/drsai
@@ -67,6 +69,7 @@ jobs:
   site:
     name: Jekyll build (the Jekyll-theme option)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:

@@ -10,12 +10,12 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { PageEditor } from '../../src';
+import { PageEditor, shortId } from '../../src';
 import { fakePlatform, pageDetail, renderUi, type Handler } from '../../../../test/harness';
-import { agentRun, assistant, EMPTY, liveStream, page, runRef } from './fixtures';
+import { agentRun, assistant, EMPTY, liveStream, page, RUN, runRef } from './fixtures';
 
 const SUGGESTION = {
-  id: 41,
+  id: 's41',
   op: 'insert',
   block_id: '',
   field: '',
@@ -23,7 +23,7 @@ const SUGGESTION = {
   rationale: 'Headliner: Add a summary',
   status: 'pending',
   agent: 'assistant',
-  run_id: 9,
+  run_id: RUN,
   created_at: '2026-10-22T09:00:00Z',
   target: { type: 'page', id: 5, title: 'Nightly backups' },
   change: { kind: 'block', label: 'insert markdown at the end', before: '', after: 'Back up nightly.', stale: false },
@@ -37,8 +37,8 @@ function platform(overrides: Record<string, unknown> = {}, routes: Record<string
     'GET /api/v2/content/pages/5/': () => pageDetail({ pending_suggestions: proposed ? 1 : 0, ...overrides }),
     'GET /api/v2/ai/assistants/': () => page([assistant()]),
     'GET /api/v2/ai/pipelines/': () => EMPTY,
-    'POST /api/v2/ai/assistants/a1/run/': () => ({ run: runRef(9) }),
-    'GET /api/v2/agent-runs/9/': () => agentRun(status, { markdown: 'Back up nightly.', suggestions: proposed ? [41] : [] }),
+    'POST /api/v2/ai/assistants/a1/run/': () => ({ run: runRef() }),
+    [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status, { markdown: 'Back up nightly.', suggestions: proposed ? ['s41'] : [] }),
     'GET /api/v2/review/suggestions/': () => page(proposed ? [SUGGESTION] : []),
     ...routes,
   });
@@ -66,7 +66,7 @@ describe('<PageEditor>’s AI panel', () => {
     expect(screen.getByRole('button', { name: 'AI' })).toHaveAttribute('aria-expanded', 'true');
     await userEvent.type(panel.getByLabelText('What should it do?'), 'Add a summary');
     await userEvent.click(panel.getByRole('button', { name: 'Suggest' }));
-    expect(await panel.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
+    expect(await panel.findByRole('status', { name: `Run ${shortId(RUN)}` })).toHaveTextContent('running');
     expect(calls.find((c) => c.path === '/api/v2/ai/assistants/a1/run/')?.body).toEqual({
       prompt: 'Add a summary',
       page_id: 5,
@@ -74,7 +74,7 @@ describe('<PageEditor>’s AI panel', () => {
       block_id: '',
       selection: '',
     });
-    await waitFor(() => expect(stream).toHaveBeenCalledWith('/api/v2/agent-runs/9/stream/', ['step', 'status', 'end'], expect.any(Function)));
+    await waitFor(() => expect(stream).toHaveBeenCalledWith(`/api/v2/agent-runs/${RUN}/stream/`, ['step', 'status', 'end'], expect.any(Function)));
     done();
     expect(await panel.findByText('1 suggestion on this page')).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: 'Suggestions (1)' })).toBeInTheDocument(); // the page was read again
@@ -113,7 +113,7 @@ describe('<PageEditor>’s AI panel', () => {
       {},
       {
         'GET /api/v2/ai/pipelines/': () => page([{ id: 'p1', name: 'Draft, then edit', owner: 'editor', site: null, visibility: 'private', can_edit: true, created_at: '', updated_at: '', steps: [] }]),
-        'POST /api/v2/ai/pipelines/p1/run/': () => ({ run: runRef(9) }),
+        'POST /api/v2/ai/pipelines/p1/run/': () => ({ run: runRef() }),
       },
     );
     renderUi(<PageEditor pageId={5} />, { api, stream });
@@ -123,7 +123,7 @@ describe('<PageEditor>’s AI panel', () => {
     await userEvent.click(panel.getByRole('combobox', { name: 'Pipeline' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Draft, then edit' }));
     await userEvent.dblClick(panel.getByRole('button', { name: 'Suggest' })); // a pipeline needs no prompt
-    expect(await panel.findByRole('status', { name: 'Run #9' })).toBeInTheDocument();
+    expect(await panel.findByRole('status', { name: `Run ${shortId(RUN)}` })).toBeInTheDocument();
     const runs = calls.filter((c) => c.path === '/api/v2/ai/pipelines/p1/run/');
     expect(runs).toHaveLength(1);
     expect(runs[0]?.body).toEqual({ prompt: '', page_id: 5, suggest: true, block_id: '', selection: '' });

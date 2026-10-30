@@ -150,9 +150,8 @@ def elsewhere(automation: Automation, site_id) -> bool:
     return automation.site_id is not None and site_id is not None and automation.site_id != site_id
 
 
-def from_automation(run) -> bool:
-    """Whether an agent run (or its id) was started by an automation — itself, or the run above it."""
-    run = AgentRun.objects.filter(pk=run).first() if isinstance(run, int) else run
+def from_automation(run: AgentRun | None) -> bool:
+    """Whether an agent run was started by an automation — itself, or the run above it."""
     for _ in range(10):
         if run is None:
             return False
@@ -172,7 +171,7 @@ def _page_of(event_type: str, data: dict):
     on. None for one about no page (a suggestion on an image, a run without a page)."""
     if data.get("page_id"):
         return Page.objects.filter(pk=data["page_id"]).first()
-    run = AgentRun.objects.filter(pk=data.get("run_id")).first() if event_type == "agent.run.completed" else None
+    run = AgentRun.objects.filter(public_id=data.get("run_id")).first() if event_type == "agent.run.completed" else None
     target = run.target if run is not None else None
     return target if isinstance(target, Page) else None
 
@@ -181,9 +180,9 @@ def _sees(owner, event_type: str, data: dict, page, restricted: bool) -> bool:
     """Whether an automation's owner may see what an event is about: a suggestion, an agent run, or a page that went
     live — public, unless a view restriction keeps it from some, when only its editors hear it."""
     if event_type == "content.suggestion.created":
-        return Suggestion.objects.visible_to(owner).filter(pk=data["suggestion_id"]).exists()
+        return Suggestion.objects.visible_to(owner).filter(public_id=data["suggestion_id"]).exists()
     if event_type == "agent.run.completed":
-        return AgentRun.objects.visible_to(owner).filter(pk=data["run_id"]).exists()
+        return AgentRun.objects.visible_to(owner).filter(public_id=data["run_id"]).exists()
     return page is not None and (not restricted or page.permissions_for_user(owner).can_edit())
 
 
@@ -193,7 +192,8 @@ def on_event(envelope: dict) -> list[AutomationRun]:
         return []
     data, kind = envelope.get("data") or {}, envelope["type"]
     automations = list(listening("event", event=kind))
-    if not automations or (data.get("run_id") and from_automation(data["run_id"])):
+    by_run = AgentRun.objects.filter(public_id=data["run_id"]).first() if data.get("run_id") else None
+    if not automations or from_automation(by_run):
         return []  # nobody waits for it, or it is an automation's own work, which never fires automations
     page = _page_of(kind, data)
     site = page.get_site() if page is not None else None
@@ -426,11 +426,11 @@ def _agent_trigger(run: AutomationRun) -> str:
     return {"schedule": "schedule", "test": "manual"}.get(run.trigger, "event")
 
 
-def _mark(started: AgentRun, run: AutomationRun) -> int:
+def _mark(started: AgentRun, run: AutomationRun) -> str:
     """The agent run says which automation run started it — the link back, and what keeps an automation's own work
-    from firing automations (`from_automation`)."""
+    from firing automations (`from_automation`). Its public id, for the outcome."""
     AgentRun.objects.filter(pk=started.pk).update(started_by_event=f"{MARK}{run.public_id}")
-    return started.pk
+    return str(started.public_id)
 
 
 def _row(model, public_id, owner, what: str):
@@ -486,7 +486,7 @@ def _agent(given, run, owner):
         )
     except RunRefused as e:
         raise Conflict(str(e)) from e
-    return {"run": started.pk}
+    return {"run": str(started.public_id)}
 
 
 def _brief(given, run, owner):

@@ -31,12 +31,12 @@ export interface TaskOutput {
   suggestions?: number[];
 }
 
-export function useFollowRun(runId: number | null) {
+export function useFollowRun(runId: string | null) {
   const api = useApi();
   return useQuery({
     queryKey: ['run', runId],
     enabled: runId !== null,
-    queryFn: () => call(api.GET('/api/v2/agent-runs/{id}/', { params: { path: { id: runId ?? 0 } } })),
+    queryFn: () => call(api.GET('/api/v2/agent-runs/{public_id}/', { params: { path: { public_id: runId ?? '' } } })),
     refetchInterval: (query) => (query.state.data?.is_final ? false : 1000),
   });
 }

@@ -28,7 +28,7 @@ def _refused(e: ApiError) -> ToolError:
 
 
 def _run_json(run) -> dict:
-    return {"run_id": run.pk, "status": run.status, "stream": f"/api/v2/agent-runs/{run.pk}/stream/"}
+    return {"run_id": str(run.public_id), "status": run.status, "stream": run.links["stream"]}
 
 
 def _visible(model, public_id, ctx):

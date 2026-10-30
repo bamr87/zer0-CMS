@@ -118,7 +118,8 @@ def test_an_agent_edge_below_the_threshold_becomes_a_suggestion(agent, linked):
     source.save_revision().publish()
     assert registry.call("graph.upsert_edge", {**args, "confidence": 0.5}, ctx)["written"] is False
     out = registry.call("graph.upsert_edge", {**args, "confidence": 0.95}, ctx)
-    assert out["written"] is True and Edge.objects.get(pk=out["edge_id"]).source == "agent"
+    assert out == {"written": True}  # no integer key: the edge is named by what it joins (P-D6)
+    assert Edge.objects.get(src_id=source.pk, rel="about", dst_id=target.pk).source == "agent"
 
 
 @pytest.mark.django_db

@@ -23,7 +23,7 @@ def suggestion_log_actions(actions):
 def urls():
     return [
         path("suggestions/page/<int:page_id>/", views.page_suggestions, name="suggestions_page"),
-        path("suggestions/<int:suggestion_id>/<str:decision>/", views.decide, name="suggestions_decide"),
+        path("suggestions/<uuid:suggestion_id>/<str:decision>/", views.decide, name="suggestions_decide"),
     ]
 
 

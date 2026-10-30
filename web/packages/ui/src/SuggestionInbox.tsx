@@ -6,6 +6,7 @@
 // filtered or shortened view never accepts what it did not show. The platform
 // re-checks rights, locks and the page's current state on every decision; a
 // suggestion whose block has gone is marked stale and cannot be accepted.
+// Suggestions and runs are named by their public ids (UUIDs).
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Paper, Stack, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,11 +16,12 @@ import { useState } from 'react';
 import { call, errorText } from './call';
 import { useApi, useGo } from './context';
 import { DiffView } from './DiffView';
+import { shortId } from './RunTimeline';
 
 interface Filters {
   siteId?: number;
   pageId?: number;
-  runId?: number;
+  runId?: string;
   /** Why accepting is held back (unsaved edits, a lock): accepting makes a new revision. */
   holdAccept?: string;
 }
@@ -38,12 +40,12 @@ export function SuggestionInbox({ siteId, pageId, runId, holdAccept }: Filters) 
     void qc.invalidateQueries();
   };
   const decide = useMutation({
-    mutationFn: ({ id, decision, reason }: { id: number; decision: 'accept' | 'reject'; reason?: string }) =>
-      call(api.POST('/api/v2/suggestions/{id}/{decision}/', { params: { path: { id, decision } }, body: reason ? { reason } : {} })),
+    mutationFn: ({ id, decision, reason }: { id: string; decision: 'accept' | 'reject'; reason?: string }) =>
+      call(api.POST('/api/v2/suggestions/{public_id}/{decision}/', { params: { path: { public_id: id, decision } }, body: reason ? { reason } : {} })),
     onSuccess: (_, { decision }) => done(decision === 'accept' ? 'Accepted as a draft revision' : 'Rejected'),
   });
   const acceptRun = useMutation({
-    mutationFn: ({ run, ids }: { run: number; ids: number[] }) =>
+    mutationFn: ({ run, ids }: { run: string; ids: string[] }) =>
       call(api.POST('/api/v2/review/runs/{run_id}/accept/', { params: { path: { run_id: run } }, body: { ids } })),
     onSuccess: (result) => done(`Accepted ${result.accepted.length} suggestion(s) as ${result.revision_ids.length} draft revision(s)`),
   });
@@ -52,8 +54,8 @@ export function SuggestionInbox({ siteId, pageId, runId, holdAccept }: Filters) 
   if (inbox.isError) return <Alert color="red">{errorText(inbox.error)}</Alert>;
   if (inbox.data.count === 0) return <Text c="dimmed">Nothing to review.</Text>;
 
-  const runs = new Map<number, Suggestion[]>();
-  for (const s of inbox.data.results) runs.set(s.run_id ?? 0, [...(runs.get(s.run_id ?? 0) ?? []), s]);
+  const runs = new Map<string, Suggestion[]>();
+  for (const s of inbox.data.results) runs.set(s.run_id ?? '', [...(runs.get(s.run_id ?? '') ?? []), s]);
   const failure = decide.error ?? acceptRun.error;
 
   return (
@@ -66,7 +68,9 @@ export function SuggestionInbox({ siteId, pageId, runId, holdAccept }: Filters) 
           <Card key={run} withBorder padding="md">
             <Group justify="space-between" mb="sm">
               <Group gap="xs">
-                <Text fw={600}>{run ? `Run #${run}` : 'Without a run'}</Text>
+                <Text fw={600} title={run || undefined}>
+                  {run ? `Run ${shortId(run)}` : 'Without a run'}
+                </Text>
                 {items[0]?.agent ? <Badge variant="light">{items[0].agent}</Badge> : null}
                 <Text size="sm" c="dimmed">
                   {items.length} suggestion{items.length === 1 ? '' : 's'}
@@ -83,7 +87,7 @@ export function SuggestionInbox({ siteId, pageId, runId, holdAccept }: Filters) 
                     loading={acceptRun.isPending}
                     onClick={() => acceptRun.mutate({ run, ids: acceptable })}
                   >
-                    Accept all {acceptable.length} shown of run #{run}
+                    Accept all {acceptable.length} shown of run {shortId(run)}
                   </Button>
                 </Group>
               ) : null}

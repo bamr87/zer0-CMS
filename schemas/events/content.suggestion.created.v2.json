@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.suggestion.created.v2.json",
+  "title": "content.suggestion.created (v2)",
+  "description": "An agent proposed a change an editor has to decide on. v2 names the suggestion and its run by their public ids, the UUIDs every API gives (P-D6, ADR 0009); v1 named them by their integer keys.",
+  "type": "object",
+  "required": [
+    "suggestion_id",
+    "target",
+    "page_id",
+    "op",
+    "agent",
+    "run_id"
+  ],
+  "properties": {
+    "suggestion_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The suggestion's public id."
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^(page|image|entity):[0-9]+$",
+      "description": "What the suggestion changes, by Wagtail's id (pages and images keep their integer ids)."
+    },
+    "page_id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "description": "The page, when the target is one."
+    },
+    "op": {
+      "enum": [
+        "insert",
+        "replace",
+        "delete",
+        "meta",
+        "edge"
+      ]
+    },
+    "block_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "field": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "agent": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "The public id of the run that proposed it, if one did."
+    }
+  },
+  "additionalProperties": false
+}

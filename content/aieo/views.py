@@ -35,20 +35,19 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from wagtail.models import Site
 
-from ai.models import Assistant, sites_for
+from ai.models import Assistant
 from ai.serializers import RunRefSerializer
 from ai.services import stable_id
 from ai.views import IDEMPOTENCY, CanEdit, OwnedViewSet, accepted, idempotent, page_or_404
 from api.pages import IsPerson
 from ops.errors import Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
-from research.views import FetchThrottle
+from research.views import FetchThrottle, Newest
 
 from . import prompts, reports, services
 from . import serializers as s
@@ -75,17 +74,20 @@ def site_param(request, *, required=False):
     return site
 
 
-def editor_of(user, site):
-    if not (user.is_staff or user.is_superuser or site.pk in sites_for(user)):
-        raise NotFound(f"no site {site.pk}")
-    return site
+class BatchThrottle(FetchThrottle):
+    """A batch reaches the web once for every site it lists, so each spends the person's fetch rate as one fetch
+    would: one that would not fit is refused whole, and spends nothing."""
 
+    def allow_request(self, request, view):
+        urls = request.data.get("urls") if isinstance(request.data, dict) else None
+        self.cost = len(urls) if isinstance(urls, list) and urls else 1
+        if self.rate is not None:
+            self.num_requests -= self.cost - 1  # room for every site, or none
+        return super().allow_request(request, view)
 
-class Newest(CursorPagination):
-    ordering = "-created_at"
-    page_size = 50
-    page_size_query_param = "page_size"
-    max_page_size = 200
+    def throttle_success(self):
+        self.history[:0] = [self.now] * (self.cost - 1)
+        return super().throttle_success()
 
 
 @extend_schema(
@@ -98,7 +100,7 @@ class ScoreView(APIView):
 
     def post(self, request):
         body = valid(s.AieoScoreInputSerializer, request)
-        result = services.quick_score(body["content"], body["format"], site=body.get("site"))
+        result = services.quick_score(body["content"], body["format"], site=body.get("site"), user=request.user)
         return Response(s.AieoScoreSerializer(result).data)
 
 
@@ -131,7 +133,9 @@ class AuditViewSet(OwnedViewSet):
 
     def get_throttles(self):
         data = self.request.data if self.request.method == "POST" else {}
-        fetches = self.action == "batch" or (isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE))
+        if self.action == "batch":
+            return [*super().get_throttles(), BatchThrottle()]
+        fetches = isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE)
         return [*super().get_throttles(), FetchThrottle()] if fetches else super().get_throttles()
 
     @extend_schema(
@@ -366,10 +370,10 @@ class CitationQueryViewSet(OwnedViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
 
     def perform_create(self, serializer):
-        row = serializer.save(owner=self.request.user)
-        if row.interval_days and row.active:
-            row.next_check_at = timezone.now()
-            row.save(update_fields=["next_check_at"])
+        services.schedule(serializer.save(owner=self.request.user))
+
+    def perform_update(self, serializer):
+        services.schedule(serializer.save())
 
     @extend_schema(
         summary="Ask every engine the question now: a check and a run per engine (202)",
@@ -402,11 +406,8 @@ class CitationCheckViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
     filterset_class = CheckFilter
     filter_backends = [filters.DjangoFilterBackend]
 
-    class Pages(CursorPagination):
+    class Pages(Newest):
         ordering = "-checked_at"
-        page_size = 50
-        page_size_query_param = "page_size"
-        max_page_size = 200
 
     pagination_class = Pages
 
@@ -434,7 +435,12 @@ class ShareView(APIView):
 
 
 class ConnectorPermission(BasePermission):
+    """A connector is read by its site's editors (the queryset), changed by those of them with
+    `aieo.change_connector`, and removed by those who also hold `aieo.delete_connector`."""
+
     def has_object_permission(self, request, view, obj):
+        if request.method == "DELETE" and not request.user.has_perm("aieo.delete_connector"):
+            return False
         return request.method in SAFE_METHODS or obj.can_edit(request.user)
 
 
@@ -506,8 +512,8 @@ class PrioritiesView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
-        return Response(s.AieoPrioritiesSerializer(services.priorities(site)).data)
+        found = services.priorities(request.user, site_param(request, required=True))
+        return Response(s.AieoPrioritiesSerializer(found).data)
 
 
 @extend_schema_view(
@@ -527,7 +533,7 @@ class ContextView(APIView):
         site = Site.objects.filter(pk=site_id).first()
         if site is None:
             raise NotFound(f"no site {site_id}")
-        return BrandContext.for_site(editor_of(request.user, site))
+        return BrandContext.for_site(services.editor_of(request.user, site))
 
     def get(self, request, site_id):
         return Response(s.AieoBrandContextSerializer(self._context(request, site_id)).data)
@@ -549,5 +555,5 @@ class LifecycleView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
+        site = services.editor_of(request.user, site_param(request, required=True))
         return Response(services.lifecycle(request.user, site))

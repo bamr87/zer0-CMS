@@ -12,6 +12,7 @@ from django.test import Client
 from agents.models import AgentRun, AgentToken
 from agents.registry import ToolContext, ToolError, registry
 from agents.runner import execute, start_run
+from aieo import services
 from aieo.models import Audit
 from aieo.tools import ALIASES
 
@@ -51,6 +52,24 @@ def test_every_alias_is_its_platform_tool_under_aieos_name():
     assert registry.get("aieo_editor_review").effect == registry.get("aieo_headline_generate").effect == "propose"
 
 
+def test_an_alias_spends_the_budget_of_the_tool_it_names(agent, db, monkeypatch):
+    """AIEO's names are the same tool, so they share its rate: aieo.audit_site's ten a minute are ten whichever of
+    its three names is called, not ten for each."""
+    from aieo import tools
+
+    monkeypatch.setattr(tools, "_audit", lambda row: {"audit": str(row.public_id)})
+    monkeypatch.setattr(services, "audit", lambda *a, **k: Audit(kind=Audit.SITE))
+    ctx = ToolContext(user=agent("aieo").user, agent=agent("aieo"))
+    for name in ["aieo.audit_site"] * 4 + ["aieo_crawl_site"] * 3 + ["aieo_site_context"] * 3:
+        registry.call(name, {"url": "https://example.com/", "max_pages": 1}, ctx)
+    for name in ("aieo.audit_site", "aieo_crawl_site", "aieo_site_context"):
+        try:
+            registry.call(name, {"url": "https://example.com/", "max_pages": 1}, ctx)
+            raise AssertionError(f"{name} has a budget of its own")
+        except ToolError as e:
+            assert e.code == "rate_limited" and "aieo.audit_site" in e.message
+
+
 def test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_text(agent, db):
     assert agent("aieo").live  # its evals passed in the session's sync_agents --publish
     raw = token()
@@ -63,6 +82,23 @@ def test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_t
     assert len(patterns["patterns"]) == 10
     one = rpc(raw, "tools/call", {"name": "aieo_get_pattern", "arguments": {"pattern_name": "nope"}})["result"]
     assert one["isError"] and one["structuredContent"]["error"] == "not_found"
+
+
+def test_a_text_is_scored_at_once_only_when_short_and_a_long_one_is_audited(
+    agent, db, django_capture_on_commit_callbacks
+):
+    ctx = ToolContext(user=agent("aieo").user, agent=agent("aieo"))
+    long = "Backups are copies. " * (services.NOW_MAX // 20 + 1)
+    for name in ("aieo.score_text", "aieo_score_content", "aieo.readability", "aieo.landing_audit"):
+        try:
+            registry.call(name, {"content": long}, ctx)
+            raise AssertionError(f"{name} scored {len(long)} characters inside the call")
+        except ToolError as e:
+            assert e.code == "invalid_args"
+    with django_capture_on_commit_callbacks(execute=True):
+        started = registry.call("aieo.audit_text", {"content": long, "method": "heuristic"}, ctx)
+    row = Audit.objects.get(public_id=started["audit"])
+    assert row.kind == Audit.TEXT and row.status == Audit.READY and row.owner.username == "agent:aieo"
 
 
 def test_auditing_a_url_over_mcp_is_a_run_the_agent_owns(agent, db, fake, web, django_capture_on_commit_callbacks):
@@ -104,7 +140,7 @@ def test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose(
         with django_capture_on_commit_callbacks(execute=True):
             result = rpc(raw, "tools/call", {"name": name, "arguments": arguments})["result"]
         assert not result["isError"], result
-        run = AgentRun.objects.get(pk=result["structuredContent"]["run_id"])
+        run = AgentRun.objects.get(public_id=result["structuredContent"]["run_id"])
         assert run.status == AgentRun.SUCCEEDED and run.started_by.username == "agent:aieo", run.error
     assert AgentRun.objects.filter(input__kind="aieo.rewrite").count() == 2
 
@@ -122,7 +158,7 @@ def test_a_page_tool_needs_page_rights_and_an_agent_rewrites_a_text_never_a_page
     fake.script = [{"text": "Copies of a site, kept elsewhere."}]
     with django_capture_on_commit_callbacks(execute=True):
         started = registry.call("aieo.scrub", {"content": "Copies — of a site."}, ctx)
-    run = AgentRun.objects.get(pk=started["run_id"])
+    run = AgentRun.objects.get(public_id=started["run_id"])
     assert run.status == AgentRun.SUCCEEDED and run.output["markdown"] == "Copies of a site, kept elsewhere."
 
 

@@ -3,6 +3,8 @@
 // own), and a finished run opens no stream at all. A stream that ends on a
 // final status is not opened again; one that timed out on a live run is,
 // after a pause; one the host could not follow is, after a pause that grows.
+// A run is addressed by its public id, and a person reads its first eight
+// characters.
 import { act, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,9 +12,10 @@ import { RunTimeline, type OpenStream } from '../src';
 import { fakePlatform, renderUi } from '../../../test/harness';
 
 const FINAL = ['succeeded', 'failed', 'refused', 'cancelled'];
+const RUN = '9b2f6c4e-1d3a-4f5b-8c7d-0e1f2a3b4c5d';
 
 const run = (status: string, steps: unknown[] = []) => ({
-  id: 9,
+  id: RUN,
   agent: 'seo',
   status,
   is_final: FINAL.includes(status),
@@ -27,7 +30,7 @@ const run = (status: string, steps: unknown[] = []) => ({
   schema_version: '1',
   created_at: '2026-10-21T09:00:00Z',
   finished_at: null,
-  links: { self: '/api/v2/agent-runs/9/', stream: '/api/v2/agent-runs/9/stream/' },
+  links: { self: `/api/v2/agent-runs/${RUN}/`, stream: `/api/v2/agent-runs/${RUN}/stream/` },
   steps,
 });
 
@@ -40,24 +43,25 @@ describe('<RunTimeline>', () => {
       send = onEvent;
       return () => undefined;
     });
-    const { api } = fakePlatform({ 'GET /api/v2/agent-runs/9/': () => run('running', [step(0, 'content.get_page')]) });
-    renderUi(<RunTimeline runId={9} />, { api, stream });
+    const { api } = fakePlatform({ [`GET /api/v2/agent-runs/${RUN}/`]: () => run('running', [step(0, 'content.get_page')]) });
+    renderUi(<RunTimeline runId={RUN} />, { api, stream });
     expect(await screen.findByText('tool · content.get_page')).toBeInTheDocument();
-    expect(stream).toHaveBeenCalledWith('/api/v2/agent-runs/9/stream/', ['step', 'status', 'end'], expect.any(Function));
+    expect(stream).toHaveBeenCalledWith(`/api/v2/agent-runs/${RUN}/stream/`, ['step', 'status', 'end'], expect.any(Function));
     act(() => send('step', step(1, 'content.propose_edit')));
     expect(await screen.findByText('tool · content.propose_edit')).toBeInTheDocument();
   });
 
   it('opens no stream for a finished run, and links to its suggestions', async () => {
     const stream = vi.fn<OpenStream>(() => () => undefined);
-    const { go } = renderUi(<RunTimeline runId={9} />, {
-      api: fakePlatform({ 'GET /api/v2/agent-runs/9/': () => run('succeeded', [step(0, 'content.propose_edit')]) }).api,
+    const { go } = renderUi(<RunTimeline runId={RUN} />, {
+      api: fakePlatform({ [`GET /api/v2/agent-runs/${RUN}/`]: () => run('succeeded', [step(0, 'content.propose_edit')]) }).api,
       stream,
     });
     expect(await screen.findByText('Two suggestions.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Run 9b2f6c4e · seo' })).toBeInTheDocument(); // its public id, as a person reads it
     expect(stream).not.toHaveBeenCalled();
     act(() => screen.getByRole('button', { name: 'Review its suggestions' }).click());
-    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 9 });
+    expect(go).toHaveBeenCalledWith({ to: 'review', runId: RUN });
   });
 });
 
@@ -77,26 +81,26 @@ describe('<RunTimeline> following a run', () => {
 
   it('stops at a final status: the run is read again and no stream is opened after it', async () => {
     let status = 'running';
-    const { api, calls } = fakePlatform({ 'GET /api/v2/agent-runs/9/': () => run(status) });
+    const { api, calls } = fakePlatform({ [`GET /api/v2/agent-runs/${RUN}/`]: () => run(status) });
     const { stream, send } = recordingStream();
-    renderUi(<RunTimeline runId={9} />, { api, stream });
+    renderUi(<RunTimeline runId={RUN} />, { api, stream });
     await waitFor(() => expect(stream).toHaveBeenCalledTimes(1));
     status = 'succeeded';
-    send('status', { id: 9, status: 'succeeded', is_final: true, error: '' });
+    send('status', { id: RUN, status: 'succeeded', is_final: true, error: '' });
     send('end');
     expect(await screen.findByText('succeeded')).toBeInTheDocument();
-    expect(calls.filter((c) => c.path === '/api/v2/agent-runs/9/')).toHaveLength(2);
+    expect(calls.filter((c) => c.path === `/api/v2/agent-runs/${RUN}/`)).toHaveLength(2);
     await new Promise((resolve) => setTimeout(resolve, 1200));
     expect(stream).toHaveBeenCalledTimes(1);
   });
 
   it('follows a live run again after its stream timed out, and backs off from a stream that broke', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { api } = fakePlatform({ 'GET /api/v2/agent-runs/9/': () => run('running') });
+    const { api } = fakePlatform({ [`GET /api/v2/agent-runs/${RUN}/`]: () => run('running') });
     const { stream, send } = recordingStream();
-    renderUi(<RunTimeline runId={9} />, { api, stream });
+    renderUi(<RunTimeline runId={RUN} />, { api, stream });
     await vi.waitFor(() => expect(stream).toHaveBeenCalledTimes(1));
-    send('status', { id: 9, status: 'running', is_final: false, error: '' });
+    send('status', { id: RUN, status: 'running', is_final: false, error: '' });
     send('end'); // the server's time limit, on a run that is still working
     await act(() => vi.advanceTimersByTimeAsync(500));
     expect(stream).toHaveBeenCalledTimes(1); // not at once: after a pause

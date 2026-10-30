@@ -106,7 +106,7 @@ export function AiPanel({ page, dirty, held, onReview }: Props) {
   const [scope, setScope] = useState('page');
   const [selected, setSelected] = useState<Selected | null>(null);
   const [prompt, setPrompt] = useState('');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [done, setDone] = useState<Run | null>(null);
 
   // A selection made in a block is offered (and chosen) as what to work on; one made elsewhere — in this panel — is not.

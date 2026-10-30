@@ -55,7 +55,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v2/agent-runs/{id}/": {
+    "/api/v2/agent-runs/{public_id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -72,7 +72,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v2/agent-runs/{id}/stream/": {
+    "/api/v2/agent-runs/{public_id}/stream/": {
         parameters: {
             query?: never;
             header?: never;
@@ -1739,7 +1739,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Ask the target whether the credential works (on the worker); follow the channel */
+        /** Ask the target whether the credential works (on the worker; people who manage channels) */
         post: operations["distribution_channels_check_create"];
         delete?: never;
         options?: never;
@@ -1808,7 +1808,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Read the channel's post statistics now (on the worker) */
+        /** Read the channel's post statistics now (on the worker; people who manage channels) */
         post: operations["distribution_channels_statistics_create"];
         delete?: never;
         options?: never;
@@ -1882,7 +1882,7 @@ export interface paths {
         delete: operations["distribution_posts_destroy"];
         options?: never;
         head?: never;
-        /** Change a post's text; an approved one goes back to draft */
+        /** Change a post's text; an approved or failed one goes back to draft for a person to approve */
         patch: operations["distribution_posts_partial_update"];
         trace?: never;
     };
@@ -1912,7 +1912,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go */
+        /** Publish an approved post: 202, the worker sends it — or, for an attempt that is over without its worker saying so, the post as it ended; 409 while it is queued or being sent, or with every blocker */
         post: operations["distribution_posts_publish_create"];
         delete?: never;
         options?: never;
@@ -3631,7 +3631,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v2/suggestions/{id}/{decision}/": {
+    "/api/v2/suggestions/{public_id}/{decision}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -3677,10 +3677,10 @@ export interface components {
     schemas: {
         AcceptRunRequest: {
             /** @description The run's pending suggestions the caller saw and accepts — only these, never the rest of the run. */
-            ids: number[];
+            ids: string[];
         };
         AcceptedRun: {
-            accepted: number[];
+            accepted: string[];
             revision_ids: number[];
         };
         AieoAgent: {
@@ -3767,6 +3767,7 @@ export interface components {
             readonly result: unknown;
             /** @description A site audit's pages: url, title, score, grade … */
             readonly pages: unknown;
+            /** @description Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees. */
             readonly benchmark: unknown;
             readonly screenshot: string | null;
             /** @description Audits made together. */
@@ -3804,7 +3805,7 @@ export interface components {
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
         };
-        /** @description An audit in a list: everything but the whole result and the pages. */
+        /** @description An audit in a list: everything but the whole result and the pages, and of its benchmark the counts. */
         AieoAuditList: {
             /** Format: uuid */
             readonly id: string;
@@ -3844,6 +3845,7 @@ export interface components {
             /** @description What scored it: heuristic or ai. */
             readonly scoring_method: string;
             readonly content_hash: string;
+            /** @description Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees. */
             readonly benchmark: unknown;
             readonly screenshot: string | null;
             /** @description Audits made together. */
@@ -4163,12 +4165,12 @@ export interface components {
             /** @description The draft page (not live). */
             page_id: number;
             /** @description To accept on the draft. */
-            suggestions: number[];
+            suggestions: string[];
         };
         AppliedDraft: {
             story: components["schemas"]["StoryDetail"];
             page_id: number;
-            suggestions: number[];
+            suggestions: string[];
         };
         ApplyBriefRequest: {
             /** @description Where the draft goes; else the brief's parent. */
@@ -4701,9 +4703,10 @@ export interface components {
                 input?: {
                     [key: string]: unknown;
                 };
-                /** @description What it made: an agent run's id (`run`), a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status. */
+                /** @description What it made: an agent run, a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status. */
                 result?: {
-                    run?: number;
+                    /** Format: uuid */
+                    run?: string;
                     /** Format: uuid */
                     brief?: string;
                     /** Format: uuid */
@@ -5619,9 +5622,16 @@ export interface components {
             readonly url: string;
         };
         DistributionFinding: {
-            level: components["schemas"]["GuardLevelEnum"];
+            level: components["schemas"]["DistributionGuardLevelEnum"];
             message: string;
         };
+        /**
+         * @description * `error` - error
+         *     * `warning` - warning
+         *     * `info` - info
+         * @enum {string}
+         */
+        DistributionGuardLevelEnum: "error" | "warning" | "info";
         /**
          * @description * `linkedin` - LinkedIn
          *     * `wordpress` - WordPress
@@ -5631,7 +5641,8 @@ export interface components {
          */
         DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
         DistributionLedgerEntry: {
-            readonly id: number;
+            /** Format: uuid */
+            readonly id: string;
             /** Format: uuid */
             readonly channel: string;
             readonly channel_name: string;
@@ -5639,8 +5650,8 @@ export interface components {
             readonly key: string;
             /** @description Empty for an attempt the target did not confirm. */
             readonly urn: string;
-            readonly state: components["schemas"]["LedgerStateEnum"];
-            readonly kind: string;
+            readonly state: components["schemas"]["DistributionLedgerStateEnum"];
+            readonly kind: components["schemas"]["DistributionPostKindEnum"];
             /** Format: date-time */
             readonly posted_at: string | null;
             /** Format: date-time */
@@ -5666,6 +5677,12 @@ export interface components {
             kept: number;
             skipped: number;
         };
+        /**
+         * @description * `published` - Published
+         *     * `unconfirmed` - Unconfirmed
+         * @enum {string}
+         */
+        DistributionLedgerStateEnum: "published" | "unconfirmed";
         /**
          * @description * `person` - A person
          *     * `agent` - An agent
@@ -6006,8 +6023,11 @@ export interface components {
             /** @description What those words should say, by the sources. */
             replace: string;
             sources: components["schemas"]["FindingSource"][];
-            /** @description The suggestion it became — with the block's other corrections — to accept or reject. */
-            suggestion: number | null;
+            /**
+             * Format: uuid
+             * @description The suggestion it became — with the block's other corrections — to accept or reject.
+             */
+            suggestion: string | null;
             /** @description Why a correction could not become a suggestion. */
             error: string;
         };
@@ -6072,13 +6092,6 @@ export interface components {
             /** @description In order; replaced as a whole. */
             slots?: components["schemas"]["FrontSlotRequest"][];
         };
-        /**
-         * @description * `error` - error
-         *     * `warning` - warning
-         *     * `info` - info
-         * @enum {string}
-         */
-        GuardLevelEnum: "error" | "warning" | "info";
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         Handoff: {
             /** @description The relay's number; none until delivered. */
@@ -6343,7 +6356,7 @@ export interface components {
             readonly idx: number;
             /** Format: date-time */
             readonly at: string;
-            readonly level: components["schemas"]["GuardLevelEnum"];
+            readonly level: components["schemas"]["DistributionGuardLevelEnum"];
             readonly text: string;
         };
         /**
@@ -6380,12 +6393,6 @@ export interface components {
             kind: components["schemas"]["HandoffKindEnum"];
             count: number;
         };
-        /**
-         * @description * `published` - Published
-         *     * `unconfirmed` - Unconfirmed
-         * @enum {string}
-         */
-        LedgerStateEnum: "published" | "unconfirmed";
         ManagedSite: {
             /** @description The site key its pages were imported under (SiteRootPage.site_key). */
             key: string;
@@ -8133,7 +8140,8 @@ export interface components {
         RoleEnum: "user" | "assistant" | "system";
         /** @description What `api.views.run_json` returns; `steps` only on a single run. */
         Run: {
-            id: number;
+            /** Format: uuid */
+            id: string;
             agent: string;
             status: string;
             /** @description It has finished (succeeded, failed, refused or cancelled). */
@@ -8218,15 +8226,17 @@ export interface components {
             /** @default  */
             prompt: string;
         };
-        /** @description An agent run to follow on the existing runs API. */
+        /** @description An agent run to follow on the existing runs API, by its public id. */
         RunRef: {
-            id: number;
+            /** Format: uuid */
+            id: string;
             status: string;
             readonly links: components["schemas"]["RunLinks"];
         };
-        /** @description An agent run to follow on the existing runs API. */
+        /** @description An agent run to follow on the existing runs API, by its public id. */
         RunRefRequest: {
-            id: number;
+            /** Format: uuid */
+            id: string;
             status: string;
         };
         RunTarget: {
@@ -8751,7 +8761,8 @@ export interface components {
          */
         SubscriptionStatusEnum: "pending" | "confirmed" | "unsubscribed";
         Suggestion: {
-            id: number;
+            /** Format: uuid */
+            id: string;
             op: string;
             block_id: string;
             field: string;
@@ -8759,7 +8770,11 @@ export interface components {
             rationale: string;
             status: string;
             agent: string | null;
-            run_id: number | null;
+            /**
+             * Format: uuid
+             * @description The run that proposed it.
+             */
+            run_id: string | null;
             /** Format: date-time */
             created_at: string;
             target: components["schemas"]["Target"];
@@ -8771,7 +8786,7 @@ export interface components {
             revision_id?: number | null;
         };
         SuggestionDecisionRequest: {
-            with?: number[];
+            with?: string[];
             reason?: string;
         };
         SyncOptionsRequest: {
@@ -9472,7 +9487,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                public_id: string;
             };
             cookie?: never;
         };
@@ -9561,7 +9576,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                id: number;
+                public_id: string;
             };
             cookie?: never;
         };
@@ -24615,7 +24630,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                run_id: number;
+                run_id: string;
             };
             cookie?: never;
         };
@@ -24711,7 +24726,8 @@ export interface operations {
                 page_id?: number;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                run?: number;
+                /** @description A run's id: the suggestions it proposed. */
+                run?: string;
                 /** @description A site id: suggestions on its pages. */
                 site?: number;
             };
@@ -25796,7 +25812,7 @@ export interface operations {
             header?: never;
             path: {
                 decision: string;
-                id: number;
+                public_id: string;
             };
             cookie?: never;
         };

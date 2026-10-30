@@ -26,6 +26,7 @@ tools:
   - aieo.landing_audit
   - aieo.list_patterns
   - aieo.get_pattern
+  - aieo.audit_text
   - aieo.audit_url
   - aieo.audit_site
   - aieo.audit_page
