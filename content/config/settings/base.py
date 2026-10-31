@@ -516,11 +516,13 @@ SITES_DIR = env("SITES_DIR", default="")
 # ── Distribution (distribution/README.md) ───────────────────────────────────
 # A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
 # channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
-# LinkedIn lane always had), ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
+# LinkedIn lane always had), ZER0_X_PUBLISH, ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH. An
+# X channel carries its own app and account keys (X bills the app), so the platform has no X app of its own.
 DISTRIBUTION_ARMED = {
     kind
     for kind, variable in (
         ("linkedin", "ZER0_LINKEDIN_PUBLISH"),
+        ("x", "ZER0_X_PUBLISH"),
         ("wordpress", "ZER0_WORDPRESS_PUBLISH"),
         ("github_pr", "ZER0_GITHUB_PR_PUBLISH"),
         ("email", "ZER0_EMAIL_PUBLISH"),

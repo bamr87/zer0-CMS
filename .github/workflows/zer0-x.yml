@@ -1,0 +1,265 @@
+# zer0-x — the X distribution lane, as a reusable workflow.
+#
+# A content repository calls it (docs/DISTRIBUTION.md § X). It runs the lane
+# over the caller's own files — `manage.py x` (content/distribution/lane/x_*.py),
+# the LinkedIn lane's twin — and touches no database:
+#
+#   on:
+#     push:
+#       branches: [main]
+#       paths: ["drafts/x/**"]            # a merged draft is an approved draft
+#     workflow_dispatch:
+#   permissions:
+#     contents: write                     # publish commits results back
+#   jobs:
+#     publish:
+#       uses: bamr87/zer0-CMS/.github/workflows/zer0-x.yml@main
+#       with:
+#         command: publish
+#         live: ${{ github.event_name == 'push' }}
+#       secrets:
+#         X_API_KEY: ${{ secrets.X_API_KEY }}
+#         X_API_SECRET: ${{ secrets.X_API_SECRET }}
+#         X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+#         X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+#
+# Commands:
+#   publish  the queue (or one `draft`); rehearsal unless `live`
+#   status   the site's settings and — with the credentials — which account the
+#            token posts as; fails when the keys are rejected or belong to an
+#            account other than distribution.x.account. An OAuth 1.0a token has
+#            no expiry: it works until its owner revokes it
+#
+# Permissions: this workflow declares none, so the caller's grant applies —
+# `contents: write` for publish, which commits results back, and
+# `contents: read` for status.
+#
+# It runs against the tip of the branch the run is on, not the commit that
+# triggered it, so a run queued behind another sees the ledger that run
+# committed. On the default branch it sets ZER0_X_MERGED=1, which lets a site
+# that treats a merge as approval publish a `pending` draft; anywhere else a
+# draft must be `approved`. A rehearsal needs no credential and still fails on a
+# guard error (a post over 280 characters as X counts them included), a missing
+# page or an unconfirmed earlier attempt. Every other run skips with a notice
+# when any of the four X secrets is absent. `ZER0_X_PUBLISH=1` is set for the one
+# step of a live publish. After a live publish the ledger and the queue are
+# committed back with [skip ci], and uploaded as the `zer0-x-results` artifact.
+# X bills each request (pay-per-use): every live post, and the account check
+# before it, is a billed call.
+name: zer0-x
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        description: "publish or status"
+        type: string
+        required: false
+        default: publish
+      site-path:
+        description: "The Jekyll site root, relative to the caller repository root"
+        type: string
+        required: false
+        default: "."
+      live:
+        description: "publish only: send approved drafts to X (otherwise rehearse)"
+        type: boolean
+        required: false
+        default: false
+      draft:
+        description: "publish only: one draft id instead of the whole queue"
+        type: string
+        required: false
+        default: ""
+      zer0-cms-ref:
+        description: "The zer0-CMS ref to run"
+        type: string
+        required: false
+        default: main
+    secrets:
+      X_API_KEY:
+        required: false
+      X_API_SECRET:
+        required: false
+      X_ACCESS_TOKEN:
+        required: false
+      X_ACCESS_TOKEN_SECRET:
+        required: false
+
+jobs:
+  x:
+    name: zer0 x ${{ inputs.command }}${{ inputs.live && ' (live)' || '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One group per command: a token check queued behind a publish must never
+    # replace it, and two publishes must never run at once.
+    concurrency:
+      group: zer0-x-${{ github.repository }}-${{ inputs.command }}
+      cancel-in-progress: false
+    steps:
+      - name: Validate the inputs and look for a credential
+        id: gate
+        env:
+          COMMAND: ${{ inputs.command }}
+          SITE_PATH: ${{ inputs.site-path }}
+          DRAFT: ${{ inputs.draft }}
+          LIVE: ${{ inputs.live }}
+          HAS_CREDENTIAL: ${{ secrets.X_API_KEY != '' && secrets.X_API_SECRET != '' && secrets.X_ACCESS_TOKEN != '' && secrets.X_ACCESS_TOKEN_SECRET != '' }}
+        run: |
+          set -euo pipefail
+          case "$COMMAND" in
+            publish | status) ;;
+            *) echo "::error::command must be publish or status, not: $COMMAND"; exit 2 ;;
+          esac
+          case "$SITE_PATH" in
+            /* | .. | ../* | */.. | */../*) echo "::error::site-path must stay inside the repository: $SITE_PATH"; exit 2 ;;
+          esac
+          if [ -n "$DRAFT" ] && ! printf '%s' "$DRAFT" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+            echo "::error::draft must be a draft id (a filename without .md)"; exit 2
+          fi
+          if [ "$HAS_CREDENTIAL" = "true" ] || { [ "$COMMAND" = "publish" ] && [ "$LIVE" != "true" ]; }; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No X credential (X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN and X_ACCESS_TOKEN_SECRET) — skipping $COMMAND. Add the four secrets to activate the lane."
+          fi
+
+      # In a called workflow `github.repository` and `github.ref` are the
+      # caller's. `ref` is the branch, so the checkout is its tip now.
+      - name: Check out the site
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          path: site
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          persist-credentials: ${{ inputs.command == 'publish' && inputs.live }}
+
+      - name: Check out zer0-CMS
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: bamr87/zer0-CMS
+          ref: ${{ inputs.zer0-cms-ref }}
+          path: zer0-cms
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: zer0-cms/content/requirements.txt
+
+      - name: Install the platform
+        if: steps.gate.outputs.ready == 'true'
+        run: pip install -r zer0-cms/content/requirements.txt
+
+      - name: Run manage.py x ${{ inputs.command }}
+        id: run
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          COMMAND: ${{ inputs.command }}
+          SITE_PATH: ${{ inputs.site-path }}
+          DRAFT: ${{ inputs.draft }}
+          LIVE: ${{ inputs.live }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          ZER0_X_PUBLISH: ${{ inputs.command == 'publish' && inputs.live && '1' || '' }}
+          ZER0_X_MERGED: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && '1' || '' }}
+        run: |
+          set -uo pipefail
+          mkdir -p x-report
+          cli=(python zer0-cms/content/manage.py x)
+          site=(--site "site/$SITE_PATH")
+          case "$COMMAND" in
+            publish)
+              extra=()
+              [ -n "$DRAFT" ] && extra+=("$DRAFT")
+              [ "$LIVE" = "true" ] && extra+=(--live)
+              "${cli[@]}" publish "${site[@]}" "${extra[@]}" 2>&1 | tee x-report/output.txt ;;
+            status)
+              check=()
+              [ -n "$X_ACCESS_TOKEN" ] && check+=(--check)
+              "${cli[@]}" status "${site[@]}" "${check[@]}" 2>&1 | tee x-report/output.txt ;;
+          esac
+          status=${PIPESTATUS[0]}
+          "${cli[@]}" status "${site[@]}" --json > x-report/status.json 2>/dev/null || true
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Keep a copy of the ledger and the queue
+        if: always() && steps.gate.outputs.ready == 'true'
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          python3 - x-report/status.json "site/$SITE_PATH" <<'PY' || true
+          import json, shutil, sys
+          from pathlib import Path
+
+          try:
+              report = json.loads(Path(sys.argv[1]).read_text())
+          except (OSError, ValueError):
+              sys.exit(0)
+          for key in ("ledger", "queue"):
+              relative = str(report.get(key) or "")
+              source = Path(sys.argv[2]) / relative
+              if not relative or not source.exists():
+                  continue
+              target = Path("x-report/state") / relative
+              target.parent.mkdir(parents=True, exist_ok=True)
+              if source.is_dir():
+                  shutil.copytree(source, target, dirs_exist_ok=True)
+              else:
+                  shutil.copy2(source, target)
+          PY
+
+      - name: Commit the ledger and the queue back
+        if: always() && steps.gate.outputs.ready == 'true' && inputs.command == 'publish' && inputs.live
+        working-directory: site
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          set -uo pipefail
+          report=../x-report/status.json
+          if [ ! -s "$report" ]; then echo "No status report; nothing to commit."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 -c 'import json, os, sys; r = json.load(open(sys.argv[1])); print("\n".join(os.path.join(sys.argv[2], r[k]) for k in ("ledger", "queue")))' \
+            "$report" "$SITE_PATH" | while read -r path; do
+            if [ -e "$path" ]; then git add -- "$path"; fi
+          done
+          if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+          git commit -m "chore(x): record the distribution lane's results [skip ci]" || exit 1
+          for _ in 1 2 3; do
+            if git push; then exit 0; fi
+            if ! git pull --rebase --autostash; then
+              git rebase --abort 2>/dev/null || true
+              break
+            fi
+          done
+          echo "::error::could not commit the ledger back — its copy is in the zer0-x-results artifact (state/). Add those entries to the ledger before the next publish runs."
+          exit 1
+
+      - name: Upload the results
+        if: always() && steps.gate.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: zer0-x-results
+          path: x-report
+          if-no-files-found: ignore
+
+      - name: Write the job summary
+        if: always() && steps.gate.outputs.ready == 'true'
+        env:
+          COMMAND: ${{ inputs.command }}
+        run: |
+          {
+            echo "## zer0 x \`$COMMAND\`"
+            echo
+            echo '```text'
+            head -n 400 x-report/output.txt 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

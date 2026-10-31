@@ -37,8 +37,8 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
         child=serializers.CharField(allow_blank=True),
         write_only=True,
         required=False,
-        help_text="The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; "
-        "github_pr: token). Encrypted at rest and never returned.",
+        help_text="The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, "
+        "access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned.",
     )
     has_credential = serializers.SerializerMethodField()
     connecting = serializers.SerializerMethodField(help_text="LinkedIn came back; the worker is exchanging the code.")

@@ -11,6 +11,7 @@ import { useApi } from '../context';
 
 export const KINDS: { value: DistributionKind; label: string }[] = [
   { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'x', label: 'X' },
   { value: 'wordpress', label: 'WordPress' },
   { value: 'github_pr', label: 'GitHub pull request' },
   { value: 'email', label: 'Email newsletter' },
@@ -29,6 +30,9 @@ export const STATUSES: { value: DistributionPostStatus; label: string; color: st
 
 export const statusOf = (value: string) => STATUSES.find((s) => s.value === value) ?? DRAFT;
 export const kindLabel = (value: string) => KINDS.find((k) => k.value === value)?.label ?? value;
+/** The kinds whose posts the platform reads aggregate counts for, and that take a text update with no page. */
+export const MEASURED: string[] = ['linkedin', 'x'];
+export const TEXT_UPDATES: string[] = ['linkedin', 'x'];
 export const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : '—');
 
 /** What each kind keeps in its settings, as the platform's channel takes them (distribution/models.py). */
@@ -36,6 +40,10 @@ export const SETTINGS: Record<DistributionKind, { name: string; label: string; d
   linkedin: [
     { name: 'author', label: 'Author', description: 'urn:li:organization:… for a page, urn:li:person:… for a profile' },
     { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own ledger (e.g. .github/linkedin-log.json), read before and written after a publish' },
+  ],
+  x: [
+    { name: 'account', label: 'Account', description: 'The X handle it posts as, e.g. @bamr87 — Check it refuses a key for any other' },
+    { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own X ledger (e.g. .github/x-log.json), read before and written after a publish' },
   ],
   wordpress: [
     { name: 'url', label: 'Site address', description: 'https://blog.example.com' },
@@ -53,6 +61,9 @@ export const SETTINGS: Record<DistributionKind, { name: string; label: string; d
 const SECRET_LABELS: Record<string, string> = {
   access_token: 'Access token',
   refresh_token: 'Refresh token',
+  api_key: 'API key',
+  api_secret: 'API key secret',
+  access_token_secret: 'Access token secret',
   application_password: 'Application password',
   token: 'Token',
 };

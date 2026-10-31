@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Distribute, Distribution } from '../src';
 import { ChannelPanel } from '../src/distribution/Channels';
+import { ComposeForm } from '../src/distribution/Compose';
 import { Ledger, Statistics } from '../src/distribution/Ledger';
 import { PostPanel } from '../src/distribution/PostPanel';
 import { fakePlatform, renderUi, Reply } from '../../../test/harness';
@@ -306,6 +307,53 @@ describe('a channel', () => {
     expect(platform.calls.find((c) => c.method === 'POST' && c.path.endsWith('/ledger-file/'))?.body).toEqual({
       content: '{"https://example.test/b/": {"urn": "urn:li:share:2"}}',
     });
+  });
+});
+
+describe('an X channel', () => {
+  it('takes its four keys, offers no consent screen, and reads its statistics', async () => {
+    const x = { id: 'c3', kind: 'x', kind_label: 'X', name: 'The account', settings: { account: 'bamr87' }, account: '@bamr87' };
+    const secret_fields = ['api_key', 'api_secret', 'access_token', 'access_token_secret'];
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c3/`]: () => channel({ ...x, has_credential: false, secret_fields }),
+      [`PATCH ${API}/channels/c3/`]: () => channel({ ...x, has_credential: true, secret_fields }),
+      [`POST ${API}/channels/c3/statistics/`]: () => new Reply(202, {}),
+      [`GET ${API}/channels/c3/ledger-file/`]: () => ({ filename: 'x-c3.json', content: '{}\n' }),
+    });
+    renderUi(<ChannelPanel channelId="c3" />, { api: platform.api });
+    expect(await screen.findByLabelText('Account')).toHaveValue('bamr87');
+    expect(screen.queryByRole('button', { name: 'Connect with LinkedIn' })).toBeNull();
+    for (const label of ['API key', 'API key secret', 'Access token', 'Access token secret']) {
+      await userEvent.type(screen.getByLabelText(label), `${label}-value`);
+    }
+    await userEvent.click(screen.getByRole('button', { name: 'Set the credential' }));
+    await waitFor(() =>
+      expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        credentials: {
+          api_key: 'API key-value',
+          api_secret: 'API key secret-value',
+          access_token: 'Access token-value',
+          access_token_secret: 'Access token secret-value',
+        },
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Read statistics now' }));
+    expect(await screen.findByText('The worker is reading X’s statistics; they appear under Statistics.')).toBeInTheDocument();
+  });
+
+  it('offers a text update, and the ledger links its post', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/`]: () => listOf([channel({ id: 'c3', kind: 'x', kind_label: 'X', name: 'The account' })]),
+      [`GET ${API}/ledger/`]: () => listOf([entry({ channel: 'c3', channel_kind: 'x', urn: '1850000000000000001' })]),
+    });
+    const { unmount } = renderUi(<ComposeForm siteId={1} onDone={() => undefined} />, { api: platform.api });
+    await userEvent.click(await screen.findByLabelText('Channel', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: /The account — X/ }));
+    expect(screen.getByRole('radio', { name: 'A text update' })).toBeInTheDocument();
+    unmount();
+    renderUi(<Ledger siteId={1} />, { api: platform.api });
+    const table = await screen.findByRole('table', { name: 'The ledger' });
+    expect(within(table).getByRole('link', { name: '1850000000000000001' })).toHaveAttribute('href', 'https://x.com/i/status/1850000000000000001');
   });
 });
 

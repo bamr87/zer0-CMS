@@ -4,7 +4,7 @@ statistics. Views, tools, the consumer and the workers call these; nothing else
 writes the tables.
 
     compose ──▶ guard ──▶ approve ──▶ publish (202) ──▶ worker: gates again ──▶ published | failed
-    a person,    the brand   a person    a person with        LinkedIn, WordPress,       ledger, keyed by
+    a person,    the brand   a person    a person with        LinkedIn, X, WordPress,    ledger, keyed by
     an agent or  guard       who may     the right, an armed   GitHub, a newsletter       canonical URL
     a published  (findings   publish     channel and the
     page         stored)     the page    deployment's switch
@@ -13,9 +13,10 @@ The gates are `gates.ORDER`, the same as a site's own lane's: a post publishes
 only when a person approved its exact text (`approval_digest`), the channel is
 armed (`Channel.armed`) and the
 deployment armed the kind (`DISTRIBUTION_ARMED`, from `ZER0_LINKEDIN_PUBLISH`,
-`ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`, `ZER0_EMAIL_PUBLISH`), the
-ledger has no entry for its key — in the channel's rows and, for a LinkedIn
-channel with a `ledger_file`, in the site's own ledger file, where the
+`ZER0_X_PUBLISH`, `ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`,
+`ZER0_EMAIL_PUBLISH`), the ledger has no entry for its key — in the channel's
+rows and, for a LinkedIn or X channel with a `ledger_file`, in the site's own
+ledger file, where the
 extension and CI write — and the brand guard has no error. The worker runs the
 gates again before anything leaves, and every attempt ends published or
 failed: an error nobody expected fails it as one that may have published, an
@@ -63,12 +64,21 @@ from .models import (
     target_of,
 )
 from .transports import TransportError
+from .x import Client as XClient
+from .x import Credentials as XCredentials
+from .x import Error as XError
+from .x import HTTPError as XHTTPError
+from .x import Refused as XRefused
+from .x import plan as xplan
+from .x import posts as xposts
 
 log = logging.getLogger(__name__)
 FINAL = (DistributionPost.Status.PUBLISHED, DistributionPost.Status.REJECTED)
 EDITABLE = ("title", "description", "commentary", "kind")
 # A post a person approved: waiting, going, or back after an attempt that failed.
 APPROVED = (DistributionPost.Status.APPROVED, DistributionPost.Status.PUBLISHING, DistributionPost.Status.FAILED)
+# The kinds that take a text update, which has no page.
+UPDATES = (Kind.LINKEDIN, Kind.X)
 
 
 def _detail(field_name, message):
@@ -127,10 +137,14 @@ def clean_settings(kind: str, values: dict) -> dict:
             )
         if out.get("api_version") and plan.version_status(out["api_version"]) == "invalid":
             raise Invalid("api_version must be YYYYMM", details=_detail("settings", "api_version"))
-        if out.get("ledger_file"):
-            text = str(out["ledger_file"]).replace("\\", "/")
-            if text.startswith("/") or ".." in text.split("/"):
-                raise Invalid("ledger_file is a path inside the site", details=_detail("settings", "ledger_file"))
+    if kind == Kind.X and out.get("account"):
+        if xplan.handle(out["account"]) is None:
+            raise Invalid("account is the X handle the channel posts as", details=_detail("settings", "account"))
+        out["account"] = xplan.handle(out["account"])
+    if kind in (Kind.LINKEDIN, Kind.X) and out.get("ledger_file"):
+        text = str(out["ledger_file"]).replace("\\", "/")
+        if text.startswith("/") or ".." in text.split("/"):
+            raise Invalid("ledger_file is a path inside the site", details=_detail("settings", "ledger_file"))
     if kind == Kind.WORDPRESS and out.get("url"):
         if not re.match(r"https://[^\s/]+", str(out["url"])):
             raise Invalid(
@@ -366,6 +380,8 @@ def check(channel) -> Channel:
     try:
         if channel.kind == Kind.LINKEDIN:
             report = check_linkedin(channel)
+        elif channel.kind == Kind.X:
+            report = check_x(channel)
         elif channel.kind == Kind.WORDPRESS:
             report = wordpress_check(channel, channel.credentials())
         elif channel.kind == Kind.GITHUB_PR:
@@ -377,7 +393,7 @@ def check(channel) -> Channel:
                 "account": channel.newsletter.name if channel.newsletter else "",
                 "notes": [f"{confirmed} confirmed subscriber(s)"],
             }
-    except (TransportError, LinkedInError) as e:
+    except (TransportError, LinkedInError, XError) as e:
         report = {"ok": False, "problems": [str(e)]}
     problems = "; ".join(report.get("problems", []))
     Channel.objects.filter(pk=channel.pk).update(
@@ -420,6 +436,28 @@ def check_linkedin(channel) -> dict:
             out["problems"].append(str(e))
     out["ok"] = not out["problems"]
     return out
+
+
+def x_credentials(channel) -> XCredentials:
+    """The channel's own app and account keys — never the environment's X_*, which are the site lane's."""
+    stored = channel.credentials()
+    return XCredentials(*(stored.get(name, "") for name in SECRETS[Kind.X]))
+
+
+def check_x(channel) -> dict:
+    """Whether the keys work and post as the channel's account: X posts as whoever the token is."""
+    creds = x_credentials(channel)
+    if not creds.complete:
+        return {
+            "ok": False,
+            "problems": ["no X credential: set the channel's app key and secret and its token and secret"],
+        }
+    account = channel.setting("account")
+    if not account:
+        found = xposts.me(XClient(creds))
+        return {"ok": False, "account": f"@{found['username']}", "problems": ["the channel names no account"]}
+    found = xposts.check_account(XClient(creds), account)
+    return {"ok": True, "problems": [], "notes": [], "account": f"@{found['username']}"}
 
 
 # ── the canonical URL ───────────────────────────────────────────────────────
@@ -525,13 +563,23 @@ def default_commentary(page, limit: int = 3) -> str:
 # ── the guard ───────────────────────────────────────────────────────────────
 
 
-def guard(text: str, channel) -> list[dict]:
+def guard(text: str, channel, link=None) -> list[dict]:
     """The brand guard (suggestions/guard.py, the extension's rules, with the active brand rules and the channel's
-    site's own), and for LinkedIn its own limit once the text is escaped — the site lane's check, the same rule."""
+    site's own), for LinkedIn its own limit once the text is escaped, and for X its own limit on the whole post — the
+    text and the article's `link` — as X counts it: the site lanes' checks, the same rules."""
     from .lane.pipeline import check_commentary
+    from .lane.x_pipeline import check_text
 
     extra = extra_patterns(channel.site)
-    return check_commentary(text or "", extra) if channel.kind == Kind.LINKEDIN else guard_text(text or "", extra)
+    if channel.kind == Kind.LINKEDIN:
+        return check_commentary(text or "", extra)
+    if channel.kind == Kind.X:
+        return check_text(text or "", link, extra)
+    return guard_text(text or "", extra)
+
+
+def post_guard(post) -> list[dict]:
+    return guard(post.commentary, post.channel, post.link if post.kind == "article" else None)
 
 
 def guard_errors(findings) -> list[str]:
@@ -568,8 +616,8 @@ def compose(
         )
     if channel.kind == Kind.EMAIL and story is None:
         raise Invalid("an email channel sends newsroom stories: pick a story", details=_detail("story", "required"))
-    if kind == "update" and channel.kind != Kind.LINKEDIN:
-        raise Invalid("only LinkedIn takes a text update", details=_detail("kind", "linkedin only"))
+    if kind == "update" and channel.kind not in UPDATES:
+        raise Invalid("only LinkedIn and X take a text update", details=_detail("kind", "linkedin and x only"))
     if page is not None:
         page = page.specific
         if origin == DistributionPost.Origin.PERSON and not may_compose(page, user):
@@ -602,7 +650,7 @@ def compose(
         commentary=str(commentary),
         link=link,
     )
-    post.guard = guard(post.commentary, channel)
+    post.guard = post_guard(post)
     post.save()
     return post
 
@@ -617,12 +665,12 @@ def edit(post, user, **fields) -> DistributionPost:
     if post.status in (DistributionPost.Status.PUBLISHING, *FINAL):
         raise Conflict(f"a {post.status} post does not change")
     changed = [name for name in EDITABLE if name in fields and fields[name] != getattr(post, name)]
-    if "kind" in changed and fields["kind"] == "update" and post.channel.kind != Kind.LINKEDIN:
-        raise Invalid("only LinkedIn takes a text update", details=_detail("kind", "linkedin only"))
+    if "kind" in changed and fields["kind"] == "update" and post.channel.kind not in UPDATES:
+        raise Invalid("only LinkedIn and X take a text update", details=_detail("kind", "linkedin and x only"))
     for name in changed:
         setattr(post, name, fields[name])
     if changed:
-        post.guard = guard(post.commentary, post.channel)
+        post.guard = post_guard(post)
         if post.status in APPROVED:
             post.status, post.approved_by, post.approved_at = DistributionPost.Status.DRAFT, None, None
             post.approved_digest = ""
@@ -647,7 +695,7 @@ def approve(post, user) -> DistributionPost:
         raise PermissionDenied("approving a post is the right of someone who may publish its page")
     if post.status != DistributionPost.Status.DRAFT:
         raise Conflict(f"the post is already {post.status}")
-    post.guard = guard(post.commentary, post.channel)
+    post.guard = post_guard(post)
     if errors := guard_errors(post.guard):
         post.save(update_fields=["guard", "updated_at"])
         raise Conflict(f"brand guard: {'; '.join(errors)}")
@@ -772,6 +820,11 @@ def preview(post, *, live: bool = True) -> Preview:
                 )
             except ValueError as e:
                 blockers.append(Blocker("source_missing", str(e)))
+    if channel.kind == Kind.X:
+        if not channel.setting("account"):
+            blockers.append(Blocker("no_author", "no X account on the channel (the handle it posts as)"))
+        elif post.kind == "update" or post.link:
+            payload = xposts.payload(commentary=post.commentary, link=post.link if post.kind == "article" else None)
     page = post.page.specific if post.page_id else None
     if post.kind == "article":
         if page is None:
@@ -786,7 +839,7 @@ def preview(post, *, live: bool = True) -> Preview:
         blockers.append(Blocker("source_missing", "an update needs its text"))
     if channel.kind == Kind.EMAIL and (post.story is None or not post.story.is_published):
         blockers.append(Blocker("source_missing", "email sends a published story: the story is not published"))
-    if errors := guard_errors(guard(post.commentary, channel)):
+    if errors := guard_errors(post_guard(post)):
         blockers.append(Blocker("guard_error", f"brand guard: {'; '.join(errors)}"))
     ledger = site_ledger(channel)
     entry = find_entry(channel, post.ledger_key) if (ledger is None or ledger.readable) else None
@@ -822,6 +875,7 @@ def preview(post, *, live: bool = True) -> Preview:
     elif not armed_for_kind(channel.kind):
         variable = {
             "linkedin": "ZER0_LINKEDIN_PUBLISH",
+            "x": "ZER0_X_PUBLISH",
             "wordpress": "ZER0_WORDPRESS_PUBLISH",
             "github_pr": "ZER0_GITHUB_PR_PUBLISH",
             "email": "ZER0_EMAIL_PUBLISH",
@@ -835,6 +889,8 @@ def preview(post, *, live: bool = True) -> Preview:
         creds = linkedin_credentials(channel)
         if not (creds.access or creds.refreshable):
             blockers.append(Blocker("no_credential", "no LinkedIn token: connect the channel"))
+    elif channel.kind == Kind.X and not x_credentials(channel).complete:
+        blockers.append(Blocker("no_credential", "no X credential: set the channel's four keys"))
     elif channel.kind in (Kind.WORDPRESS, Kind.GITHUB_PR) and not channel.credentials():
         blockers.append(Blocker("no_credential", f"no credential for {channel.name}: set it on the channel"))
     found = gates.ordered(blockers)
@@ -1052,7 +1108,27 @@ def _send(post) -> tuple[str, str, dict]:
     if channel.kind == Kind.EMAIL:
         issue = email_publish(channel, post, post.published_by)
         return str(issue.public_id), "", {}
+    if channel.kind == Kind.X:
+        return _send_x(post)
     return _send_linkedin(post, page)
+
+
+def _send_x(post):
+    """The account first — a read, so a token for another account fails with nothing in doubt — then the post. A 5xx,
+    a dropped connection or a success with no id may have posted, so it is doubted."""
+    channel = post.channel
+    client = XClient(x_credentials(channel))
+    try:
+        xposts.check_account(client, channel.setting("account"))
+    except XError as e:
+        raise TransportError(f"X: {e}") from e
+    try:
+        post_id = xposts.create(client, preview(post).payload)
+    except XHTTPError as e:
+        raise TransportError(f"X: {e}", doubt=e.status == 0 or e.status >= 500) from e
+    except XError as e:
+        raise TransportError(f"X: {e}", doubt=not isinstance(e, XRefused)) from e
+    return post_id, xposts.post_url(post_id, channel.setting("account")), {}
 
 
 def _send_linkedin(post, page):
@@ -1095,7 +1171,7 @@ def _doubt(post, message: str) -> None:
                 "kind": post.kind,
                 "extra": {},  # a new fact about the key: nothing another lane wrote about an older one
                 "post": post,
-                "author": channel.setting("author"),
+                "author": author_of(channel),
                 "source_file": _source_file(post),
             },
         )
@@ -1110,13 +1186,18 @@ def _doubt(post, message: str) -> None:
                     error=message,
                     kind=post.kind,
                     target=channel.kind,
-                    author=channel.setting("author") or None,
+                    author=author_of(channel) or None,
                     source_file=_source_file(post) or None,
                 ),
             )
         except (OSError, LedgerError) as e:
             log.warning("distribution: could not mark %s unconfirmed in the site's ledger file: %s", key, e)
             _note(post, f"the site's ledger file ({channel.setting('ledger_file')}) did not take the doubt: {e}")
+
+
+def author_of(channel) -> str:
+    """Who a channel's ledger entries say published: the LinkedIn author's URN, the X handle."""
+    return channel.setting("account") if channel.kind == Kind.X else channel.setting("author")
 
 
 def _note(post, text: str) -> None:
@@ -1144,7 +1225,7 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             "attempted_at": None,
             "error": "",
             "kind": post.kind,
-            "author": channel.setting("author"),
+            "author": author_of(channel),
             "source_file": _source_file(post),
             "image_urn": image_urn,
             "extra": {},  # a re-publish is a new fact about the key: nothing from an older entry (ledger.entry_for)
@@ -1160,7 +1241,7 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
                     urn=urn,
                     kind=post.kind,
                     target=channel.kind,
-                    author=channel.setting("author") or None,
+                    author=author_of(channel) or None,
                     source_file=_source_file(post) or None,
                     image_urn=image_urn or None,
                     now=now,
@@ -1197,6 +1278,8 @@ def record_by_hand(post, user, urn: str) -> DistributionPost:
         )
     if post.channel.kind == Kind.LINKEDIN and not plan.POST_URN.match(urn or ""):
         raise Invalid("not a LinkedIn post URN (urn:li:share:… or urn:li:ugcPost:…)", details=_detail("urn", "invalid"))
+    if post.channel.kind == Kind.X and not xplan.POST_ID.match(urn or ""):
+        raise Invalid("not an X post id (its digits, from x.com/…/status/ID)", details=_detail("urn", "invalid"))
     if not str(urn or "").strip():
         raise Invalid("say what it was published as", details=_detail("urn", "required"))
     record(post, urn)
@@ -1208,6 +1291,8 @@ def record_by_hand(post, user, urn: str) -> DistributionPost:
     )
     if post.channel.kind == Kind.LINKEDIN:
         post.external_url = posts.feed_url(urn)
+    if post.channel.kind == Kind.X:
+        post.external_url = xposts.post_url(urn, post.channel.setting("account"))
     post.save()
     return post
 
@@ -1360,8 +1445,10 @@ def import_ledger(channel, user, text: str) -> dict:
 
 
 def ingest_statistics(channel, *, today=None) -> int:
-    """Aggregate counts for the channel's own LinkedIn posts, one row per post a day; nothing about who engaged. A
-    channel nobody connected is skipped: it has no token of its own."""
+    """Aggregate counts for the channel's own LinkedIn or X posts, one row per post a day; nothing about who engaged.
+    A channel nobody connected is skipped: it has no token of its own."""
+    if channel.kind == Kind.X and channel.connected:
+        return _ingest_x(channel, today=today)
     if channel.kind != Kind.LINKEDIN or not channel.connected:
         return 0
     author = channel.setting("author")
@@ -1387,3 +1474,25 @@ def ingest_statistics(channel, *, today=None) -> int:
                 entry=row, day=day, defaults={**counts[row.urn], "fetched_at": timezone.now()}
             )
     return len(counts)
+
+
+def _ingest_x(channel, *, today=None) -> int:
+    """X's public counts for the account's own posts in the ledger — one billed read for the account, and one per
+    post (`x/posts.py`: link clicks are not public, so they stay at zero)."""
+    account = channel.setting("account")
+    rows = [
+        r
+        for r in channel.ledger.filter(state="published")
+        if xplan.POST_ID.match(r.urn) and (not r.author or r.author.lower() == str(account).lower())
+    ]
+    if not rows or not account:
+        return 0
+    client = XClient(x_credentials(channel))
+    found = xposts.lookup(client, [r.urn for r in rows], account_id=xposts.check_account(client, account)["id"])
+    day = today or timezone.localdate()
+    for row in rows:
+        if row.urn in found:
+            Statistic.objects.update_or_create(
+                entry=row, day=day, defaults={**xposts.counts(found[row.urn]), "fetched_at": timezone.now()}
+            )
+    return len(found)

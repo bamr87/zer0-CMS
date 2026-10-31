@@ -4,7 +4,7 @@ ledger), exchanging an OAuth code, checking a channel's credential, and — on
 Celery beat — settling every attempt that is over without its worker saying so
 (each minute: a send whose worker died, a post no worker took, an email post
 whose newsletter issue the newsroom sent or failed) and the statistics of every
-LinkedIn channel's posts (daily).
+LinkedIn and X channel's posts (daily).
 """
 
 import logging
@@ -13,6 +13,7 @@ from celery import shared_task
 
 from .linkedin import Error as LinkedInError
 from .models import Channel, Kind
+from .x import Error as XError
 
 log = logging.getLogger(__name__)
 
@@ -52,18 +53,18 @@ def check_channel(channel_id: int) -> None:
 
 @shared_task
 def ingest_statistics(channel_id: int | None = None) -> int:
-    """One channel's statistics, or — from beat — every connected LinkedIn channel's; a channel LinkedIn refuses
-    is recorded on the channel and the rest still run."""
+    """One channel's statistics, or — from beat — every connected LinkedIn and X channel's; a channel its target
+    refuses is recorded on the channel and the rest still run."""
     from .services import ingest_statistics as ingest
 
-    channels = Channel.objects.filter(kind=Kind.LINKEDIN)
+    channels = Channel.objects.filter(kind__in=(Kind.LINKEDIN, Kind.X))
     if channel_id is not None:
         channels = channels.filter(pk=channel_id)
     total = 0
     for channel in channels:
         try:
             total += ingest(channel)
-        except LinkedInError as e:
+        except (LinkedInError, XError) as e:
             log.warning("distribution: statistics for channel %s failed: %s", channel.public_id, e)
             Channel.objects.filter(pk=channel.pk).update(last_error=f"statistics: {e}"[:1000])
     return total

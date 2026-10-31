@@ -1,6 +1,6 @@
 // The ledger — what has been published, keyed by canonical URL, with the
 // attempts that may have landed marked unconfirmed — and its statistics: the
-// latest aggregate counts LinkedIn reported for each of the channels' own
+// latest aggregate counts LinkedIn or X reported for each of the channels' own
 // posts, the most seen first, with the totals. Nothing about who engaged.
 import { Alert, Anchor, Badge, Loader, Select, Table, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +38,11 @@ function ChannelFilter({ siteId, value, onChange }: { siteId?: number; value: st
 }
 
 const linkFor = (entry: DistributionLedgerEntry) =>
-  entry.urn.startsWith('urn:li:') ? `https://www.linkedin.com/feed/update/${entry.urn}/` : null;
+  entry.urn.startsWith('urn:li:')
+    ? `https://www.linkedin.com/feed/update/${entry.urn}/`
+    : entry.channel_kind === 'x' && /^\d+$/.test(entry.urn)
+      ? `https://x.com/i/status/${entry.urn}`
+      : null;
 
 export function Ledger({ siteId }: { siteId?: number }) {
   const go = useGo();
@@ -109,7 +113,7 @@ export function Statistics({ siteId }: { siteId?: number }) {
     <>
       <ChannelFilter siteId={siteId} value={channel} onChange={setChannel} />
       <Text size="sm" c="dimmed">
-        Aggregate counts for the channels’ own LinkedIn posts, read once a day (or now, from a channel’s panel). Nothing about who
+        Aggregate counts for the channels’ own LinkedIn and X posts, read once a day (or now, from a channel’s panel). Nothing about who
         engaged is read or kept.
       </Text>
       {ledger.isPending ? <Loader /> : null}

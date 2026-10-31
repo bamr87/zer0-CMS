@@ -1,8 +1,8 @@
 # Distribution
 
-> Distribution on the platform — channels (LinkedIn, WordPress, GitHub pull requests, newsletters), the queue, the brand guard, a person's approval, the ledger and statistics — and the LinkedIn lane a site that is still files runs from its CI.
+> Distribution on the platform — channels (LinkedIn, X, WordPress, GitHub pull requests, newsletters), the queue, the brand guard, a person's approval, the ledger and statistics — and the LinkedIn and X lanes a site that is still files runs from its CI.
 
-zer0-CMS carries a site's content to where its readers are — a LinkedIn company page or a member's own profile, a WordPress site, a GitHub repository as a pull request, a newsroom newsletter — and brings LinkedIn's aggregate response back, where it decides what gets written next. A person approves every post. Nothing a repository ships can switch publishing on. Every LinkedIn call the CMS can make is declared, as data, before it is made.
+zer0-CMS carries a site's content to where its readers are — a LinkedIn company page or a member's own profile, an X account, a WordPress site, a GitHub repository as a pull request, a newsroom newsletter — and brings LinkedIn's and X's aggregate response back, where it decides what gets written next. A person approves every post. Nothing a repository ships can switch publishing on. Every LinkedIn and X call the CMS can make is declared, as data, before it is made.
 
 ```text
 page ──▶ draft ──▶ guard ──▶ approve ──▶ preview ──▶ publish ──▶ ledger ──▶ statistics
@@ -22,10 +22,10 @@ Two queues share one set of rules. The **platform's** is rows — channels of ev
 | Studio | the **Distribution** area (`/distribution`: the queue, channels, the ledger, statistics) and **Distribute** in the page editor and a newsroom story's panel (`web/packages/ui/src/distribution/`) | composing, the guard's findings, the exact payload, approving and publishing; connecting an account through LinkedIn's consent screen |
 | Platform MCP | `/mcp/`: `distribution.compose` (`propose`) and `distribution.publish` (`publish`), for a client holding the `distribution` agent's token | an agent drafts; it publishes only on the armed path below |
 | Published-page consumer | `content.page.published` → a run of the `distribution` agent | a draft for every channel of the page's site set to draft automatically; never a publish |
-| Lane library | `content/distribution/linkedin/` (the API client) and `content/distribution/lane/` (the lane) | a site's own files, no database |
-| CLI | `python manage.py linkedin COMMAND --site PATH`, from `content/` | a terminal, and every other lane surface's reference behaviour |
-| Reusable workflow | `.github/workflows/zer0-linkedin.yml` | a content repository's CI: publish merged drafts, check the token, read statistics |
-| Lane MCP server | `python manage.py linkedin mcp --site PATH` | Claude Code in a site's checkout: status, sources, queue, preview, draft — publish only when the operator armed it |
+| Lane library | `content/distribution/linkedin/` and `content/distribution/x/` (the API clients) and `content/distribution/lane/` (the lanes: `site.py`, `pipeline.py`, `cli.py`, `mcp.py` for LinkedIn, and their `x_*.py` subclasses for X — § X) | a site's own files, no database |
+| CLI | `python manage.py linkedin COMMAND --site PATH` and `python manage.py x COMMAND --site PATH`, from `content/` | a terminal, and every other lane surface's reference behaviour |
+| Reusable workflows | `.github/workflows/zer0-linkedin.yml`, `.github/workflows/zer0-x.yml` | a content repository's CI: publish merged drafts, check the token, read statistics (LinkedIn) |
+| Lane MCP servers | `python manage.py linkedin mcp --site PATH`, `python manage.py x mcp --site PATH` | Claude Code in a site's checkout: status, sources, queue, preview, draft — publish only when the operator armed it |
 
 ## Channels
 
@@ -34,6 +34,7 @@ A channel belongs to a site and has a kind. Everyone who edits the site sees its
 | Kind | Publishing a post | Credential |
 |---|---|---|
 | `linkedin` | an article (a link card for the page, with its preview image when it has one) or a text update, as the channel's author | its own OAuth token, from **Connect with LinkedIn** |
+| `x` | an article (its text, then the page's URL — X draws the card from the page's own card tags) or a text update, as the channel's `account`, after checking the token is that account's | the app's API key and secret and the account's OAuth 1.0a token and secret, typed into the channel (§ X) |
 | `wordpress` | `POST /wp-json/wp/v2/posts` with the page's HTML, a draft unless the channel says `pending`, `private` or `publish`, with the Yoast title and meta description (`yoast_title`, `yoast_metadesc`); the address goes through the research library's SSRF guard and no redirect is followed | the user's application password |
 | `github_pr` | the page exported as its Jekyll file (`exporters/jekyll.py`) onto a `distribute/…` branch, and a pull request into the channel's branch | a token that may push and open pull requests |
 | `email` | an issue of the site's newsletter carrying the story, sent as the newsroom sends every issue (django-anymail) | none |
@@ -81,7 +82,7 @@ The environment, all optional, overrides the file for one process: `LINKEDIN_AUT
 | `LINKEDIN_REFRESH_TOKEN` | secret | Renewing the lane's access token on a 401, when LinkedIn issued one |
 | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | secret | OAuth: connecting an account, refreshing, and introspecting a token's expiry |
 | `ZER0_LINKEDIN_PUBLISH` | switch | `1` arms a live LinkedIn publish for this process. The CLI also needs `--live`; the platform also needs a channel a person armed |
-| `ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`, `ZER0_EMAIL_PUBLISH` | switch | `1` arms the platform's channels of that kind, the same way |
+| `ZER0_X_PUBLISH`, `ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`, `ZER0_EMAIL_PUBLISH` | switch | `1` arms the platform's channels of that kind, the same way — and `ZER0_X_PUBLISH` the X lane's live publish (§ X) |
 | `ZER0_LINKEDIN_MCP_PUBLISH` | switch | `1` lets the lane MCP server's `linkedin_publish` tool run at all |
 | `ZER0_LINKEDIN_MERGED` | switch | `1` says this run publishes the default branch, so a `pending` draft there was merged; the reusable workflow sets it for a run on the default branch and nowhere else |
 | `ZER0_CMS_LINKEDIN_REDIRECT_URI` | setting | The platform's OAuth callback, when it is not this request's origin plus `/api/v2/distribution/oauth/linkedin/` |
@@ -268,6 +269,74 @@ It checks out the caller — at the tip of the branch the run is on, not the com
 - **A credential is encrypted with the AI layer's rotatable keys** (`ai/crypto.py`) rather than Active Record encryption keyed on `secret_key_base`.
 - **The gates run twice on the platform**: when publishing is asked for (a `409` with every blocker) and again on the worker that sends it.
 
+## X
+
+The X lane is the LinkedIn lane's twin, and inherits from it rather than copying it: `lane/x_site.py`, `x_pipeline.py`, `x_cli.py` and `x_mcp.py` subclass the LinkedIn modules and change only what X changes. The sources, composing, the draft queue and its dialect, approval, the gates after the target's own, the publish flow, the ledger file's format and recording a post by hand are the same code. A platform X channel goes through the same queue, gates and worker as every other kind.
+
+### Configure a site's X lane
+
+```jsonc
+"distribution": {
+  "x": {
+    "account": "bamr87",
+    "queue": "drafts/x",
+    "ledger": ".github/x-log.json",
+    "acceptStatuses": ["pending", "approved"],
+    "sources": ["posts"]
+  }
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `account` | none | The X handle the lane posts as (`@` optional). X posts as whoever the token is, so a publish first reads the token's account (`GET /2/users/me`) and refuses before sending anything when it is another |
+| `siteUrl` | `_config.yml` `url` + `baseurl` | The origin of the canonical URLs posts link to and the ledger is keyed by |
+| `queue` | `.zer0/drafts/x` | The draft queue folder, in the LinkedIn queue's dialect (the post's id goes under `post_id`) |
+| `ledger` | `.zer0/x-ledger.json` | The idempotency ledger. X's own file: it is keyed by canonical URL, and a page shared on LinkedIn has still to go to X |
+| `acceptStatuses` | `["approved"]` | As LinkedIn's, with `ZER0_X_MERGED=1` saying a run is on the default branch |
+| `sources` | every collection | The collections whose pages can be shared |
+| `hashtagLimit` | `2` | Hashtags in a composed first draft |
+| `bannedPatternsFile` | none | Extra brand-guard bans |
+
+| Variable | Kind | Used for |
+|---|---|---|
+| `X_API_KEY`, `X_API_SECRET` | secret | The app's key and secret (the X developer console's "API Key and Secret") |
+| `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` | secret | The account's OAuth 1.0a token and secret — the console's "Access Token and Secret" for the app owner's own account, or `manage.py x connect` for any account whose owner approves |
+| `ZER0_X_PUBLISH` | switch | `1` arms a live X publish for this process; the CLI also needs `--live` |
+| `ZER0_X_MCP_PUBLISH` | switch | `1` lets the lane MCP server's `x_publish` tool run at all |
+| `ZER0_X_MERGED` | switch | `1` says this run publishes the default branch, so a `pending` draft there was merged |
+
+`manage.py x` takes `status [--check]`, `plan`, `sources`, `queue`, `draft`, `approve`, `preview`, `publish [--live] [--force]`, `record DRAFT ID`, `posts`, `verify ID`, `connect` and `mcp`, with the LinkedIn lane's exit codes. `zer0 doctor`'s `distribution` check reads the `distribution.x` block beside `distribution.linkedin`.
+
+### What a post is, and its length
+
+A post is `{"text": …}`. An article is its commentary with the page's canonical URL on a line of its own after it (unless the commentary already carries it); X draws the link's card from the page's own `twitter:card` and Open Graph tags, so nothing is uploaded and no card title or description travels with it. A text update is the text alone, ledgered under `draft:<queue path>`. The brand guard runs on the commentary, and X's own limit on the whole post: 280 characters as X counts them (`x/plan.py` `weighted_length`, twitter-text's rules — a link counts 23 whatever its length, a character outside the Latin, Greek, Cyrillic and common punctuation ranges counts 2). An emoji sequence is counted per code point and a bare domain at no less than 23, so the count may refuse a post X would take, never take one X refuses. A post over the limit is a `guard_error`.
+
+### What X sees
+
+`manage.py x plan` prints every call the client can make (`distribution/x/plan.py`); `Client.request` takes a call id from it, never a URL, and every request goes to `api.x.com` over https.
+
+| Call | Endpoint | Returns |
+|---|---|---|
+| `request_token` | `POST /oauth/request_token` | a temporary token for this app's own connection request |
+| `access_token` | `POST /oauth/access_token` | this app's own access token for the account whose owner authorized it |
+| `me` | `GET /2/users/me` | the authenticated account's own id, name and handle |
+| `posts_create` | `POST /2/tweets` | the id of the account's own new post |
+| `posts_lookup` | `GET /2/tweets?ids=…` | the account's own posts, as published, with their aggregate counts (posts by any other author are dropped) |
+| `posts_by_account` | `GET /2/users/{id}/tweets` | the account's own recent posts |
+
+The same two tests as LinkedIn's keep the list honest: every `returns` sentence contains "own", and no declared path reaches followers, likes, bookmarks, mentions, messages, lists, spaces or search. Every request is signed with OAuth 1.0a (HMAC-SHA1, oauthlib's signer); a secret signs a request and is never sent, and every credential is scrubbed out of an error. Retries are LinkedIn's: a read on 429, 5xx and a dropped connection (honouring `retry-after` and `x-rate-limit-reset`), a write only on 429. A create that ends in a 5xx, a dropped connection or a success with no id is ledgered `unconfirmed`, and `manage.py x record DRAFT ID` (the digits of `x.com/…/status/ID`) or the studio's **Record** clears it.
+
+### Tokens and cost
+
+OAuth 1.0a tokens do not expire until their owner revokes them or the app's permission changes, which is what a repository secret needs: X's OAuth 2.0 tokens last two hours and each refresh spends the refresh token it used, which a CI secret cannot follow. `status --check` and a channel's **Check it** therefore read no expiry; they ask which account the token posts as and fail when it is not the configured one. `manage.py x connect` runs OAuth 1.0a's three legs with a PIN: it prints the authorize URL, the account's owner approves while signed in as that account, types the PIN X shows, and the lane stores the token pair only with `--write-env FILE` (a file git ignores) or shows it with `--print-token`. The app's permission must be "Read and write". A platform X channel keeps all four keys, encrypted and write-only, because X bills the app: each channel names the app that pays for it, and the platform has no X app of its own.
+
+X's API is pay-per-use, billed per request against credits bought ahead. Since 2026-04-20 a post carrying a URL is billed well above one without (X's developer announcement put them at $0.20 and $0.015 at the time; the console shows today's rates), and reads are billed too. Every article share carries its URL, so it is the dearer kind of post; each publish also makes one billed read (the account check), as does each daily statistics read on the platform plus one per post read. A failed request is not billed.
+
+### Statistics
+
+The platform reads X's public counts for each X channel's own ledgered posts once a day with LinkedIn's (`distribution-statistics`) or when a person asks: impressions, likes as reactions, replies as comments, reposts and quotes as shares. Link clicks are not public metrics, so `clicks` stays at zero. The lane has no `stats` command: `performance.json` is keyed by page and holds LinkedIn's counts, and X's would overwrite them.
+
 ## Not built, and not to be described as built
 
-Reading or replying to comments, reactions or mentions; anything about individual members (profiles, connections, followers, who engaged); scheduling, queue-ahead or timed release; video, document, poll or multi-image posts; statistics for WordPress, a pull request or a newsletter; and a hosted multi-tenant service. The call plan is the list of what exists: a capability not on it does not exist.
+Reading or replying to comments, reactions or mentions; anything about individual members (profiles, connections, followers, who engaged); scheduling, queue-ahead or timed release; video, document, poll or multi-image posts; threads, replies and media on X; connecting an X account from the studio (its channel takes the keys typed; `manage.py x connect` gets them in a terminal); X statistics in the lane; statistics for WordPress, a pull request or a newsletter; and a hosted multi-tenant service. The call plan is the list of what exists: a capability not on it does not exist.

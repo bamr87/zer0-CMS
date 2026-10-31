@@ -1,5 +1,5 @@
-// Channels: where a site's content goes — a LinkedIn page or profile, a
-// WordPress site, a GitHub repository (as pull requests), a newsletter — and
+// Channels: where a site's content goes — a LinkedIn page or profile, an X
+// account, a WordPress site, a GitHub repository (as pull requests), a newsletter — and
 // whether each can publish now: connected, armed by a person, armed for its
 // kind by the deployment. A channel's panel changes its settings, takes a new
 // credential (typed into an empty field, sent once, never shown), connects a
@@ -35,7 +35,7 @@ import { useState } from 'react';
 import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { KINDS, kindLabel, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
+import { KINDS, kindLabel, MEASURED, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
 
 type Settings = Record<string, string>;
 
@@ -311,7 +311,7 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
         </Button>
       </Group>
       <Text size="xs" c="dimmed">
-        Changing where the channel points — its author, address, user or repository — forgets its credential: it was given for the old one.
+        Changing where the channel points — its author, account, address, user or repository — forgets its credential: it was given for the old one.
       </Text>
 
       {channel.secret_fields.length ? (
@@ -386,14 +386,14 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
             </Button>
           )}
         </FileButton>
-        {channel.kind === 'linkedin' ? (
+        {MEASURED.includes(channel.kind) ? (
           <Button variant="default" size="xs" disabled={!channel.can_manage} loading={statistics.isPending} onClick={() => statistics.mutate()}>
             Read statistics now
           </Button>
         ) : null}
       </Group>
       {imported ? <Alert color="green">Imported: {imported}.</Alert> : null}
-      {statistics.isSuccess ? <Text size="sm">The worker is reading LinkedIn’s statistics; they appear under Statistics.</Text> : null}
+      {statistics.isSuccess ? <Text size="sm">The worker is reading {channel.kind_label}’s statistics; they appear under Statistics.</Text> : null}
       {ledger.data ? <Code block>{ledger.data.content.length > 2000 ? `${ledger.data.content.slice(0, 2000)}…` : ledger.data.content}</Code> : null}
 
       <Group justify="flex-end">

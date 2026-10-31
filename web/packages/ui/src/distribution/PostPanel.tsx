@@ -2,7 +2,7 @@
 // what changed — changing the text of an approved post, or of one whose
 // attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
-// for LinkedIn the exact payload — and, while an email post waits, that the
+// for LinkedIn and X the exact payload — and, while an email post waits, that the
 // newsroom is sending its issue — and its notes (where its site ledger entry
 // went, say). Approve, reject, publish (asked first, never
 // with unsaved changes, and past a lifted gate only when the person ticks
@@ -195,7 +195,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       )}
       {post.payload ? (
         <details>
-          <summary>The exact LinkedIn request</summary>
+          <summary>The exact {kindLabel(post.channel_kind)} request</summary>
           <Code block>{JSON.stringify(post.payload, null, 2)}</Code>
         </details>
       ) : null}
@@ -229,7 +229,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         <Group align="flex-end">
           <TextInput
             label="It went out after all? Record it"
-            description="The post's id at the target — a LinkedIn post URN (urn:li:share:…), a post id, a URL"
+            description="The post's id at the target — a LinkedIn post URN (urn:li:share:…), an X post's number, a post id, a URL"
             value={urn}
             onChange={(e) => setUrn(e.currentTarget.value)}
             style={{ flex: 1 }}

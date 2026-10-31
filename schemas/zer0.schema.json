@@ -271,6 +271,40 @@
               "description": "OAuth scopes a connection asks for. Default: the least the author type needs."
             }
           }
+        },
+        "x": {
+          "type": "object",
+          "description": "X publishing through the platform's lane over this site's files: manage.py x, the zer0-x.yml workflow and the lane's MCP server. Its own queue and ledger: a page shared on LinkedIn has still to go to X. A platform X channel can share the ledger file named here.",
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "type": "string",
+              "pattern": "^@?[A-Za-z0-9_]{1,15}$",
+              "description": "The X handle the lane posts as. X posts as whoever the token is, so a publish first checks the token is this account's."
+            },
+            "siteUrl": {
+              "type": "string",
+              "pattern": "^https?://",
+              "description": "The origin canonical URLs are built on. Defaults to _config.yml url + baseurl."
+            },
+            "queue": { "type": "string", "default": ".zer0/drafts/x", "description": "The draft queue folder." },
+            "ledger": { "type": "string", "default": ".zer0/x-ledger.json", "description": "The idempotency ledger." },
+            "acceptStatuses": {
+              "type": "array",
+              "items": { "enum": ["pending", "approved"] },
+              "minItems": 1,
+              "uniqueItems": true,
+              "default": ["approved"],
+              "description": "Draft statuses that may publish. A repository whose merge is the approval lists pending too."
+            },
+            "sources": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Collections whose pages can be shared. Empty or absent: every collection."
+            },
+            "hashtagLimit": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 },
+            "bannedPatternsFile": { "type": "string", "description": "Extra brand-guard bans: [{ name, pattern, flags }]." }
+          }
         }
       }
     },

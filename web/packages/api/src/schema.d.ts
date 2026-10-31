@@ -5627,7 +5627,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -5668,12 +5668,13 @@ export interface components {
         DistributionGuardLevelEnum: "error" | "warning" | "info";
         /**
          * @description * `linkedin` - LinkedIn
+         *     * `x` - X
          *     * `wordpress` - WordPress
          *     * `github_pr` - GitHub pull request
          *     * `email` - Email newsletter
          * @enum {string}
          */
-        DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
+        DistributionKindEnum: "linkedin" | "x" | "wordpress" | "github_pr" | "email";
         DistributionLedgerEntry: {
             /** Format: uuid */
             readonly id: string;
@@ -7603,7 +7604,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -17389,11 +17390,12 @@ export interface operations {
             query?: {
                 /**
                  * @description * `linkedin` - LinkedIn
+                 *     * `x` - X
                  *     * `wordpress` - WordPress
                  *     * `github_pr` - GitHub pull request
                  *     * `email` - Email newsletter
                  */
-                kind?: "email" | "github_pr" | "linkedin" | "wordpress";
+                kind?: "email" | "github_pr" | "linkedin" | "wordpress" | "x";
                 /** @description A page number within the paginated result set. */
                 page?: number;
                 /** @description Number of results to return per page. */

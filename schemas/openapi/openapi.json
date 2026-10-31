@@ -13560,10 +13560,11 @@
                                 "email",
                                 "github_pr",
                                 "linkedin",
-                                "wordpress"
+                                "wordpress",
+                                "x"
                             ]
                         },
-                        "description": "* `linkedin` - LinkedIn\n* `wordpress` - WordPress\n* `github_pr` - GitHub pull request\n* `email` - Email newsletter"
+                        "description": "* `linkedin` - LinkedIn\n* `x` - X\n* `wordpress` - WordPress\n* `github_pr` - GitHub pull request\n* `email` - Email newsletter"
                     },
                     {
                         "name": "page",
@@ -34981,7 +34982,7 @@
                             "type": "string"
                         },
                         "writeOnly": true,
-                        "description": "The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
+                        "description": "The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
                     },
                     "auto_draft": {
                         "type": "boolean",
@@ -35082,12 +35083,13 @@
             "DistributionKindEnum": {
                 "enum": [
                     "linkedin",
+                    "x",
                     "wordpress",
                     "github_pr",
                     "email"
                 ],
                 "type": "string",
-                "description": "* `linkedin` - LinkedIn\n* `wordpress` - WordPress\n* `github_pr` - GitHub pull request\n* `email` - Email newsletter"
+                "description": "* `linkedin` - LinkedIn\n* `x` - X\n* `wordpress` - WordPress\n* `github_pr` - GitHub pull request\n* `email` - Email newsletter"
             },
             "DistributionLedgerEntry": {
                 "type": "object",
@@ -40721,7 +40723,7 @@
                             "type": "string"
                         },
                         "writeOnly": true,
-                        "description": "The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
+                        "description": "The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
                     },
                     "auto_draft": {
                         "type": "boolean",
