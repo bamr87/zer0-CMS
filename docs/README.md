@@ -44,7 +44,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/MONOREPO.md`](MONOREPO.md) | Every project under `packages/`, `sites/` and `apps/` — the sources the platform is absorbing (ADR 0006) — how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs… |
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0009, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
 | [`docs/amendments/`](amendments/README.md) | The numbered, append-only record of every change to the constitution, with its status. |
 
 ### `schemas/`
