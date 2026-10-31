@@ -998,13 +998,10 @@ def test_the_agents_definition_is_live_and_gated(db, agent):
 # ── X ───────────────────────────────────────────────────────────────────────
 
 X_API = "https://api.x.com"
-X_KEYS = {
-    "api_key": "app-key-123456",
-    "api_secret": "app-secret-SECRET-123456",
-    "access_token": "1001-token-123456",
-    "access_token_secret": "token-secret-SECRET-123456",
-}
+X_APP = {"X_CLIENT_ID": "x-client-id", "X_CLIENT_SECRET": "x-client-SECRET-123456"}
+X_TOKENS = {"access_token": "x-access-SECRET-123456", "refresh_token": "x-refresh-SECRET-123456"}
 X_ME = {"data": {"id": "1001", "username": "bamr87", "name": "Amr"}}
+X_CALLBACK = "http://testserver/api/v2/distribution/oauth/x/"
 
 
 @pytest.fixture
@@ -1012,12 +1009,29 @@ def x_channel(article):
     found = Channel.objects.create(
         site=article.get_site(), kind="x", name="The account", settings={"account": "bamr87"}, armed=True
     )
-    found.set_credentials(X_KEYS)
+    found.set_credentials(X_TOKENS)
     found.save()
     return found
 
 
-def test_an_x_channel_takes_its_handle_and_four_keys_write_only_and_checks_the_account(
+def x_consent(client, channel) -> dict:
+    """Start connecting `channel` and return the consent URL's query."""
+    from urllib.parse import parse_qsl, urlsplit
+
+    started = client.post(f"{API}/channels/{channel.public_id}/connect/")
+    assert started.status_code == 200, started.content
+    url = started.json()["url"]
+    assert url.startswith("https://x.com/i/oauth2/authorize?") and "SECRET" not in url
+    return dict(parse_qsl(urlsplit(url).query))
+
+
+def form_of(route) -> dict:
+    from urllib.parse import parse_qsl
+
+    return dict(parse_qsl(route.calls.last.request.content.decode()))
+
+
+def test_an_x_channel_takes_its_handle_and_its_token_write_only_and_checks_the_account(
     api, manager, article, web, worker
 ):
     site = article.get_site().pk
@@ -1029,13 +1043,13 @@ def test_an_x_channel_takes_its_handle_and_four_keys_write_only_and_checks_the_a
     assert bad.status_code == 422 and "X handle" in bad.json()["error"]["message"]
     made = api(manager).post(
         f"{API}/channels/",
-        {"site": site, "kind": "x", "name": "X", "settings": {"account": "@bamr87"}, "credentials": X_KEYS},
+        {"site": site, "kind": "x", "name": "X", "settings": {"account": "@bamr87"}, "credentials": X_TOKENS},
         format="json",
     )
     assert made.status_code == 201, made.content
     body = made.json()
     assert body["settings"] == {"account": "bamr87"} and body["has_credential"] is True
-    assert body["secret_fields"] == ["api_key", "api_secret", "access_token", "access_token_secret"]
+    assert body["secret_fields"] == ["access_token", "refresh_token"]
     assert "SECRET" not in made.content.decode()
     twin = api(manager).post(
         f"{API}/channels/",
@@ -1119,10 +1133,141 @@ def test_an_x_post_x_did_not_confirm_is_doubted_and_recorded_by_its_id(api, alic
     assert done.status_code == 200 and done.json()["external_url"] == "https://x.com/bamr87/status/1850000000000000009"
 
 
-def test_an_x_channel_uses_its_own_keys_never_the_environments(x_channel, web, monkeypatch):
+def test_an_x_channel_uses_its_own_token_never_the_environments(x_channel, web, monkeypatch):
     monkeypatch.setenv("X_ACCESS_TOKEN", "env-token-SHOULD-NOT-BE-USED")
     me = web.get(f"{X_API}/2/users/me").respond(200, json=X_ME)
     services.check(x_channel)
-    assert 'oauth_token="1001-token-123456"' in me.calls.last.request.headers["authorization"]
+    assert me.calls.last.request.headers["authorization"] == f"Bearer {X_TOKENS['access_token']}"
     bare = Channel.objects.create(site=x_channel.site, kind="x", name="Bare", settings={"account": "other"})
     assert services.check(bare).last_check["ok"] is False and me.call_count == 1
+    assert "connect the channel" in bare.last_error
+
+
+@override_settings(**X_APP)
+def test_connecting_x_is_state_and_pkce_one_use_and_takes_the_account_its_owner_approved_as(
+    api, manager, article, web, worker
+):
+    import base64
+
+    client = api(manager)
+    channel = Channel.objects.create(site=article.get_site(), kind="x", name="X")
+    with override_settings(X_CLIENT_SECRET=""):
+        refused = client.post(f"{API}/channels/{channel.public_id}/connect/")
+        assert refused.status_code == 409 and "X_CLIENT_ID and X_CLIENT_SECRET" in refused.json()["error"]["message"]
+    query = x_consent(client, channel)
+    assert query["client_id"] == "x-client-id" and query["code_challenge_method"] == "S256"
+    assert query["redirect_uri"] == X_CALLBACK and query["scope"] == "tweet.read tweet.write users.read offline.access"
+    assert client.get(f"{API}/oauth/x/", {"state": "forged", "code": "C"}).status_code == 403
+    assert client.get(f"{API}/oauth/linkedin/", {"state": query["state"], "code": "C"}).status_code == 403, (
+        "a state comes back to its own kind's callback"
+    )
+    query = x_consent(client, channel)
+    token = web.post(f"{X_API}/2/oauth2/token").respond(
+        200,
+        json={
+            "token_type": "bearer",
+            "expires_in": 7200,
+            "access_token": "x-access-SECRET-1",
+            "scope": "tweet.read tweet.write users.read offline.access",
+            "refresh_token": "x-refresh-SECRET-1",
+        },
+    )
+    me = web.get(f"{X_API}/2/users/me").respond(200, json=X_ME)
+    back = worker(client.get, f"{API}/oauth/x/", {"state": query["state"], "code": "C"})
+    assert (
+        back.status_code == 302
+        and back["Location"] == f"/studio/distribution/channels/{channel.public_id}?connecting=1"
+    )
+    form = form_of(token)
+    assert len(form.pop("code_verifier")) >= 43
+    assert form == {"grant_type": "authorization_code", "code": "C", "redirect_uri": X_CALLBACK}
+    basic = base64.b64encode(b"x-client-id:x-client-SECRET-123456").decode()
+    assert token.calls.last.request.headers["authorization"] == f"Basic {basic}", (
+        "the app's secret never travels in a form"
+    )
+    assert me.calls.last.request.headers["authorization"] == "Bearer x-access-SECRET-1"
+    channel.refresh_from_db()
+    assert channel.credentials() == {"access_token": "x-access-SECRET-1", "refresh_token": "x-refresh-SECRET-1"}
+    assert (channel.settings, channel.account, channel.last_error) == ({"account": "bamr87"}, "@bamr87", "")
+    assert channel.expires_at is not None and channel.scopes[-1] == "offline.access"
+    assert "SECRET" not in channel.credential_encrypted and not channel.pending_encrypted
+    assert client.get(f"{API}/oauth/x/", {"state": query["state"], "code": "C"}).status_code == 403, "single use"
+    out = client.post(f"{API}/channels/{channel.public_id}/disconnect/").json()
+    assert out["has_credential"] is False and out["armed"] is False
+
+
+@override_settings(**X_APP)
+def test_x_keeps_no_token_for_another_account_and_says_when_its_code_died(api, manager, x_channel, web, worker):
+    x_channel.forget_credentials()
+    x_channel.save()
+    client = api(manager)
+    token = web.post(f"{X_API}/2/oauth2/token").mock(
+        side_effect=[
+            httpx.Response(
+                400,
+                json={
+                    "error": "invalid_request",
+                    "error_description": "Value passed for the authorization code was invalid.",
+                },
+            ),
+            httpx.Response(200, json={"access_token": "other-access-123456", "refresh_token": "other-refresh-123456"}),
+        ]
+    )
+    worker(client.get, f"{API}/oauth/x/", {"state": x_consent(client, x_channel)["state"], "code": "C"})
+    x_channel.refresh_from_db()
+    assert (
+        not x_channel.connected
+        and "thirty seconds" in x_channel.last_error
+        and "invalid_request" in x_channel.last_error
+    )
+    web.get(f"{X_API}/2/users/me").respond(200, json={"data": {"id": "5", "username": "someone"}})
+    revoke = web.post(f"{X_API}/2/oauth2/revoke").respond(200, json={"revoked": True})
+    worker(client.get, f"{API}/oauth/x/", {"state": x_consent(client, x_channel)["state"], "code": "C"})
+    x_channel.refresh_from_db()
+    assert not x_channel.connected and token.call_count == 2
+    assert "you approved as @someone, but the channel posts as @bamr87" in x_channel.last_error
+    assert form_of(revoke) == {"token": "other-refresh-123456", "token_type_hint": "refresh_token"}
+    assert x_channel.settings == {"account": "bamr87"}
+
+
+@override_settings(**X_APP)
+def test_a_lapsed_x_token_is_renewed_once_and_kept_and_a_pair_another_worker_kept_is_the_one_used(x_channel, web):
+    x_channel.expires_at = timezone.now() - timedelta(minutes=1)
+    x_channel.save()
+    renew = web.post(f"{X_API}/2/oauth2/token").respond(
+        200, json={"access_token": "x-access-SECRET-2", "refresh_token": "x-refresh-SECRET-2", "expires_in": 7200}
+    )
+    me = web.get(f"{X_API}/2/users/me").respond(200, json=X_ME)
+    assert services.check(x_channel).last_check["ok"] is True
+    assert form_of(renew) == {"grant_type": "refresh_token", "refresh_token": X_TOKENS["refresh_token"]}
+    assert me.calls.last.request.headers["authorization"] == "Bearer x-access-SECRET-2"
+    x_channel.refresh_from_db()
+    assert x_channel.credentials() == {"access_token": "x-access-SECRET-2", "refresh_token": "x-refresh-SECRET-2"}
+    assert x_channel.expires_at > timezone.now() + timedelta(hours=1)
+    stale = services.x_session(x_channel)
+    x_channel.set_credentials({"access_token": "x-access-SECRET-3", "refresh_token": "x-refresh-SECRET-3"})
+    x_channel.save()
+    assert stale.refresh().access_token == "x-access-SECRET-3" and renew.call_count == 1, (
+        "another worker's renewal spent this one's refresh token: it takes the pair that one kept"
+    )
+
+
+@override_settings(**X_APP)
+def test_a_401_renews_the_x_token_once_and_a_refused_renewal_says_connect_again(x_channel, web):
+    renew = web.post(f"{X_API}/2/oauth2/token").mock(
+        side_effect=[
+            httpx.Response(200, json={"access_token": "x-access-SECRET-2", "refresh_token": "x-refresh-SECRET-2"}),
+            httpx.Response(
+                400, json={"error": "invalid_request", "error_description": "Value passed for the token was invalid."}
+            ),
+        ]
+    )
+    me = web.get(f"{X_API}/2/users/me").mock(
+        side_effect=[httpx.Response(401, json={"title": "Unauthorized"}), httpx.Response(200, json=X_ME)]
+    )
+    assert services.check(x_channel).last_check["ok"] is True and me.call_count == 2 and renew.call_count == 1
+    me.mock(side_effect=[httpx.Response(401, json={"title": "Unauthorized"})])
+    checked = services.check(x_channel)
+    assert checked.last_check["ok"] is False and "connect the channel again" in checked.last_error
+    assert "SECRET" not in checked.last_error
+    assert checked.credentials()["refresh_token"] == "x-refresh-SECRET-2", "a refused renewal changes nothing kept"

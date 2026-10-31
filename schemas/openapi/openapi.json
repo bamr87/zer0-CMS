@@ -14010,7 +14010,7 @@
         "/api/v2/distribution/channels/{public_id}/connect/": {
             "post": {
                 "operationId": "distribution_channels_connect_create",
-                "summary": "Start connecting a LinkedIn account: the consent URL for its owner (state + PKCE)",
+                "summary": "Start connecting a LinkedIn or X account: the consent URL for its owner (state + PKCE)",
                 "parameters": [
                     {
                         "in": "path",
@@ -14724,6 +14724,111 @@
             "get": {
                 "operationId": "distribution_oauth_linkedin_retrieve",
                 "summary": "Where LinkedIn returns the account's owner; the code is exchanged on the worker",
+                "tags": [
+                    "distribution"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "No response body"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/distribution/oauth/x/": {
+            "get": {
+                "operationId": "distribution_oauth_x_retrieve",
+                "summary": "Where X returns the account's owner; the code is exchanged on the worker within X's thirty seconds",
                 "tags": [
                     "distribution"
                 ],
@@ -34842,7 +34947,7 @@
                     "connecting": {
                         "type": "boolean",
                         "readOnly": true,
-                        "description": "LinkedIn came back; the worker is exchanging the code."
+                        "description": "LinkedIn or X came back; the worker is exchanging the code."
                     },
                     "account": {
                         "type": "string",
@@ -34982,7 +35087,7 @@
                             "type": "string"
                         },
                         "writeOnly": true,
-                        "description": "The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
+                        "description": "The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
                     },
                     "auto_draft": {
                         "type": "boolean",
@@ -40723,7 +40828,7 @@
                             "type": "string"
                         },
                         "writeOnly": true,
-                        "description": "The kind's secret (linkedin: access_token, refresh_token; x: api_key, api_secret, access_token, access_token_secret; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
+                        "description": "The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned."
                     },
                     "auto_draft": {
                         "type": "boolean",

@@ -49,9 +49,9 @@ SETTINGS = {
 }
 SECRETS = {
     Kind.LINKEDIN: ("access_token", "refresh_token"),
-    # The app's key and secret and the account's OAuth 1.0a token and secret: X bills the app, so each channel names
-    # its own (distribution/x/client.py).
-    Kind.X: ("api_key", "api_secret", "access_token", "access_token_secret"),
+    # The account's OAuth 2.0 pair, from Connect with X through the platform's X app (X_CLIENT_ID, X_CLIENT_SECRET):
+    # the access token lasts two hours and each renewal spends the refresh token (distribution/x/session.py).
+    Kind.X: ("access_token", "refresh_token"),
     Kind.WORDPRESS: ("application_password",),
     Kind.GITHUB_PR: ("token",),
     Kind.EMAIL: (),

@@ -65,12 +65,14 @@ from .models import (
 )
 from .transports import TransportError
 from .x import Client as XClient
-from .x import Credentials as XCredentials
 from .x import Error as XError
 from .x import HTTPError as XHTTPError
 from .x import Refused as XRefused
+from .x import oauth2 as xoauth2
 from .x import plan as xplan
 from .x import posts as xposts
+from .x.session import Session as XSession
+from .x.session import UserToken as XUserToken
 
 log = logging.getLogger(__name__)
 FINAL = (DistributionPost.Status.PUBLISHED, DistributionPost.Status.REJECTED)
@@ -264,19 +266,30 @@ def linkedin_app() -> tuple[str, str]:
     return settings.LINKEDIN_CLIENT_ID, settings.LINKEDIN_CLIENT_SECRET
 
 
+def x_app() -> tuple[str, str]:
+    return settings.X_CLIENT_ID, settings.X_CLIENT_SECRET
+
+
+# The kinds a person connects through the target's consent screen, as the platform's own app: its variables.
+CONNECTS = {Kind.LINKEDIN: "LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET", Kind.X: "X_CLIENT_ID and X_CLIENT_SECRET"}
+
+
 def start_connect(channel, user, redirect_uri: str) -> dict:
     """The consent URL for the account's owner, with a fresh `state` and a PKCE verifier the caller keeps for this
-    browser session (and nowhere else) until LinkedIn comes back."""
+    browser session (and nowhere else) until LinkedIn or X comes back."""
     if not manages_channels(user):
         raise Forbidden("connecting a channel needs the right to manage channels")
-    if channel.kind != Kind.LINKEDIN:
-        raise Invalid("only a LinkedIn channel connects through LinkedIn's consent screen; set the others' credential")
-    client_id, client_secret = linkedin_app()
+    if channel.kind not in CONNECTS:
+        raise Invalid("only a LinkedIn or X channel connects through its consent screen; set the others' credential")
+    client_id, client_secret = x_app() if channel.kind == Kind.X else linkedin_app()
     if not client_id or not client_secret:
-        raise Conflict(
-            "set LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET for the platform before connecting an account"
-        )
+        raise Conflict(f"set {CONNECTS[channel.kind]} for the platform before connecting an account")
     state, verifier = oauth.new_state(), oauth.new_verifier()
+    if channel.kind == Kind.X:
+        url = xoauth2.OAuth(client_id, client_secret).authorize_url(
+            redirect_uri=redirect_uri, state=state, code_challenge=oauth.challenge(verifier)
+        )
+        return {"url": url, "state": state, "verifier": verifier}
     author_type = plan.author_type(channel.setting("author")) or "organization"
     scopes = channel.setting("scopes") or oauth.scopes_for(author_type)
     url = oauth.OAuth(client_id, client_secret).authorize_url(
@@ -286,17 +299,18 @@ def start_connect(channel, user, redirect_uri: str) -> dict:
 
 
 def connect_refused(channel, reason: str) -> None:
-    """LinkedIn came back without a code (the owner declined, or LinkedIn refused): the channel says why."""
-    Channel.objects.filter(pk=channel.pk).update(last_error=f"LinkedIn: {reason}"[:1000])
+    """LinkedIn or X came back without a code (the owner declined, or the target refused): the channel says why."""
+    Channel.objects.filter(pk=channel.pk).update(last_error=f"{channel.get_kind_display()}: {reason}"[:1000])
 
 
 @transaction.atomic
 def finish_connect(channel, *, code: str, verifier: str, redirect_uri: str) -> Channel:
-    """LinkedIn came back with a code: keep it (encrypted) for the worker, which exchanges it."""
+    """LinkedIn or X came back with a code: keep it (encrypted) for the worker, which exchanges it — X's within the
+    thirty seconds X gives it."""
     from .tasks import exchange_code
 
     if not code:
-        raise Invalid("LinkedIn sent no authorization code")
+        raise Invalid(f"{channel.get_kind_display()} sent no authorization code")
     channel.set_pending({"code": code, "verifier": verifier, "redirect_uri": redirect_uri})
     channel.last_error = ""
     channel.save(update_fields=["pending_encrypted", "last_error", "updated_at"])
@@ -309,6 +323,8 @@ def exchange(channel) -> Channel:
     pending = channel.pending()
     if not pending:
         return channel
+    if channel.kind == Kind.X:
+        return _exchange_x(channel, pending)
     client_id, client_secret = linkedin_app()
     try:
         flow = oauth.OAuth(client_id, client_secret)
@@ -325,6 +341,52 @@ def exchange(channel) -> Channel:
     channel.set_credentials({"access_token": token.access_token, "refresh_token": token.refresh_token or ""})
     channel.expires_at, channel.refresh_expires_at = token.expires_at, token.refresh_expires_at
     channel.scopes, channel.account, channel.last_error = token.scopes, account or channel.account, ""
+    channel.save()
+    return channel
+
+
+def _exchange_x(channel, pending) -> Channel:
+    """The code for the account's token pair, then which account it is: a channel that names its account takes a
+    token for that account only, and one that names none takes the account its owner approved as — unless another
+    channel of the site already posts as it. A token the channel does not keep is given back to X."""
+
+    def refuse(message):
+        Channel.objects.filter(pk=channel.pk).update(pending_encrypted="", last_error=f"X: {message}"[:1000])
+        return channel
+
+    try:
+        flow = xoauth2.OAuth(*x_app())
+        token = flow.exchange(
+            code=pending["code"], redirect_uri=pending["redirect_uri"], code_verifier=pending["verifier"]
+        )
+        found = xposts.me(XClient(bearer=token.access_token))
+    except XHTTPError as e:
+        why = " — X refuses a code over thirty seconds old, or a callback its app does not list: connect again"
+        return refuse(f"{e}{why if e.status == 400 else ''}")
+    except (XError, ValueError) as e:
+        return refuse(str(e))
+    handle = found["username"]
+    account = channel.setting("account")
+    siblings = Channel.objects.filter(site_id=channel.site_id, kind=Kind.X).exclude(pk=channel.pk)
+    twin = None if account else next((c for c in siblings if target_of(c) == handle.lower()), None)
+    if (account and account.lower() != handle.lower()) or twin:
+        try:
+            flow.revoke(
+                token.refresh_token or token.access_token,
+                hint="refresh_token" if token.refresh_token else "access_token",
+            )
+        except XError as e:
+            log.warning("distribution: could not give X back a token for @%s: %s", handle, e)
+        if twin:
+            return refuse(f"{twin.name} already publishes this site as @{handle}: one channel per account")
+        return refuse(
+            f"you approved as @{handle}, but the channel posts as @{account}: sign in to X as @{account} and connect again"
+        )
+    channel.set_pending(None)
+    channel.settings = {**(channel.settings or {}), "account": account or handle}
+    channel.set_credentials({"access_token": token.access_token, "refresh_token": token.refresh_token or ""})
+    channel.expires_at, channel.refresh_expires_at = token.expires_at, None
+    channel.scopes, channel.account, channel.last_error = token.scopes, f"@{handle}", ""
     channel.save()
     return channel
 
@@ -438,25 +500,46 @@ def check_linkedin(channel) -> dict:
     return out
 
 
-def x_credentials(channel) -> XCredentials:
-    """The channel's own app and account keys — never the environment's X_*, which are the site lane's."""
+def x_token(channel) -> XUserToken:
+    """The channel's own OAuth 2.0 pair and the platform's X app — never the environment's X_*, which are the site
+    lane's OAuth 1.0a keys."""
     stored = channel.credentials()
-    return XCredentials(*(stored.get(name, "") for name in SECRETS[Kind.X]))
+    client_id, client_secret = x_app()
+    return XUserToken(
+        stored.get("access_token", ""), stored.get("refresh_token", ""), client_id, client_secret, channel.expires_at
+    )
+
+
+def x_session(channel) -> XSession:
+    def renew(spent, refreshed):
+        """Under the channel's row: a pair another worker kept since this one read the channel is the one to use (its
+        renewal spent the refresh token this one holds); otherwise renew, and keep the new pair before letting go."""
+        with transaction.atomic():
+            row = Channel.objects.select_for_update().get(pk=channel.pk)
+            stored = x_token(row)
+            if stored.refresh_token and stored.refresh_token != spent.refresh_token:
+                return stored
+            fresh = refreshed(spent)
+            row.set_credentials({"access_token": fresh.access_token, "refresh_token": fresh.refresh_token})
+            row.expires_at = fresh.expires_at
+            row.save(update_fields=["credential_encrypted", "expires_at", "updated_at"])
+            return fresh
+
+    return XSession(x_token(channel), renew=renew)
 
 
 def check_x(channel) -> dict:
-    """Whether the keys work and post as the channel's account: X posts as whoever the token is."""
-    creds = x_credentials(channel)
-    if not creds.complete:
-        return {
-            "ok": False,
-            "problems": ["no X credential: set the channel's app key and secret and its token and secret"],
-        }
+    """Whether the token works — renewing it when it lapsed — and posts as the channel's account: X posts as whoever
+    the token is."""
+    token = x_token(channel)
+    if not (token.access or token.refreshable):
+        return {"ok": False, "problems": ["no X token: connect the channel"]}
+    session = x_session(channel)
     account = channel.setting("account")
     if not account:
-        found = xposts.me(XClient(creds))
+        found = session.run(xposts.me)
         return {"ok": False, "account": f"@{found['username']}", "problems": ["the channel names no account"]}
-    found = xposts.check_account(XClient(creds), account)
+    found = session.run(lambda client: xposts.check_account(client, account))
     return {"ok": True, "problems": [], "notes": [], "account": f"@{found['username']}"}
 
 
@@ -889,8 +972,10 @@ def preview(post, *, live: bool = True) -> Preview:
         creds = linkedin_credentials(channel)
         if not (creds.access or creds.refreshable):
             blockers.append(Blocker("no_credential", "no LinkedIn token: connect the channel"))
-    elif channel.kind == Kind.X and not x_credentials(channel).complete:
-        blockers.append(Blocker("no_credential", "no X credential: set the channel's four keys"))
+    elif channel.kind == Kind.X:
+        token = x_token(channel)
+        if not (token.access or token.refreshable):
+            blockers.append(Blocker("no_credential", "no X token: connect the channel"))
     elif channel.kind in (Kind.WORDPRESS, Kind.GITHUB_PR) and not channel.credentials():
         blockers.append(Blocker("no_credential", f"no credential for {channel.name}: set it on the channel"))
     found = gates.ordered(blockers)
@@ -1114,16 +1199,17 @@ def _send(post) -> tuple[str, str, dict]:
 
 
 def _send_x(post):
-    """The account first — a read, so a token for another account fails with nothing in doubt — then the post. A 5xx,
-    a dropped connection or a success with no id may have posted, so it is doubted."""
-    channel = post.channel
-    client = XClient(x_credentials(channel))
+    """The account first — a read, which renews a lapsed token, so a token for another account or one X will not
+    renew fails with nothing in doubt — then the post. A 5xx, a dropped connection or a success with no id may have
+    posted, so it is doubted."""
+    channel, payload = post.channel, preview(post).payload
+    session = x_session(channel)
     try:
-        xposts.check_account(client, channel.setting("account"))
+        session.run(lambda client: xposts.check_account(client, channel.setting("account")))
     except XError as e:
         raise TransportError(f"X: {e}") from e
     try:
-        post_id = xposts.create(client, preview(post).payload)
+        post_id = session.run(lambda client: xposts.create(client, payload))
     except XHTTPError as e:
         raise TransportError(f"X: {e}", doubt=e.status == 0 or e.status >= 500) from e
     except XError as e:
@@ -1487,8 +1573,11 @@ def _ingest_x(channel, *, today=None) -> int:
     ]
     if not rows or not account:
         return 0
-    client = XClient(x_credentials(channel))
-    found = xposts.lookup(client, [r.urn for r in rows], account_id=xposts.check_account(client, account)["id"])
+    found = x_session(channel).run(
+        lambda client: xposts.lookup(
+            client, [r.urn for r in rows], account_id=xposts.check_account(client, account)["id"]
+        )
+    )
     day = today or timezone.localdate()
     for row in rows:
         if row.urn in found:

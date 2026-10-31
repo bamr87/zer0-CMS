@@ -3,8 +3,8 @@
 // when the person ticks it, and showing the platform's blockers when it
 // refuses) and records a post found at the target; Distribute — from the
 // editor or a story — drafts a post and leads to the queue; a channel takes a
-// credential once and never shows it, connects LinkedIn through its consent
-// screen, arms, and downloads and imports its ledger file; the ledger marks an
+// credential once and never shows it, connects LinkedIn and X through their
+// consent screens, arms, and downloads and imports its ledger file; the ledger marks an
 // attempt that may have landed; statistics list the most seen first with
 // totals.
 import { screen, waitFor, within } from '@testing-library/react';
@@ -311,32 +311,21 @@ describe('a channel', () => {
 });
 
 describe('an X channel', () => {
-  it('takes its four keys, offers no consent screen, and reads its statistics', async () => {
+  it('connects through X’s consent screen, says its token renews itself, and reads its statistics', async () => {
+    const consent = 'https://x.com/i/oauth2/authorize?response_type=code&state=s&code_challenge=x';
     const x = { id: 'c3', kind: 'x', kind_label: 'X', name: 'The account', settings: { account: 'bamr87' }, account: '@bamr87' };
-    const secret_fields = ['api_key', 'api_secret', 'access_token', 'access_token_secret'];
     const platform = fakePlatform({
-      [`GET ${API}/channels/c3/`]: () => channel({ ...x, has_credential: false, secret_fields }),
-      [`PATCH ${API}/channels/c3/`]: () => channel({ ...x, has_credential: true, secret_fields }),
+      [`GET ${API}/channels/c3/`]: () => channel({ ...x, has_credential: true, expires_at: '2026-10-31T12:00:00Z' }),
+      [`POST ${API}/channels/c3/connect/`]: () => ({ url: consent }),
       [`POST ${API}/channels/c3/statistics/`]: () => new Reply(202, {}),
       [`GET ${API}/channels/c3/ledger-file/`]: () => ({ filename: 'x-c3.json', content: '{}\n' }),
     });
     renderUi(<ChannelPanel channelId="c3" />, { api: platform.api });
     expect(await screen.findByLabelText('Account')).toHaveValue('bamr87');
-    expect(screen.queryByRole('button', { name: 'Connect with LinkedIn' })).toBeNull();
-    for (const label of ['API key', 'API key secret', 'Access token', 'Access token secret']) {
-      await userEvent.type(screen.getByLabelText(label), `${label}-value`);
-    }
-    await userEvent.click(screen.getByRole('button', { name: 'Set the credential' }));
-    await waitFor(() =>
-      expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({
-        credentials: {
-          api_key: 'API key-value',
-          api_secret: 'API key secret-value',
-          access_token: 'Access token-value',
-          access_token_secret: 'Access token secret-value',
-        },
-      }),
-    );
+    expect(screen.getByText(/publishes as @bamr87 · its token renews itself/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Connect with X' }));
+    expect(await screen.findByRole('link', { name: 'Continue to X' })).toHaveAttribute('href', consent);
+    expect(screen.queryByLabelText('API key')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Read statistics now' }));
     expect(await screen.findByText('The worker is reading X’s statistics; they appear under Statistics.')).toBeInTheDocument();
   });

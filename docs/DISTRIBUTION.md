@@ -14,17 +14,21 @@ This is the design of record. It supersedes the per-site Python publisher bash-3
 
 ## Where it runs
 
-Two queues share one set of rules. The **platform's** is rows — channels of every kind, for any site the platform knows. The **lane's** is files — a content repository that is still files keeps its LinkedIn drafts and ledger in git and publishes from its own CI. Both use the same client, the same gates (`distribution/gates.py`), the same ledger format, the same permalinks and the same brand guard, so a draft, a finding and a ledger entry mean the same thing in the extension, the studio and CI.
+Two queues share one set of rules. The **platform's** is rows — channels of every kind, for any site the platform knows. The **lane's** is files — a content repository that is still files keeps its LinkedIn and X drafts and ledgers in git and publishes from its own CI.
+
+The platform is where accounts are connected and managed. It is registered with LinkedIn and with X as an app of its own (`LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`, `X_CLIENT_ID` and `X_CLIENT_SECRET`): a person connects each account through that network's consent screen in the studio, and composes, approves, publishes and reads statistics there, with no repository involved. The lane, and the reusable workflows that run it from CI, are optional automation for a site that keeps its drafts in git; nothing on the platform needs them. A channel whose `ledger_file` names the site's ledger shares it with the lane, so a page either one published is never published by the other.
+
+Both use the same client, the same gates (`distribution/gates.py`), the same ledger format, the same permalinks and the same brand guard, so a draft, a finding and a ledger entry mean the same thing in the extension, the studio and CI.
 
 | Surface | Where | For |
 |---|---|---|
 | Platform | `content/distribution/` — channels, the queue, the ledger, statistics, `/api/v2/distribution/` ([README](../content/distribution/README.md)) | every channel kind; publishing and statistics run on the worker |
-| Studio | the **Distribution** area (`/distribution`: the queue, channels, the ledger, statistics) and **Distribute** in the page editor and a newsroom story's panel (`web/packages/ui/src/distribution/`) | composing, the guard's findings, the exact payload, approving and publishing; connecting an account through LinkedIn's consent screen |
+| Studio | the **Distribution** area (`/distribution`: the queue, channels, the ledger, statistics) and **Distribute** in the page editor and a newsroom story's panel (`web/packages/ui/src/distribution/`) | composing, the guard's findings, the exact payload, approving and publishing; connecting an account through LinkedIn's or X's consent screen |
 | Platform MCP | `/mcp/`: `distribution.compose` (`propose`) and `distribution.publish` (`publish`), for a client holding the `distribution` agent's token | an agent drafts; it publishes only on the armed path below |
 | Published-page consumer | `content.page.published` → a run of the `distribution` agent | a draft for every channel of the page's site set to draft automatically; never a publish |
 | Lane library | `content/distribution/linkedin/` and `content/distribution/x/` (the API clients) and `content/distribution/lane/` (the lanes: `site.py`, `pipeline.py`, `cli.py`, `mcp.py` for LinkedIn, and their `x_*.py` subclasses for X — § X) | a site's own files, no database |
 | CLI | `python manage.py linkedin COMMAND --site PATH` and `python manage.py x COMMAND --site PATH`, from `content/` | a terminal, and every other lane surface's reference behaviour |
-| Reusable workflows | `.github/workflows/zer0-linkedin.yml`, `.github/workflows/zer0-x.yml` | a content repository's CI: publish merged drafts, check the token, read statistics (LinkedIn) |
+| Reusable workflows | `.github/workflows/zer0-linkedin.yml`, `.github/workflows/zer0-x.yml` | optional: a content repository's CI publishes merged drafts, checks the token and reads statistics (LinkedIn) |
 | Lane MCP servers | `python manage.py linkedin mcp --site PATH`, `python manage.py x mcp --site PATH` | Claude Code in a site's checkout: status, sources, queue, preview, draft — publish only when the operator armed it |
 
 ## Channels
@@ -34,7 +38,7 @@ A channel belongs to a site and has a kind. Everyone who edits the site sees its
 | Kind | Publishing a post | Credential |
 |---|---|---|
 | `linkedin` | an article (a link card for the page, with its preview image when it has one) or a text update, as the channel's author | its own OAuth token, from **Connect with LinkedIn** |
-| `x` | an article (its text, then the page's URL — X draws the card from the page's own card tags) or a text update, as the channel's `account`, after checking the token is that account's | the app's API key and secret and the account's OAuth 1.0a token and secret, typed into the channel (§ X) |
+| `x` | an article (its text, then the page's URL — X draws the card from the page's own card tags) or a text update, as the channel's `account`, after checking the token is that account's | its own OAuth 2.0 token pair, from **Connect with X**, which the platform renews (§ X) |
 | `wordpress` | `POST /wp-json/wp/v2/posts` with the page's HTML, a draft unless the channel says `pending`, `private` or `publish`, with the Yoast title and meta description (`yoast_title`, `yoast_metadesc`); the address goes through the research library's SSRF guard and no redirect is followed | the user's application password |
 | `github_pr` | the page exported as its Jekyll file (`exporters/jekyll.py`) onto a `distribute/…` branch, and a pull request into the channel's branch | a token that may push and open pull requests |
 | `email` | an issue of the site's newsletter carrying the story, sent as the newsroom sends every issue (django-anymail) | none |
@@ -205,7 +209,7 @@ Both read `organizationalEntityShareStatistics` in batches of twenty for a page 
 
 ## CI: the reusable workflow
 
-A content repository calls `zer0-linkedin.yml` without vendoring anything:
+The workflow is optional: a site whose channels live on the platform publishes from the studio and needs none. A content repository that wants its merged drafts published from its own CI calls `zer0-linkedin.yml` without vendoring anything:
 
 ```yaml
 name: LinkedIn publish
@@ -271,7 +275,20 @@ It checks out the caller — at the tip of the branch the run is on, not the com
 
 ## X
 
-The X lane is the LinkedIn lane's twin, and inherits from it rather than copying it: `lane/x_site.py`, `x_pipeline.py`, `x_cli.py` and `x_mcp.py` subclass the LinkedIn modules and change only what X changes. The sources, composing, the draft queue and its dialect, approval, the gates after the target's own, the publish flow, the ledger file's format and recording a post by hand are the same code. A platform X channel goes through the same queue, gates and worker as every other kind.
+The X lane is the LinkedIn lane's twin, and inherits from it rather than copying it: `lane/x_site.py`, `x_pipeline.py`, `x_cli.py` and `x_mcp.py` subclass the LinkedIn modules and change only what X changes. The sources, composing, the draft queue and its dialect, approval, the gates after the target's own, the publish flow, the ledger file's format and recording a post by hand are the same code. A platform X channel goes through the same queue, gates and worker as every other kind, and is connected in the studio (§ Connecting an X account in the studio); the lane and `zer0-x.yml` are optional automation beside it.
+
+### Connecting an X account in the studio
+
+The platform is the X app. In the X developer console, the app's user authentication settings are OAuth 2.0 for a confidential client (a web app) with "Read and write" permission and the callback `https://<the platform>/api/v2/distribution/oauth/x/`; its OAuth 2.0 Client ID and Client Secret are the platform's `X_CLIENT_ID` and `X_CLIENT_SECRET`, on the content service and the worker.
+
+| Variable | Kind | Used for |
+|---|---|---|
+| `X_CLIENT_ID`, `X_CLIENT_SECRET` | secret | The platform's X app: connecting an account and renewing its token. Never the lane's `X_API_KEY` and `X_API_SECRET`, which are OAuth 1.0a's |
+| `ZER0_CMS_X_REDIRECT_URI` | setting | The platform's X callback, when it is not this request's origin plus `/api/v2/distribution/oauth/x/` |
+
+**Connect with X** on a channel is a POST, so no other site can start a connection. It answers with X's consent URL (`https://x.com/i/oauth2/authorize`) carrying a fresh `state`, a PKCE challenge (S256) and the scopes `tweet.read tweet.write users.read offline.access` — the least a channel needs to post, read its own posts and their counts back, learn which account it is, and renew its token. The person's session keeps the state, the verifier and the channel's kind; the callback accepts a state this session started for X less than ten minutes ago, once. X's code lives thirty seconds, so the worker exchanges it as soon as the callback commits: the token endpoint (`POST /2/oauth2/token`) gets the code and the verifier, with the app's id and secret as HTTP Basic, never in a URL or a form. The worker then asks X which account the token is (`GET /2/users/me`). A channel that names its `account` keeps a token for that account only; one that names none takes the account its owner approved as, unless another channel of the site already posts as it. A token the channel does not keep is revoked (`POST /2/oauth2/revoke`), and the channel says why.
+
+The access token lasts two hours. The platform renews it two minutes before it lapses, or once on a 401 — safe, because a 401 means X did nothing — and keeps the new pair at once: X spends a refresh token when it is used and answers with a new one. The renewal holds the channel's row, so two workers that find the token lapsed at once renew it once; the second takes the pair the first kept. A renewal X refuses (the owner revoked the app, or the refresh token is spent) changes nothing kept and says to connect the channel again. **Disconnect** forgets the pair here; the owner revokes the app in X's settings ("Connected apps").
 
 ### Configure a site's X lane
 
@@ -320,16 +337,18 @@ A post is `{"text": …}`. An article is its commentary with the page's canonica
 |---|---|---|
 | `request_token` | `POST /oauth/request_token` | a temporary token for this app's own connection request |
 | `access_token` | `POST /oauth/access_token` | this app's own access token for the account whose owner authorized it |
+| `oauth2_token` | `POST /2/oauth2/token` | this app's own OAuth 2.0 token for the account whose owner authorized it |
+| `oauth2_revoke` | `POST /2/oauth2/revoke` | nothing but this app's own token, revoked |
 | `me` | `GET /2/users/me` | the authenticated account's own id, name and handle |
 | `posts_create` | `POST /2/tweets` | the id of the account's own new post |
 | `posts_lookup` | `GET /2/tweets?ids=…` | the account's own posts, as published, with their aggregate counts (posts by any other author are dropped) |
 | `posts_by_account` | `GET /2/users/{id}/tweets` | the account's own recent posts |
 
-The same two tests as LinkedIn's keep the list honest: every `returns` sentence contains "own", and no declared path reaches followers, likes, bookmarks, mentions, messages, lists, spaces or search. Every request is signed with OAuth 1.0a (HMAC-SHA1, oauthlib's signer); a secret signs a request and is never sent, and every credential is scrubbed out of an error. Retries are LinkedIn's: a read on 429, 5xx and a dropped connection (honouring `retry-after` and `x-rate-limit-reset`), a write only on 429. A create that ends in a 5xx, a dropped connection or a success with no id is ledgered `unconfirmed`, and `manage.py x record DRAFT ID` (the digits of `x.com/…/status/ID`) or the studio's **Record** clears it.
+The same two tests as LinkedIn's keep the list honest: every `returns` sentence contains "own", and no declared path reaches followers, likes, bookmarks, mentions, messages, lists, spaces or search. The lane signs every request with OAuth 1.0a (HMAC-SHA1, oauthlib's signer), so a secret signs a request and is never sent; a platform channel sends its OAuth 2.0 token as a bearer, and the token endpoint authenticates the platform's app with HTTP Basic. Every credential is scrubbed out of an error. Retries are LinkedIn's: a read on 429, 5xx and a dropped connection (honouring `retry-after` and `x-rate-limit-reset`), a write and a token call only on 429 — a renewal that reached X has spent its refresh token. A create that ends in a 5xx, a dropped connection or a success with no id is ledgered `unconfirmed`, and `manage.py x record DRAFT ID` (the digits of `x.com/…/status/ID`) or the studio's **Record** clears it.
 
 ### Tokens and cost
 
-OAuth 1.0a tokens do not expire until their owner revokes them or the app's permission changes, which is what a repository secret needs: X's OAuth 2.0 tokens last two hours and each refresh spends the refresh token it used, which a CI secret cannot follow. `status --check` and a channel's **Check it** therefore read no expiry; they ask which account the token posts as and fail when it is not the configured one. `manage.py x connect` runs OAuth 1.0a's three legs with a PIN: it prints the authorize URL, the account's owner approves while signed in as that account, types the PIN X shows, and the lane stores the token pair only with `--write-env FILE` (a file git ignores) or shows it with `--print-token`. The app's permission must be "Read and write". A platform X channel keeps all four keys, encrypted and write-only, because X bills the app: each channel names the app that pays for it, and the platform has no X app of its own.
+The lane uses OAuth 1.0a, whose tokens do not expire until their owner revokes them or the app's permission changes, which is what a repository secret needs: an OAuth 2.0 token lasts two hours and each renewal spends the refresh token it used, which only a store the renewal can write back to — the platform's channel — can follow. `status --check` and a channel's **Check it** ask which account the token posts as and fail when it is not the configured one; **Check it** renews a lapsed token first. `manage.py x connect` runs OAuth 1.0a's three legs with a PIN: it prints the authorize URL, the account's owner approves while signed in as that account, types the PIN X shows, and the lane stores the token pair only with `--write-env FILE` (a file git ignores) or shows it with `--print-token`. The app's permission must be "Read and write". The lane's app and the platform's may be one X app (it has both OAuth 1.0a keys and an OAuth 2.0 client) or two; either way X bills the app.
 
 X's API is pay-per-use, billed per request against credits bought ahead. Since 2026-04-20 a post carrying a URL is billed well above one without (X's developer announcement put them at $0.20 and $0.015 at the time; the console shows today's rates), and reads are billed too. Every article share carries its URL, so it is the dearer kind of post; each publish also makes one billed read (the account check), as does each daily statistics read on the platform plus one per post read. A failed request is not billed.
 
@@ -339,4 +358,4 @@ The platform reads X's public counts for each X channel's own ledgered posts onc
 
 ## Not built, and not to be described as built
 
-Reading or replying to comments, reactions or mentions; anything about individual members (profiles, connections, followers, who engaged); scheduling, queue-ahead or timed release; video, document, poll or multi-image posts; threads, replies and media on X; connecting an X account from the studio (its channel takes the keys typed; `manage.py x connect` gets them in a terminal); X statistics in the lane; statistics for WordPress, a pull request or a newsletter; and a hosted multi-tenant service. The call plan is the list of what exists: a capability not on it does not exist.
+Reading or replying to comments, reactions or mentions; anything about individual members (profiles, connections, followers, who engaged); scheduling, queue-ahead or timed release; video, document, poll or multi-image posts; threads, replies and media on X; X statistics in the lane; statistics for WordPress, a pull request or a newsletter; and a hosted multi-tenant service. The call plan is the list of what exists: a capability not on it does not exist.

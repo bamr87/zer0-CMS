@@ -516,8 +516,7 @@ SITES_DIR = env("SITES_DIR", default="")
 # ── Distribution (distribution/README.md) ───────────────────────────────────
 # A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
 # channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
-# LinkedIn lane always had), ZER0_X_PUBLISH, ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH. An
-# X channel carries its own app and account keys (X bills the app), so the platform has no X app of its own.
+# LinkedIn lane always had), ZER0_X_PUBLISH, ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
 DISTRIBUTION_ARMED = {
     kind
     for kind, variable in (
@@ -534,6 +533,12 @@ DISTRIBUTION_ARMED = {
 LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
 LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
 LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
+# The platform's X app (OAuth 2.0: connecting an account through X's consent screen and renewing its two-hour token),
+# and the address X returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/x/.
+# The site lane's X_API_KEY and X_API_SECRET are another app's, OAuth 1.0a's, and the platform never reads them.
+X_CLIENT_ID = env("X_CLIENT_ID", default="")
+X_CLIENT_SECRET = env("X_CLIENT_SECRET", default="")
+X_REDIRECT_URI = env("ZER0_CMS_X_REDIRECT_URI", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

@@ -1,9 +1,10 @@
 # zer0-linkedin — the LinkedIn distribution lane, as a reusable workflow.
 #
-# A content repository calls it (docs/DISTRIBUTION.md). It runs the lane over
-# the caller's own files — `manage.py linkedin` (content/distribution/lane/), the
-# Python port of the Ruby lane this workflow ran until PLAN G5 — and touches no
-# database:
+# A content repository calls it (docs/DISTRIBUTION.md) — optional automation: a
+# site whose LinkedIn channel lives on the platform publishes from the studio and
+# needs none of it. It runs the lane over the caller's own files — `manage.py
+# linkedin` (content/distribution/lane/), the Python port of the Ruby lane this
+# workflow ran until PLAN G5 — and touches no database:
 #
 #   on:
 #     push:

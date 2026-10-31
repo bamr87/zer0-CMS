@@ -1,8 +1,10 @@
 # zer0-x — the X distribution lane, as a reusable workflow.
 #
-# A content repository calls it (docs/DISTRIBUTION.md § X). It runs the lane
-# over the caller's own files — `manage.py x` (content/distribution/lane/x_*.py),
-# the LinkedIn lane's twin — and touches no database:
+# A content repository calls it (docs/DISTRIBUTION.md § X) — optional automation:
+# a site whose X channel lives on the platform connects it in the studio (OAuth
+# 2.0) and needs none of it. It runs the lane over the caller's own files —
+# `manage.py x` (content/distribution/lane/x_*.py), the LinkedIn lane's twin —
+# and touches no database:
 #
 #   on:
 #     push:

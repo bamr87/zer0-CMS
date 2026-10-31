@@ -3,7 +3,7 @@
 // whether each can publish now: connected, armed by a person, armed for its
 // kind by the deployment. A channel's panel changes its settings, takes a new
 // credential (typed into an empty field, sent once, never shown), connects a
-// LinkedIn account through LinkedIn's consent screen, asks the target whether
+// LinkedIn or X account through its consent screen, asks the target whether
 // the credential works, arms or disarms it, and holds its ledger file —
 // downloaded byte for byte as every lane writes it, or imported from the
 // extension's or a site's CI so what they published never goes twice.
@@ -35,7 +35,7 @@ import { useState } from 'react';
 import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { KINDS, kindLabel, MEASURED, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
+import { CONNECTS, KINDS, kindLabel, MEASURED, RENEWS, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
 
 type Settings = Record<string, string>;
 
@@ -270,10 +270,10 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
         <Text size="sm" c="dimmed">
           {channel.site_name}
           {channel.account ? ` · publishes as ${channel.account}` : ''}
-          {channel.expires_at ? ` · token expires ${when(channel.expires_at)}` : ''}
+          {channel.expires_at ? (RENEWS.includes(channel.kind) ? ' · its token renews itself' : ` · token expires ${when(channel.expires_at)}`) : ''}
         </Text>
       </Group>
-      {returned && channel.connecting ? <Alert color="blue">LinkedIn sent its answer; the platform is finishing the connection…</Alert> : null}
+      {returned && channel.connecting ? <Alert color="blue">{channel.kind_label} sent its answer; the platform is finishing the connection…</Alert> : null}
       {channel.last_error ? (
         <Alert color="red" title="Needs attention">
           {channel.last_error}
@@ -320,14 +320,14 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
           <Text size="sm">
             {channel.has_credential ? 'A credential is set. It is stored encrypted and never shown again.' : 'No credential is set.'}
           </Text>
-          {channel.kind === 'linkedin' ? (
+          {CONNECTS.includes(channel.kind) ? (
             <Group>
               <Button disabled={!channel.can_manage} loading={connect.isPending} onClick={() => connect.mutate()}>
-                Connect with LinkedIn
+                Connect with {channel.kind_label}
               </Button>
               {consent ? (
-                <Anchor href={consent} aria-label="Continue to LinkedIn">
-                  Continue to LinkedIn’s consent screen →
+                <Anchor href={consent} aria-label={`Continue to ${channel.kind_label}`}>
+                  Continue to {channel.kind_label}’s consent screen →
                 </Anchor>
               ) : null}
             </Group>

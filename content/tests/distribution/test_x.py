@@ -1,5 +1,5 @@
-"""X: the client (`distribution/x/` — the call plan, OAuth 1.0a signing, retries,
-the length X counts) and the lane over a site's own files (`manage.py x`,
+"""X: the client (`distribution/x/` — the call plan, OAuth 1.0a signing, OAuth
+2.0 bearer tokens and their renewal, retries, the length X counts) and the lane over a site's own files (`manage.py x`,
 `distribution/lane/x_*.py`) end to end, over the fixture site. Recorded HTTP
 only (respx): an unscripted request fails the test, and nothing reaches X.
 """
@@ -15,7 +15,8 @@ from distribution.lane.x_cli import main
 from distribution.lane.x_pipeline import XPipeline
 from distribution.lane.x_site import XConfig
 from distribution.ledger import Ledger
-from distribution.x import Client, Credentials, Error, HTTPError, Refused, oauth, plan, posts
+from distribution.x import Client, Credentials, Error, HTTPError, Refused, oauth, oauth2, plan, posts
+from distribution.x.session import Session, UserToken
 
 from .conftest import MCP_POST, MCP_URL, NOW, tree
 
@@ -88,6 +89,25 @@ def test_a_request_is_signed_with_oauth_1a_and_refused_without_a_credential(web)
         Client(Credentials("k", "s")).request("me")
     with pytest.raises(Refused, match="X_API_KEY"):
         Client(Credentials()).request("me")
+
+
+def test_an_oauth2_token_is_a_bearer_the_app_alone_takes_it_and_a_renewal_is_never_repeated(web):
+    me = web.get(f"{API}/2/users/me").respond(200, json=ME)
+    assert posts.me(Client(bearer="x-access-SECRET-123456"))["username"] == "bamr87"
+    assert me.calls.last.request.headers["authorization"] == "Bearer x-access-SECRET-123456"
+    with pytest.raises(Refused, match="OAuth 1.0a"):
+        Client(bearer="x-access-SECRET-123456").request("request_token")
+    with pytest.raises(Refused, match="X_CLIENT_ID"):
+        Client(bearer="x-access-SECRET-123456").request("oauth2_token", form={"grant_type": "refresh_token"})
+    token = web.post(f"{API}/2/oauth2/token").respond(503)
+    session = Session(UserToken("", "x-refresh-SECRET-123456", "cid", "x-client-SECRET-123456"), sleeper=nosleep)
+    with pytest.raises(HTTPError) as caught:
+        session.run(posts.me)
+    assert token.call_count == 1, "a renewal that reached X spent its refresh token"
+    assert me.call_count == 1 and "SECRET" not in str(caught.value)
+    assert not [c.id for c in plan.CALLS if c.grant and c.write] and plan.fetch("oauth2_token").grant
+    with pytest.raises(ValueError, match="X_CLIENT_ID and X_CLIENT_SECRET"):
+        oauth2.OAuth("cid", "")
 
 
 def test_a_write_is_never_retried_after_a_5xx_and_a_read_is(web):

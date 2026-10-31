@@ -33,6 +33,10 @@ export const kindLabel = (value: string) => KINDS.find((k) => k.value === value)
 /** The kinds whose posts the platform reads aggregate counts for, and that take a text update with no page. */
 export const MEASURED: string[] = ['linkedin', 'x'];
 export const TEXT_UPDATES: string[] = ['linkedin', 'x'];
+/** The kinds a person connects through the target's consent screen, as the platform's own app. */
+export const CONNECTS: string[] = ['linkedin', 'x'];
+/** The kinds whose short-lived token the platform renews by itself (X's lasts two hours). */
+export const RENEWS: string[] = ['x'];
 export const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : '—');
 
 /** What each kind keeps in its settings, as the platform's channel takes them (distribution/models.py). */
@@ -42,7 +46,7 @@ export const SETTINGS: Record<DistributionKind, { name: string; label: string; d
     { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own ledger (e.g. .github/linkedin-log.json), read before and written after a publish' },
   ],
   x: [
-    { name: 'account', label: 'Account', description: 'The X handle it posts as, e.g. @bamr87 — Check it refuses a key for any other' },
+    { name: 'account', label: 'Account', description: 'The X handle it posts as, e.g. @bamr87 — empty, Connect fills it in; set, a connection for any other account is refused' },
     { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own X ledger (e.g. .github/x-log.json), read before and written after a publish' },
   ],
   wordpress: [
@@ -61,9 +65,6 @@ export const SETTINGS: Record<DistributionKind, { name: string; label: string; d
 const SECRET_LABELS: Record<string, string> = {
   access_token: 'Access token',
   refresh_token: 'Refresh token',
-  api_key: 'API key',
-  api_secret: 'API key secret',
-  access_token_secret: 'Access token secret',
   application_password: 'Application password',
   token: 'Token',
 };
@@ -82,7 +83,7 @@ export function useChannel(id: string) {
   return useQuery({
     queryKey: ['distribution', 'channel', id],
     queryFn: () => call(api.GET('/api/v2/distribution/channels/{public_id}/', { params: { path: { public_id: id } } })),
-    // The worker is exchanging LinkedIn's code: follow the channel until it is connected or says why not.
+    // The worker is exchanging LinkedIn's or X's code: follow the channel until it is connected or says why not.
     refetchInterval: (query) => (query.state.data?.connecting ? 1500 : false),
   });
 }

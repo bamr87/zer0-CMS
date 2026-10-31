@@ -8,7 +8,9 @@ list cannot be expressed. Two assertions keep the list honest, as LinkedIn's do
 contains the word "own" (`own_content_only`), and no declared path reaches
 followers, likes, bookmarks, mentions, messages, lists, spaces or search
 (`forbidden_path`). OAuth 1.0a carries no per-call scopes: what a token may do
-is the app's permission ("Read and write"), set where the app is.
+is the app's permission ("Read and write"), set where the app is. An OAuth 2.0
+token — a platform channel's — carries the scopes its owner granted
+(`oauth2.SCOPES`, the least a channel needs).
 
 X counts a post's text with its twitter-text rules (`weighted_length`): a link
 is 23 whatever its length, a character in the Latin, Greek, Cyrillic and common
@@ -78,7 +80,13 @@ class Call:
 
     @property
     def oauth(self) -> bool:
+        """A step of OAuth 1.0a's handshake: signed by the app, with no account token yet."""
         return self.path.startswith("/oauth/")
+
+    @property
+    def grant(self) -> bool:
+        """OAuth 2.0's token endpoint: the platform's app authenticates, with HTTP Basic."""
+        return self.path.startswith("/2/oauth2/")
 
     def as_dict(self) -> dict:
         return {
@@ -106,6 +114,20 @@ CALLS = [
         "/oauth/access_token",
         "finish connecting: the authorized token and its PIN for the account's token",
         "this app's own access token for the account whose owner authorized it",
+    ),
+    Call(
+        "oauth2_token",
+        "POST",
+        "/2/oauth2/token",
+        "connect an account through X's consent screen, and renew its two-hour token (OAuth 2.0)",
+        "this app's own OAuth 2.0 token for the account whose owner authorized it",
+    ),
+    Call(
+        "oauth2_revoke",
+        "POST",
+        "/2/oauth2/revoke",
+        "give back a token for an account the channel does not post as",
+        "nothing but this app's own token, revoked",
     ),
     Call(
         "me",

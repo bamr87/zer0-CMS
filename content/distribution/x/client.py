@@ -1,21 +1,27 @@
 """The one gateway to X, and the credentials it signs with.
 
 `Client.request` takes a call id from `plan`, never a URL: it refuses a call the
-plan does not declare, signs the request with OAuth 1.0a (HMAC-SHA1, oauthlib's
-signer, so no signature is hand-rolled) — the app's key and secret, and the
-account's token and secret — sends it with httpx and maps a non-2xx answer to
-`HTTPError`. OAuth 1.0a tokens do not expire until their owner revokes them,
-which is what a CI secret needs: X's OAuth 2.0 tokens last two hours and their
-refresh tokens are spent on use, which a repository secret cannot follow.
+plan does not declare, authorizes the request, sends it with httpx and maps a
+non-2xx answer to `HTTPError`. Two ways to authorize, one per surface:
+
+- the site lane signs with OAuth 1.0a (HMAC-SHA1, oauthlib's signer, so no
+  signature is hand-rolled) — the app's key and secret, and the account's token
+  and secret. Those tokens do not expire until their owner revokes them, which
+  is what a CI secret needs;
+- a platform channel carries the account's OAuth 2.0 token as a bearer
+  (`session.py` renews it: it lasts two hours, and each refresh spends the
+  refresh token it used, which a repository secret cannot follow), and the
+  token endpoint authenticates the platform's own app with HTTP Basic.
 
 Retries are LinkedIn's (`linkedin/client.py`), for the same reason: a read is
 retried on 429, 5xx and a dropped connection, honouring `retry-after` or X's
 `x-rate-limit-reset`; a write and the token calls only on 429, which X sends
-before acting — a 5xx or a dropped socket after `POST /2/tweets` may mean the
+before acting — a refresh that reached X has spent its refresh token — a 5xx or a dropped socket after `POST /2/tweets` may mean the
 post exists. An error's message is built from X's error body, never from the
 request, and every credential the client holds is scrubbed out of it.
 """
 
+import base64
 import json as jsonlib
 import re
 import time
@@ -51,7 +57,7 @@ class HTTPError(Error):
     """A non-2xx answer from X, after the retries a call is allowed."""
 
     def __init__(self, status: int, message: str, *, code=None, body=None):
-        self.status, self.code, self.body = status, code, body
+        self.status, self.message, self.code, self.body = status, message, code, body
         super().__init__(f"HTTP {status}: {message}" + (f" ({code})" if code else ""))
 
     @property
@@ -105,24 +111,58 @@ def send(verb: str, url: str, headers: dict, body) -> Response:
 
 
 class Client:
-    def __init__(self, credentials: Credentials, *, sleeper=time.sleep, transport=send, clock=time.time):
-        self.credentials = credentials
-        self.sleeper, self.transport, self.clock = sleeper, transport, clock
-        c = credentials
-        self.secrets = [s for s in (c.api_key, c.api_secret, c.access_token, c.access_token_secret) if len(s) >= 8]
+    """`credentials` signs with OAuth 1.0a (the lane); `bearer` is an account's OAuth 2.0 token instead (a platform
+    channel's); `app` is the platform's (client id, client secret) for the OAuth 2.0 token endpoint. `secrets` are
+    more strings to scrub out of an error."""
 
-    def request(self, call_id, *, path=None, query=(), json=None, owner=None, callback=None, verifier=None):
+    def __init__(
+        self,
+        credentials: Credentials | None = None,
+        *,
+        bearer: str = "",
+        app: tuple[str, str] | None = None,
+        secrets=(),
+        sleeper=time.sleep,
+        transport=send,
+        clock=time.time,
+    ):
+        self.credentials, self.bearer, self.app = credentials or Credentials(), str(bearer or ""), app
+        self.sleeper, self.transport, self.clock = sleeper, transport, clock
+        c = self.credentials
+        held = (c.api_key, c.api_secret, c.access_token, c.access_token_secret, self.bearer, *(app or ()), *secrets)
+        self.secrets = [s for s in held if s and len(s) >= 8]
+
+    def request(self, call_id, *, path=None, query=(), json=None, form=None, owner=None, callback=None, verifier=None):
         """Perform a declared call. `path` fills the declared path's `{placeholders}`; `query` is (key, value) pairs;
-        `owner` is a (token, secret) pair in place of the account's, for the second step of connecting."""
+        `json` or `form` is the body; `owner` is a (token, secret) pair in place of the account's, for the second
+        step of connecting with OAuth 1.0a."""
         call = plan.fetch(call_id)
+        target = self._url(call, path or {}, query)
+        headers = {**self._authorization(call, target, owner, callback, verifier), "Accept": "application/json"}
+        body = None
+        if form is not None:
+            body = urlencode(list(form.items())).encode()
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
+        elif json is not None:
+            body = jsonlib.dumps(json, separators=(",", ":"), ensure_ascii=False).encode()
+            headers["Content-Type"] = "application/json"
+        return self._send(call, target, headers, body)
+
+    def _authorization(self, call, target, owner, callback, verifier) -> dict:
+        if call.grant:
+            if not (self.app and all(self.app)):
+                raise Refused("no X OAuth 2.0 app (X_CLIENT_ID and X_CLIENT_SECRET)")
+            return {"Authorization": "Basic " + base64.b64encode(":".join(self.app).encode()).decode()}
+        if self.bearer:
+            if call.oauth:
+                raise Refused(f"{call.id} is a step of OAuth 1.0a: an OAuth 2.0 token cannot take it")
+            return {"Authorization": f"Bearer {self.bearer}"}
         c = self.credentials
         if not c.app:
             raise Refused("no X app credentials (X_API_KEY and X_API_SECRET)")
         token, secret = owner or (c.access_token, c.access_token_secret)
         if not call.oauth and not (token and secret):
             raise Refused("no X account token (X_ACCESS_TOKEN and X_ACCESS_TOKEN_SECRET): connect the account")
-        target = self._url(call, path or {}, query)
-        body = jsonlib.dumps(json, separators=(",", ":"), ensure_ascii=False).encode() if json is not None else None
         signer = Signer(
             c.api_key,
             client_secret=c.api_secret,
@@ -132,29 +172,27 @@ class Client:
             verifier=verifier,
         )
         _, headers, _ = signer.sign(target, http_method=call.verb)  # a JSON body is not part of an OAuth 1.0a signature
-        headers = {**headers, "Accept": "application/json"}
-        if body is not None:
-            headers["Content-Type"] = "application/json"
-        return self._send(call, target, headers, body)
+        return headers
 
     def json(self, call_id, **options) -> dict:
         data = self.request(call_id, **options).json()
         return data if isinstance(data, dict) else {}
 
     def _send(self, call, target, headers, body) -> Response:
+        once = call.write or call.oauth or call.grant
         attempt = 0
         while True:
             attempt += 1
             try:
                 response = self.transport(call.verb, target, headers, body)
             except NetworkError as e:
-                if call.write or call.oauth or attempt >= MAX_ATTEMPTS:
+                if once or attempt >= MAX_ATTEMPTS:
                     raise HTTPError(0, self.scrub(str(e))) from e
                 self.sleeper(self._backoff(attempt, None))
                 continue
             if response.success:
                 return response
-            retry = response.status == 429 if (call.write or call.oauth) else response.status in RETRY_STATUSES
+            retry = response.status == 429 if once else response.status in RETRY_STATUSES
             if not retry or attempt >= MAX_ATTEMPTS:
                 raise self._error(response)
             self.sleeper(self._backoff(attempt, response))
@@ -188,8 +226,9 @@ class Client:
         errors = data.get("errors") if isinstance(data.get("errors"), list) else []
         first = errors[0] if errors and isinstance(errors[0], dict) else {}
         message = data.get("detail") or data.get("title") or first.get("message") or data.get("message")
+        message = message or data.get("error_description")  # the OAuth 2.0 token endpoint's (RFC 6749 § 5.2)
         message = message or response.body.decode("utf-8", errors="replace").strip()[:300] or "request failed"
-        code = first.get("code") or data.get("code") or data.get("type")
+        code = first.get("code") or data.get("code") or data.get("type") or data.get("error")
         return HTTPError(response.status, self.scrub(str(message)), code=code, body=data)
 
     def scrub(self, text: str) -> str:
