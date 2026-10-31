@@ -439,6 +439,18 @@ platform:
     proof:
       api: content/tests/sites/test_sites.py
       studio: web/packages/ui/test/sites.test.tsx
+  - id: sites.voice
+    what: A site's voice — who it writes for, how it sounds, what it never says — scoped below the site (section, content type, book, channel), resolved for every piece, pushed to every writer and gate, recorded on every result, round-tripped through its files.
+    # ADR 0010 (proposed). V0 (2026-10-30): voice/services.py composes today's stores in the guard's order — the built-in
+    # bans and filler, each active BrandRules, SiteSettings, AIEO's BrandContext, a book's style guide and switch, a
+    # chapter's tone and style, a channel's limits — with who reads each; brand.rules answers from it; GET
+    # /api/v2/sites/<id>/voice/resolved/ and POST .../voice/test/ (the guard on a text, no model); the studio's Voice tab
+    # on the site's page. Read-only: the scopes below the site, the model, the push into runs and the files are V1–V4.
+    # The extension renders the same tab through WORKSPACES' Sites workspace; not yet proved through its host.
+    surfaces: {api: partial, studio: partial, extension: partial}
+    proof:
+      api: content/tests/voice/test_voice.py
+      studio: web/packages/ui/test/voice.test.tsx
   - id: sites.sync
     what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
     # G4: sites/catalog.py (Jekyll 4.4's reader, byte for byte against Jekyll's own lists; the importer reads through it),

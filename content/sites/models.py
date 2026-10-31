@@ -14,7 +14,7 @@ last doctor run's findings.
 `SiteSettings` holds what a site's people set for it, through Wagtail's site
 settings (`SiteSettings.for_site(site)`): SEO defaults, analytics ids,
 navigation, design and skin, a monthly budget, and its brand rules — the voice
-AI help reads and the phrases the brand guard refuses on its pages, on top of
+agents read through `brand.rules` and the phrases the brand guard refuses on its pages, on top of
 the built-in bans and every active `cms.BrandRules` (suggestions/guard.py), and
 whether those built-in bans hold on its books' chapters (PLAN P-D7). Who may see a
 site and who may manage it is sites/access.py.
@@ -94,7 +94,9 @@ class SiteSettings(BaseSiteSetting):
     ga4_measurement_id = models.CharField(max_length=40, blank=True, help_text="Google Analytics 4, e.g. G-XXXXXXX.")
     search_console_property = models.CharField(max_length=200, blank=True, help_text="Search Console's property.")
     navigation = models.JSONField(default=list, blank=True, help_text="The main menu: [{label, url}].")
-    brand_voice = models.TextField(blank=True, help_text="How the site writes; AI help reads it.")
+    brand_voice = models.TextField(
+        blank=True, help_text="How the site writes; agents that call brand.rules read it (the site's Voice tab)."
+    )
     banned_patterns = models.JSONField(
         default=list,
         blank=True,

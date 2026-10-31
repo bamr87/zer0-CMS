@@ -303,6 +303,20 @@ features:
       - web/studio/test/app.test.tsx
     scenarios: []
     evidence: []
+  - id: ZER0-046
+    title: "A site's Voice tab: every layer of its voice, who reads it, and the guard on a text"
+    description: "A person reads a site's voice as the platform holds it today — the built-in bans, each brand rules snippet, the site's settings, AIEO's brand context, a book's style guide and a chapter's tone, a channel's limits — composed for a page or a post in the order the brand guard applies them, with where each lives, where to change it, who reads it, which assistants could ask for it and what brand.rules tells an agent; and tests a text against the guard under that voice, without a model. Read-only: step V0 of ADR 0010."
+    implemented: true
+    surface: ui
+    link: /studio/sites
+    docs: content/voice/README.md
+    tags: [studio, web, sites, voice, brand]
+    date: 2026-10-30
+    tests:
+      - content/tests/voice/test_voice.py
+      - web/packages/ui/test/voice.test.tsx
+    scenarios: []
+    evidence: []
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030

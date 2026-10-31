@@ -1,10 +1,10 @@
 // One site: its overview — how it renders, where its files live, its pages,
 // and its jobs — with sync, write-back and the doctor as jobs that a person
 // starts and follows live (JobLog), its registry fields, its per-site
-// settings (its brand rules among them: the voice AI help reads, the phrases
-// the brand guard refuses on its pages, and whether its built-in bans hold on
-// its books' chapters), and what its last doctor run
-// found. Only someone who may manage the site sees the actions and may save;
+// settings (its brand rules among them: the voice agents read through
+// brand.rules, the phrases the brand guard refuses on its pages, and whether
+// its built-in bans hold on its books' chapters), its voice as every writer
+// and gate meets it (Voice), and what its last doctor run found. Only someone who may manage the site sees the actions and may save;
 // the platform re-checks every one.
 import {
   Alert,
@@ -37,6 +37,7 @@ import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { JobLog, JobStatus } from './JobLog';
 import { DoctorBadges, rendersWith, when } from './SitesWorkspace';
+import { Voice } from './Voice';
 
 type Kind = 'sync' | 'export' | 'doctor';
 const ACTIONS: { kind: Kind; label: string; help: string }[] = [
@@ -76,6 +77,7 @@ export function SiteView({ siteId }: { siteId: number }) {
         <Tabs.List>
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
           <Tabs.Tab value="settings">Settings</Tabs.Tab>
+          <Tabs.Tab value="voice">Voice</Tabs.Tab>
           <Tabs.Tab value="findings">Findings</Tabs.Tab>
           <Tabs.Tab value="jobs">Jobs</Tabs.Tab>
         </Tabs.List>
@@ -84,6 +86,9 @@ export function SiteView({ siteId }: { siteId: number }) {
         </Tabs.Panel>
         <Tabs.Panel value="settings" pt="md">
           <SettingsForm siteId={siteId} editable={Boolean(s.can_manage)} />
+        </Tabs.Panel>
+        <Tabs.Panel value="voice" pt="md">
+          <Voice siteId={siteId} />
         </Tabs.Panel>
         <Tabs.Panel value="findings" pt="md">
           <Findings siteId={siteId} />
@@ -338,7 +343,7 @@ function SettingsFields({ siteId, initial, editable }: { siteId: number; initial
         <Card withBorder>
           <Stack gap="xs">
             <Title order={5}>Voice and design</Title>
-            <Textarea label="Brand voice" description="How the site writes; AI help reads it" autosize minRows={3} disabled={!editable} value={form.brand_voice ?? ''} onChange={(e) => set({ brand_voice: e.currentTarget.value })} />
+            <Textarea label="Brand voice" description="How the site writes; agents that call brand.rules read it — the Voice tab shows who reads what" autosize minRows={3} disabled={!editable} value={form.brand_voice ?? ''} onChange={(e) => set({ brand_voice: e.currentTarget.value })} />
             {text('skin', 'Skin')}
             <Pairs label="Design tokens" left="Token" right="Value" rows={tokens.map((t) => [t.name, t.value])} editable={editable} onChange={(rows) => setTokens(rows.map(([name, value]) => ({ name, value })))} />
             <Pairs label="Banned phrases (the brand guard refuses them on this site's pages, as regular expressions, any case)" left="Phrase" right="Pattern" rows={bans} editable={editable} onChange={setBans} />

@@ -1,0 +1,10 @@
+# `voice/` — a site's voice, composed in one place
+
+A site's voice — how it writes and what it never says — as the platform holds it today, composed by one function and shown in the studio's Voice tab: step V0 of [ADR 0010](../../docs/adr/0010-voice.md). It is read-only and changes nothing any writer or gate does; it makes the voice's scope and distribution visible, so the later steps (a `VoiceProfile` model with scopes below the site, the voice pushed into every run) start from what is true.
+
+| Module | What it is |
+|---|---|
+| `services.py` | `resolve(site, page=, channel=)`: every layer that holds, in the order the guard and `brand.rules` apply them — the built-in bans and filler (`suggestions/guard.py`), each active `cms.BrandRules`, the site's `SiteSettings` (brand voice, banned phrases), AIEO's `BrandContext` (its brand voice, style guide and writing examples, an unfilled template counting as empty), a book's style guide, a chapter's tone and style, a channel's limits — each with where it lives, where a person changes it and who reads it (`READERS`), whether it holds (a chapter whose book or site lifted the built-in bans), its bans as the guard reads them (a malformed one shown as skipped) and a `digest` of what the layers say. `told(resolved)` is what the `brand.rules` tool answers, so the tool and the studio cannot disagree. It never makes a row |
+| `views.py`, `serializers.py` | `GET /api/v2/sites/<id>/voice/resolved/` (`?page=`, `?channel=`) and `POST /api/v2/sites/<id>/voice/test/` (the guard's findings on a text under that resolution, no model), routed from `../sites/urls.py`. A page is one the caller may open, a channel one of the site's they see; AIEO's layer is `hidden` to anyone who does not edit the site |
+
+Today a voice reaches a model only through `brand.rules`, which an assistant may call only if it lists it among its tools — the resolution's `assistants` says which of the caller's do. Tests: `content/tests/voice/`; the studio's tab is `web/packages/ui/src/sites/Voice.tsx`.

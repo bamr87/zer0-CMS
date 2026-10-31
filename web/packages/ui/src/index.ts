@@ -69,5 +69,6 @@ export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
 export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
 export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
 export { SiteView } from './sites/SiteView';
+export { Voice } from './sites/Voice';
 export { SuggestionInbox } from './SuggestionInbox';
 export { HOME, WORKSPACES, workspaceFor, type Workspace, type WorkspaceId, type WorkspaceProps } from './workspaces';

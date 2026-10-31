@@ -27795,6 +27795,286 @@
                 }
             }
         },
+        "/api/v2/sites/{id}/voice/resolved/": {
+            "get": {
+                "operationId": "sites_voice_resolved",
+                "summary": "A site's voice for a page or a channel: every layer that holds, in order, and who reads each",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "channel",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The public id of one of the site's channels."
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A page of the site the caller may open."
+                    }
+                ],
+                "tags": [
+                    "sites"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResolvedVoice"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/sites/{id}/voice/test/": {
+            "post": {
+                "operationId": "sites_voice_test",
+                "summary": "The brand guard's findings on a text under the site's voice for a page or a channel (no model)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "sites"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceTestRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceTestRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceTestRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoiceTest"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/sites/discover/": {
             "get": {
                 "operationId": "sites_discover",
@@ -40875,7 +41155,7 @@
                     },
                     "brand_voice": {
                         "type": "string",
-                        "description": "How the site writes; AI help reads it."
+                        "description": "How the site writes; agents that call brand.rules read it (the site's Voice tab)."
                     },
                     "banned_patterns": {
                         "type": "array",
@@ -41967,6 +42247,71 @@
                     "story"
                 ]
             },
+            "ResolvedVoice": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VoicePage"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "channel": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VoiceChannel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "layers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceLayer"
+                        }
+                    },
+                    "digest": {
+                        "type": "string",
+                        "description": "The sha256 of what the layers say."
+                    },
+                    "told": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/VoiceTold"
+                            }
+                        ],
+                        "description": "What brand.rules answers an agent working on this page."
+                    },
+                    "assistants": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceAssistant"
+                        },
+                        "description": "The assistants the caller may run on this site."
+                    },
+                    "readers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceReader"
+                        }
+                    }
+                },
+                "required": [
+                    "assistants",
+                    "channel",
+                    "digest",
+                    "layers",
+                    "page",
+                    "readers",
+                    "told"
+                ]
+            },
             "Revision": {
                 "type": "object",
                 "properties": {
@@ -42785,7 +43130,7 @@
                     },
                     "brand_voice": {
                         "type": "string",
-                        "description": "How the site writes; AI help reads it."
+                        "description": "How the site writes; agents that call brand.rules read it (the site's Voice tab)."
                     },
                     "banned_patterns": {
                         "type": "array",
@@ -44868,6 +45213,331 @@
                 ],
                 "type": "string",
                 "description": "* `private` - Private — its owner\n* `site` - Site — everyone who edits its site\n* `shared` - Shared — everyone signed in"
+            },
+            "VoiceAssistant": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "reads_voice": {
+                        "type": "boolean",
+                        "description": "It lists brand.rules among its tools, so its model may ask."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "reads_voice"
+                ]
+            },
+            "VoiceBan": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "pattern": {
+                        "type": "string",
+                        "description": "A regular expression."
+                    },
+                    "flags": {
+                        "type": "string",
+                        "description": "\"i\" (the default) matches any case."
+                    },
+                    "level": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/IssueLevelEnum"
+                            }
+                        ],
+                        "description": "An error blocks; a warning never does.\n\n* `error` - error\n* `warning` - warning"
+                    },
+                    "valid": {
+                        "type": "boolean",
+                        "description": "False when the guard skips it."
+                    },
+                    "why": {
+                        "type": "string",
+                        "description": "Why the guard skips it."
+                    }
+                },
+                "required": [
+                    "flags",
+                    "level",
+                    "name",
+                    "pattern",
+                    "valid",
+                    "why"
+                ]
+            },
+            "VoiceChannel": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "kind",
+                    "name"
+                ]
+            },
+            "VoiceFinding": {
+                "type": "object",
+                "properties": {
+                    "level": {
+                        "$ref": "#/components/schemas/DistributionGuardLevelEnum"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "level",
+                    "message"
+                ]
+            },
+            "VoiceGuidance": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Markdown."
+                    }
+                },
+                "required": [
+                    "label",
+                    "text"
+                ]
+            },
+            "VoiceLayer": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "builtin, brand-rules-<n>, site, aieo, book, chapter or channel."
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "$ref": "#/components/schemas/VoiceScopeEnum"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "The store that holds it."
+                    },
+                    "edit": {
+                        "type": "string",
+                        "description": "Where a person changes it; blank when it is code."
+                    },
+                    "readers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceReaderEnum"
+                        },
+                        "description": "Who reads it today."
+                    },
+                    "guidance": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceGuidance"
+                        }
+                    },
+                    "bans": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceBan"
+                        }
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/VoiceLimits"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "description": "False when switched off for this page (lifted_by says by whom)."
+                    },
+                    "lifted_by": {
+                        "type": "string"
+                    },
+                    "hidden": {
+                        "type": "boolean",
+                        "description": "True when its content is not the caller's to see (AIEO's context)."
+                    }
+                },
+                "required": [
+                    "active",
+                    "bans",
+                    "edit",
+                    "guidance",
+                    "hidden",
+                    "key",
+                    "label",
+                    "lifted_by",
+                    "limits",
+                    "readers",
+                    "scope",
+                    "source"
+                ]
+            },
+            "VoiceLimits": {
+                "type": "object",
+                "properties": {
+                    "max_length": {
+                        "type": "integer"
+                    },
+                    "fold": {
+                        "type": "integer",
+                        "description": "Where a long post is cut off with '… see more'."
+                    },
+                    "max_escaped_length": {
+                        "type": "integer",
+                        "description": "LinkedIn's limit once escaped."
+                    }
+                }
+            },
+            "VoicePage": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Its page type's name."
+                    }
+                },
+                "required": [
+                    "id",
+                    "title",
+                    "type"
+                ]
+            },
+            "VoiceReader": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "$ref": "#/components/schemas/VoiceReaderEnum"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "key",
+                    "label"
+                ]
+            },
+            "VoiceReaderEnum": {
+                "enum": [
+                    "guard",
+                    "review",
+                    "eval",
+                    "distribution",
+                    "brand_rules",
+                    "aieo",
+                    "book"
+                ],
+                "type": "string",
+                "description": "* `guard` - guard\n* `review` - review\n* `eval` - eval\n* `distribution` - distribution\n* `brand_rules` - brand_rules\n* `aieo` - aieo\n* `book` - book"
+            },
+            "VoiceScopeEnum": {
+                "enum": [
+                    "platform",
+                    "site",
+                    "book",
+                    "chapter",
+                    "channel"
+                ],
+                "type": "string",
+                "description": "* `platform` - platform\n* `site` - site\n* `book` - book\n* `chapter` - chapter\n* `channel` - channel"
+            },
+            "VoiceTest": {
+                "type": "object",
+                "properties": {
+                    "findings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VoiceFinding"
+                        }
+                    },
+                    "digest": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "digest",
+                    "findings"
+                ]
+            },
+            "VoiceTestRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20000
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "channel": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "VoiceTold": {
+                "type": "object",
+                "properties": {
+                    "style_guides": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "banned": {
+                        "type": "array",
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "banned",
+                    "style_guides"
+                ]
             },
             "Winner": {
                 "type": "object",

@@ -67,17 +67,9 @@ def remember(ctx, scope, key, value, scope_id="", ttl_days=None):
     input_schema=obj({}),
 )
 def brand_rules(ctx):
-    from cms.models import BrandRules
-    from sites.models import SiteSettings
-    from suggestions.guard import BANNED_PATTERNS, builtin_bans, site_of
+    """From the one composition of a voice (voice/services.py), which the studio's Voice tab shows."""
+    from suggestions.guard import site_of
+    from voice.services import resolve, told
 
-    active = BrandRules.objects.filter(is_active=True)
     target = ctx.extra.get("target")
-    own = SiteSettings.objects.filter(site=site_of(target)).first()
-    builtin = [name for name, _ in BANNED_PATTERNS] if builtin_bans(target) else []
-    entries = [p for r in active for p in (r.banned_patterns or [])] + (own.banned_patterns if own else [])
-    return {
-        "style_guides": [r.style_guide for r in active if r.style_guide]
-        + ([own.brand_voice] if own and own.brand_voice else []),
-        "banned": builtin + [p.get("name") for p in entries if isinstance(p, dict)],
-    }
+    return told(resolve(site_of(target), page=target))

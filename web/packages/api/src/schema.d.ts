@@ -3597,6 +3597,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/sites/{id}/voice/resolved/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A site's voice for a page or a channel: every layer that holds, in order, and who reads each */
+        get: operations["sites_voice_resolved"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/voice/test/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The brand guard's findings on a text under the site's voice for a page or a channel (no model) */
+        post: operations["sites_voice_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/sites/discover/": {
         parameters: {
             query?: never;
@@ -7722,7 +7756,7 @@ export interface components {
             /** @description Search Console's property. */
             search_console_property?: string;
             navigation?: components["schemas"]["NavigationItemRequest"][];
-            /** @description How the site writes; AI help reads it. */
+            /** @description How the site writes; agents that call brand.rules read it (the site's Voice tab). */
             brand_voice?: string;
             banned_patterns?: components["schemas"]["BannedPatternRequest"][];
             /**
@@ -8083,6 +8117,18 @@ export interface components {
             rule: components["schemas"]["FrontRuleEnum"];
             story: components["schemas"]["StoryCard"] | null;
         };
+        ResolvedVoice: {
+            page: components["schemas"]["VoicePage"] | null;
+            channel: components["schemas"]["VoiceChannel"] | null;
+            layers: components["schemas"]["VoiceLayer"][];
+            /** @description The sha256 of what the layers say. */
+            digest: string;
+            /** @description What brand.rules answers an agent working on this page. */
+            told: components["schemas"]["VoiceTold"];
+            /** @description The assistants the caller may run on this site. */
+            assistants: components["schemas"]["VoiceAssistant"][];
+            readers: components["schemas"]["VoiceReader"][];
+        };
         Revision: {
             id: number;
             /** Format: date-time */
@@ -8367,7 +8413,7 @@ export interface components {
             /** @description Search Console's property. */
             search_console_property?: string;
             navigation?: components["schemas"]["NavigationItem"][];
-            /** @description How the site writes; AI help reads it. */
+            /** @description How the site writes; agents that call brand.rules read it (the site's Voice tab). */
             brand_voice?: string;
             banned_patterns?: components["schemas"]["BannedPattern"][];
             /**
@@ -9008,6 +9054,117 @@ export interface components {
          * @enum {string}
          */
         VisibilityEnum: "private" | "site" | "shared";
+        VoiceAssistant: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description It lists brand.rules among its tools, so its model may ask. */
+            reads_voice: boolean;
+        };
+        VoiceBan: {
+            name: string;
+            /** @description A regular expression. */
+            pattern: string;
+            /** @description "i" (the default) matches any case. */
+            flags: string;
+            /**
+             * @description An error blocks; a warning never does.
+             *
+             *     * `error` - error
+             *     * `warning` - warning
+             */
+            level: components["schemas"]["IssueLevelEnum"];
+            /** @description False when the guard skips it. */
+            valid: boolean;
+            /** @description Why the guard skips it. */
+            why: string;
+        };
+        VoiceChannel: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: string;
+        };
+        VoiceFinding: {
+            level: components["schemas"]["DistributionGuardLevelEnum"];
+            message: string;
+        };
+        VoiceGuidance: {
+            label: string;
+            /** @description Markdown. */
+            text: string;
+        };
+        VoiceLayer: {
+            /** @description builtin, brand-rules-<n>, site, aieo, book, chapter or channel. */
+            key: string;
+            label: string;
+            scope: components["schemas"]["VoiceScopeEnum"];
+            /** @description The store that holds it. */
+            source: string;
+            /** @description Where a person changes it; blank when it is code. */
+            edit: string;
+            /** @description Who reads it today. */
+            readers: components["schemas"]["VoiceReaderEnum"][];
+            guidance: components["schemas"]["VoiceGuidance"][];
+            bans: components["schemas"]["VoiceBan"][];
+            limits: components["schemas"]["VoiceLimits"];
+            /** @description False when switched off for this page (lifted_by says by whom). */
+            active: boolean;
+            lifted_by: string;
+            /** @description True when its content is not the caller's to see (AIEO's context). */
+            hidden: boolean;
+        };
+        VoiceLimits: {
+            max_length?: number;
+            /** @description Where a long post is cut off with '… see more'. */
+            fold?: number;
+            /** @description LinkedIn's limit once escaped. */
+            max_escaped_length?: number;
+        };
+        VoicePage: {
+            id: number;
+            title: string;
+            /** @description Its page type's name. */
+            type: string;
+        };
+        VoiceReader: {
+            key: components["schemas"]["VoiceReaderEnum"];
+            label: string;
+        };
+        /**
+         * @description * `guard` - guard
+         *     * `review` - review
+         *     * `eval` - eval
+         *     * `distribution` - distribution
+         *     * `brand_rules` - brand_rules
+         *     * `aieo` - aieo
+         *     * `book` - book
+         * @enum {string}
+         */
+        VoiceReaderEnum: "guard" | "review" | "eval" | "distribution" | "brand_rules" | "aieo" | "book";
+        /**
+         * @description * `platform` - platform
+         *     * `site` - site
+         *     * `book` - book
+         *     * `chapter` - chapter
+         *     * `channel` - channel
+         * @enum {string}
+         */
+        VoiceScopeEnum: "platform" | "site" | "book" | "chapter" | "channel";
+        VoiceTest: {
+            findings: components["schemas"]["VoiceFinding"][];
+            digest: string;
+        };
+        VoiceTestRequestRequest: {
+            text: string;
+            page?: number | null;
+            /** Format: uuid */
+            channel?: string | null;
+        };
+        VoiceTold: {
+            style_guides: string[];
+            banned: (string | null)[];
+        };
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         Winner: {
             id: string | null;
@@ -25568,6 +25725,187 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_voice_resolved: {
+        parameters: {
+            query?: {
+                /** @description The public id of one of the site's channels. */
+                channel?: string;
+                /** @description A page of the site the caller may open. */
+                page?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedVoice"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_voice_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceTestRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["VoiceTestRequestRequest"];
+                "multipart/form-data": components["schemas"]["VoiceTestRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceTest"];
                 };
             };
             401: {

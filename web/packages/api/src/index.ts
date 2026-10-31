@@ -86,6 +86,11 @@ export type ManagedSite = Schemas['ManagedSite'];
 export type SiteDetail = Schemas['SiteDetail'];
 export type SiteCandidate = Schemas['SiteCandidate'];
 export type SiteSettings = Schemas['SiteSettings'];
+// A site's voice (ADR 0010 V0): every layer that holds, who reads it, and the guard's findings under it.
+export type ResolvedVoice = Schemas['ResolvedVoice'];
+export type VoiceLayer = Schemas['VoiceLayer'];
+export type VoiceBan = Schemas['VoiceBan'];
+export type VoiceFinding = Schemas['VoiceFinding'];
 export type DoctorFinding = Schemas['DoctorFinding'];
 export type Job = Schemas['Job'];
 export type JobDetail = Schemas['JobDetail'];
