@@ -2,6 +2,28 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/bamr87/zer0-CMS/compare/v1.0.0...v1.1.0) (2026-10-31)
+
+
+### Features
+
+* **sites:** zer0-pages moves to the Jekyll-theme option, the last site's Ruby gone ([bcdd672](https://github.com/bamr87/zer0-CMS/commit/bcdd67253adf9c35624ef5377d3a541a6cf10eca))
+* **voice:** the Voice tab maps who reads which layer, and every badge can be read ([778ab22](https://github.com/bamr87/zer0-CMS/commit/778ab22cc066f8c543dd37d677268b610408d177))
+* **voice:** V0 — compose a site's voice in one place and show it in the studio ([15ce35d](https://github.com/bamr87/zer0-CMS/commit/15ce35dfdc51040d759e3d1becba14af55b7b783))
+
+
+### Bug Fixes
+
+* **studio:** the Sites list asks for checkouts only for someone who may register a site ([780b0fa](https://github.com/bamr87/zer0-CMS/commit/780b0fa8bb75d909652378bd1d55fdb4f5622fdf))
+* **voice:** show what the guard actually applies, and keep findings to their scope ([756348e](https://github.com/bamr87/zer0-CMS/commit/756348e53161a7d23edf9e2718e6fb9f3208cc91))
+* **web:** the page picker searches the platform, so every page is within reach ([861d09b](https://github.com/bamr87/zer0-CMS/commit/861d09b76f0c8bf320618e5e94b1b113c5f93dcc))
+
+
+### Performance Improvements
+
+* **ci:** cut Actions minutes in content, CodeQL and the uncapped jobs ([508971f](https://github.com/bamr87/zer0-CMS/commit/508971ff462a337ab43edafb54737b8b8582e450))
+* **ci:** cut Actions minutes in content, CodeQL and the uncapped jobs ([7cb8993](https://github.com/bamr87/zer0-CMS/commit/7cb8993a9437472b256554f5e7b3cffb29e27a51))
+
 ## [1.0.0](https://github.com/bamr87/zer0-CMS/compare/v0.3.0...v1.0.0) (2026-10-28)
 
 
