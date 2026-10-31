@@ -447,6 +447,7 @@ platform:
     # /api/v2/sites/<id>/voice/resolved/ and POST .../voice/test/ (the guard on a text, no model); the studio's Voice tab
     # on the site's page. Read-only: the scopes below the site, the model, the push into runs and the files are V1–V4.
     # The extension renders the same tab through WORKSPACES' Sites workspace; not yet proved through its host.
+    # The tab in a browser: verify/scenarios/studio-voice-resolve.yml (desktop and phone; evidence test/evidence/studio-voice-resolve/).
     surfaces: {api: partial, studio: partial, extension: partial}
     proof:
       api: content/tests/voice/test_voice.py

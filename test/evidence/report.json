@@ -1,11 +1,11 @@
 {
   "schema": "verify-report/v1",
-  "base": "http://127.0.0.1:55144",
-  "generated": "2026-10-22T07:49:52.784Z",
-  "by": "human",
+  "base": "http://127.0.0.1:8000",
+  "generated": "2026-10-31T04:40:12.673Z",
+  "by": "agent",
   "run": null,
-  "total": 3,
-  "passed": 3,
+  "total": 4,
+  "passed": 4,
   "failed": 0,
   "scenarios": [
     {
@@ -45,6 +45,21 @@
       "screenshots": [
         "test/evidence/studio-publish/desktop-editing.png",
         "test/evidence/studio-publish/desktop-published.png"
+      ]
+    },
+    {
+      "id": "studio-voice-resolve",
+      "title": "Read a site's voice and test a text against it",
+      "features": [
+        "ZER0-046"
+      ],
+      "ok": true,
+      "dir": "test/evidence/studio-voice-resolve",
+      "screenshots": [
+        "test/evidence/studio-voice-resolve/desktop-voice.png",
+        "test/evidence/studio-voice-resolve/desktop-tested.png",
+        "test/evidence/studio-voice-resolve/mobile-voice.png",
+        "test/evidence/studio-voice-resolve/mobile-tested.png"
       ]
     }
   ]

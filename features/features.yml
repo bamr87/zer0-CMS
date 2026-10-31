@@ -51,7 +51,7 @@ features:
     surface: ui
     link: /admin/
     docs: content/README.md
-    tags: [platform, admin, wagtail]
+    tags: [ platform, admin, wagtail ]
     tests:
       - content/tests/cms/test_models.py
     scenarios:
@@ -64,7 +64,7 @@ features:
     surface: ui
     link: /admin/suggestions/page/
     docs: content/suggestions/services.py
-    tags: [platform, agents, governance]
+    tags: [ platform, agents, governance ]
     tests:
       - content/tests/suggestions/test_suggestions.py
     scenarios: []
@@ -76,7 +76,7 @@ features:
     surface: ui
     link: /admin/workflows/
     docs: content/workflow/models.py
-    tags: [platform, agents, workflow]
+    tags: [ platform, agents, workflow ]
     tests:
       - content/tests/workflow/test_review.py
     scenarios: []
@@ -88,7 +88,7 @@ features:
     surface: ui
     link: /admin/reports/agent-runs/
     docs: content/agents/README.md
-    tags: [platform, agents, reports]
+    tags: [ platform, agents, reports ]
     tests:
       - content/tests/agents/test_runner.py
     scenarios: []
@@ -102,7 +102,7 @@ features:
     surface: api
     link: /graphql/
     docs: schemas/graphql/schema.graphql
-    tags: [platform, api, graphql]
+    tags: [ platform, api, graphql ]
     tests:
       - content/tests/api/test_graphql.py
       - content/tests/ops/test_graphql_errors.py
@@ -115,7 +115,7 @@ features:
     surface: api
     link: /api/v2/docs/
     docs: schemas/openapi/openapi.json
-    tags: [platform, api, rest, openapi]
+    tags: [ platform, api, rest, openapi ]
     tests:
       - content/tests/api/test_graphql.py
       - content/tests/ops/test_openapi.py
@@ -129,7 +129,7 @@ features:
     surface: api
     link: /mcp/
     docs: content/mcp_server/README.md
-    tags: [platform, api, mcp, agents]
+    tags: [ platform, api, mcp, agents ]
     tests:
       - content/tests/mcp/test_mcp.py
       - content/tests/ops/test_mcp_errors.py
@@ -142,7 +142,7 @@ features:
     surface: cli
     link: content/importers/jekyll.py
     docs: content/README.md
-    tags: [platform, jekyll, import, export]
+    tags: [ platform, jekyll, import, export ]
     tests:
       - content/tests/importers/test_jekyll.py
       - content/tests/api/test_page_files.py
@@ -157,7 +157,7 @@ features:
     surface: api
     link: /readyz
     docs: content/ops/README.md
-    tags: [platform, ops, probes]
+    tags: [ platform, ops, probes ]
     tests:
       - content/tests/ops/test_health.py
     scenarios: []
@@ -169,7 +169,7 @@ features:
     surface: api
     link: /api/v2/docs/
     docs: content/ops/README.md
-    tags: [platform, ops, logging, errors]
+    tags: [ platform, ops, logging, errors ]
     tests:
       - content/tests/ops/test_request_id.py
       - content/tests/ops/test_errors.py
@@ -188,7 +188,7 @@ features:
     surface: ui
     link: /studio/write
     docs: web/README.md
-    tags: [studio, web, editor, publishing]
+    tags: [ studio, web, editor, publishing ]
     date: 2026-10-22
     tests:
       - content/tests/api/test_pages.py
@@ -215,7 +215,7 @@ features:
     surface: ui
     link: /studio/review
     docs: web/README.md
-    tags: [studio, web, review, agents, governance]
+    tags: [ studio, web, review, agents, governance ]
     date: 2026-10-22
     tests:
       - content/tests/api/test_review.py
@@ -233,7 +233,7 @@ features:
     surface: ui
     link: /studio/ai
     docs: web/README.md
-    tags: [studio, web, agents]
+    tags: [ studio, web, agents ]
     date: 2026-10-22
     tests:
       - web/packages/ui/test/runs.test.tsx
@@ -249,7 +249,7 @@ features:
     surface: ui
     link: /studio/ai
     docs: content/ai/README.md
-    tags: [studio, web, ai, assistants, pipelines, providers]
+    tags: [ studio, web, ai, assistants, pipelines, providers ]
     date: 2026-10-22
     tests:
       - web/packages/ui/test/ai/assistants.test.tsx
@@ -270,7 +270,7 @@ features:
     surface: ui
     link: /studio/create/briefs
     docs: content/ai/README.md
-    tags: [studio, web, ai, briefs, conversations, editor]
+    tags: [ studio, web, ai, briefs, conversations, editor ]
     date: 2026-10-22
     tests:
       - web/packages/ui/test/ai/briefs.test.tsx
@@ -293,7 +293,7 @@ features:
     surface: ui
     link: /studio/outbox
     docs: content/outboxdesk/README.md
-    tags: [studio, web, outbox, belt, claim-desk, pipelines]
+    tags: [ studio, web, outbox, belt, claim-desk, pipelines ]
     date: 2026-10-27
     tests:
       - content/tests/outboxdesk/test_belt.py
@@ -310,13 +310,18 @@ features:
     surface: ui
     link: /studio/sites
     docs: content/voice/README.md
-    tags: [studio, web, sites, voice, brand]
+    tags: [ studio, web, sites, voice, brand ]
     date: 2026-10-30
     tests:
       - content/tests/voice/test_voice.py
       - web/packages/ui/test/voice.test.tsx
-    scenarios: []
-    evidence: []
+    scenarios:
+      - verify/scenarios/studio-voice-resolve.yml
+    evidence:
+      - test/evidence/studio-voice-resolve/
+    verified:
+      date: 2026-10-31
+      by: agent
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030
@@ -326,7 +331,7 @@ features:
     surface: ui
     link: src/panel/panelProvider.ts
     docs: README.md
-    tags: [extension, editor]
+    tags: [ extension, editor ]
     tests:
       - src/test/fields.test.ts
       - src/test/extension.test.ts
@@ -339,7 +344,7 @@ features:
     surface: ui
     link: src/dashboard/dashboardPanel.ts
     docs: README.md
-    tags: [extension, dashboard]
+    tags: [ extension, dashboard ]
     tests:
       - src/test/webview.test.ts
       - src/test/routes.test.ts
@@ -352,7 +357,7 @@ features:
     surface: ui
     link: src/core/governance/
     docs: README.md
-    tags: [extension, governance]
+    tags: [ extension, governance ]
     tests:
       - src/test/governance.test.ts
       - src/test/golden.test.ts
@@ -365,7 +370,7 @@ features:
     surface: api
     link: src/mcp/server.ts
     docs: README.md
-    tags: [extension, mcp]
+    tags: [ extension, mcp ]
     tests:
       - src/test/mcp.test.ts
     scenarios: []

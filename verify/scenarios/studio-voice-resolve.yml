@@ -1,0 +1,44 @@
+# =============================================================================
+# verify/scenarios/studio-voice-resolve.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# A site's voice (ADR 0010, step V0): the editor opens the demo site's Voice
+# tab and reads who is told the voice, the map of who reads which layer — with
+# the editor's AI panel named as the reader no layer reaches — and the
+# built-in bans as the guard applies them (four warnings that can never fire
+# shown as skipped); then tests a sentence under that voice and the guard's
+# verdict arrives without a model. Sites is reached by its address, because
+# the navigation folds away at a phone's width. The map scrolls inside its own
+# box, so the page itself never scrolls sideways.
+# =============================================================================
+id: studio-voice-resolve
+feature: ZER0-046
+title: "Read a site's voice and test a text against it"
+description: "An editor opens a site's Voice tab: who is told the voice, the map of who reads which layer and the reader none reaches, the built-in bans as the guard applies them; then a sentence tested under the voice gets the guard's verdict, at once and without a model."
+viewports: [desktop, mobile]
+# Before the sign-in form the studio asks allauth whether anyone is signed in;
+# signed out, that answer is a 401, which Chromium logs as a console error.
+ignore_console: ["status of 401 \\(Unauthorized\\)"]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - goto: /studio/sites
+  - click: "role=button[name='Demo site']"
+  - click: "role=tab[name='Voice']"
+  - wait: { selector: "text=Who is told this voice" }
+  - expect: { visible: "role=table[name='Who reads which layer']" }
+  - expect: { text: "Never reached here:" }
+  - expect: { text: "AI panel (the editor's AI panel" }
+  - expect: { visible: "role=region[name='Built-in bans']" }
+  - expect: { text: "13 bans, 5 warnings, 4 skipped" }
+  - expect: { no_horizontal_scroll: true }
+  - screenshot: voice
+  - fill: { selector: "role=textbox[name='Text']", value: "A cutting-edge launch for your month-end close." }
+  - click: "role=button[name='Test it']"
+  - wait: { selector: "text=1 error — the guard would refuse it" }
+  - expect: { text: "banned phrase \"cutting-edge\"" }
+  - expect: { no_horizontal_scroll: true }
+  - expect: { no_console_errors: true }
+  - { screenshot: tested, full_page: true }
