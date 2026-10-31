@@ -41,6 +41,8 @@ const site = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const me = (permissions: string[]) => ({ authenticated: true, user: { id: 1, username: 'ed', name: 'Ed', email: '', is_staff: false, is_superuser: false }, permissions, csrf_token: 'x' });
+
 const job = (overrides: Record<string, unknown> = {}) => ({
   id: 'b0b0b0b0-0000-4000-8000-000000000001',
   kind: 'sync',
@@ -87,6 +89,7 @@ describe('<SitesWorkspace>', () => {
   it('lists every site with how it renders, where its files are and what the doctor found', async () => {
     const { api } = fakePlatform({
       'GET /api/v2/sites/': () => [site(), site({ id: 4, name: 'Elsewhere', hostname: 'x.localhost', managed: null, can_manage: false })],
+      'GET /api/v2/me': () => me(['sites.manage_site']),
       'GET /api/v2/sites/discover/': () => [],
     });
     const { go } = renderUi(<SitesWorkspace />, { api });
@@ -102,6 +105,7 @@ describe('<SitesWorkspace>', () => {
   it('registers a checkout the workspace declares and opens the new site', async () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/sites/': () => [],
+      'GET /api/v2/me': () => me(['sites.manage_site']),
       'GET /api/v2/sites/discover/': () => [
         { key: 'wargames', checkout: 'sites/wargames', render: 'jekyll-theme', theme_tag: 'v1.31.3', server: 'jekyll-4', deploy_target: '/wargames/' },
       ],
@@ -116,9 +120,23 @@ describe('<SitesWorkspace>', () => {
     expect(nth(calls.filter((c) => c.method === 'POST')).body).toEqual({ checkout: 'sites/wargames', key: 'wargames' });
   });
 
-  it('shows no registration to someone who may not manage sites', async () => {
+  it('shows no registration to someone who may not manage sites, and never asks the platform for checkouts', async () => {
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/sites/': () => [site({ can_manage: false })],
+      'GET /api/v2/me': () => me([]),
+      'GET /api/v2/sites/discover/': () => new Reply(403, { error: { code: 'auth.forbidden', message: 'no', status: 403, details: [] } }),
+    });
+    renderUi(<SitesWorkspace />, { api });
+    expect(await screen.findByRole('button', { name: 'drsai' })).toBeInTheDocument();
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/me')).toBe(true));
+    expect(screen.queryByText('Register a site')).not.toBeInTheDocument();
+    expect(calls.some((c) => c.path === '/api/v2/sites/discover/')).toBe(false); // a refused request is an error in their console
+  });
+
+  it('still hides registration when the platform refuses the checkouts', async () => {
     const { api } = fakePlatform({
       'GET /api/v2/sites/': () => [site({ can_manage: false })],
+      'GET /api/v2/me': () => me(['sites.manage_site']),
       'GET /api/v2/sites/discover/': () => new Reply(403, { error: { code: 'auth.forbidden', message: 'no', status: 403, details: [] } }),
     });
     renderUi(<SitesWorkspace />, { api });

@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ManagedSite, Site } from '@zer0/api';
 import { useState } from 'react';
 
-import { oneClick } from '../ai/shared';
+import { oneClick, useMe } from '../ai/shared';
 import { ApiError, call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 
@@ -95,7 +95,8 @@ export function SitesWorkspace() {
   );
 }
 
-/** Register a site from its checkout; hidden from someone who may not. */
+/** Register a site from its checkout; hidden from someone who may not, who is never sent to ask the platform for
+ * checkouts (`sites.manage_site`, from /api/v2/me) — so their browser logs no refusal. A 403 still hides it. */
 export function RegisterSite() {
   const api = useApi();
   const go = useGo();
@@ -103,7 +104,8 @@ export function RegisterSite() {
   const [checkout, setCheckout] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
   const [key, setKey] = useState('');
-  const candidates = useQuery({ queryKey: ['site-candidates'], queryFn: () => call(api.GET('/api/v2/sites/discover/')) });
+  const mayRegister = useMe().data?.permissions.includes('sites.manage_site') ?? false;
+  const candidates = useQuery({ queryKey: ['site-candidates'], queryFn: () => call(api.GET('/api/v2/sites/discover/')), enabled: mayRegister });
   const register = useMutation({
     mutationFn: (vars: { checkout: string; key: string }) =>
       call(api.POST('/api/v2/sites/', { body: { checkout: vars.checkout, key: vars.key } })),
@@ -113,7 +115,7 @@ export function RegisterSite() {
       go({ to: 'site', id: made.site.id });
     },
   });
-  if (candidates.error instanceof ApiError && candidates.error.status === 403) return null;
+  if (!mayRegister || (candidates.error instanceof ApiError && candidates.error.status === 403)) return null;
   const chosen = typed.trim() || checkout || '';
   return (
     <Card withBorder>
