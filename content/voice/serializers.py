@@ -70,7 +70,8 @@ class VoiceAssistantSerializer(serializers.Serializer):
 
 class VoiceReaderSerializer(serializers.Serializer):
     key = serializers.ChoiceField(READER_KEYS)
-    label = serializers.CharField()
+    name = serializers.CharField(help_text="A short name, for a column.")
+    label = serializers.CharField(help_text="What it is.")
 
 
 class ResolvedVoiceSerializer(serializers.Serializer):

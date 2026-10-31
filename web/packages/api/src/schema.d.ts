@@ -9129,6 +9129,9 @@ export interface components {
         };
         VoiceReader: {
             key: components["schemas"]["VoiceReaderEnum"];
+            /** @description A short name, for a column. */
+            name: string;
+            /** @description What it is. */
             label: string;
         };
         /**
@@ -9139,9 +9142,10 @@ export interface components {
          *     * `brand_rules` - brand_rules
          *     * `aieo` - aieo
          *     * `book` - book
+         *     * `ai_panel` - ai_panel
          * @enum {string}
          */
-        VoiceReaderEnum: "guard" | "review" | "eval" | "distribution" | "brand_rules" | "aieo" | "book";
+        VoiceReaderEnum: "guard" | "review" | "eval" | "distribution" | "brand_rules" | "aieo" | "book" | "ai_panel";
         /**
          * @description * `platform` - platform
          *     * `site` - site

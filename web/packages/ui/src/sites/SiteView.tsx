@@ -37,7 +37,7 @@ import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { JobLog, JobStatus } from './JobLog';
 import { DoctorBadges, rendersWith, when } from './SitesWorkspace';
-import { Voice } from './Voice';
+import { Voice, type VoiceScope } from '../voice';
 
 type Kind = 'sync' | 'export' | 'doctor';
 const ACTIONS: { kind: Kind; label: string; help: string }[] = [
@@ -51,6 +51,8 @@ export function SiteView({ siteId }: { siteId: number }) {
   const path = { params: { path: { id: siteId } } };
   const site = useQuery({ queryKey: ['site', siteId], queryFn: () => call(api.GET('/api/v2/sites/{id}/', path)) });
   const [watching, setWatching] = useState<string | null>(null);
+  // The Voice tab's page and channel, held here so they survive a change of tab.
+  const [voiceScope, setVoiceScope] = useState<VoiceScope>({ page: null, channel: null });
 
   if (site.isPending) return <Loader />;
   if (site.isError) return <Alert color="red">{errorText(site.error)}</Alert>;
@@ -88,7 +90,7 @@ export function SiteView({ siteId }: { siteId: number }) {
           <SettingsForm siteId={siteId} editable={Boolean(s.can_manage)} />
         </Tabs.Panel>
         <Tabs.Panel value="voice" pt="md">
-          <Voice siteId={siteId} />
+          <Voice siteId={siteId} scope={voiceScope} onScopeChange={setVoiceScope} />
         </Tabs.Panel>
         <Tabs.Panel value="findings" pt="md">
           <Findings siteId={siteId} />

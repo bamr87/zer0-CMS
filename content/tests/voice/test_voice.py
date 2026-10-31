@@ -185,7 +185,10 @@ def test_the_api_resolves_a_page_with_the_assistants_that_could_read_it(client, 
     assert reads["Asks"] and not reads["Does not"]
     assert not any(reads[name] for name in reads if name not in ("Asks", "Does not"))  # no bundled one asks
     assert body["told"] == what_brand_rules_answered(voiced.article)
-    assert {r["key"] for r in body["readers"]} >= {"guard", "brand_rules", "aieo", "book"}
+    assert {r["key"] for r in body["readers"]} >= {"guard", "brand_rules", "aieo", "book", "ai_panel"}
+    assert all(r["name"] and r["label"] for r in body["readers"])
+    # the editor's AI panel is a reader no layer reaches: the gap ADR 0010's V2 closes
+    assert not any("ai_panel" in layer["readers"] for layer in body["layers"])
 
 
 @pytest.mark.django_db

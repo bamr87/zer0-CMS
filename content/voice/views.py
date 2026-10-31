@@ -101,7 +101,7 @@ class Resolved(APIView):
             "assistants": [
                 {"id": a.public_id, "name": a.name, "reads_voice": "brand.rules" in (a.tools or [])} for a in assistants
             ],
-            "readers": [{"key": key, "label": label} for key, label in services.READERS.items()],
+            "readers": [{"key": key, "name": name, "label": label} for key, (name, label) in services.READERS.items()],
         }
         return Response(s.ResolvedVoiceSerializer(body).data)
 

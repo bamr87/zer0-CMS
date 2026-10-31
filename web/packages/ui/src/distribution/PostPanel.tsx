@@ -16,10 +16,10 @@ import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
+import { LevelBadge } from '../LevelBadge';
 import { kindLabel, statusOf, usePost, when } from './shared';
 
 const FORCEABLE = ['guard_error', 'already_published', 'publish_unconfirmed'];
-const LEVEL_COLOR = { error: 'red', warning: 'yellow', info: 'gray' };
 
 export function PostPanel({ postId }: { postId: string }) {
   const post = usePost(postId);
@@ -173,10 +173,10 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       <Stack gap={4} aria-label="Brand guard">
         {post.guard.map((finding, i) => (
           <Group key={i} gap="xs" wrap="nowrap" align="flex-start">
-            <Badge size="sm" color={LEVEL_COLOR[finding.level]} variant="light">
-              {finding.level}
-            </Badge>
-            <Text size="sm">{finding.message}</Text>
+            <LevelBadge size="sm" level={finding.level} />
+            <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+              {finding.message}
+            </Text>
           </Group>
         ))}
       </Stack>

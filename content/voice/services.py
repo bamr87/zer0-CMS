@@ -21,15 +21,17 @@ import re
 
 from suggestions.guard import BANNED_PATTERNS, FILLER, FOLD, MAX_LEN, builtin_bans
 
-# Every reader of a voice in the platform today, as the studio names it.
+# Every reader of a voice in the platform today: a short name for a column and what it is. The AI panel reads no
+# layer — an assistant run on a page is told only its own instructions — and is listed so that gap shows (ADR 0010).
 READERS = {
-    "guard": "the brand guard on an agent's suggestion, at propose and at accept",
-    "review": "the brand review task in the Editorial workflow",
-    "eval": "the brand_clean check of an agent's evals",
-    "distribution": "the brand guard on a distribution post",
-    "brand_rules": "agents and assistants that call the brand.rules tool",
-    "aieo": "AIEO's agents",
-    "book": "a book task's context (draft, continue, revise, check)",
+    "guard": ("Suggestion guard", "the brand guard on an agent's suggestion, at propose and at accept"),
+    "review": ("Brand review", "the brand review task in the Editorial workflow"),
+    "eval": ("Evals", "the brand_clean check of an agent's evals"),
+    "distribution": ("Post guard", "the brand guard on a distribution post"),
+    "brand_rules": ("brand.rules", "agents and assistants that call the brand.rules tool"),
+    "aieo": ("AIEO agents", "AIEO's agents"),
+    "book": ("Book tasks", "a book task's context (draft, continue, revise, check)"),
+    "ai_panel": ("AI panel", "the editor's AI panel: an assistant run on a page is told its own instructions only"),
 }
 GATES = ["guard", "review", "eval", "distribution"]
 

@@ -45438,13 +45438,19 @@
                     "key": {
                         "$ref": "#/components/schemas/VoiceReaderEnum"
                     },
+                    "name": {
+                        "type": "string",
+                        "description": "A short name, for a column."
+                    },
                     "label": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "What it is."
                     }
                 },
                 "required": [
                     "key",
-                    "label"
+                    "label",
+                    "name"
                 ]
             },
             "VoiceReaderEnum": {
@@ -45455,10 +45461,11 @@
                     "distribution",
                     "brand_rules",
                     "aieo",
-                    "book"
+                    "book",
+                    "ai_panel"
                 ],
                 "type": "string",
-                "description": "* `guard` - guard\n* `review` - review\n* `eval` - eval\n* `distribution` - distribution\n* `brand_rules` - brand_rules\n* `aieo` - aieo\n* `book` - book"
+                "description": "* `guard` - guard\n* `review` - review\n* `eval` - eval\n* `distribution` - distribution\n* `brand_rules` - brand_rules\n* `aieo` - aieo\n* `book` - book\n* `ai_panel` - ai_panel"
             },
             "VoiceScopeEnum": {
                 "enum": [
