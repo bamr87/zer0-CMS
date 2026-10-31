@@ -59,7 +59,12 @@ def voiced(article):
         brand_voice="Plain and calm.",
         banned_patterns=[{"name": "nightly", "pattern": r"\bnightly\b"}, {"name": "broken", "pattern": "("}],
     )
-    BrandContext.objects.create(site=site, brand_voice="Warm, exact.", style_guide=CONTEXT_TEMPLATES["style_guide"])
+    BrandContext.objects.create(
+        site=site,
+        brand_voice="Warm, exact.",
+        style_guide=CONTEXT_TEMPLATES["style_guide"],
+        writing_examples=CONTEXT_TEMPLATES["writing_examples"].strip(),  # as saving through the API trims it
+    )
     return SimpleNamespace(site=site, house=house, article=article)
 
 
@@ -72,6 +77,20 @@ def test_a_site_with_nothing_set_is_the_built_in_lists_alone_and_reading_it_make
     assert [b["name"] for b in builtin["bans"] if b["level"] == "error"] == [name for name, _ in BANNED_PATTERNS]
     assert len([b for b in builtin["bans"] if b["level"] == "warning"]) == len(FILLER)
     assert not SiteSettings.objects.exists() and not BrandContext.objects.exists()
+
+
+@pytest.mark.django_db
+def test_a_built_in_warning_the_guard_never_applies_is_shown_as_skipped(article):
+    from suggestions.guard import page_findings
+
+    site = article.get_site()
+    skipped = {b["name"]: b["why"] for b in layer(resolve(site, page=article), "builtin")["bans"] if not b["valid"]}
+    # a warning that shares an error's name never fires; the exclamation mark is not checked on a page
+    assert set(skipped) == {"cutting-edge", "next-generation", "revolutionary", "exclamation mark"}
+    assert [f["level"] for f in page_findings("A cutting-edge launch!", site=site)] == ["error"]
+    channel = Channel.objects.create(site=site, kind="linkedin", name="Company page")
+    on_post = {b["name"]: b["valid"] for b in layer(resolve(site, channel=channel), "builtin")["bans"]}
+    assert on_post["exclamation mark"] and not on_post["cutting-edge"]
 
 
 @pytest.mark.django_db

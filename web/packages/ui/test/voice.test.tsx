@@ -74,7 +74,8 @@ describe('the Voice tab', () => {
     expect(screen.getByText(/1 of the 2 assistants you may run here list that tool \(House writer\)/)).toBeInTheDocument();
     expect(within(screen.getByLabelText('AIEO brand context')).getByText('Only the site’s editors see what it says.')).toBeInTheDocument();
     expect(screen.getByTitle('abcdef0123456789')).toHaveTextContent('digest abcdef012345');
-    await userEvent.click(within(site).getByRole('button', { name: /1 ban/ }));
+    expect(screen.getByRole('button', { name: '1 ban, 1 warning' })).toBeInTheDocument();
+    await userEvent.click(within(site).getByRole('button', { name: '1 skipped' }));
     expect(await within(site).findByText('skipped: not a regular expression')).toBeInTheDocument();
   });
 
@@ -94,6 +95,7 @@ describe('the Voice tab', () => {
     );
     renderUi(<Voice siteId={3} />, { api });
     expect(await screen.findByText('switched off by its book')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Built-in bans')).getByText('Nothing is set here yet.')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('For a post to a channel', { selector: 'input' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Company page (LinkedIn)' }));
     expect(await screen.findByText(/At most 3,000 characters, counted once escaped for LinkedIn; the hook must land before the fold at 140 characters/)).toBeInTheDocument();
@@ -127,6 +129,10 @@ describe('the Voice tab', () => {
     expect(await within(form).findByText('1 error — the guard would refuse it')).toBeInTheDocument();
     expect(within(form).getByText('reads as filler: game-changer')).toBeInTheDocument();
     expect(sent).toEqual({ text: 'A cutting-edge game-changer.' });
+    // findings belong to the scope they were found under: choosing a channel puts them away
+    await userEvent.click(screen.getByLabelText('For a post to a channel', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Company page (LinkedIn)' }));
+    await waitFor(() => expect(within(form).queryByLabelText('Findings')).not.toBeInTheDocument());
   });
 
   it('is a tab of the site’s page', async () => {

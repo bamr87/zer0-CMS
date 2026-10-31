@@ -98,9 +98,20 @@ function Resolution({ voice }: { voice: ResolvedVoice }) {
   );
 }
 
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** "13 bans, 5 warnings, 4 skipped": a ban the guard skips is not counted as one it applies. */
+function banCount(layer: VoiceLayer): string {
+  const live = layer.bans.filter((b) => b.valid);
+  const errors = live.filter((b) => b.level === 'error').length;
+  const skipped = layer.bans.length - live.length;
+  return [errors ? plural(errors, 'ban', 'bans') : '', live.length - errors ? plural(live.length - errors, 'warning', 'warnings') : '', skipped ? `${skipped} skipped` : '']
+    .filter(Boolean)
+    .join(', ');
+}
+
 function LayerCard({ layer, readers }: { layer: VoiceLayer; readers: Record<string, string> }) {
-  const errors = layer.bans.filter((b) => b.level === 'error').length;
-  const warnings = layer.bans.length - errors;
+  const empty = !layer.hidden && !layer.guidance.length && !layer.bans.length && !layer.limits.max_length;
   return (
     <Card withBorder aria-label={layer.label} opacity={layer.active ? 1 : 0.7}>
       <Stack gap="xs">
@@ -115,6 +126,11 @@ function LayerCard({ layer, readers }: { layer: VoiceLayer; readers: Record<stri
           {layer.source} · {layer.edit ? `change it in ${layer.edit}` : 'it is code: no screen changes it'}
         </Text>
         {layer.hidden ? <Text size="sm">Only the site’s editors see what it says.</Text> : null}
+        {empty ? (
+          <Text size="sm" c="dimmed">
+            Nothing is set here yet.
+          </Text>
+        ) : null}
         {layer.guidance.map((g) => (
           <Stack key={g.label} gap={2}>
             <Text size="sm" fw={500}>
@@ -136,10 +152,7 @@ function LayerCard({ layer, readers }: { layer: VoiceLayer; readers: Record<stri
         {layer.bans.length ? (
           <Accordion variant="contained">
             <Accordion.Item value="bans">
-              <Accordion.Control>
-                {errors} {errors === 1 ? 'ban' : 'bans'}
-                {warnings ? `, ${warnings} ${warnings === 1 ? 'warning' : 'warnings'}` : ''}
-              </Accordion.Control>
+              <Accordion.Control>{banCount(layer)}</Accordion.Control>
               <Accordion.Panel>
                 <Table aria-label={`${layer.label}: bans`}>
                   <Table.Thead>
@@ -183,10 +196,12 @@ function LayerCard({ layer, readers }: { layer: VoiceLayer; readers: Record<stri
 function TestText({ siteId, page, channel }: { siteId: number; page: number | null; channel: string | null }) {
   const api = useApi();
   const [text, setText] = useState('');
+  // The findings are shown only under the page and channel they were found under: change either and they go.
   const test = useMutation({
-    mutationFn: () =>
-      call(api.POST('/api/v2/sites/{id}/voice/test/', { params: { path: { id: siteId } }, body: { text, page: page ?? undefined, channel: channel ?? undefined } })),
+    mutationFn: (scope: { page: number | null; channel: string | null }) =>
+      call(api.POST('/api/v2/sites/{id}/voice/test/', { params: { path: { id: siteId } }, body: { text, page: scope.page ?? undefined, channel: scope.channel ?? undefined } })),
   });
+  const current = test.variables?.page === page && test.variables.channel === channel;
   return (
     <Paper withBorder p="md" component="form" aria-label="Test a text" onSubmit={(e) => e.preventDefault()}>
       <Stack gap="xs">
@@ -197,12 +212,12 @@ function TestText({ siteId, page, channel }: { siteId: number; page: number | nu
         </Text>
         <Textarea label="Text" autosize minRows={3} maxLength={20000} value={text} onChange={(e) => setText(e.currentTarget.value)} />
         <Group>
-          <Button onClick={oneClick(() => test.mutate())} loading={test.isPending} disabled={!text.trim()}>
+          <Button onClick={oneClick(() => test.mutate({ page, channel }))} loading={test.isPending} disabled={!text.trim()}>
             Test it
           </Button>
         </Group>
-        {test.isError ? <Alert color="red">{errorText(test.error)}</Alert> : null}
-        {test.data ? <Findings findings={test.data.findings} /> : null}
+        {test.isError && current ? <Alert color="red">{errorText(test.error)}</Alert> : null}
+        {test.data && current ? <Findings findings={test.data.findings} /> : null}
       </Stack>
     </Paper>
   );
@@ -218,7 +233,9 @@ function Findings({ findings }: { findings: VoiceFinding[] }) {
       {findings.map((f, at) => (
         <Group key={at} gap="xs" wrap="nowrap" align="start">
           <Badge color={LEVEL_COLOR[f.level]}>{f.level}</Badge>
-          <Text size="sm">{f.message}</Text>
+          <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+            {f.message}
+          </Text>
         </Group>
       ))}
     </Stack>

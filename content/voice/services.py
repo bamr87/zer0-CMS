@@ -95,6 +95,27 @@ def _book_of(page):
     return None
 
 
+def _filler(*, post: bool) -> list[dict]:
+    """The built-in warnings as the guard applies them (suggestions/guard.py `_filler`): one that shares an error's
+    name never fires, because the error catches the same words first; the exclamation mark is never checked on a
+    page, and on a post the commentary guard warns on it with a check of its own."""
+    errors = {name for name, _ in BANNED_PATTERNS}
+    out = []
+    for pattern, name in FILLER:
+        ban = _ban(name, pattern.pattern, level="warning")
+        if name in errors:
+            ban.update(valid=False, why="never fires: the error of the same name catches it first")
+        elif name == "exclamation mark" and not post:
+            ban.update(valid=False, why="not checked on a page; a post's commentary guard warns on it")
+        out.append(ban)
+    return out
+
+
+def _unfilled(value: str, template: str) -> bool:
+    """Empty, or still AIEO's template — whitespace aside, which saving through the API trims."""
+    return not value.split() or value.split() == template.split()
+
+
 def _lifted_by(page, own) -> str:
     """Who switched the built-in bans off for a chapter the guard's `builtin_bans` says they are off for."""
     return "site" if own is not None and own.chapter_builtin_bans is False else "book"
@@ -117,8 +138,7 @@ def resolve(site, *, page=None, channel=None) -> dict:
             "suggestions/guard.py — code, the same for every site",
             "",  # code: no screen changes it (ADR 0010 VD1 proposes a starter profile instead)
             [*GATES, "brand_rules"],
-            bans=[_ban(name, p.pattern) for name, p in BANNED_PATTERNS]
-            + [_ban(name, p.pattern, level="warning") for p, name in FILLER],
+            bans=[_ban(name, p.pattern) for name, p in BANNED_PATTERNS] + _filler(post=channel is not None),
             active=builtin_on,
             lifted_by="" if builtin_on else _lifted_by(page, own),
         )
@@ -158,7 +178,7 @@ def resolve(site, *, page=None, channel=None) -> dict:
                 ("style_guide", "Style guide"),
                 ("writing_examples", "Writing examples"),
             )
-            if (value := getattr(context, field) or "").strip() and value != CONTEXT_TEMPLATES[field]
+            if not _unfilled(value := getattr(context, field) or "", CONTEXT_TEMPLATES[field])
         ]
         layers.append(
             _layer(
