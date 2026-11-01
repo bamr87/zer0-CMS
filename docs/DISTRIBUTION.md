@@ -279,7 +279,7 @@ The X lane is the LinkedIn lane's twin, and inherits from it rather than copying
 
 ### Connecting an X account in the studio
 
-The platform is the X app. In the X developer console, the app's user authentication settings are OAuth 2.0 for a confidential client (a web app) with "Read and write" permission and the callback `https://<the platform>/api/v2/distribution/oauth/x/`; its OAuth 2.0 Client ID and Client Secret are the platform's `X_CLIENT_ID` and `X_CLIENT_SECRET`, on the content service and the worker.
+The platform is the X app. In the X developer console (console.x.com → Apps → the app → Keys & Tokens → OAuth 2.0 Keys → **Set up**), the app's user authentication settings are "Read and write" permission, the type "Web App, Automated App or Bot" (a confidential client) and the callback `https://<the platform>/api/v2/distribution/oauth/x/`, matched exactly, trailing slash included. A platform on this machine uses `http://127.0.0.1:<port>/…`, not `localhost`, which X's docs say not to use. X shows the OAuth 2.0 Client ID and Client Secret once, after the save: they are the platform's `X_CLIENT_ID` and `X_CLIENT_SECRET`, on the content service and the worker.
 
 | Variable | Kind | Used for |
 |---|---|---|
