@@ -31,12 +31,12 @@ from .site import ConfigError, default_commentary
 
 def check_text(commentary: str, link, extra) -> list[dict]:
     """The brand guard on the commentary, plus X's own limit on the whole post — the commentary and the link — as X
-    counts it."""
-    findings = guard_text(commentary, extra)
+    counts it. LinkedIn's fold is not X's: X shows a post that fits whole, so the guard's fold note is left out."""
+    findings = [f for f in guard_text(commentary, extra) if not f["message"].startswith("fold at ")]
     length = plan.weighted_length(plan.post_text(commentary, link))
     if length > plan.TEXT_MAX:
         message = f"the post is {length} characters as X counts them (max {plan.TEXT_MAX}; a link counts 23)"
-        findings.insert(len(findings) - 1, {"level": "error", "message": message})
+        findings.append({"level": "error", "message": message})
     return findings
 
 

@@ -223,6 +223,7 @@ def test_a_post_over_280_as_x_counts_it_is_a_guard_error(x_checkout):
     preview = pipe.preview(draft)
     assert [b.kind for b in preview.blockers] == ["guard_error"]
     assert "as X counts them (max 280" in preview.blockers[0].message
+    assert not [f for f in preview.guard if f["message"].startswith("fold at")], "LinkedIn's fold is not X's"
 
 
 def test_publishing_posts_as_the_configured_account_and_ledgers_it_in_xs_own_file(x_checkout, web):
