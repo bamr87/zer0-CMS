@@ -1,0 +1,19 @@
+# features/features.d/books-serial-fiction-pilot.yml — one feature, in the features/v1 shape of features/features.yml.
+# The id's number is assigned at merge (ZER0-NEW is the placeholder); then this entry moves into features/features.yml.
+schema: features/v1
+repo: bamr87/zer0-CMS
+features:
+  - id: ZER0-NEW
+    title: "Books: a serial fiction pilot in the library (The Cost Line)"
+    description: "An author opens The Cost Line, the pilot of the Business as Usual series, in the studio's Books area — manifest, chapter plan, timeline, character bible, style guide and act guides — and continues it chapter by chapter with the book assistant, every draft arriving as a suggestion they review."
+    implemented: true
+    surface: content
+    link: packages/books/library/cost-line/
+    docs: packages/books/library/cost-line/guides/ai-prompts.md
+    prd: [FR1]
+    tags: [ books, fiction, series, ai ]
+    date: 2026-11-01
+    tests:
+      - content/tests/books/test_files.py
+      - content/tests/books/test_library.py
+    evidence: []
