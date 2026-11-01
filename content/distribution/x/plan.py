@@ -126,7 +126,7 @@ CALLS = [
         "oauth2_revoke",
         "POST",
         "/2/oauth2/revoke",
-        "give back a token for an account the channel does not post as",
+        "give back a token for an account the channel does not post as, or the grant of a channel a person disconnected",
         "nothing but this app's own token, revoked",
     ),
     Call(

@@ -256,10 +256,37 @@ def rotate_credentials(**_signal) -> int:
 def disconnect(channel, user) -> Channel:
     if not manages_channels(user):
         raise Forbidden("disconnecting a channel needs the right to manage channels")
+    sealed = channel.credential_encrypted if channel.kind == Kind.X else ""
     channel.forget_credentials()
     channel.armed = False
     channel.save()
+    if sealed:
+        from .tasks import revoke_x_grant
+
+        # X keeps a grant until it is given back: the worker revokes it from the credential as it was sealed, so the
+        # token never crosses the queue in the clear.
+        transaction.on_commit(lambda: revoke_x_grant.delay(sealed))
     return channel
+
+
+def revoke_x(sealed: str) -> bool:
+    """Give back the X grant behind a credential as a channel sealed it (Disconnect): its refresh token, which ends
+    the grant and the access token with it, else the access token. Best effort — the channel has already forgotten
+    both, so a refusal or an X out of reach is logged, never raised."""
+    try:
+        values = json.loads(crypto.decrypt(sealed))
+    except (crypto.InvalidToken, ValueError):
+        return False
+    hint = "refresh_token" if values.get("refresh_token") else "access_token"
+    client_id, client_secret = x_app()
+    if not values.get(hint) or not (client_id and client_secret):
+        return False
+    try:
+        xoauth2.OAuth(client_id, client_secret).revoke(values[hint], hint=hint)
+    except XError as e:
+        log.warning("distribution: X did not take back a disconnected channel's grant: %s", e)
+        return False
+    return True
 
 
 def linkedin_app() -> tuple[str, str]:

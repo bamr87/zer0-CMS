@@ -1,6 +1,7 @@
 """Distribution's work on the worker, never inside a request: publishing a
 post (`services.deliver`: the gates again, the channel's transport, the
-ledger), exchanging an OAuth code, checking a channel's credential, and — on
+ledger), exchanging an OAuth code, checking a channel's credential, giving a
+disconnected X channel's grant back to X, and — on
 Celery beat — settling every attempt that is over without its worker saying so
 (each minute: a send whose worker died, a post no worker took, an email post
 whose newsletter issue the newsroom sent or failed) and the statistics of every
@@ -49,6 +50,13 @@ def check_channel(channel_id: int) -> None:
     from .services import check
 
     check(Channel.objects.get(pk=channel_id))
+
+
+@shared_task
+def revoke_x_grant(sealed: str) -> bool:
+    from .services import revoke_x
+
+    return revoke_x(sealed)
 
 
 @shared_task

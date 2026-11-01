@@ -1197,6 +1197,25 @@ def test_connecting_x_is_state_and_pkce_one_use_and_takes_the_account_its_owner_
 
 
 @override_settings(**X_APP)
+def test_disconnecting_x_gives_the_grant_back_and_an_x_out_of_reach_still_disconnects(
+    api, manager, x_channel, web, worker
+):
+    revoke = web.post(f"{X_API}/2/oauth2/revoke").respond(200, json={})
+    client = api(manager)
+    out = worker(client.post, f"{API}/channels/{x_channel.public_id}/disconnect/").json()
+    assert out["has_credential"] is False and out["armed"] is False
+    assert form_of(revoke) == {"token": "x-refresh-SECRET-123456", "token_type_hint": "refresh_token"}
+    assert revoke.calls.last.request.headers["authorization"].startswith("Basic "), "the app asks, as the app"
+    x_channel.set_credentials(X_TOKENS)
+    x_channel.armed = True
+    x_channel.save()
+    revoke.respond(503, json={"title": "Service Unavailable"})
+    out = worker(client.post, f"{API}/channels/{x_channel.public_id}/disconnect/").json()
+    assert revoke.call_count == 2, "asked once: a grant call is never repeated"
+    assert out["has_credential"] is False and out["armed"] is False, "an X that cannot take it back keeps nothing here"
+
+
+@override_settings(**X_APP)
 def test_x_keeps_no_token_for_another_account_and_says_when_its_code_died(api, manager, x_channel, web, worker):
     x_channel.forget_credentials()
     x_channel.save()
