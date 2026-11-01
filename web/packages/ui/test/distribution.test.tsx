@@ -197,6 +197,17 @@ describe('a post', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Record' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/record/'))?.body).toEqual({ urn: 'urn:li:share:42' }));
   });
+
+  it('deletes a draft and goes back to the queue — the platform’s empty 204 is the success, not an error', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post(),
+      [`DELETE ${API}/posts/p1/`]: () => new Reply(204, null),
+    });
+    const { go } = renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'distribution' }));
+    expect(screen.queryByText('No Content')).toBeNull();
+  });
 });
 
 describe('a rejected post', () => {
