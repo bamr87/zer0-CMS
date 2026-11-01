@@ -132,8 +132,10 @@ export function nth<T>(items: T[], at = 0): T {
   return item;
 }
 
-export function Providers({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+/** A query client as the tests use it: no retries. Hold one to refetch from a test. */
+export const testClient = () => new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+
+export function Providers({ children, client = testClient() }: { children: ReactNode; client?: QueryClient }) {
   return (
     <QueryClientProvider client={client}>
       <MantineProvider theme={theme} env="test">
@@ -143,11 +145,14 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 }
 
-export function renderUi(ui: ReactNode, host: { api: ApiClient; stream?: OpenStream; go?: (to: Destination) => void; auth?: AuthHost }) {
+export function renderUi(
+  ui: ReactNode,
+  host: { api: ApiClient; stream?: OpenStream; go?: (to: Destination) => void; auth?: AuthHost; setDirty?: (dirty: boolean) => void; client?: QueryClient },
+) {
   const go = host.go ?? vi.fn();
   const result = render(
-    <Providers>
-      <StudioProvider api={host.api} stream={host.stream ?? noStream} go={go} auth={host.auth}>
+    <Providers client={host.client}>
+      <StudioProvider api={host.api} stream={host.stream ?? noStream} go={go} auth={host.auth} setDirty={host.setDirty}>
         {ui}
       </StudioProvider>
     </Providers>,

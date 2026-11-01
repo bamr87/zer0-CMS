@@ -5,12 +5,13 @@
 // latest and revert as a new draft; the page list filters through the platform.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { QueryClient } from '@tanstack/react-query';
 import type { Block } from '@zer0/api';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { BodyEditor, PageEditor, PageList, RevisionHistory } from '../src';
-import { fakePlatform, pageDetail, renderUi, Reply } from '../../../test/harness';
+import { fakePlatform, pageDetail, renderUi, Reply, testClient, type Handler } from '../../../test/harness';
 
 describe('<PageEditor>', () => {
   it('saves only the changed fields, against the revision it loaded', async () => {
@@ -176,6 +177,124 @@ describe('<PageEditor>', () => {
     expect(within(screen.getByLabelText('Block 1: heading')).getByLabelText('text')).toBeDisabled();
     for (const name of ['Save draft', 'Publish', 'Schedule…']) expect(screen.getByRole('button', { name })).toBeDisabled();
     expect(platform.calls.every((c) => c.method === 'GET')).toBe(true);
+  });
+
+  describe('while someone else saves a newer revision (#64)', () => {
+    /** The platform's page, which a co-editor can move on to revision 42 mid-edit. */
+    function movingPage(extra: Record<string, Handler> = {}) {
+      const server = { revision: 41 };
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () =>
+          server.revision === 41
+            ? pageDetail()
+            : pageDetail({
+                title: 'Nightly backups (by Ada)',
+                fields: { ...pageDetail().fields, title: 'Nightly backups (by Ada)' },
+                status: 'changed',
+                latest_revision: { id: 42, created_at: '2026-10-21T10:00:00Z', user: 'ada' },
+              }),
+        ...extra,
+      });
+      return { platform, server };
+    }
+    /** Somebody else saves, and something (a rejected suggestion, here) refetches every query. */
+    async function coEditorSaves(server: { revision: number }, client: QueryClient) {
+      server.revision = 42;
+      await client.invalidateQueries();
+    }
+
+    it('keeps a dirty draft’s edits and says the page moved on', async () => {
+      const { platform, server } = movingPage();
+      const client = testClient();
+      renderUi(<PageEditor pageId={5} />, { api: platform.api, client });
+      const title = await screen.findByLabelText(/^Title/);
+      await userEvent.clear(title);
+      await userEvent.type(title, 'My edit');
+      await coEditorSaves(server, client);
+      expect(await screen.findByText(/someone saved a newer revision/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Title/)).toHaveValue('My edit');
+      expect(screen.getByText('unsaved')).toBeInTheDocument();
+    });
+
+    it('discards the edits and loads the latest on request', async () => {
+      const { platform, server } = movingPage();
+      const client = testClient();
+      renderUi(<PageEditor pageId={5} />, { api: platform.api, client });
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await coEditorSaves(server, client);
+      await userEvent.click(await screen.findByRole('button', { name: 'Discard and load latest' }));
+      expect(screen.getByLabelText(/^Title/)).toHaveValue('Nightly backups (by Ada)');
+      expect(screen.queryByText('unsaved')).toBeNull();
+      expect(screen.queryByText(/someone saved a newer revision/i)).toBeNull();
+    });
+
+    it('keeps the edits on request, and a save is then refused against the newer revision', async () => {
+      const { platform, server } = movingPage({
+        'PATCH /api/v2/content/pages/5/': () =>
+          new Reply(409, { error: { code: 'resource.conflict', message: 'page 5 has a newer revision', status: 409, details: [] } }),
+      });
+      const client = testClient();
+      renderUi(<PageEditor pageId={5} />, { api: platform.api, client });
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await coEditorSaves(server, client);
+      await userEvent.click(await screen.findByRole('button', { name: 'Keep my edits' }));
+      expect(screen.queryByRole('button', { name: 'Keep my edits' })).toBeNull();
+      expect(screen.getByLabelText(/^Title/)).toHaveValue('Nightly backups!');
+      await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+      expect(await screen.findByText('page 5 has a newer revision')).toBeInTheDocument();
+      expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ base_revision_id: 41, fields: { title: 'Nightly backups!' } });
+    });
+
+    it('takes the newer revision silently when there is nothing unsaved', async () => {
+      const { platform, server } = movingPage();
+      const client = testClient();
+      renderUi(<PageEditor pageId={5} />, { api: platform.api, client });
+      await screen.findByLabelText(/^Title/);
+      await coEditorSaves(server, client);
+      await waitFor(() => expect(screen.getByLabelText(/^Title/)).toHaveValue('Nightly backups (by Ada)'));
+      expect(screen.queryByText(/someone saved a newer revision/i)).toBeNull();
+      expect(screen.queryByText('unsaved')).toBeNull();
+    });
+
+    it('takes its own save as the new baseline, with no conflict', async () => {
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () => pageDetail(),
+        'PATCH /api/v2/content/pages/5/': () =>
+          pageDetail({
+            title: 'Mine',
+            fields: { ...pageDetail().fields, title: 'Mine' },
+            status: 'changed',
+            latest_revision: { id: 42, created_at: '2026-10-21T10:00:00Z', user: 'editor' },
+          }),
+      });
+      renderUi(<PageEditor pageId={5} />, { api: platform.api });
+      const title = await screen.findByLabelText(/^Title/);
+      await userEvent.clear(title);
+      await userEvent.type(title, 'Mine');
+      await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+      expect(await screen.findByText('Live + draft')).toBeInTheDocument();
+      expect(screen.queryByText('unsaved')).toBeNull();
+      expect(screen.queryByText(/someone saved a newer revision/i)).toBeNull();
+    });
+  });
+
+  it('asks before the browser leaves a dirty draft, and not a clean one', async () => {
+    const platform = fakePlatform({ 'GET /api/v2/content/pages/5/': () => pageDetail() });
+    const setDirty = vi.fn();
+    renderUi(<PageEditor pageId={5} />, { api: platform.api, setDirty });
+    const leave = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    const title = await screen.findByLabelText(/^Title/);
+    expect(leave()).toBe(false);
+    await userEvent.type(title, '!');
+    expect(leave()).toBe(true);
+    expect(setDirty).toHaveBeenLastCalledWith(true);
+    await userEvent.type(title, '{Backspace}');
+    expect(leave()).toBe(false);
+    expect(setDirty).toHaveBeenLastCalledWith(false);
   });
 
   it('shows the platform’s refusal of a stale save', async () => {

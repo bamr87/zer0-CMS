@@ -85,12 +85,18 @@ export interface Host {
    * it out, and the account workspace offers what the token can do.
    */
   auth?: AuthHost;
+  /**
+   * Told whether an editor holds unsaved edits (true) or no longer does
+   * (false, also when it closes). A host with in-app navigation asks before
+   * leaving while it is true (the studio); a host without one leaves it out.
+   */
+  setDirty?: (dirty: boolean) => void;
 }
 
 const HostContext = createContext<Host | null>(null);
 
-export function StudioProvider({ api, stream, go, auth, children }: Host & { children: ReactNode }) {
-  return <HostContext value={{ api, stream, go, auth }}>{children}</HostContext>;
+export function StudioProvider({ api, stream, go, auth, setDirty, children }: Host & { children: ReactNode }) {
+  return <HostContext value={{ api, stream, go, auth, setDirty }}>{children}</HostContext>;
 }
 
 function useHost(): Host {
@@ -104,3 +110,5 @@ export const useStream = () => useHost().stream;
 export const useGo = () => useHost().go;
 /** allauth's headless API from the host, or undefined where the host has no browser session. */
 export const useAuthHost = () => useHost().auth;
+/** Where an editor reports unsaved edits, or undefined where the host does not ask. */
+export const useSetDirty = () => useHost().setDirty;
