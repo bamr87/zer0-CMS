@@ -33,7 +33,8 @@ Every piece carries the tag `badwill-impairment`; posts on X and LinkedIn carry 
 
 | # | Date | Event | Journey post | X | LinkedIn | Cross-post |
 | --- | --- | --- | --- | --- | --- | --- |
-| 01 | 2026-11-01 | A fresh draft from The Impairment's premise, under the new title | Pull request | Drafted below | Drafted below | None: no business lesson yet |
+| 01 | 2026-11-01 | A fresh draft from The Impairment's premise, under the new title | bamr87.github.io#51, merged | Drafted below | Drafted below | None: no business lesson yet |
+| 02 | 2026-11-01 | Three years since the noise stopped: Amr's own post, and its long version | bamr87.github.io#52 | Drafted below | Drafted below | bash-365.com#63, the muses essay "Badwill impairment: three years of building without the meeting" |
 
 ### Beat 01 — drafts for approval
 
@@ -53,8 +54,18 @@ LinkedIn, Amr's profile, with the journey post's link:
 >
 > #BadwillImpairment #Writing #Finance
 
+### Beat 02 — three versions, one story
+
+Amr's post is the short version (bamr87.github.io#52). The long version is a bash-365.com muses essay (bash-365.com#63): the meeting, goodwill and badwill, and a ledger of six projects (fredgar-ai, law-ai, zer0-CMS, lifehacker.dev, CSV Grid Editor and the bamr87/bamr87 control plane), each with a screenshot and an auditor's note on what is still a plan. Both posts link to the essay. Facts were checked against each project on 2026-11-01; the unbuilt parts are named as plans in all three versions.
+
+X, as @bamr87, with the essay's link after it (274 of 280 characters):
+
+> Three years ago I wasn't invited to the cash flow imperative meeting. Since then: an SEC filings analyst, a lawyer that keeps prompts local, a CMS that never skips approval, a control plane over 44 repos. No stand-ups were harmed. #BadwillImpairment
+
+LinkedIn, Amr's profile, with the essay's link: the text is in bash-365.com#63's description, from "Three years ago, I missed a meeting about the cash flow imperative" to "#BadwillImpairment #GovernedAI #EnterpriseSoftware".
+
 ## Next
 
 - Connect: register bamr87.github.io in zer0-CMS, give it an X channel for @bamr87, and connect LinkedIn for Amr's profile. Each needs the account's owner to sign in once.
 - Beat 02: the first open questions answered, the company and the CFO named, written up from the author's own decisions.
-- First cross-post: an essay for bash-365.com on goodwill impairment and badwill for an owner who has bought a business, or may sell one.
+- First cross-post: beat 02's essay (bash-365.com#63); once it is live, share it on the BASH company page through bash-365's LinkedIn lane.
