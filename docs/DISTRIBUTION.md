@@ -64,7 +64,7 @@ A site opts in to the lane with a `distribution.linkedin` block in its `zer0.jso
 
 | Key | Default | Meaning |
 |---|---|---|
-| `author` | `_config.yml` `linkedin.org_urn` | Who posts: `urn:li:organization:{id}` for a page, `urn:li:person:{id}` for a member's own profile |
+| `author` | `_config.yml` `linkedin.org_urn` | Who posts: `urn:li:organization:{id}` for a page, `urn:li:person:{id}` for a member's own profile. A platform channel's author may start empty: **Connect with LinkedIn** then asks for the person scopes and fills in the member who connects, from `userinfo` — a member's id is not shown anywhere before |
 | `siteUrl` | `_config.yml` `url` + `baseurl` | The origin of the canonical URLs article shares link to and the ledger is keyed by |
 | `apiVersion` | `202608` | The `Linkedin-Version` header (YYYYMM). LinkedIn supports a version for twelve months; `status` warns two months before |
 | `queue` | `.zer0/drafts/linkedin` | The draft queue folder |
@@ -167,7 +167,7 @@ Each account is authorized by its owner through LinkedIn's three-legged OAuth: a
 | Author | Scopes |
 |---|---|
 | organization | `w_organization_social r_organization_social rw_organization_admin` |
-| person | `openid profile w_member_social r_member_postAnalytics` |
+| person, and a platform channel with no author yet | `openid profile w_member_social r_member_postAnalytics` |
 
 Both ways to connect send a fresh `state` and a PKCE challenge (S256). PKCE has never been tried against a live LinkedIn, which documents it for native apps only, on an endpoint of their own; on the web flow LinkedIn may well ignore it (a server ignores a parameter it does not know, RFC 6749 § 3.1), so `state` is the guard relied on. In the studio, a LinkedIn channel's **Connect with LinkedIn** is a POST, so no other site can start a connection; the person's session keeps the state and the verifier, the callback (`/api/v2/distribution/oauth/linkedin/`) is accepted only when its `state` matches one this session started less than ten minutes ago and is consumed on first use, and the worker exchanges the code with the verifier and stores the token encrypted on the channel. A channel's token is used for its site, and only its own: a channel nobody connected has none, so it is not checked, read for statistics or published to. In a terminal, `manage.py linkedin connect` prints the consent URL, waits for LinkedIn's redirect on `http://127.0.0.1:8765/callback` (add it to the app's authorized redirect URLs; `--redirect-uri` may name another loopback port, which is then the one it listens on), checks `state`, exchanges the code and — only with `--write-env FILE` for a file git ignores, or `--print-token` — stores or shows the token for a CI secret.
 

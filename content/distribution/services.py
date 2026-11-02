@@ -317,7 +317,9 @@ def start_connect(channel, user, redirect_uri: str) -> dict:
             redirect_uri=redirect_uri, state=state, code_challenge=oauth.challenge(verifier)
         )
         return {"url": url, "state": state, "verifier": verifier}
-    author_type = plan.author_type(channel.setting("author")) or "organization"
+    # A page's URN is known before connecting; a member's is not, so an empty author is the member who connects, and
+    # the exchange fills in their urn:li:person.
+    author_type = plan.author_type(channel.setting("author")) or "person"
     scopes = channel.setting("scopes") or oauth.scopes_for(author_type)
     url = oauth.OAuth(client_id, client_secret).authorize_url(
         redirect_uri=redirect_uri, state=state, scopes=list(scopes), code_challenge=oauth.challenge(verifier)
@@ -358,12 +360,20 @@ def exchange(channel) -> Channel:
         token = flow.exchange(
             code=pending["code"], redirect_uri=pending["redirect_uri"], code_verifier=pending["verifier"]
         )
-        account = ""
+        account, member = "", None
         if "openid" in token.scopes:
-            account = oauth.member(_client(channel, token.access_token))["name"]
+            member = oauth.member(_client(channel, token.access_token))
+            account = member["name"]
     except (LinkedInError, ValueError) as e:
         Channel.objects.filter(pk=channel.pk).update(pending_encrypted="", last_error=f"LinkedIn: {e}"[:1000])
         return channel
+    if member and not channel.setting("author"):
+        siblings = Channel.objects.filter(site_id=channel.site_id, kind=Kind.LINKEDIN).exclude(pk=channel.pk)
+        if twin := next((c for c in siblings if c.setting("author") == member["urn"]), None):
+            message = f"LinkedIn: {twin.name} already publishes this site as {account or member['urn']}: one channel per account"
+            Channel.objects.filter(pk=channel.pk).update(pending_encrypted="", last_error=message[:1000])
+            return channel
+        channel.settings = {**channel.settings, "author": member["urn"]}
     channel.set_pending(None)
     channel.set_credentials({"access_token": token.access_token, "refresh_token": token.refresh_token or ""})
     channel.expires_at, channel.refresh_expires_at = token.expires_at, token.refresh_expires_at

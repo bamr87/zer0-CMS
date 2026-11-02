@@ -308,6 +308,35 @@ def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged
     assert out["has_credential"] is False and out["armed"] is False
 
 
+@override_settings(**LINKEDIN_APP)
+def test_a_linkedin_channel_with_no_author_connects_the_member_and_takes_their_profile(
+    api, manager, article, web, worker
+):
+    from urllib.parse import parse_qsl, urlsplit
+
+    def connect(channel):
+        url = client.post(f"{API}/channels/{channel.public_id}/connect/").json()["url"]
+        query = dict(parse_qsl(urlsplit(url).query))
+        worker(client.get, f"{API}/oauth/linkedin/", {"state": query["state"], "code": "C"})
+        channel.refresh_from_db()
+        return query
+
+    client = api(manager)
+    web.post("https://www.linkedin.com/oauth/v2/accessToken").respond(
+        200, json={"access_token": "AT-member-secret", "expires_in": 5184000, "scope": "openid,profile,w_member_social"}
+    )
+    web.get("https://api.linkedin.com/v2/userinfo").respond(200, json={"sub": "m42", "name": "Amr"})
+    profile = Channel.objects.create(site=article.get_site(), kind="linkedin", name="My profile")
+    query = connect(profile)
+    assert query["scope"] == "openid profile w_member_social r_member_postAnalytics", "no author: the member's scopes"
+    assert profile.setting("author") == "urn:li:person:m42" and profile.account == "Amr"
+    assert profile.credentials()["access_token"] == "AT-member-secret" and not profile.last_error
+    twin = Channel.objects.create(site=article.get_site(), kind="linkedin", name="Twin")
+    connect(twin)
+    assert not twin.connected and not twin.setting("author")
+    assert "My profile already publishes this site as Amr: one channel per account" in twin.last_error
+
+
 # ── the canonical URL: the key every lane uses ──────────────────────────────
 
 

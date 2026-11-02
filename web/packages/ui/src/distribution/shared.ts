@@ -42,7 +42,7 @@ export const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString
 /** What each kind keeps in its settings, as the platform's channel takes them (distribution/models.py). */
 export const SETTINGS: Record<DistributionKind, { name: string; label: string; description?: string }[]> = {
   linkedin: [
-    { name: 'author', label: 'Author', description: 'urn:li:organization:… for a page, urn:li:person:… for a profile' },
+    { name: 'author', label: 'Author', description: 'urn:li:organization:… for a page; empty, Connect fills in the profile of whoever connects it (urn:li:person:…)' },
     { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own ledger (e.g. .github/linkedin-log.json), read before and written after a publish' },
   ],
   x: [
