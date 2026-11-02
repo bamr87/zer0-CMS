@@ -7,18 +7,18 @@ One story told across a book, two sites, X and LinkedIn, and the tools that publ
 | Strand | What it is | Truth rule |
 | --- | --- | --- |
 | The book | *Badwill Impairment: Corporate Cache Compromised*, a financial thriller | Fiction stays fiction: invented people and companies, never a real one. |
-| The journey | The true account of writing it, and of building the tools that write and publish it | Only what the record shows: commits, drafts, sessions, decisions the author made. Nothing about the author's life that he has not written himself. |
+| The journey | The true account of writing it, and of building the tools that write and publish it | Only what the record shows: commits, drafts, sessions, decisions the author made. Nothing about the author's life that the author has not written. |
 
 ## Where it lives
 
 | Place | Carries | How it gets there | Approval |
 | --- | --- | --- | --- |
 | zer0-CMS book library, `packages/books/library/badwill-impairment/` | The book: outline, notes, chapters | The studio's Books area. Every AI draft, continuation or revision arrives as a suggestion | The author accepts each suggestion |
-| bamr87.github.io, `pages/_posts/badwill-impairment/` | The journey's home: one post per beat | A pull request per post | Merging the pull request |
+| bamr87.github.io, `pages/_posts/badwill-impairment/` and `pages/_posts/quest-log/` | The journey's home: one post per beat, and one Quest Log article per repository | A pull request per post | Merging the pull request |
 | bash-365.com, `pages/_posts/muses/` | Only a piece that carries a finance-and-IT lesson a business owner can use | bash-365's content process and gates | Merging the pull request |
 | X, @bamr87 | A short post per journey post, linking to it | zer0-CMS, an X channel for bamr87.github.io | Approving it in the studio's queue |
-| LinkedIn, Amr's profile | The journey for a professional audience, linking to the post | zer0-CMS, a LinkedIn channel for bamr87.github.io | Approving it in the studio's queue |
-| LinkedIn, the BASH company page | The bash-365.com cross-posts only | bash-365's LinkedIn lane, `drafts/linkedin/` | Merging the draft |
+| LinkedIn, Amr's profile | The journey for a professional audience, linking to the post; each Quest Log article, pasted into LinkedIn's article editor by hand (LinkedIn has no API for articles) | zer0-CMS, a LinkedIn channel for bamr87.github.io | Approving it in the studio's queue |
+| LinkedIn, the BASH company page | The bash-365.com cross-posts, and one link card per Quest Log article | bash-365's LinkedIn lane, `drafts/linkedin/` | Merging the draft |
 
 Every piece carries the tag `badwill-impairment`; posts on X and LinkedIn carry #BadwillImpairment. Each channel's ledger keeps a page from going to it twice.
 
@@ -64,8 +64,23 @@ X, as @bamr87, with the essay's link after it (274 of 280 characters):
 
 LinkedIn, Amr's profile, with the essay's link: the text is in bash-365.com#63's description, from "Three years ago, I missed a meeting about the cash flow imperative" to "#BadwillImpairment #GovernedAI #EnterpriseSoftware".
 
+## The Quest Log series
+
+Beat 02's post ends on the Quest Log: eight levels and more than thirty side quests, one per repository. The series walks it one repository at a time, riding the hub's daily deep dive (bamr87/bamr87 `docs/DEEP-DIVE.md`; cycle 1 runs from 2026-10-30 to 2026-12-10). Every repository the deep dive reviews gets five pieces, each a pull request a person merges:
+
+| Piece | Where | How it reaches LinkedIn |
+| --- | --- | --- |
+| Article with screenshots | bamr87.github.io, `pages/_posts/quest-log/`, listed at `/quest-log/` | Pasted into LinkedIn's article editor on Amr's profile |
+| Personal post | bamr87.github.io, `.zer0/drafts/linkedin/` | Amr's profile, through the studio once LinkedIn is connected |
+| Company post | bash-365.com, `drafts/linkedin/`, carded with the article's own screenshot (`image:`) | Merging the draft, after the article is live and at most one company post a day |
+| Presentation | The repository itself: README first screen, link card, a proposal for its GitHub About box | Not a post |
+| Record | The hub ledger, `_data/deep-dive.yml` | Not a post |
+
+The procedure is the hub's `deep-dive-showcase` skill and `docs/SHOWCASE.md`. Days 1–3 (it-journey, bamr87, bamr87.github.io) were caught up on 2026-11-02: the series page bamr87.github.io#54; articles bamr87.github.io#55, #56 and #57; presentations it-journey#901 and bamr87#579; company posts bash-365.com#64, #65 and #66; the procedure bamr87#580. The truth rule holds here too: every figure is dated and sourced, built things are called built and plans are called plans, and a score appears only once the deep dive records one.
+
 ## Next
 
 - Connect: register bamr87.github.io in zer0-CMS, give it an X channel for @bamr87, and connect LinkedIn for Amr's profile. Each needs the account's owner to sign in once.
 - Beat 02: the first open questions answered, the company and the CFO named, written up from the author's own decisions.
 - First cross-post: beat 02's essay (bash-365.com#63); once it is live, share it on the BASH company page through bash-365's LinkedIn lane.
+- Quest Log: point the routine that runs the daily deep dive at the `deep-dive-showcase` skill, so days 4–42 ship their five pieces the day each repository is reviewed.
