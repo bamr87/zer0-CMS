@@ -118,7 +118,7 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 - **Backlog of record:** GitHub Issues (`.github/sdlc.yml`) with the fleet labels — take `agent:ready`, never touch `agent:hold` or `human-review` — and the order of work in `docs/plan/PLAN.md` § 3.
 - **One milestone at a time:** the first milestone in PLAN § 3's order that is not done and whose predecessors have landed — not the first unchecked box in the file. One commit series per milestone; unrelated fixes get their own commits. Tick its PLAN boxes and set the status (and proof) of every `capabilities.yml` row it moved, in the same commits, adding sub-tasks and deviations.
 - **Definition of Done:** the "done" commands, the milestone's PLAN test commands, `bin/zer0 check`, `python3 tools/check_absorption.py` and `bin/zer0 run test` per affected project, green before every push, with the commands and results in the commit message body (in the PR, under `.github/PULL_REQUEST_TEMPLATE.md`'s checklist, once pull requests return). Never tick a box over red or skipped tests.
-- **Decisions:** ADRs in `docs/adr/NNNN-slug.md`, indexed in `docs/adr/README.md`; the extension's D1–D17 and D-A–D-I are in `docs/ARCHITECTURE.md`. **Stop and ask** (tell the owner, box unchecked) on an open PLAN §7 decision, destructive data step or credential.
+- **Decisions:** ADRs in `docs/adr/NNNN-slug.md`, indexed in `docs/adr/README.md`; the extension's D1–D18 and D-A–D-I are in `docs/ARCHITECTURE.md`. **Stop and ask** (tell the owner, box unchecked) on an open PLAN §7 decision, destructive data step or credential.
 - **Commits:** Conventional Commits (`feat(content): …`), which release-please reads in manifest mode — no nested release-please config, no hand edits to `CHANGELOG.md` or a version.
 - **Never:** force-push, rewrite shared history, amend pushed commits, `--no-verify`, change repo settings, branch protection, secrets or workflow permissions, suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`), leave an empty exception handler, or hand-edit a generated or vendored file.
 - **README-First, README-Last:** read the nearest `README.md` first, update it (and any behaviour doc) in the same PR. Every source file opens with a short block comment saying what it is and why. Markdown is one paragraph per line.
@@ -141,7 +141,7 @@ Non-negotiable; ADRs 0001 and 0004 record where today's code still crosses it an
 
 ## Extension rules the build enforces
 
-Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–D17) and [`src/README.md`](src/README.md).
+Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–D18) and [`src/README.md`](src/README.md).
 
 - **`src/core/` and `src/mcp/` never import `vscode`** (eslint, and the MCP bundle marks nothing external — `Could not resolve "vscode"` from `npm run compile` *is* the gate). Take the editor as a parameter or an injected callback.
 - **`src/webview/` never imports `vscode`, `commands/` or `views/`** (it speaks `postMessage` only) and never uses `innerHTML` — `el()` and `textContent`.
@@ -167,9 +167,10 @@ Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–
 - **The platform is a profile:** nothing platform-specific outside `src/core/platform/profiles/`; `src/test/fixtures/golden/platform/` pins Jekyll's answers.
 - **`.cms/` absence is normal:** the page index supplies `health: -1`, `freshness: 'unknown'`; never invent a score.
 - **MCP registration is two-phase:** `provideMcpServerDefinitions` returns an empty `env`; `resolveMcpServerDefinition` reads the publish flag from the **settings** layer (disabled → `null`). `ZER0_CMS_MCP_ALLOW_EXEC` (trusted only) and `ZER0_CMS_MCP_ALLOW_SCAFFOLD` gate `zer0_contract` and `zer0_lane_scaffold`; otherwise the server only reads and drafts, and never opens a socket ([`docs/CONFIG.md`](docs/CONFIG.md) §6).
+- **The browser bridge opens a socket only on a person's act** (D18): `zer0Cms.browserBridge.start`, trusted workspaces only, 127.0.0.1 only, a token per start; it lists and calls the integrated browser's tools in `BROWSER_TOOLS` and nothing else, refuses any request with an `Origin`, and opens http or https pages only. Never start it from activation, never widen the allowlist to a non-browser tool, and never put its token in a setting or a log line.
 - **`src/core/harness/` is one vocabulary** for the editor agent and CI: `resolveHarnessProfile` alone decides roles, skills and model ([`src/core/harness/README.md`](src/core/harness/README.md)).
 - **Eleven context keys, each gating something:** grep `package.json` before adding one; a key is a rendering hint, so every spawn re-asks `workspaceTrusted()`.
-- **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `57` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
+- **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `59` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
 
 ## A site's files (`content/sites/`)
 

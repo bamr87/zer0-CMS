@@ -446,6 +446,16 @@
         "command": "zer0Cms.platform.clearToken",
         "title": "Clear platform token",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.browserBridge.start",
+        "title": "Start browser bridge (agents drive the integrated browser)",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.browserBridge.stop",
+        "title": "Stop browser bridge",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -513,6 +523,10 @@
         {
           "command": "zer0Cms.agent.stop",
           "when": "zer0Cms:agent:running"
+        },
+        {
+          "command": "zer0Cms.browserBridge.start",
+          "when": "zer0Cms:workspace:trusted"
         },
         {
           "command": "zer0Cms.fleet.open",

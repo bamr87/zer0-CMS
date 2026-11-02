@@ -51,6 +51,7 @@ Each directory keeps its own guide; this index is generated from their summary l
 | `uiState.ts` | The eleven context keys, the status bar item, the notification helpers. |
 | `diagnostics.ts` | Required-field diagnostics, drawn inside the front-matter block. |
 | `mcpRegistration.ts` | The two-phase MCP server definition provider, plus the `.vscode/mcp.json` fallback. |
+| `browserBridge.ts` | The browser bridge (D18): on `zer0Cms.browserBridge.start`, in a trusted workspace, a loopback MCP endpoint (`http://127.0.0.1:<port>/mcp`) that hands an agent outside the editor the integrated browser's tools through `vscode.lm.invokeTool` — the rules are `core/browser/bridge.ts`; a token per start, written with the URL to `browser-bridge.json` (mode 0600) in the extension's global storage; a status bar item while it runs. |
 | `studio/studio.ts` | Platform mode (PLAN G10): the studio's workspaces in the dashboard panel, the Metadata view and the AI panel — the page each loads (`core/studio/page.ts`), one `StudioBridge` per webview (`core/studio/bridge.ts`), the open file's path for the page view, the person's token in SecretStorage per platform origin, event streams with the token as a header. Nothing per workspace: `@zer0/ui`'s `WORKSPACES` decides what the dashboard shows. |
 
 Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and `agent/`. Nothing above imports them, except `extension.ts`, which imports everything and is imported by nothing.
@@ -115,7 +116,7 @@ With `zer0Cms.platform.url` set (settings layer only, trusted workspaces only; h
 1. Declare it in `package.json` under `contributes.commands`, with any `when`
    clause it needs in `contributes.menus`.
 2. Implement it in the matching `commands/*.ts`, taking the `Zer0Shell`.
-3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `57` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
+3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `59` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
 
 The only three commands `extension.ts` registers itself are `zer0Cms.dashboard`, `zer0Cms.dashboard.close` and `zer0Cms.dashboard.files`, because the dashboard panel is a singleton the shell owns and no command module does.
 

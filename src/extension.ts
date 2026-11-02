@@ -79,6 +79,7 @@ import { UiState } from './uiState';
 
 import { registerAgentCommands } from './commands/agent';
 import { registerAuditCommands, type AuditActions } from './commands/audit';
+import { registerBrowserCommands } from './commands/browser';
 import { registerHarnessCommands, type HarnessActions } from './commands/harness';
 import { registerContentCommands } from './commands/content';
 import { registerContentTypeCommands } from './commands/contentType';
@@ -232,6 +233,9 @@ export function activate(context: vscode.ExtensionContext): void {
   const harness: HarnessActions = registerHarnessCommands(shell);
   // Setting and clearing the platform token — nothing else, and no socket.
   registerPlatformCommands(shell);
+  // Starting and stopping the browser bridge (D18). Registration only: its
+  // socket opens when a person runs the start command, never here (D11).
+  registerBrowserCommands(shell);
 
   // --- 7. The metadata panel ----------------------------------------------
   context.subscriptions.push(

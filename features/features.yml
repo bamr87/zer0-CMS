@@ -375,3 +375,17 @@ features:
       - src/test/mcp.test.ts
     scenarios: []
     evidence: []
+  - id: ZER0-047
+    title: "Browser bridge: an agent drives the editor's integrated browser"
+    description: "A person starts the bridge from the command palette and an agent outside the editor (Claude Code, any MCP client) gets VS Code's integrated-browser tools — open, read, click, type, screenshot — over MCP on this machine, to test the studio or a site where the person watches; web pages only, a token per start, stopped from the status bar."
+    implemented: true
+    surface: api
+    link: src/browserBridge.ts
+    docs: src/README.md
+    tags: [ extension, mcp, browser, verify ]
+    date: 2026-11-02
+    tests:
+      - src/test/core.test.ts
+      - src/test/extension.test.ts
+    scenarios: []
+    evidence: []

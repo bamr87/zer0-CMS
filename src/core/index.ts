@@ -109,6 +109,11 @@ export * from './fleet/client';
 export * from './studio/bridge';
 export * from './studio/page';
 
+// --- the browser bridge (D18) ------------------------------------------------
+// The rules an agent's request to the integrated browser is held to; the
+// socket and the editor call are the shell's (`src/browserBridge.ts`).
+export * from './browser/bridge';
+
 // --- the module that is deliberately NOT here -------------------------------
 //
 // `./fleet/engines` is NEVER exported from this file, and that is a rule rather

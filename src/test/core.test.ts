@@ -1,6 +1,7 @@
 /**
  * Unit tests for the pure-Node core: configuration, the front-matter engine,
- * line surgery, the shared primitives, the page index and the SEO metrics.
+ * line surgery, the shared primitives, the page index, the SEO metrics and the
+ * browser bridge's protocol.
  *
  * No `vscode`, no network, and no writes anywhere — every assertion here reads
  * the checked-in fixture workspace or builds its input in memory. The tests
@@ -48,6 +49,16 @@ import {
   stitch,
   updateFrontMatterKeys,
 } from '../core/content/serialize';
+import {
+  BRIDGE_PATH,
+  BROWSER_TOOLS,
+  bridgeMcpConfig,
+  handleBridgeRequest,
+  isWebUrl,
+  type BridgeRequest,
+  type BrowserHost,
+  type BrowserPart,
+} from '../core/browser/bridge';
 import { roundHalfEven } from '../core/catering/catering';
 import { formatPercent, formatThousands } from '../core/catering/worklist';
 import { resolveConfig } from '../core/shared/config';
@@ -1544,5 +1555,175 @@ suite('sites: the active-site rule', () => {
       'the closed pick must not win, and must not blank the console either',
     );
     assert.equal(resolveActiveSite(folders, 'file:///closed', undefined), 'file:///a');
+  });
+});
+
+/**
+ * The browser bridge's rules (D18), held without an editor: a fake host stands
+ * in for `vscode.lm`, and every request is built in memory.
+ */
+suite('core: the browser bridge — MCP over loopback HTTP (D18)', () => {
+  const TOKEN = 'a'.repeat(64);
+
+  function fakeHost(parts: readonly BrowserPart[] = [{ type: 'text', text: 'ok' }]): BrowserHost & { calls: Array<[string, Record<string, unknown>]> } {
+    const calls: Array<[string, Record<string, unknown>]> = [];
+    return {
+      calls,
+      tools: () => [
+        { name: 'read_page', description: 'Read a page', inputSchema: { type: 'object' } },
+        { name: 'open_browser_page', description: 'Open a page', inputSchema: { type: 'object' } },
+        { name: 'run_in_terminal', description: 'Not a browser tool', inputSchema: { type: 'object' } },
+      ],
+      invoke: (name, input) => {
+        calls.push([name, input]);
+        return Promise.resolve(parts);
+      },
+    };
+  }
+
+  function rpc(message: unknown, overrides: Partial<BridgeRequest> = {}): BridgeRequest {
+    return {
+      method: 'POST',
+      path: BRIDGE_PATH,
+      headers: { host: '127.0.0.1:51234', authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+      body: JSON.stringify(message),
+      ...overrides,
+    };
+  }
+
+  async function result(request: BridgeRequest, host: BrowserHost = fakeHost()): Promise<Record<string, unknown>> {
+    const reply = await handleBridgeRequest(request, TOKEN, host, '9.9.9');
+    assert.equal(reply.status, 200, reply.body);
+    return JSON.parse(reply.body) as Record<string, unknown>;
+  }
+
+  test('a missing or wrong token is 401, and the right one is compared whole', async () => {
+    const headers = { host: '127.0.0.1:1', 'content-type': 'application/json' };
+    for (const authorization of [undefined, 'Bearer nope', `Bearer ${TOKEN}x`, TOKEN]) {
+      const reply = await handleBridgeRequest(rpc({ id: 1, method: 'ping' }, { headers: { ...headers, authorization } }), TOKEN, fakeHost(), '0');
+      assert.equal(reply.status, 401, String(authorization));
+    }
+    const empty = await handleBridgeRequest(rpc({ id: 1, method: 'ping' }), '', fakeHost(), '0');
+    assert.equal(empty.status, 401, 'a bridge with no token answers nobody');
+  });
+
+  test('a web page cannot reach it: any Origin is 403, and so is a host that is not this machine', async () => {
+    const withOrigin = rpc({ id: 1, method: 'ping' });
+    const fromPage = await handleBridgeRequest(
+      { ...withOrigin, headers: { ...withOrigin.headers, origin: 'http://127.0.0.1:4042' } },
+      TOKEN,
+      fakeHost(),
+      '0',
+    );
+    assert.equal(fromPage.status, 403);
+    const rebound = await handleBridgeRequest(
+      { ...withOrigin, headers: { ...withOrigin.headers, host: 'evil.example:51234' } },
+      TOKEN,
+      fakeHost(),
+      '0',
+    );
+    assert.equal(rebound.status, 403);
+    for (const host of ['localhost:9', '[::1]:9', '127.0.0.1']) {
+      const reply = await handleBridgeRequest({ ...withOrigin, headers: { ...withOrigin.headers, host } }, TOKEN, fakeHost(), '0');
+      assert.equal(reply.status, 200, host);
+    }
+  });
+
+  test('one path, POST only, JSON only, and a size limit', async () => {
+    assert.equal((await handleBridgeRequest(rpc({}, { path: '/other' }), TOKEN, fakeHost(), '0')).status, 404);
+    const get = await handleBridgeRequest(rpc({}, { method: 'GET', body: '' }), TOKEN, fakeHost(), '0');
+    assert.equal(get.status, 405);
+    assert.equal(get.headers.Allow, 'POST');
+    const text = rpc({ id: 1, method: 'ping' });
+    assert.equal(
+      (await handleBridgeRequest({ ...text, headers: { ...text.headers, 'content-type': 'text/plain' } }, TOKEN, fakeHost(), '0')).status,
+      415,
+    );
+    assert.equal((await handleBridgeRequest(rpc({}, { body: 'x'.repeat(1_000_001) }), TOKEN, fakeHost(), '0')).status, 413);
+    assert.equal((await handleBridgeRequest(rpc({}, { body: '{not json' }), TOKEN, fakeHost(), '0')).status, 400);
+    assert.equal((await handleBridgeRequest(rpc([{ id: 1, method: 'ping' }]), TOKEN, fakeHost(), '0')).status, 400, 'no batches');
+  });
+
+  test('initialize names the server and echoes a protocol it supports', async () => {
+    const reply = await result(rpc({ jsonrpc: '2.0', id: 7, method: 'initialize', params: { protocolVersion: '2025-03-26' } }));
+    const init = reply.result as { protocolVersion: string; serverInfo: { name: string; version: string } };
+    assert.equal(reply.id, 7);
+    assert.equal(init.protocolVersion, '2025-03-26');
+    assert.deepEqual(init.serverInfo, { name: 'zer0-cms-browser', version: '9.9.9' });
+    const unknown = await result(rpc({ id: 8, method: 'initialize', params: { protocolVersion: '1999-01-01' } }));
+    assert.equal((unknown.result as { protocolVersion: string }).protocolVersion, '2025-06-18');
+  });
+
+  test('a notification, or a reply from the client, is 202 with no body', async () => {
+    for (const message of [{ jsonrpc: '2.0', method: 'notifications/initialized' }, { jsonrpc: '2.0', id: 3, result: {} }]) {
+      const reply = await handleBridgeRequest(rpc(message), TOKEN, fakeHost(), '0');
+      assert.equal(reply.status, 202);
+      assert.equal(reply.body, '');
+    }
+  });
+
+  test('tools/list offers the browser tools the editor has, in BROWSER_TOOLS order, and nothing else', async () => {
+    const reply = await result(rpc({ id: 1, method: 'tools/list' }));
+    const names = (reply.result as { tools: Array<{ name: string }> }).tools.map((tool) => tool.name);
+    assert.deepEqual(names, ['open_browser_page', 'read_page']);
+    assert.ok(!names.includes('run_in_terminal'));
+    assert.equal(BROWSER_TOOLS.length, 11);
+  });
+
+  test('tools/call reaches only a listed browser tool the editor has', async () => {
+    const host = fakeHost();
+    for (const name of ['run_in_terminal', 'screenshot_page', '']) {
+      const reply = await result(rpc({ id: 1, method: 'tools/call', params: { name, arguments: {} } }), host);
+      assert.equal((reply.error as { code: number }).code, -32602, name);
+    }
+    assert.deepEqual(host.calls, [], 'nothing was invoked');
+  });
+
+  test('a page opens at http or https only — file: and the rest are refused before the editor is asked', async () => {
+    const host = fakeHost();
+    for (const url of ['file:///etc/passwd', 'javascript:alert(1)', 'not a url']) {
+      const reply = await result(rpc({ id: 1, method: 'tools/call', params: { name: 'open_browser_page', arguments: { url } } }), host);
+      assert.equal((reply.result as { isError: boolean }).isError, true, url);
+    }
+    assert.deepEqual(host.calls, []);
+    assert.ok(isWebUrl('http://127.0.0.1:8000/studio/') && isWebUrl('https://example.com'));
+  });
+
+  test('a call passes its arguments through and carries text and images back', async () => {
+    const host = fakeHost([
+      { type: 'text', text: 'Page abc opened' },
+      { type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' },
+    ]);
+    const args = { url: 'http://127.0.0.1:8000/studio/', forceNew: true };
+    const reply = await result(rpc({ id: 2, method: 'tools/call', params: { name: 'open_browser_page', arguments: args } }), host);
+    assert.deepEqual(host.calls, [['open_browser_page', args]]);
+    assert.deepEqual(reply.result, {
+      content: [
+        { type: 'text', text: 'Page abc opened' },
+        { type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' },
+      ],
+      isError: false,
+    });
+  });
+
+  test('a tool that throws is a flagged result, not a dead bridge', async () => {
+    const host: BrowserHost = { ...fakeHost(), invoke: () => Promise.reject(new Error('page closed')) };
+    const reply = await result(rpc({ id: 4, method: 'tools/call', params: { name: 'read_page', arguments: {} } }), host);
+    assert.deepEqual(reply.result, { content: [{ type: 'text', text: 'tool error: page closed' }], isError: true });
+    const after = await result(rpc({ id: 5, method: 'ping' }), host);
+    assert.deepEqual(after.result, {});
+  });
+
+  test('an unknown method is -32601', async () => {
+    const reply = await result(rpc({ id: 9, method: 'resources/list' }));
+    assert.equal((reply.error as { code: number }).code, -32601);
+  });
+
+  test('the MCP config an agent is given is the http transport with the bearer header', () => {
+    assert.deepEqual(JSON.parse(bridgeMcpConfig('http://127.0.0.1:1/mcp', TOKEN)), {
+      type: 'http',
+      url: 'http://127.0.0.1:1/mcp',
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    });
   });
 });

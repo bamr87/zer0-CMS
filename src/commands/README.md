@@ -2,7 +2,7 @@
 
 > The command layer: every command by file, the gates only `governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold, the Workspace Trust re-checks, and how to add a command.
 
-Fifty-seven commands, eleven files, and one rule that matters more than the other fifty-six: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
+Fifty-nine commands, thirteen files, and one rule that matters more than the other fifty-eight: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -22,7 +22,9 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 916 |
 | `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 237 |
 | `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1255 |
-| `index.ts` | barrel + `ALL_COMMAND_IDS` | 164 |
+| `platform.ts` | `platform.setToken`, `platform.clearToken` | 16 |
+| `browser.ts` | `browserBridge.start`, `browserBridge.stop` — the socket opens on the person's start, in a trusted workspace (D18) | 17 |
+| `index.ts` | barrel + `ALL_COMMAND_IDS` | 168 |
 
 `dashboard`, `dashboard.close` and `dashboard.files` are registered by `extension.ts`, beside the panel object they operate on. With a platform configured `dashboard` opens the studio (PLAN G10), so every command here that means the file-mode dashboard — `fleet.open`, `monitor.open`, the audit, the harness routes, a draft's review — executes `dashboard.files`. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 

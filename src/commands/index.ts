@@ -93,7 +93,7 @@ export {
 
 /**
  * Every id `package.json` contributes, without the `zer0Cms.` prefix, grouped
- * the way the manifest groups them. Fifty-seven — and the number is asserted
+ * the way the manifest groups them. Fifty-nine — and the number is asserted
  * against the manifest rather than trusted, in `src/test/extension.test.ts`.
  */
 export const ALL_COMMAND_IDS: readonly string[] = [
@@ -162,6 +162,9 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   // platform — src/commands/platform.ts (PLAN G10)
   'platform.setToken',
   'platform.clearToken',
+  // browser bridge — src/commands/browser.ts (D18)
+  'browserBridge.start',
+  'browserBridge.stop',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */
