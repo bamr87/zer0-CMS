@@ -26,6 +26,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
 | [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | The standards of behaviour for everyone taking part. |
+| [`PRD.md`](../PRD.md) | What the product must do, with stable requirement ids (`FRn`, `NFRn`) that features in [`features/features.yml`](../features/features.yml) name under `prd:`. The constitution (§ 3) ranks this document under AGENTS.md and above the feature… |
 | [`ATTRIBUTION.md`](../ATTRIBUTION.md) | Where zer0-CMS came from — a fork of Front Matter CMS, since rewritten from scratch — what of its design remains, and the MIT notice that covers it. |
 | [`content/`](../content/README.md) | The Django 5.2 + Wagtail 7.4 platform — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, the operational baseline, and its GraphQL, REST and MCP surfaces — and how to run it. |
 | [`media/`](../media/README.md) | The extension's design system: four stylesheets, the `--z-*` token layer, themes, metrics and icons, and the rules for adding a style. |
