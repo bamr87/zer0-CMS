@@ -22,6 +22,7 @@ going live                   the page
 | `linkedin/` | The LinkedIn client: every call declared as data, OAuth with state and PKCE, posts and card images, page roles, aggregate statistics (`linkedin/__init__.py`) |
 | `transports.py` | WordPress (REST over https, through the research library's fetcher, `research.fetch.send`: its SSRF guard, one deadline and size cap), GitHub pull requests (PyGithub; the page's file as a write-back writes it, `exporters.jekyll.file_of`), email (the newsroom's newsletters) |
 | `lane/` | The LinkedIn lane over a site's own files, for its CI and a terminal: `manage.py linkedin …` (`lane/__init__.py`) |
+| `substack/` | A book's chapters to Substack: the importer's RSS feed, a copy package, and an unofficial adapter that is off by default ([`docs/SUBSTACK.md`](../../docs/SUBSTACK.md)) |
 | `tasks.py` | Publishing, exchanging an OAuth code, checking a channel; on beat, settling attempts that are over without their worker saying so (`distribution-settle`, each minute) and statistics (`distribution-statistics`, daily) |
 | `tools.py` | `distribution.compose` (`propose`) and `distribution.publish` (`publish`) in the registry |
 | `consumers.py`, `agent.py` | `content.page.published` → a run of the GitOps `distribution` agent (`agents/definitions/distribution.yaml`), which drafts a post for every channel of the page's site that drafts automatically |
@@ -89,3 +90,7 @@ Once a day (`distribution-statistics` on beat) — or when a person asks — the
 ## Tests
 
 `tests/distribution/`: `test_linkedin.py` (the client; the Ruby lane's tests), `test_lane.py` (the lane end to end and its command line; the Ruby lane's tests and its recording), `test_platform.py` (channels, OAuth, the queue and its gates, the ledger file, the site ledger, statistics, the tools, MCP and the consumer), `test_transports.py` (WordPress, GitHub pull requests, email). LinkedIn and WordPress are recorded with respx (WordPress at the address the SSRF guard pins), GitHub with `responses` (PyGithub speaks `requests`), email with Django's locmem backend.
+
+## Substack
+
+`substack/` carries a book's chapters to a Substack publication through one adapter interface: the sanctioned RSS feed for Substack's post importer and a paste-ready copy package, and an unofficial adapter over Substack's undocumented endpoints that is off unless `ZER0_SUBSTACK_UNOFFICIAL` is on (`manage.py substack feed|copy|sync`). It is not a channel kind yet — no rows, no queue — and keeps its ledger in this app's file format. [`docs/SUBSTACK.md`](../../docs/SUBSTACK.md) is the design, including what Substack allows; `tests/distribution/test_substack.py` pins it.

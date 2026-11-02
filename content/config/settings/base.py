@@ -527,6 +527,15 @@ DISTRIBUTION_ARMED = {
     )
     if env.bool(variable, default=False)
 }
+# Substack (distribution/substack/, docs/SUBSTACK.md). Substack has no public write API: the sanctioned routes
+# (`manage.py substack feed|copy`) need only the publication's address and the base of chapters' canonical URLs. The
+# unofficial adapter (`substack sync`) is off unless ZER0_SUBSTACK_UNOFFICIAL is on, authenticates with a session
+# cookie from the environment only (never a file or a row), and publishes only when ZER0_SUBSTACK_PUBLISH is on too.
+SUBSTACK_PUBLICATION_URL = env("SUBSTACK_PUBLICATION_URL", default="")
+SUBSTACK_CANONICAL_BASE = env("SUBSTACK_CANONICAL_BASE", default="")
+SUBSTACK_SESSION_COOKIE = env("SUBSTACK_SESSION_COOKIE", default="")
+ZER0_SUBSTACK_UNOFFICIAL = env.bool("ZER0_SUBSTACK_UNOFFICIAL", default=False)
+ZER0_SUBSTACK_PUBLISH = env.bool("ZER0_SUBSTACK_PUBLISH", default=False)
 # The platform's LinkedIn app (connecting an account, refreshing and introspecting its token), and the address
 # LinkedIn returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/linkedin/.
 LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
