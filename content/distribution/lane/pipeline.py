@@ -295,7 +295,7 @@ class Pipeline:
                 commentary = default_commentary(entry, config.hashtag_limit)
                 notes.append("the draft has no body; the page's default commentary will publish")
             if not draft.no_thumbnail:
-                thumbnail = self._thumbnail(entry, notes)
+                thumbnail = self._thumbnail(entry, notes, "" if entry else draft.text("image"))
             key = url
             if author_ok and url and title.strip():
                 try:
@@ -641,9 +641,9 @@ class Pipeline:
                 out["probe"] = "failed"
                 out["problems"].append(str(e))
 
-    def _thumbnail(self, entry, notes) -> Path | None:
+    def _thumbnail(self, entry, notes, image="") -> Path | None:
         root = self.config.root
-        value = entry.preview.strip() if entry else ""
+        value = entry.preview.strip() if entry else image
         if value and "://" not in value:
             relative = value.lstrip("/")
             source = self.catalog.source

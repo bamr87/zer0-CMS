@@ -103,6 +103,7 @@ The lane's queue is markdown files at the top level of the queue folder; `exampl
 | `status` | `pending` (default), `approved`, `published` | Where it is in the lifecycle |
 | `source` | a repository path, or `section/YYYY-MM-DD-slug` | The page an article shares |
 | `title`, `description`, `link` | text | An article's own card, for a link that is not a page of this site; ignored when `source` names a page |
+| `image` | a repository path | That card's image, in place of `fallbackImage`; ignored when `source` names a page, whose preview wins |
 | `no_thumbnail` | `true` | Post the card without an image |
 | `linkedin_urn` | set on publish | The post it became |
 

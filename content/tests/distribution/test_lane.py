@@ -359,6 +359,23 @@ def test_approval_is_pending_only_and_the_guard_can_refuse_it(checkout):
     assert pipe.draft(bad.id).status == "pending"
 
 
+def test_a_link_draft_names_its_own_card_image_inside_the_checkout(checkout):
+    config = Config(checkout, env={})
+    card = {"link": "https://elsewhere.test/a/", "title": "Elsewhere", "description": "A page that lives elsewhere."}
+    image = "assets/images/previews/mcp-for-the-back-office.png"
+    (checkout.parent / "outside.png").write_bytes((checkout / image).read_bytes())
+
+    def thumbnail(slug, **meta):
+        draft = drafts.create(config, type="article", slug=slug, body="A real thing.", meta={**card, **meta})
+        return pipeline(checkout).preview(draft).thumbnail
+
+    assert thumbnail("named", image=image) == checkout / image
+    assert thumbnail("rooted", image=f"/{image}") == checkout / image
+    assert thumbnail("escaped", image="../outside.png") is None
+    assert thumbnail("bare") is None
+    assert thumbnail("refused", image=image, no_thumbnail="true") is None
+
+
 def test_a_rehearsal_and_an_unarmed_live_run_send_nothing(checkout, web):
     draft = approved_draft(pipeline(checkout))
     before = tree(checkout)

@@ -8,6 +8,7 @@ and the Ruby lane share, so a queue written by any of them reads the same:
     status: pending | approved | published   (default pending)
     source: the page an article shares (a path, or `section/YYYY-MM-DD-slug`)
     title / description / link: an article's own card, for a link that is not a page here
+    image: that card's image, a path inside this checkout
     no_thumbnail: true to post without a card image
 
 The body is the text that publishes. Top-level `*.md` files only, so an
