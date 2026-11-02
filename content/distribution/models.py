@@ -2,7 +2,7 @@
 
 | Model | What it is |
 |---|---|
-| `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters — one channel of a site per target (`target_of`), so one ledger holds what went there. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
+| `Channel` | where a site's content goes: a LinkedIn page or profile, an X account, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters — one channel of a site per target (`target_of`), so one ledger holds what went there. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
 | `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person (`approved_digest`: the exact text they approved — a text changed since needs approving again) → published or failed, with a readable error; an email post follows its newsletter `issue` until the newsroom has sent it |
 | `LedgerEntry` | what a channel has published, keyed by canonical URL (or `draft:<post>` for a text update) — the platform's half of the ledger file every lane writes (`ledger.py`); an attempt the target did not confirm is an entry with no URN |
 | `Statistic` | a published post's aggregate counts on a day, read through its entry |
@@ -30,6 +30,7 @@ USER = settings.AUTH_USER_MODEL
 
 class Kind(models.TextChoices):
     LINKEDIN = "linkedin", "LinkedIn"
+    X = "x", "X"
     WORDPRESS = "wordpress", "WordPress"
     GITHUB_PR = "github_pr", "GitHub pull request"
     EMAIL = "email", "Email newsletter"
@@ -41,22 +42,32 @@ LEDGER_STATES = [("published", "Published"), ("unconfirmed", "Unconfirmed")]
 # What each kind keeps in `settings` (never a secret) and in its encrypted credential.
 SETTINGS = {
     Kind.LINKEDIN: ("author", "api_version", "scopes", "ledger_file"),
+    Kind.X: ("account", "ledger_file"),
     Kind.WORDPRESS: ("url", "username", "status"),
     Kind.GITHUB_PR: ("repo", "branch", "directory"),
     Kind.EMAIL: (),
 }
 SECRETS = {
     Kind.LINKEDIN: ("access_token", "refresh_token"),
+    # The account's OAuth 2.0 pair, from Connect with X through the platform's X app (X_CLIENT_ID, X_CLIENT_SECRET):
+    # the access token lasts two hours and each renewal spends the refresh token (distribution/x/session.py).
+    Kind.X: ("access_token", "refresh_token"),
     Kind.WORDPRESS: ("application_password",),
     Kind.GITHUB_PR: ("token",),
     Kind.EMAIL: (),
 }
 # A change to one of these points the channel somewhere else, so its credential is forgotten.
-IDENTITY = {Kind.LINKEDIN: ("author",), Kind.WORDPRESS: ("url", "username"), Kind.GITHUB_PR: ("repo",), Kind.EMAIL: ()}
+IDENTITY = {
+    Kind.LINKEDIN: ("author",),
+    Kind.X: ("account",),
+    Kind.WORDPRESS: ("url", "username"),
+    Kind.GITHUB_PR: ("repo",),
+    Kind.EMAIL: (),
+}
 
 
 def target_of(channel) -> str:
-    """Where a channel publishes, as one string: the LinkedIn author, the WordPress site's address, the repository
+    """Where a channel publishes, as one string: the LinkedIn author, the X handle, the WordPress site's address, the repository
     and the folder in it, the newsletter. Each channel keeps its own ledger, so two channels of a site with one target
     would post a page there twice (`services.save_channel` refuses the second); empty while the channel does not say."""
     if channel.kind == Kind.EMAIL:
@@ -67,6 +78,8 @@ def target_of(channel) -> str:
     if channel.kind == Kind.GITHUB_PR:
         repo = str(channel.setting("repo")).lower()
         return f"{repo}/{str(channel.setting('directory')).strip('/')}".rstrip("/") if repo else ""
+    if channel.kind == Kind.X:
+        return str(channel.setting("account")).lstrip("@").lower()
     return str(channel.setting("author"))
 
 

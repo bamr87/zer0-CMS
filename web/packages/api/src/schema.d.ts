@@ -1756,7 +1756,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start connecting a LinkedIn account: the consent URL for its owner (state + PKCE) */
+        /** Start connecting a LinkedIn or X account: the consent URL for its owner (state + PKCE) */
         post: operations["distribution_channels_connect_create"];
         delete?: never;
         options?: never;
@@ -1842,6 +1842,23 @@ export interface paths {
         };
         /** Where LinkedIn returns the account's owner; the code is exchanged on the worker */
         get: operations["distribution_oauth_linkedin_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/oauth/x/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where X returns the account's owner; the code is exchanged on the worker within X's thirty seconds */
+        get: operations["distribution_oauth_x_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5588,7 +5605,7 @@ export interface components {
             readonly newsletter_name: string;
             readonly has_credential: boolean;
             readonly secret_fields: string[];
-            /** @description LinkedIn came back; the worker is exchanging the code. */
+            /** @description LinkedIn or X came back; the worker is exchanging the code. */
             readonly connecting: boolean;
             /** @description Who it publishes as, as the target reports it. */
             readonly account: string;
@@ -5627,7 +5644,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -5668,12 +5685,13 @@ export interface components {
         DistributionGuardLevelEnum: "error" | "warning" | "info";
         /**
          * @description * `linkedin` - LinkedIn
+         *     * `x` - X
          *     * `wordpress` - WordPress
          *     * `github_pr` - GitHub pull request
          *     * `email` - Email newsletter
          * @enum {string}
          */
-        DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
+        DistributionKindEnum: "linkedin" | "x" | "wordpress" | "github_pr" | "email";
         DistributionLedgerEntry: {
             /** Format: uuid */
             readonly id: string;
@@ -7603,7 +7621,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -17389,11 +17407,12 @@ export interface operations {
             query?: {
                 /**
                  * @description * `linkedin` - LinkedIn
+                 *     * `x` - X
                  *     * `wordpress` - WordPress
                  *     * `github_pr` - GitHub pull request
                  *     * `email` - Email newsletter
                  */
-                kind?: "email" | "github_pr" | "linkedin" | "wordpress";
+                kind?: "email" | "github_pr" | "linkedin" | "wordpress" | "x";
                 /** @description A page number within the paginated result set. */
                 page?: number;
                 /** @description Number of results to return per page. */
@@ -18122,6 +18141,88 @@ export interface operations {
         };
     };
     distribution_oauth_linkedin_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_oauth_x_retrieve: {
         parameters: {
             query?: never;
             header?: never;

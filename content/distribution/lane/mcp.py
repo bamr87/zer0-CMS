@@ -94,6 +94,17 @@ TOOLS = [
 
 
 class Server:
+    # What the server is, its tools and what it builds per call; the X lane's server (`x_mcp.XServer`) names its own.
+    TOOLS = TOOLS
+    INFO = {"name": "zer0-linkedin", "title": "zer0-CMS LinkedIn lane"}
+    INSTRUCTIONS = (
+        "Draft LinkedIn posts for this site with linkedin_draft; a person approves them. "
+        "Preview before anything else. Publishing is off unless the operator armed it."
+    )
+    ARM, MERGED = ARM_VARIABLE, "ZER0_LINKEDIN_MERGED"
+    CONFIG, PIPELINE = Config, Pipeline
+    ERRORS = (ValueError, KeyError, ConfigError, LedgerError, Error)
+
     def __init__(self, site, *, env, pipeline_options=None):
         self.site, self.env = site, env
         self.options = pipeline_options or {}
@@ -125,15 +136,14 @@ class Server:
                 {
                     "protocolVersion": asked if asked in SUPPORTED_VERSIONS else SUPPORTED_VERSIONS[0],
                     "capabilities": {"tools": {"listChanged": False}},
-                    "serverInfo": {"name": "zer0-linkedin", "title": "zer0-CMS LinkedIn lane"},
-                    "instructions": "Draft LinkedIn posts for this site with linkedin_draft; a person approves them. "
-                    "Preview before anything else. Publishing is off unless the operator armed it.",
+                    "serverInfo": self.INFO,
+                    "instructions": self.INSTRUCTIONS,
                 },
             )
         if method == "ping":
             return result(id_, {})
         if method == "tools/list":
-            return result(id_, {"tools": TOOLS})
+            return result(id_, {"tools": self.TOOLS})
         if method == "tools/call":
             params = message.get("params") if isinstance(message.get("params"), dict) else {}
             arguments = params.get("arguments") if isinstance(params.get("arguments"), dict) else {}
@@ -143,14 +153,14 @@ class Server:
     def call(self, name: str, args: dict) -> dict:
         try:
             # The server never runs as a merged run: a draft must be approved, whatever acceptStatuses says.
-            env = {k: v for k, v in self.env.items() if k != "ZER0_LINKEDIN_MERGED"}
-            config = Config(self.site, env=env)
-            data = self.dispatch(name, args, config, Pipeline(config, **self.options))
+            env = {k: v for k, v in self.env.items() if k != self.MERGED}
+            config = self.CONFIG(self.site, env=env)
+            data = self.dispatch(name, args, config, self.PIPELINE(config, **self.options))
             return {
                 "content": [{"type": "text", "text": data if isinstance(data, str) else json.dumps(data, indent=2)}],
                 "isError": False,
             }
-        except (ValueError, KeyError, ConfigError, LedgerError, Error) as e:
+        except self.ERRORS as e:
             return {"content": [{"type": "text", "text": f"error: {e}"}], "isError": True}
 
     def dispatch(self, name, args, config, pipeline):
@@ -180,8 +190,8 @@ class Server:
         if name == "linkedin_posts":
             return pipeline.posts(count=int(args.get("count") or 10))
         if name == "linkedin_publish":
-            if not truthy(self.env.get(ARM_VARIABLE)):
-                raise ValueError(f"linkedin_publish is off: the operator must start this server with {ARM_VARIABLE}=1")
+            if not truthy(self.env.get(self.ARM)):
+                raise ValueError(f"linkedin_publish is off: the operator must start this server with {self.ARM}=1")
             if args.get("confirm") is not True:
                 raise ValueError("linkedin_publish needs confirm: true")
             return pipeline.publish(pipeline.draft(args["draft"]), live=True).as_dict()

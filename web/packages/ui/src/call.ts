@@ -30,6 +30,8 @@ function envelopeOf(error: unknown): ErrorEnvelope['error'] | undefined {
 
 export async function call<T>(request: Promise<Result<T>>): Promise<T> {
   const { data, error, response } = await request;
+  // A 204 (a delete) has no body by definition, so no data is its success.
+  if (response.status === 204 && error === undefined) return data as T;
   if (error !== undefined || !response.ok || data === undefined) {
     const envelope = envelopeOf(error);
     throw new ApiError(

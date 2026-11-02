@@ -353,19 +353,24 @@ class Runner:
         return 0
 
     # ── helpers ──────────────────────────────────────────────────────────────
+    def env_file(self) -> Path:
+        """`--write-env`'s file, refused unless git ignores it: a token never lands where a commit would take it."""
+        path = (self.config.root / self.opts.write_env).resolve()
+        ignored = (
+            subprocess.run(
+                ["git", "-C", str(self.config.root), "check-ignore", "-q", str(path)], capture_output=True
+            ).returncode
+            == 0
+        )
+        if not ignored:
+            raise ConfigError(f"{self.opts.write_env} is not ignored by git — refusing to write a token into it")
+        return path
+
     def store_token(self, token):
         if self.opts.write_env:
-            path = (self.config.root / self.opts.write_env).resolve()
-            ignored = (
-                subprocess.run(
-                    ["git", "-C", str(self.config.root), "check-ignore", "-q", str(path)], capture_output=True
-                ).returncode
-                == 0
-            )
-            if not ignored:
-                raise ConfigError(f"{self.opts.write_env} is not ignored by git — refusing to write a token into it")
             write_env(
-                path, {"LINKEDIN_ACCESS_TOKEN": token.access_token, "LINKEDIN_REFRESH_TOKEN": token.refresh_token}
+                self.env_file(),
+                {"LINKEDIN_ACCESS_TOKEN": token.access_token, "LINKEDIN_REFRESH_TOKEN": token.refresh_token},
             )
             self.line(f"Wrote the token to {self.opts.write_env} (mode 600).")
         elif self.opts.print_token:

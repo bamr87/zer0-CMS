@@ -1,0 +1,48 @@
+# Manifest for one book. Schema: docs/SCHEMA.md
+slug: badwill-impairment
+title: Badwill Impairment
+subtitle: Corporate Cache Compromised
+alt_titles: [The Impairment, Goodwill, The Valuation]
+status: outlining
+genre: Financial thriller / geopolitical drama
+logline: A laid-off systems engineer finds that the goodwill impairment that cost him his job covered the transfer of his company's technology and data to a foreign military regime, through systems he built, and must decide whether exposing it is worth his family's safety.
+comparables: [Succession, Syriana]
+
+pov: Third person limited
+tense: Past
+era: Early 2020s
+protagonist: Kareem Hassan
+
+acts: 3
+planned_chapters: 14
+target_word_count: 90000
+
+tags: [narrative, corporate ethics, identity, globalization, environmental justice, information security]
+
+themes:
+  - Economic colonialism
+  - Corporate dehumanization
+  - Identity and guilt
+  - Environmental injustice
+  - Weaponization of finance
+  - Moral conflict
+  - Personal sacrifice
+  - Legacy and betrayal
+
+# Carried from The Impairment's character bible (notes/characters.md). An entry in
+# Title Case that reads as a role is a placeholder the outline has not named yet.
+cast:
+  - Kareem Hassan
+  - Sarah
+  - Elena
+  - Omar
+  - Aisha
+  - Uncle Farid
+  - Mother
+  - Big Mike
+  - The CFO
+  - Board Members
+  - HR Manager
+  - Laid-off Workers
+
+created: 2026-11-01

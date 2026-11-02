@@ -31,7 +31,7 @@ from ..linkedin.client import send
 from ..linkedin.session import Session, send_post
 from ..permalink import path_for
 from . import drafts as queue
-from .site import ARM_VARIABLE, DATED, MERGED_VARIABLE, ConfigError, catalog, default_commentary, read_jsonc, slug
+from .site import DATED, ConfigError, catalog, default_commentary, read_jsonc, slug
 
 NOTE = "Aggregate statistics for the author's own content. No per-reader data."
 
@@ -41,6 +41,7 @@ class Source:
     entry: object
     url: str
     urn: str | None
+    id_key: str = "linkedin_urn"  # what the lane calls a post's id: the X lane's is `post_id`
 
     def as_dict(self) -> dict:
         e = self.entry
@@ -50,7 +51,7 @@ class Source:
             "title": e.title,
             "date": e.date_raw,
             "url": self.url,
-            "linkedin_urn": self.urn,
+            self.id_key: self.urn,
         }
 
 
@@ -97,6 +98,7 @@ class Outcome:
     urn: str | None = None
     messages: list = field(default_factory=list)
     preview: Preview | None = None
+    id_key: str = "linkedin_urn"
 
     @property
     def ok(self) -> bool:
@@ -107,7 +109,7 @@ class Outcome:
             "state": self.state,
             "draft": self.draft.relative if self.draft else None,
             "key": self.key,
-            "linkedin_urn": self.urn,
+            self.id_key: self.urn,
             "messages": self.messages,
         }
 
@@ -140,6 +142,11 @@ def check_commentary(text: str, extra) -> list[dict]:
 
 
 class Pipeline:
+    # The target's name in messages, the command a person runs, the draft key a published post's id goes under, and
+    # the errors a publish turns into a failed outcome; the X lane's pipeline (`x_pipeline.XPipeline`) names its own.
+    NAME, COMMAND, ID_KEY = "LinkedIn", "linkedin", "linkedin_urn"
+    ERRORS = (Error, ConfigError, LedgerError, ValueError)
+
     def __init__(self, config, *, transport=send, sleeper=time.sleep, clock=None, credentials=None):
         self.config = config
         self.transport = transport
@@ -188,7 +195,7 @@ class Pipeline:
         out = []
         for entry in sorted(self.catalog.entries, key=_newest_first):
             if self.shareable(entry) and (url := self.canonical_url(entry)):
-                out.append(Source(entry, url, self.ledger.urn_for(url)))
+                out.append(Source(entry, url, self.ledger.urn_for(url), self.ID_KEY))
         return out
 
     def resolve_source(self, ref):
@@ -304,6 +311,23 @@ class Pipeline:
         errors = [f["message"] for f in guard if f["level"] == "error"]
         if errors:
             blockers.append(Blocker("guard_error", f"brand guard: {'; '.join(errors)}"))
+        self._gates(draft, key, blockers)
+        return Preview(
+            draft, draft.type, key, entry, commentary, payload, thumbnail, notes, guard, gates.ordered(blockers)
+        )
+
+    # Where a person looks for a post that may exist, and what they record it by: the X lane names its own.
+    POSTS_WHERE, ID_WORD = "author's LinkedIn posts", "URN"
+
+    def credential_missing(self) -> str | None:
+        if self.credentials.access or self.credentials.refreshable:
+            return None
+        return "no LinkedIn credential (LINKEDIN_ACCESS_TOKEN, or a refresh token with the app credentials)"
+
+    def _gates(self, draft, key, blockers):
+        """The blockers every lane checks the same way after its target's own: the ledger, approval, arming and the
+        credential."""
+        config = self.config
         ledger = self.ledger
         if not ledger.readable:
             blockers.append(
@@ -317,8 +341,8 @@ class Pipeline:
                     "publish_unconfirmed",
                     (
                         f"an attempt on {attempt.get('attempted_at')} may have posted this ({attempt.get('error')}): check the "
-                        f"author's LinkedIn posts, then run `manage.py linkedin record {draft.id} URN` if it did, or publish "
-                        "it with --force if it did not"
+                        f"{self.POSTS_WHERE}, then run `manage.py {self.COMMAND} record {draft.id} {self.ID_WORD}` if it did, "
+                        "or publish it with --force if it did not"
                     ),
                 )
             )
@@ -330,7 +354,7 @@ class Pipeline:
                 Blocker(
                     "status_not_accepted",
                     (
-                        f"draft is pending: this site publishes a pending draft only once it is merged ({MERGED_VARIABLE}=1, "
+                        f"draft is pending: this site publishes a pending draft only once it is merged ({config.MERGED}=1, "
                         "set by the workflow on the default branch); approve it to publish here"
                     ),
                 )
@@ -345,19 +369,11 @@ class Pipeline:
         if not config.publish_armed:
             blockers.append(
                 Blocker(
-                    "publish_disabled", f"publishing is not armed ({ARM_VARIABLE}=1 in the environment, and a live run)"
+                    "publish_disabled", f"publishing is not armed ({config.ARM}=1 in the environment, and a live run)"
                 )
             )
-        if not (self.credentials.access or self.credentials.refreshable):
-            blockers.append(
-                Blocker(
-                    "no_credential",
-                    "no LinkedIn credential (LINKEDIN_ACCESS_TOKEN, or a refresh token with the app credentials)",
-                )
-            )
-        return Preview(
-            draft, draft.type, key, entry, commentary, payload, thumbnail, notes, guard, gates.ordered(blockers)
-        )
+        if missing := self.credential_missing():
+            blockers.append(Blocker("no_credential", missing))
 
     # ── publish ──────────────────────────────────────────────────────────────
     def publish(self, draft, *, live=False, force=False) -> Outcome:
@@ -372,7 +388,7 @@ class Pipeline:
         # the file): finish that run instead of posting again.
         if [b.kind for b in blockers] == ["already_published"] and draft.status in self.config.publishable_statuses:
             urn = self.ledger.urn_for(preview.key)
-            queue.set_status(draft, "published", {"linkedin_urn": urn})
+            queue.set_status(draft, "published", {self.ID_KEY: urn})
             return Outcome(
                 "skipped",
                 draft,
@@ -385,12 +401,13 @@ class Pipeline:
             return Outcome("blocked", draft, preview.key, messages=[b.message for b in blockers], preview=preview)
         try:
             return self._send(draft, preview)
-        except (Error, ConfigError, LedgerError, ValueError) as e:
+        except self.ERRORS as e:
             messages = [str(e)]
             if preview.key and self.ledger.unconfirmed(preview.key):
                 messages.append(
-                    f"LinkedIn did not confirm the post, so it may exist: {self.config.ledger} marks it unconfirmed and "
-                    f"no run will send it again until a person checks (`manage.py linkedin record {draft.id} URN`, or --force)"
+                    f"{self.NAME} did not confirm the post, so it may exist: {self.config.ledger} marks it unconfirmed "
+                    f"and no run will send it again until a person checks (`manage.py {self.COMMAND} record {draft.id} "
+                    "URN`, or --force)"
                 )
             return Outcome("failed", draft, preview.key, messages=messages, preview=preview)
 
@@ -404,8 +421,7 @@ class Pipeline:
 
     def record_post(self, draft, urn: str) -> Outcome:
         """A person found the post on LinkedIn — after an unconfirmed attempt, or one made by hand — and records it."""
-        if not plan.POST_URN.match(str(urn or "")):
-            raise ValueError(f"not a post URN: {urn!r}")
+        self.check_post_id(urn)
         draft = queue.read(self.config, draft.path)
         preview = self.preview(draft)
         if not preview.key:
@@ -415,8 +431,13 @@ class Pipeline:
         if not self.ledger.readable:
             raise ConfigError(f"{self.config.ledger} is not valid JSON — fix it first")
         self._record(draft, preview, urn, None)
-        queue.set_status(draft, "published", {"linkedin_urn": urn})
+        queue.set_status(draft, "published", {self.ID_KEY: urn})
         return Outcome("recorded", draft, preview.key, urn, [f"recorded {urn} for {preview.key}"], preview)
+
+    @staticmethod
+    def check_post_id(urn):
+        if not plan.POST_URN.match(str(urn or "")):
+            raise ValueError(f"not a post URN: {urn!r}")
 
     def _send(self, draft, preview) -> Outcome:
         image = (preview.thumbnail.name, preview.thumbnail.read_bytes()) if preview.thumbnail else None

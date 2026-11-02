@@ -70,6 +70,9 @@ def read_jsonc(path: Path):
 
 
 class Config:
+    # The lane's block of zer0.json, its settings and its switches; the X lane's config (`x_site.XConfig`) names its own.
+    BLOCK, KEYS, ARM, MERGED = "linkedin", KEYS, ARM_VARIABLE, MERGED_VARIABLE
+
     def __init__(self, root, env=None):
         try:
             self.root = Path(os.path.realpath(root))
@@ -80,7 +83,7 @@ class Config:
         self.env = os.environ if env is None else env
         self.problems: list[tuple[str, str]] = []
         zer0 = self._read_zer0()
-        block = (zer0.get("distribution") or {}).get("linkedin") if isinstance(zer0.get("distribution"), dict) else None
+        block = (zer0.get("distribution") or {}).get(self.BLOCK) if isinstance(zer0.get("distribution"), dict) else None
         self.block = block if isinstance(block, dict) else {}
         cms = zer0.get("cms") if isinstance(zer0.get("cms"), dict) else {}
         self.site_config = self._read_site_config()
@@ -102,11 +105,11 @@ class Config:
 
     @property
     def publish_armed(self) -> bool:
-        return truthy(self.env.get(ARM_VARIABLE))
+        return truthy(self.env.get(self.ARM))
 
     @property
     def merged(self) -> bool:
-        return truthy(self.env.get(MERGED_VARIABLE))
+        return truthy(self.env.get(self.MERGED))
 
     @property
     def publishable_statuses(self) -> list[str]:
@@ -180,16 +183,15 @@ class Config:
         self.scopes = [str(s) for s in block.get("scopes") or []]
         self.cms_root = self._confined(cms_root or ".cms", "cms.root")
 
+    def _error(self, message):
+        self.problems.append(("error", message))
+
+    def _warn(self, message):
+        self.problems.append(("warning", message))
+
     def _validate(self):
-        def error(message):
-            self.problems.append(("error", message))
-
-        def warn(message):
-            self.problems.append(("warning", message))
-
-        for key in self.block:
-            if key not in KEYS:
-                warn(f"distribution.linkedin.{key} is not a setting (known: {', '.join(KEYS)})")
+        error, warn = self._error, self._warn
+        self._validate_keys()
         if not self.author:
             warn("no LinkedIn author: set distribution.linkedin.author in zer0.json")
         elif self.author_type is None:
@@ -206,8 +208,18 @@ class Config:
             warn(
                 f"LinkedIn-Version {self.api_version} leaves LinkedIn's support window within two months; bump apiVersion"
             )
+        self._validate_url_and_statuses()
+
+    def _validate_keys(self):
+        for key in self.block:
+            if key not in self.KEYS:
+                self._warn(f"distribution.{self.BLOCK}.{key} is not a setting (known: {', '.join(self.KEYS)})")
+
+    def _validate_url_and_statuses(self):
+        """What every lane checks the same way: the site URL article shares link to, and the approval statuses."""
+        error, warn = self._error, self._warn
         if not self.site_url:
-            warn("no site URL: set url in _config.yml or distribution.linkedin.siteUrl — article shares need one")
+            warn(f"no site URL: set url in _config.yml or distribution.{self.BLOCK}.siteUrl — article shares need one")
         elif not re.match(r"https?://[^\s/]+", self.site_url):
             error(f'siteUrl must be an absolute http(s) URL, got "{self.site_url}"')
         for status in self.accept_statuses:
@@ -223,7 +235,7 @@ class Config:
         text = str(value or "").strip().replace("\\", "/")
         parts = text.split("/")
         if not text or text.startswith("/") or ".." in parts or re.match(r"[A-Za-z]:", text):
-            raise ConfigError(f"distribution.linkedin.{key} must be a path inside the repository, got {value!r}")
+            raise ConfigError(f"distribution.{self.BLOCK}.{key} must be a path inside the repository, got {value!r}")
         return os.path.normpath(text).replace(os.sep, "/")
 
 

@@ -54,6 +54,7 @@ export function fakePlatform(routes: Record<string, Handler>) {
       ? handler({ body, url })
       : new Reply(404, { error: { code: 'resource.not_found', message: `no fake for ${request.method} ${url.pathname}`, status: 404, details: [] } }));
     const reply = out instanceof Reply ? out : new Reply(200, out);
+    if (reply.status === 204) return new Response(null, { status: 204 });
     return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { 'Content-Type': 'application/json' } });
   };
   const api: ApiClient = createSessionClient({ baseUrl: 'http://studio.test', fetch, csrfToken: () => 'test-csrf' });

@@ -3,8 +3,8 @@
 // when the person ticks it, and showing the platform's blockers when it
 // refuses) and records a post found at the target; Distribute — from the
 // editor or a story — drafts a post and leads to the queue; a channel takes a
-// credential once and never shows it, connects LinkedIn through its consent
-// screen, arms, and downloads and imports its ledger file; the ledger marks an
+// credential once and never shows it, connects LinkedIn and X through their
+// consent screens, arms, and downloads and imports its ledger file; the ledger marks an
 // attempt that may have landed; statistics list the most seen first with
 // totals.
 import { screen, waitFor, within } from '@testing-library/react';
@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Distribute, Distribution } from '../src';
 import { ChannelPanel } from '../src/distribution/Channels';
+import { ComposeForm } from '../src/distribution/Compose';
 import { Ledger, Statistics } from '../src/distribution/Ledger';
 import { PostPanel } from '../src/distribution/PostPanel';
 import { fakePlatform, renderUi, Reply } from '../../../test/harness';
@@ -196,6 +197,17 @@ describe('a post', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Record' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/record/'))?.body).toEqual({ urn: 'urn:li:share:42' }));
   });
+
+  it('deletes a draft and goes back to the queue — the platform’s empty 204 is the success, not an error', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post(),
+      [`DELETE ${API}/posts/p1/`]: () => new Reply(204, null),
+    });
+    const { go } = renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'distribution' }));
+    expect(screen.queryByText('No Content')).toBeNull();
+  });
 });
 
 describe('a rejected post', () => {
@@ -306,6 +318,42 @@ describe('a channel', () => {
     expect(platform.calls.find((c) => c.method === 'POST' && c.path.endsWith('/ledger-file/'))?.body).toEqual({
       content: '{"https://example.test/b/": {"urn": "urn:li:share:2"}}',
     });
+  });
+});
+
+describe('an X channel', () => {
+  it('connects through X’s consent screen, says its token renews itself, and reads its statistics', async () => {
+    const consent = 'https://x.com/i/oauth2/authorize?response_type=code&state=s&code_challenge=x';
+    const x = { id: 'c3', kind: 'x', kind_label: 'X', name: 'The account', settings: { account: 'bamr87' }, account: '@bamr87' };
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c3/`]: () => channel({ ...x, has_credential: true, expires_at: '2026-10-31T12:00:00Z' }),
+      [`POST ${API}/channels/c3/connect/`]: () => ({ url: consent }),
+      [`POST ${API}/channels/c3/statistics/`]: () => new Reply(202, {}),
+      [`GET ${API}/channels/c3/ledger-file/`]: () => ({ filename: 'x-c3.json', content: '{}\n' }),
+    });
+    renderUi(<ChannelPanel channelId="c3" />, { api: platform.api });
+    expect(await screen.findByLabelText('Account')).toHaveValue('bamr87');
+    expect(screen.getByText(/publishes as @bamr87 · its token renews itself/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Connect with X' }));
+    expect(await screen.findByRole('link', { name: 'Continue to X' })).toHaveAttribute('href', consent);
+    expect(screen.queryByLabelText('API key')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Read statistics now' }));
+    expect(await screen.findByText('The worker is reading X’s statistics; they appear under Statistics.')).toBeInTheDocument();
+  });
+
+  it('offers a text update, and the ledger links its post', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/`]: () => listOf([channel({ id: 'c3', kind: 'x', kind_label: 'X', name: 'The account' })]),
+      [`GET ${API}/ledger/`]: () => listOf([entry({ channel: 'c3', channel_kind: 'x', urn: '1850000000000000001' })]),
+    });
+    const { unmount } = renderUi(<ComposeForm siteId={1} onDone={() => undefined} />, { api: platform.api });
+    await userEvent.click(await screen.findByLabelText('Channel', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: /The account — X/ }));
+    expect(screen.getByRole('radio', { name: 'A text update' })).toBeInTheDocument();
+    unmount();
+    renderUi(<Ledger siteId={1} />, { api: platform.api });
+    const table = await screen.findByRole('table', { name: 'The ledger' });
+    expect(within(table).getByRole('link', { name: '1850000000000000001' })).toHaveAttribute('href', 'https://x.com/i/status/1850000000000000001');
   });
 });
 

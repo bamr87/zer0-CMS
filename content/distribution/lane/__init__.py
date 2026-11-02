@@ -1,4 +1,4 @@
-"""The LinkedIn lane over a site's own files — the Ruby lane
+"""The LinkedIn and X lanes over a site's own files — the Ruby lane
 (`rails/lib/zer0_cms/distribution/`, retired by PLAN G5) in Python, for what
 has no database: a content repository's CI (the reusable `zer0-linkedin.yml`)
 and a terminal, through `manage.py linkedin`.
@@ -10,8 +10,9 @@ and a terminal, through `manage.py linkedin`.
 | `pipeline.py` | compose, approve, preview (pure), publish (gated), record, posts, statistics, token status |
 | `cli.py` | `manage.py linkedin COMMAND --site PATH` and the loopback OAuth callback |
 | `mcp.py` | `manage.py linkedin mcp`: the lane's tools over MCP (stdio), publishing off unless the operator armed it |
+| `x_site.py`, `x_pipeline.py`, `x_cli.py`, `x_mcp.py` | the X lane (`manage.py x`): each subclasses its LinkedIn module and changes only what X changes — the `distribution.x` block, the post and its length, the account check, X's commands and tools |
 
-It shares the platform's LinkedIn client (`distribution/linkedin/`), its gates
+It shares the platform's LinkedIn and X clients (`distribution/linkedin/`, `distribution/x/`), its gates
 (`distribution/gates.py`), its ledger file (`distribution/ledger.py`), its
 permalinks (`distribution/permalink.py`) and its brand guard
 (`suggestions/guard.py`), so a draft, a finding and a ledger entry mean the same
