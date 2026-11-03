@@ -66,7 +66,9 @@ without writing a draft's content. `site_files` lists what an export writes;
 there, with no file to take down — refusing a path that would leave it and
 never writing two pages to one path (the second is skipped), and a site's
 write-back writes it into the site's checkout under the stale-write guard
-(sites/services.py).
+(sites/services.py). One page's file outside a write-back is `file_of` (the
+live page's, for distribution's GitHub channel) or `latest_file_of` (its latest
+revision's, as a write-back with drafts writes it: the studio's preview).
 """
 
 from collections.abc import Iterator
@@ -366,12 +368,25 @@ def page_file(page, current, root, source: ImportedSource | None, *, verbatim: b
 
 def file_of(page) -> File:
     """A live page's file as an export writes it now — `page_file` for one page, outside a write-back."""
+    return _one_file(page, page)
+
+
+def latest_file_of(page) -> File:
+    """The page's latest revision as its file, as a write-back with drafts writes it now (`site_files`
+    with `include_drafts`) — what the studio previews. A site's root and its collections are index pages,
+    written as no file of their own."""
+    if isinstance(page, SiteRootPage | CollectionPage):
+        raise ValueError("a site's root and its collections are index pages, not files")
+    return _one_file(page, page.get_latest_revision_as_object())
+
+
+def _one_file(page, current) -> File:
     root = page.get_ancestors(inclusive=True).type(SiteRootPage).last()
     if root is None:
         raise ValueError("the page is not in a site that exports to Jekyll files")
     source = ImportedSource.objects.filter(page_id=page.pk).first()
-    verbatim = source is not None and source.unchanged(page) and page.pk not in with_newsroom_front_matter()
-    return page_file(page, page, root.specific, source, verbatim=verbatim, now=timezone.now())
+    verbatim = source is not None and source.unchanged(current) and page.pk not in with_newsroom_front_matter()
+    return page_file(page, current, root.specific, source, verbatim=verbatim, now=timezone.now())
 
 
 def _sidecar_files(page, current, source: ImportedSource, verbatim: bool) -> Iterator[File]:

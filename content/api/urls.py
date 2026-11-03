@@ -58,6 +58,7 @@ urlpatterns = [
     path("content/pages/<int:pk>/unschedule/", pages.unschedule, name="content-page-unschedule"),
     path("content/pages/<int:pk>/revisions/", pages.RevisionList.as_view(), name="content-page-revisions"),
     path("content/pages/<int:pk>/revisions/compare/", pages.compare, name="content-page-revisions-compare"),
+    path("content/pages/<int:pk>/preview/", pages.preview, name="content-page-preview"),
     path(
         "content/pages/<int:pk>/revisions/<int:revision_id>/revert/",
         pages.revert,

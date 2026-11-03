@@ -15,11 +15,17 @@ they live in are sites/views.py).
     GET   /api/v2/content/pages/<id>/revisions/           newest first
     GET   /api/v2/content/pages/<id>/revisions/compare/   two revisions side by side, for a diff
     POST  /api/v2/content/pages/<id>/revisions/<rev>/revert/   a new draft with that revision's content
+    GET   /api/v2/content/pages/<id>/preview/             the latest revision as the file a write-back writes,
+                                                          and its body as HTML
 
 A page's `fields` are its editor fields by name, each described by a
 `field_specs` entry; a page that is a file of its own (`ArticlePage`,
 `StandardPage`) also has that file's `file_path` and raw `front_matter`, every
-key no typed field writes (group `file`, cms/files.py).
+key no typed field writes (group `file`, cms/files.py). Its preview is the file
+itself: the exporter's own `page_file` over the latest revision
+(`exporters.jekyll.latest_file_of`), beside the file the platform last read or
+wrote at that path, and the body as HTML held to what the Markdown renders
+(aieo/reports.py) — no Wagtail admin and no browser session.
 
 Views validate, call `cms.services` and serialize (api/serializers.py). They
 serve people only: an agent changes content through the tool registry and
@@ -55,7 +61,10 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from wagtail.models import Page, Site, get_page_models
 
+from aieo import reports
 from cms import files, seo, services
+from exporters.jekyll import latest_file_of
+from importers import frontmatter
 from importers.markdown import from_blocks
 from importers.services import pages_imported_from
 from ops.errors import Conflict, Forbidden, Invalid, Locked, NotFound
@@ -65,6 +74,7 @@ from suggestions.services import SuggestionError, pending_for
 from .serializers import (
     PageCreateSerializer,
     PageDetailSerializer,
+    PagePreviewSerializer,
     PageSummarySerializer,
     PageTypeSerializer,
     PageUpdateSerializer,
@@ -592,6 +602,27 @@ def compare(request, pk):
     if strip(a["body"]) != strip(b["body"]):
         changed.append("body")
     return Response(RevisionCompareSerializer({"a": a, "b": b, "changed": changed}).data)
+
+
+@extend_schema(
+    operation_id="content_pages_preview",
+    summary="The latest revision as the file a write-back writes, beside the file there now, and as HTML",
+    responses={200: PagePreviewSerializer, **ERROR_RESPONSES},
+)
+@api_view(["GET"])
+@permission_classes([IsPerson])
+def preview(request, pk):
+    page = _page(request, pk)
+    try:
+        file = latest_file_of(page)
+    except ValueError as e:
+        raise NotFound(f"page {pk} has no file of its own: {e}") from e
+    source = file.source
+    indexed = source.source_text if source is not None and source.legacy_path == file.rel else None
+    fence = frontmatter.FENCE.match(file.text)
+    body = file.text[fence.end() :] if fence else file.text
+    data = {"path": file.rel, "text": file.text, "indexed": indexed, "html": reports.html(body)}
+    return Response(PagePreviewSerializer(data).data)
 
 
 @_action("content_pages_revisions_revert", "A new draft revision with an old revision's content")

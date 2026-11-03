@@ -1543,6 +1543,23 @@ export interface paths {
         patch: operations["content_pages_save"];
         trace?: never;
     };
+    "/api/v2/content/pages/{id}/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The latest revision as the file a write-back writes, beside the file there now, and as HTML */
+        get: operations["content_pages_preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/content/pages/{id}/publish/": {
         parameters: {
             query?: never;
@@ -6764,6 +6781,16 @@ export interface components {
             unpublish: boolean;
             add_subpage: boolean;
             delete: boolean;
+        };
+        PagePreview: {
+            /** @description The file's path in the site, e.g. `pages/_posts/2026-07-31-hello.md`. */
+            path: string;
+            /** @description The latest revision as that file, byte for byte what a write-back with drafts writes there (`published: false` while the page is not live). */
+            text: string;
+            /** @description The file at `path` as the platform last read or wrote it, to compare with; null when a write-back would create it. */
+            indexed: string | null;
+            /** @description The file's body as HTML (Python-Markdown), held to headings, paragraphs, lists, emphasis, links, images, tables and code; raw HTML is unwrapped to its text. */
+            html: string;
         };
         PageRef: {
             id: number;
@@ -16618,6 +16645,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    content_pages_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagePreview"];
                 };
             };
             401: {

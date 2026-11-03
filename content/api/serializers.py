@@ -189,6 +189,25 @@ class RevisionCompareSerializer(serializers.Serializer):
     changed = serializers.ListField(child=serializers.CharField(), help_text="Field names that differ, and `body`.")
 
 
+class PagePreviewSerializer(serializers.Serializer):
+    path = serializers.CharField(help_text="The file's path in the site, e.g. `pages/_posts/2026-07-31-hello.md`.")
+    text = serializers.CharField(
+        allow_blank=True,
+        help_text="The latest revision as that file, byte for byte what a write-back with drafts writes there "
+        "(`published: false` while the page is not live).",
+    )
+    indexed = serializers.CharField(
+        allow_null=True,
+        help_text="The file at `path` as the platform last read or wrote it, to compare with; null when a "
+        "write-back would create it.",
+    )
+    html = serializers.CharField(
+        allow_blank=True,
+        help_text="The file's body as HTML (Python-Markdown), held to headings, paragraphs, lists, emphasis, "
+        "links, images, tables and code; raw HTML is unwrapped to its text.",
+    )
+
+
 # ── suggestions and runs ───────────────────────────────────────────────────
 
 

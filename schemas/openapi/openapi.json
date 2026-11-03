@@ -12469,6 +12469,128 @@
                 }
             }
         },
+        "/api/v2/content/pages/{id}/preview/": {
+            "get": {
+                "operationId": "content_pages_preview",
+                "summary": "The latest revision as the file a write-back writes, beside the file there now, and as HTML",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "content"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PagePreview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/content/pages/{id}/publish/": {
             "post": {
                 "operationId": "content_pages_publish",
@@ -38705,6 +38827,36 @@
                     "edit",
                     "publish",
                     "unpublish"
+                ]
+            },
+            "PagePreview": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "The file's path in the site, e.g. `pages/_posts/2026-07-31-hello.md`."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The latest revision as that file, byte for byte what a write-back with drafts writes there (`published: false` while the page is not live)."
+                    },
+                    "indexed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The file at `path` as the platform last read or wrote it, to compare with; null when a write-back would create it."
+                    },
+                    "html": {
+                        "type": "string",
+                        "description": "The file's body as HTML (Python-Markdown), held to headings, paragraphs, lists, emphasis, links, images, tables and code; raw HTML is unwrapped to its text."
+                    }
+                },
+                "required": [
+                    "html",
+                    "indexed",
+                    "path",
+                    "text"
                 ]
             },
             "PageRef": {
