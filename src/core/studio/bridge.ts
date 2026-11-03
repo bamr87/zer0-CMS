@@ -22,9 +22,10 @@
  *     `PATCH`, `PUT` and `DELETE`; never the session endpoints (the extension
  *     signs in with a token). A request that changes a live site or reaches
  *     people past the platform — a page published, unpublished or scheduled,
- *     from the editor or by a story's move; a distribution post published; a
- *     newsletter issue sent — asks the person modally first, whatever the
- *     webview showed; the platform then checks their permissions.
+ *     from the editor or by a story's move; a correction or an update posted
+ *     on a published story; a distribution post published; a newsletter issue
+ *     sent — asks the person modally first, whatever the webview showed; the
+ *     platform then checks their permissions.
  *   - **Network only from an explicit act.** Nothing here runs until a webview
  *     the person opened asks, or the Metadata view asks which file is a page;
  *     `fetch` and the stream opener are injected.
@@ -54,9 +55,10 @@ const MAX_STREAMS = 8;
  * The requests that change what a live site shows, or send something past the
  * platform to people, and how to ask. An id is any one segment. A page goes
  * live from the editor (publish, unpublish, schedule) and from the newsroom (a
- * story moved to published or scheduled — the body's `status` says which, so
- * that question is asked of the body that is sent); a distribution post goes to
- * its channel (LinkedIn, WordPress, a pull request, a newsletter) and a
+ * story moved to published or scheduled, or a correction or an update posted on
+ * it, whose note the live page shows at once — the body's `status` says which,
+ * so that question is asked of the body that is sent); a distribution post goes
+ * to its channel (LinkedIn, WordPress, a pull request, a newsletter) and a
  * newsletter issue to its subscribers.
  */
 const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
@@ -66,11 +68,13 @@ const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
   [/^\/api\/v2\/distribution\/posts\/([^/]+)\/publish\/$/, 'Publish distribution post $1 to its channel from $origin?'],
   [/^\/api\/v2\/newsroom\/issues\/([^/]+)\/send\/$/, 'Send newsletter issue $1 to its subscribers from $origin?'],
 ];
-/** A story's move that puts its page live, by the `status` the body asks for. */
+/** A story's move that changes its live page, by the `status` the body asks for. */
 const STORY_MOVE = /^\/api\/v2\/newsroom\/stories\/([^/]+)\/move\/$/;
 const STORY_RELEASES: Readonly<Record<string, string>> = {
   published: 'Publish story $1 on $origin?',
   scheduled: 'Schedule story $1 to go live on $origin?',
+  corrected: 'Post a correction to story $1, shown on its live page on $origin at once?',
+  updated: 'Post an update to story $1, shown on its live page on $origin at once?',
 };
 
 export interface BridgeDeps {

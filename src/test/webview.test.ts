@@ -745,16 +745,21 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(agreed.sent.length, 4);
   });
 
-  test("main's other live changes ask too: a story moved live, a distribution post published, a newsletter issue sent", async () => {
+  test("main's other live changes ask too: a story moved live, corrected or updated, a distribution post published, a newsletter issue sent", async () => {
     const declined = fake({ answer: false });
     const bridge = new StudioBridge(declined.deps);
     await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"published","reason":"breaking"}'));
     await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"scheduled","go_live_at":"2026-11-01T09:00:00Z"}'));
+    // A correction's or an update's note is shown on the live page as soon as it is posted (newsroom/services.py correct()).
+    await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"corrected","text":"A date."}'));
+    await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"updated","text":"Police confirmed."}'));
     await bridge.receive(api('/api/v2/distribution/posts/p-1/publish/', 'POST', '{"force":false}'));
     await bridge.receive(api('/api/v2/newsroom/issues/i-1/send/', 'POST'));
     assert.deepEqual(declined.asked, [
       `Publish story s-1 on ${ORIGIN}?`,
       `Schedule story s-1 to go live on ${ORIGIN}?`,
+      `Post a correction to story s-1, shown on its live page on ${ORIGIN} at once?`,
+      `Post an update to story s-1, shown on its live page on ${ORIGIN} at once?`,
       `Publish distribution post p-1 to its channel from ${ORIGIN}?`,
       `Send newsletter issue i-1 to its subscribers from ${ORIGIN}?`,
     ]);
@@ -764,7 +769,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     const agreed = fake({ answer: true });
     const quiet = new StudioBridge(agreed.deps);
     await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"copy"}'));
-    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"corrected","text":"A date."}'));
+    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"editing","comment":"corrected"}'));
     await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '"published"'));
     await quiet.receive(api('/api/v2/distribution/posts/p-1/approve/', 'POST'));
     await quiet.receive(api('/api/v2/distribution/posts/p-1/', 'PATCH', '{"status":"published"}'));
