@@ -29,7 +29,7 @@ npm run gen            # regenerate @zer0/api's types after the platform's API c
 npm run check:api      # fail when the committed types differ from a fresh generation
 ```
 
-The API changes in the platform first: change a view or serializer in `content/api/`, regenerate the document (`cd content && python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json`), then `npm run gen` here. CI (`web.yml`) runs `check:api` on every change to `web/` or to the document, so a client and the API it calls cannot drift apart.
+The API changes in the platform first: change a view or serializer in `content/api/`, regenerate the document (`cd content && python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json`), then `npm run gen` here. CI (`web.yml`) runs `check:api` on every change to `web/` or to the document, so a client and the API it calls cannot drift apart; the same check is a Vitest case (`packages/api/test/drift.test.ts`), and both run the one generation in `packages/api/scripts/generate.mjs`.
 
 For a local studio with something in it: `cd content && python manage.py migrate && python manage.py seed_demo && python manage.py runserver`, then `npm run dev` here, and sign in as `editor` with the password `zer0-demo` (the default only under `DEBUG`). `seed_demo` makes a demo site with an article, a draft and an SEO agent's pending suggestions.
 
