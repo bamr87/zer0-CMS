@@ -1,6 +1,8 @@
 // The editor: a page's latest revision — blocks, fields, SEO, settings and,
 // for a page that is a file of its site, that file (its path and its raw front
-// matter: the File tab) — with its suggestions and revisions beside it. Save writes a draft revision and
+// matter: the File tab) — with its suggestions and revisions beside it. Preview
+// is a tab, not a link out: the saved draft as the very file a write-back
+// writes, and as HTML (PreviewFile.tsx). Save writes a draft revision and
 // sends only what changed plus the revision it was edited from, so a save
 // over someone else's newer one is refused (409) rather than replacing it.
 // Publish, schedule (a time to go live, a time to come down, or both) and
@@ -14,7 +16,7 @@
 // rewrite there as suggestions too (aieo/PageScore.tsx).
 // Distribute drafts a post of the live page for one of its site's channels
 // (distribution/Compose.tsx); a person approves it in the queue.
-import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Block, PageDetail } from '@zer0/api';
@@ -27,6 +29,7 @@ import { call, errorText } from './call';
 import { useApi } from './context';
 import { Distribute } from './distribution/Compose';
 import { FieldsPanel, fromLocalInput, type FieldValues } from './FieldsPanel';
+import { PreviewFile } from './PreviewFile';
 import { PageResearch } from './research/PageResearch';
 import { RevisionHistory } from './RevisionHistory';
 import { StatusBadge } from './StatusBadge';
@@ -146,9 +149,9 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
           <Button variant={askingAi ? 'filled' : 'light'} aria-expanded={askingAi} aria-controls="zer0-ai-panel" onClick={() => setAskingAi((open) => !open)}>
             AI
           </Button>
-          <Anchor href={page.preview_url} target="_blank" rel="noreferrer" size="sm">
+          <Button variant="subtle" onClick={() => setTab('preview')}>
             Preview
-          </Anchor>
+          </Button>
           <Distribute pageId={page.id} siteId={page.site_id ?? undefined} disabled={!page.live} />
           <Button variant="default" disabled={!dirty || !editable} loading={busy} onClick={() => run('save', changes)}>
             Save draft
@@ -223,6 +226,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
               <Tabs.Tab value="content">Content</Tabs.Tab>
               <Tabs.Tab value="seo">SEO</Tabs.Tab>
               {hasFile ? <Tabs.Tab value="file">File</Tabs.Tab> : null}
+              <Tabs.Tab value="preview">Preview</Tabs.Tab>
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
               <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
               <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
@@ -243,6 +247,9 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
                 <FieldsPanel specs={page.field_specs} values={fields} group="file" disabled={!editable} onChange={setField} />
               </Tabs.Panel>
             ) : null}
+            <Tabs.Panel value="preview" pt="md">
+              <PreviewFile pageId={page.id} dirty={dirty} />
+            </Tabs.Panel>
             <Tabs.Panel value="settings" pt="md">
               <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
             </Tabs.Panel>

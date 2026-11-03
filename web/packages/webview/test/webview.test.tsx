@@ -347,12 +347,24 @@ describe('the extension webviews', () => {
     expect(host.sent.filter((m) => m.type === 'api')).toHaveLength(1);
   });
 
-  it('hands a link to the host instead of following it', async () => {
-    const host = open('page');
+  it('previews the exported file in place through the host, and hands a link in it to the host instead of following it', async () => {
+    const host = fakeHost({
+      ...PLATFORM,
+      'GET /api/v2/content/pages/5/preview/': () => ({
+        path: '_posts/2026-10-20-nightly-backups.md',
+        text: '---\ntitle: Nightly backups\n---\nWe copy the site.\n',
+        indexed: null,
+        html: '<p>We copy <a href="https://example.com/disks">the site</a>.</p>',
+      }),
+    });
+    render(<App view="page" port={host.port} />);
     await host.deliver({ type: 'file', file: { path: '_posts/backups.md', name: 'backups.md' } });
-    const preview = await screen.findByRole('link', { name: /Preview/ });
-    await userEvent.click(preview);
-    expect(host.sent).toContainEqual({ type: 'open', href: '/admin/pages/5/view_draft/' });
+    await userEvent.click(await screen.findByRole('button', { name: 'Preview' }));
+    expect(await screen.findByText('_posts/2026-10-20-nightly-backups.md')).toBeInTheDocument();
+    expect(host.sent).toContainEqual(expect.objectContaining({ type: 'api', method: 'GET', path: '/api/v2/content/pages/5/preview/' }));
+    expect(host.sent.some((m) => m.type === 'open')).toBe(false); // in place: no admin view, no browser
+    await userEvent.click(screen.getByRole('link', { name: 'the site' }));
+    expect(host.sent).toContainEqual({ type: 'open', href: 'https://example.com/disks' });
     expect(within(document.body).queryByText('Not on the platform')).toBeNull();
   });
 });
