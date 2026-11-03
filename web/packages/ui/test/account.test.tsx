@@ -273,4 +273,22 @@ describe('the account menu', () => {
     expect(screen.queryByRole('tab')).toBeNull();
     expect(platform.calls.some((c) => c.path.startsWith('/_allauth'))).toBe(false);
   });
+
+  it('with no browser session, offers no Issue form — a token cannot issue another — and says where one is issued', async () => {
+    const platform = fakePlatform({
+      'GET /api/v2/me': () => ME,
+      'GET /api/v2/account/tokens/': () => [TOKEN],
+      [`DELETE /api/v2/account/tokens/${TOKEN.id}/`]: () => ({ ...TOKEN, state: 'revoked' }),
+    });
+    renderUi(<AccountWorkspace />, { api: platform.api });
+    const table = await screen.findByRole('table', { name: 'API tokens' });
+    expect(await within(table).findByText('VS Code')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Issue a token' })).toBeNull();
+    expect(screen.queryByLabelText(/Where it is used/)).toBeNull();
+    expect(screen.getByRole('link', { name: /API tokens in the studio/ })).toHaveAttribute('href', '/studio/account/tokens');
+    expect(screen.getByText(/Set platform token/)).toBeInTheDocument();
+    await userEvent.click(within(table).getByRole('button', { name: 'Revoke VS Code' }));
+    await waitFor(() => expect(platform.calls.some((c) => c.method === 'DELETE' && c.path === `/api/v2/account/tokens/${TOKEN.id}/`)).toBe(true));
+    expect(platform.calls.some((c) => c.method === 'POST')).toBe(false);
+  });
 });

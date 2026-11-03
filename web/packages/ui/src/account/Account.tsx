@@ -6,8 +6,10 @@
 // allauth asks for the password (or a factor) again before one goes through —
 // a modal here, then the change is sent again. The tokens are the platform's
 // own API (accounts/api.py) through the host's client, so a host with no
-// browser session — the extension's webviews — still lists and revokes them.
-import { Alert, Badge, Button, Checkbox, Code, CopyButton, Group, Modal, Paper, PasswordInput, Select, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core';
+// browser session — the extension's webviews — still lists and revokes them;
+// it is not offered the issue form, which the platform refuses to a token
+// (auth.session_required), but the way to the studio's, where one is issued.
+import { Alert, Anchor, Badge, Button, Checkbox, Code, CopyButton, Group, Modal, Paper, PasswordInput, Select, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, use, useCallback, useState, type ReactNode } from 'react';
 
@@ -481,8 +483,12 @@ const DAYS = [
   { value: '365', label: 'A year' },
 ];
 
+/** Where the studio issues a token: a host with no browser session opens it against the platform. */
+const STUDIO_TOKENS = '/studio/account/tokens';
+
 export function Tokens() {
   const api = useApi();
+  const auth = useAuthHost();
   const qc = useQueryClient();
   const me = useQuery({ queryKey: ['me'], queryFn: () => call(api.GET('/api/v2/me')), staleTime: 60_000 });
   const tokens = useQuery({ queryKey: ['account', 'tokens'], queryFn: () => call(api.GET('/api/v2/account/tokens/')) });
@@ -523,35 +529,45 @@ export function Tokens() {
           </Group>
         </Alert>
       ) : null}
-      <Paper withBorder p="md">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            issue.mutate();
-          }}
-        >
-          <Stack gap="xs">
-            {issue.isError ? <Alert color="red">{errorText(issue.error)}</Alert> : null}
-            <Group align="flex-end">
-              <TextInput label="Where it is used" placeholder="VS Code on my laptop" required value={name} onChange={(e) => setName(e.currentTarget.value)} />
-              <Select label="Expires after" data={DAYS} value={days} allowDeselect={false} onChange={(v) => setDays(v ?? '90')} />
-            </Group>
-            <Checkbox label="Read only — it cannot change anything" checked={readOnly} onChange={(e) => setReadOnly(e.currentTarget.checked)} />
-            {superuser ? (
-              <Checkbox
-                label="I am a superuser: this token carries every permission I have"
-                checked={everything}
-                onChange={(e) => setEverything(e.currentTarget.checked)}
-              />
-            ) : null}
-            <Group>
-              <Button type="submit" loading={issue.isPending}>
-                Issue a token
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Paper>
+      {auth ? (
+        <Paper withBorder p="md">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              issue.mutate();
+            }}
+          >
+            <Stack gap="xs">
+              {issue.isError ? <Alert color="red">{errorText(issue.error)}</Alert> : null}
+              <Group align="flex-end">
+                <TextInput label="Where it is used" placeholder="VS Code on my laptop" required value={name} onChange={(e) => setName(e.currentTarget.value)} />
+                <Select label="Expires after" data={DAYS} value={days} allowDeselect={false} onChange={(v) => setDays(v ?? '90')} />
+              </Group>
+              <Checkbox label="Read only — it cannot change anything" checked={readOnly} onChange={(e) => setReadOnly(e.currentTarget.checked)} />
+              {superuser ? (
+                <Checkbox
+                  label="I am a superuser: this token carries every permission I have"
+                  checked={everything}
+                  onChange={(e) => setEverything(e.currentTarget.checked)}
+                />
+              ) : null}
+              <Group>
+                <Button type="submit" loading={issue.isPending}>
+                  Issue a token
+                </Button>
+              </Group>
+            </Stack>
+          </form>
+        </Paper>
+      ) : (
+        <Text size="sm">
+          A token cannot issue another, so new ones are issued in the studio, where you sign in:{' '}
+          <Anchor href={STUDIO_TOKENS} target="_blank" rel="noreferrer">
+            API tokens in the studio
+          </Anchor>
+          . This list still revokes any of yours.
+        </Text>
+      )}
       {tokens.isError ? <Alert color="red">{errorText(tokens.error)}</Alert> : null}
       {revoke.isError ? <Alert color="red">{errorText(revoke.error)}</Alert> : null}
       <Table aria-label="API tokens">

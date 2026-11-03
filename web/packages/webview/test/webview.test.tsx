@@ -161,6 +161,10 @@ describe('the extension webviews', () => {
     // The account (G3): with no browser session in a webview, the person's API tokens, through the host like the rest.
     await at({ to: 'account', section: 'tokens' }, 'Account');
     expect(await screen.findByText(/managed in the studio/)).toBeInTheDocument();
+    // A token cannot issue another: no Issue form, but the way to the studio's, which the host opens against the platform.
+    expect(screen.queryByRole('button', { name: 'Issue a token' })).toBeNull();
+    await userEvent.click(screen.getByRole('link', { name: /API tokens in the studio/ }));
+    expect(host.sent).toContainEqual({ type: 'open', href: '/studio/account/tokens' });
 
     // Each asked the platform for what it shows — through the host, by path, never with a credential.
     await waitFor(() => {
