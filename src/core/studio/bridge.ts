@@ -29,6 +29,9 @@
  *   - **Network only from an explicit act.** Nothing here runs until a webview
  *     the person opened asks, or the Metadata view asks which file is a page;
  *     `fetch` and the stream opener are injected.
+ *   - **Nothing waits forever.** A request the platform has not answered, body
+ *     and all, in `PLATFORM_TIMEOUT_MS` is answered 504 `platform.timeout`; the
+ *     Metadata view waits `MODE_TIMEOUT_MS` and keeps file mode (`pageMode`).
  *
  * A refusal answers like the platform would — the error envelope with a status
  * and a code — so the workspace shows it where the request was made. A body is
@@ -51,6 +54,10 @@ const MAX_BODY = 1_000_000;
 const MAX_PATH = 2048;
 const MAX_HEADER = 255;
 const MAX_STREAMS = 8;
+/** How long the platform has to answer a request, its body included, before the host answers it 504. */
+export const PLATFORM_TIMEOUT_MS = 30_000;
+/** How long the Metadata view waits to learn whether a file is a page before it keeps file mode. */
+export const MODE_TIMEOUT_MS = 5_000;
 /**
  * The requests that change what a live site shows, or send something past the
  * platform to people, and how to ask. An id is any one segment. A page goes
@@ -232,13 +239,36 @@ function forwarded(asked: unknown): Record<string, string> | undefined {
   return out;
 }
 
+/** A wait, as the person reads it. */
+function duration(ms: number): string {
+  return ms < 1000 ? `${ms} ms` : `${ms / 1000} s`;
+}
+
+/** The status, the body and the headers a workspace reads, of one request sent. */
+async function answer(deps: PlatformDeps, url: URL, init: RequestInit): Promise<PlatformReply> {
+  const response = await deps.fetch(url.toString(), init);
+  const kept: Record<string, string> = {};
+  for (const name of RESPONSE_HEADERS) {
+    const value = response.headers.get(name);
+    if (value !== null) {
+      kept[name] = value;
+    }
+  }
+  return { status: response.status, body: await response.text(), headers: kept };
+}
+
 /**
  * One request — `{method, path, body?, headers?}`, from a webview or from the
  * host itself — through every gate above, sent with the platform's URL and the
- * person's token; or refused, the way the platform refuses. Never throws, and
- * no reply carries the token.
+ * person's token; or refused, the way the platform refuses. A platform that
+ * has not answered in `timeoutMs` is a 504. Never throws, and no reply carries
+ * the token.
  */
-export async function sendToPlatform(deps: PlatformDeps, request: Record<string, unknown>): Promise<PlatformReply> {
+export async function sendToPlatform(
+  deps: PlatformDeps,
+  request: Record<string, unknown>,
+  timeoutMs: number = PLATFORM_TIMEOUT_MS,
+): Promise<PlatformReply> {
   const method = typeof request.method === 'string' ? request.method.toUpperCase() : '';
   const origin = deps.origin();
   if (origin === undefined) {
@@ -268,26 +298,123 @@ export async function sendToPlatform(deps: PlatformDeps, request: Record<string,
   if (typeof body === 'string') {
     headers['Content-Type'] = 'application/json';
   }
+  // The signal ends the request in the network; the race answers even a fetch that ignores it.
+  const signal = AbortSignal.timeout(timeoutMs);
+  const late = new Promise<undefined>((resolve) => signal.addEventListener('abort', () => resolve(undefined), { once: true }));
+  const timedOut = () => refusal(504, 'platform.timeout', `The platform at ${origin} did not answer within ${duration(timeoutMs)}.`);
   try {
-    const response = await deps.fetch(url.toString(), {
-      method,
-      headers,
-      ...(typeof body === 'string' ? { body } : {}),
-      redirect: 'error',
-    });
-    const kept: Record<string, string> = {};
-    for (const name of RESPONSE_HEADERS) {
-      const value = response.headers.get(name);
-      if (value !== null) {
-        kept[name] = value;
-      }
-    }
-    return { status: response.status, body: await response.text(), headers: kept };
+    const init: RequestInit = { method, headers, ...(typeof body === 'string' ? { body } : {}), redirect: 'error', signal };
+    return (await Promise.race([answer(deps, url, init), late])) ?? timedOut();
   } catch {
-    // The reason is the network's (refused, a TLS failure, a redirect); the
-    // message says where, never with what credential.
-    return refusal(503, 'platform.unreachable', `The platform at ${origin} did not answer.`);
+    // The reason is the network's (refused, a TLS failure, a redirect, the
+    // timeout); the message says where, never with what credential.
+    return signal.aborted ? timedOut() : refusal(503, 'platform.unreachable', `The platform at ${origin} did not answer.`);
   }
+}
+
+/** A reply's body as JSON, or undefined when it is not JSON. */
+function json(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined; // not JSON: the caller reads that as no answer it knows
+  }
+}
+
+/** The code and message of a refusal the platform (or `sendToPlatform`) answered with; the status when it said none. */
+function refusalOf(reply: PlatformReply): { code: string; message: string } {
+  const error = record(record(json(reply.body))?.error);
+  const code = typeof error?.code === 'string' ? error.code : '';
+  const message = typeof error?.message === 'string' && error.message !== '' ? error.message : `the platform answered ${reply.status}`;
+  return { code, message };
+}
+
+/** What the Metadata view shows for a file, and what to tell the person when the platform could not say. */
+export interface PageMode {
+  mode: 'page' | 'files';
+  /** Why the file keeps file mode though a platform is configured; the shell says it once a session. */
+  notice?: string;
+  /** Whether setting the token is what would help. */
+  askToken?: boolean;
+}
+
+/**
+ * Whether the file at `source` (its path from its folder, the folder's name
+ * first) is a page on the platform: the page view when the platform has one,
+ * file mode when it has none or cannot be reached. A missing, expired or
+ * refused token (401, 403) and a platform slower than `timeoutMs` (504) keep
+ * file mode too — every content file would otherwise lose it — with a notice
+ * that says why. Any other answer is the page view, which shows what was said.
+ */
+export async function pageMode(deps: PlatformDeps, source: string, timeoutMs: number = MODE_TIMEOUT_MS): Promise<PageMode> {
+  const path = `/api/v2/content/pages/?${new URLSearchParams({ source }).toString()}`;
+  const reply = await sendToPlatform({ ...deps, confirm: () => Promise.resolve(false) }, { method: 'GET', path }, timeoutMs);
+  if (reply.status === 503) {
+    return { mode: 'files' };
+  }
+  if (reply.status === 401 || reply.status === 403 || reply.status === 504) {
+    const origin = deps.origin() ?? 'the platform';
+    const { code, message } = refusalOf(reply);
+    const notice =
+      reply.status === 504
+        ? `files stay in file mode: ${origin} did not answer within ${duration(timeoutMs)}.`
+        : reply.status === 403
+          ? `files stay in file mode: ${origin} refused to say which files are pages (${message}).`
+          : code === 'auth.no_token'
+            ? `files stay in file mode: there is no token for ${origin}. Set one to edit their pages here.`
+            : `files stay in file mode: ${origin} did not accept your token (${message}). Set a new one to edit their pages here.`;
+    return { mode: 'files', notice, askToken: reply.status === 401 };
+  }
+  if (reply.status !== 200) {
+    return { mode: 'page' };
+  }
+  // A platform that answers something else: the page view shows what it said.
+  const found = record(json(reply.body));
+  return { mode: found !== undefined && found.count === 0 ? 'files' : 'page' };
+}
+
+/** What the platform says of a token before it is kept. */
+export type TokenCheck =
+  | { verdict: 'accepted'; username: string }
+  | { verdict: 'rejected'; message: string }
+  | { verdict: 'unchecked'; message: string };
+
+/**
+ * Keep `token` for `origin` in `secrets` unless the platform refuses it.
+ * `GET /api/v2/me` with it says whose it is; a 401 or 403, or an answer that
+ * reads it as nobody's, is a refusal and nothing is stored. A platform that
+ * cannot be asked now (unreachable, slow, failing) leaves it kept and says it
+ * was not checked. The token is in no message.
+ */
+export async function keepToken(
+  fetch: PlatformDeps['fetch'],
+  origin: string,
+  token: string,
+  secrets: { store(key: string, value: string): PromiseLike<void> },
+): Promise<TokenCheck> {
+  const candidate = token.trim();
+  if (candidate === '') {
+    return { verdict: 'rejected', message: 'the token is empty' };
+  }
+  const deps: PlatformDeps = { origin: () => origin, token: () => Promise.resolve(candidate), confirm: () => Promise.resolve(false), fetch };
+  const reply = await sendToPlatform(deps, { method: 'GET', path: '/api/v2/me' });
+  let check: TokenCheck;
+  if (reply.status === 200) {
+    const me = record(json(reply.body));
+    const username = record(me?.user)?.username;
+    check =
+      me?.authenticated === true && typeof username === 'string'
+        ? { verdict: 'accepted', username }
+        : { verdict: 'rejected', message: `${origin} does not know this token` };
+  } else if (reply.status === 401 || reply.status === 403) {
+    check = { verdict: 'rejected', message: refusalOf(reply).message };
+  } else {
+    check = { verdict: 'unchecked', message: refusalOf(reply).message };
+  }
+  if (check.verdict !== 'rejected') {
+    await secrets.store(tokenKey(origin), candidate);
+  }
+  return check;
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {

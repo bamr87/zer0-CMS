@@ -17,7 +17,8 @@
  *     the platform URL (`settingsPlatformUrl`, the settings layer only) and the
  *     person's token (SecretStorage, one per platform origin) — the webview
  *     never holds the token;
- *   - **the token's two commands**, which `src/commands/platform.ts` registers.
+ *   - **the token's two commands**, which `src/commands/platform.ts` registers;
+ *     a token is kept only when the platform does not refuse it (`keepToken`).
  *
  * Nothing here opens a socket at activation (decision D11): a request leaves
  * only when a webview a person opened asks for it.
@@ -30,9 +31,9 @@ import { EventSource } from 'eventsource';
 import * as vscode from 'vscode';
 
 import { currentConfig, onConfigChange, settingsPlatformUrl } from '../config';
-import { platformOrigin, sendToPlatform, StudioBridge, studioPage, tokenKey, type StudioView } from '../core';
+import { keepToken, pageMode, platformOrigin, StudioBridge, studioPage, tokenKey, type StudioView } from '../core';
 import { describeError, log } from '../logger';
-import { confirm, isEditableDocument, notifyError, notifyInfo } from '../uiState';
+import { confirm, isEditableDocument, notifyError, notifyInfo, notifyWarning } from '../uiState';
 
 type PanelView = Exclude<StudioView, 'page'>;
 
@@ -57,11 +58,14 @@ function editable(document: vscode.TextDocument): boolean {
 }
 
 const TITLES: Record<PanelView, string> = { dashboard: 'zer0 studio', ai: 'zer0 AI' };
+const SET_TOKEN = 'Set token';
 
 export class Studio implements vscode.Disposable {
   private readonly panels = new Map<PanelView, { panel: vscode.WebviewPanel; session: Session }>();
   private readonly sessions = new Set<Session>();
   private readonly disposables: vscode.Disposable[] = [];
+  /** Whether this session has said why files keep file mode (`modeFor`): once is enough. */
+  private noticed = false;
 
   constructor(
     readonly context: vscode.ExtensionContext,
@@ -110,10 +114,12 @@ export class Studio implements vscode.Disposable {
    * editor when the platform has a page imported from the file; file mode with
    * no platform, for a file in no folder, and when the platform has no page
    * for it — a site still on files, a file never imported — or cannot be
-   * reached. Any other answer (no token, a refusal) is the page view, which
-   * says why. Undefined for an editor the view would not edit (output, code):
-   * it keeps what it shows. One request, because a person opened the file with
-   * the view showing.
+   * reached, or has no token it accepts, or has not answered in
+   * `MODE_TIMEOUT_MS` (`pageMode`); the first time a token or a slow platform
+   * is why, a notice says so, once a session. Any other answer is the page
+   * view, which says what the platform said. Undefined for an editor the view
+   * would not edit (output, code): it keeps what it shows. One request,
+   * because a person opened the file with the view showing.
    */
   async modeFor(document: vscode.TextDocument | undefined): Promise<'page' | 'files' | undefined> {
     if (!this.configured()) {
@@ -126,23 +132,24 @@ export class Studio implements vscode.Disposable {
     if (source === undefined) {
       return 'files';
     }
-    const reply = await sendToPlatform(
+    const { mode, notice, askToken } = await pageMode(
       {
         origin: () => this.origin(),
         token: async (origin) => this.context.secrets.get(tokenKey(origin)),
         confirm: () => Promise.resolve(false), // a GET changes nothing
         fetch: this.network,
       },
-      { method: 'GET', path: `/api/v2/content/pages/?${new URLSearchParams({ source }).toString()}` },
+      source,
     );
-    if (reply.status === 503) {
-      return 'files';
+    if (notice !== undefined && !this.noticed) {
+      this.noticed = true;
+      void notifyWarning(notice, ...(askToken === true ? [SET_TOKEN] : [])).then((choice) => {
+        if (choice === SET_TOKEN) {
+          void vscode.commands.executeCommand('zer0Cms.platform.setToken');
+        }
+      });
     }
-    try {
-      return reply.status !== 200 || (JSON.parse(reply.body) as { count?: unknown }).count !== 0 ? 'page' : 'files';
-    } catch {
-      return 'page'; // a platform that answers something else: the page view shows what it said
-    }
+    return mode;
   }
 
   async setToken(): Promise<void> {
@@ -171,9 +178,18 @@ export class Studio implements vscode.Disposable {
     if (token === undefined) {
       return;
     }
-    await this.context.secrets.store(tokenKey(origin), token.trim());
+    // Asked of the platform before it is kept: a token it refuses is not stored.
+    const check = await keepToken(this.network, origin, token, this.context.secrets);
+    if (check.verdict === 'rejected') {
+      void notifyError(`that token was not saved: ${check.message.replace(/\.$/, '')}.`);
+      return;
+    }
     this.reload();
-    void notifyInfo(`your token for ${origin} is set.`);
+    if (check.verdict === 'accepted') {
+      void notifyInfo(`your token for ${origin} is set: signed in as ${check.username}.`);
+    } else {
+      void notifyWarning(`your token for ${origin} is set, but the platform could not check it now: ${check.message}`);
+    }
   }
 
   async clearToken(): Promise<void> {

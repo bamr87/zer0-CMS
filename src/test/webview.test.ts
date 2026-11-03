@@ -73,8 +73,13 @@ import { svgEl } from '../webview/shared/svg';
 import type { DashboardContext, DashboardUi } from '../webview/dashboard/main';
 import {
   apiUrl,
+  keepToken,
   linkTarget,
+  MODE_TIMEOUT_MS,
+  pageMode,
+  PLATFORM_TIMEOUT_MS,
   platformOrigin,
+  sendToPlatform,
   StudioBridge,
   studioPage,
   tokenKey,
@@ -820,6 +825,98 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(f.posted[0]?.status, 503);
     assert.match(String(f.posted[0]?.body), /cms\.test/);
     assert.ok(!JSON.stringify(f.posted).includes(TOKEN));
+  });
+
+  test('a platform that never answers is a 504 within the timeout, naming the platform', async () => {
+    const f = fake({ respond: () => new Promise<Response>(() => undefined) });
+    const started = Date.now();
+    const reply = await sendToPlatform(f.deps, { method: 'GET', path: '/api/v2/me' }, 25);
+    assert.equal(reply.status, 504);
+    assert.match(reply.body, /"code":"platform\.timeout"/);
+    assert.match(reply.body, /cms\.test/);
+    assert.ok(Date.now() - started < 2000, 'answered within the timeout, not after the fetch');
+    assert.ok(f.sent[0]?.init.signal instanceof AbortSignal, 'the request carries the signal that ends it');
+    assert.ok(!reply.body.includes(TOKEN));
+    assert.equal(PLATFORM_TIMEOUT_MS, 30_000);
+  });
+
+  test('the Metadata view keeps file mode, with a notice, when the token is missing or refused or the platform is slow', async () => {
+    const SOURCE = 'drsai/_posts/a.md';
+    const answer = (status: number, body: unknown) => () =>
+      Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
+    const expired = { error: { code: 'auth.failed', message: 'unknown, expired or revoked token', status: 401, details: [] } };
+
+    const refused = await pageMode(fake({ respond: answer(401, expired) }).deps, SOURCE);
+    assert.equal(refused.mode, 'files');
+    assert.match(refused.notice ?? '', /cms\.test/);
+    assert.match(refused.notice ?? '', /unknown, expired or revoked token/);
+    assert.equal(refused.askToken, true);
+    const none = await pageMode(fake({ origin: 'https://elsewhere.test' }).deps, SOURCE);
+    assert.equal(none.mode, 'files');
+    assert.equal(none.askToken, true);
+    const forbidden = await pageMode(fake({ respond: answer(403, { error: { code: 'auth.forbidden', message: 'no', status: 403, details: [] } }) }).deps, SOURCE);
+    assert.equal(forbidden.mode, 'files');
+    assert.ok(forbidden.notice !== undefined);
+
+    const slow = fake({ respond: () => new Promise<Response>(() => undefined) });
+    const late = await pageMode(slow.deps, SOURCE, 25);
+    assert.equal(late.mode, 'files');
+    assert.match(late.notice ?? '', /did not answer/);
+    assert.equal(late.askToken, false);
+    assert.equal(MODE_TIMEOUT_MS, 5_000);
+
+    // A page, no page, no platform and an answer it cannot read are decided as before, with nothing to tell.
+    const found = fake({ respond: answer(200, { count: 1, results: [] }) });
+    assert.deepEqual(await pageMode(found.deps, SOURCE), { mode: 'page' });
+    assert.equal(found.sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=drsai%2F_posts%2Fa.md`);
+    assert.deepEqual(await pageMode(fake({ respond: answer(200, { count: 0, results: [] }) }).deps, SOURCE), { mode: 'files' });
+    assert.deepEqual(await pageMode(fake({ origin: undefined }).deps, SOURCE), { mode: 'files' });
+    assert.deepEqual(await pageMode(fake({ respond: () => Promise.reject(new Error('offline')) }).deps, SOURCE), { mode: 'files' });
+    assert.deepEqual(await pageMode(fake({ respond: answer(500, {}) }).deps, SOURCE), { mode: 'page' });
+  });
+
+  test('a token is kept only when the platform does not refuse it, and is asked about at that origin alone', async () => {
+    const CANDIDATE = 'zer0u_pasted';
+    const kept = () => {
+      const values = new Map<string, string>();
+      return { values, store: (key: string, value: string) => Promise.resolve(void values.set(key, value)) };
+    };
+    const network = (status: number, body: unknown) => {
+      const sent: Array<{ url: string; init: RequestInit }> = [];
+      const fetch = (url: string, init: RequestInit) => {
+        sent.push({ url, init });
+        return Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
+      };
+      return { sent, fetch };
+    };
+
+    const ok = network(200, { authenticated: true, user: { username: 'editor' } });
+    const accepted = kept();
+    assert.deepEqual(await keepToken(ok.fetch, ORIGIN, ` ${CANDIDATE}\n`, accepted), { verdict: 'accepted', username: 'editor' });
+    assert.equal(accepted.values.get(tokenKey(ORIGIN)), CANDIDATE);
+    assert.equal(ok.sent[0]?.url, `${ORIGIN}/api/v2/me`);
+    assert.equal((ok.sent[0]?.init.headers as Record<string, string>).Authorization, `Bearer ${CANDIDATE}`);
+
+    for (const [status, body] of [
+      [401, { error: { code: 'auth.failed', message: 'unknown, expired or revoked token', status: 401, details: [] } }],
+      [403, { error: { code: 'auth.forbidden', message: 'not yours', status: 403, details: [] } }],
+      [200, { authenticated: false, user: null }],
+    ] as const) {
+      const secrets = kept();
+      const check = await keepToken(network(status, body).fetch, ORIGIN, CANDIDATE, secrets);
+      assert.equal(check.verdict, 'rejected', `${status} ${JSON.stringify(body)}`);
+      assert.equal(secrets.values.size, 0, 'a rejected token was stored');
+      assert.ok(!JSON.stringify(check).includes(CANDIDATE), 'the token is in what the person is told');
+    }
+
+    // A platform that cannot be asked now keeps the token, and says it was not checked.
+    const offline = kept();
+    const unchecked = await keepToken(() => Promise.reject(new Error('offline')), ORIGIN, CANDIDATE, offline);
+    assert.equal(unchecked.verdict, 'unchecked');
+    assert.equal(offline.values.get(tokenKey(ORIGIN)), CANDIDATE);
+    const blank = kept();
+    assert.equal((await keepToken(ok.fetch, ORIGIN, '  ', blank)).verdict, 'rejected');
+    assert.equal(blank.values.size, 0);
   });
 
   test('a stream is followed with the token, relayed by its id, closed at its end, and refused off the API', async () => {
