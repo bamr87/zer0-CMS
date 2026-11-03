@@ -40,8 +40,11 @@ for that date (`go_live_at`; Wagtail holds the revision until cms/tasks.py's
 sweep publishes it) — unless `_config.yml` sets `future:`, when Jekyll builds
 it now and it is published now. The markers stay in the page's `front_matter`.
 
-**Idempotent.** A file whose digest has not changed is skipped. A changed file
-updates its page — unless an editor changed that page in Wagtail since the
+**Idempotent, one file at a time.** Each file commits on its own, so a run
+that stops part way (cancelled, out of time, the database gone) keeps what it
+imported, and the next run picks up the rest. A file whose digest has not
+changed is skipped. A changed file updates its page — unless an editor
+changed that page in Wagtail since the
 last import (`ImportedSource.unchanged`: its content, or the path and
 front-matter order of a page whose file a person edits), in which case it is
 reported as a conflict and left alone (`--force` overrides). A new file at a
@@ -62,6 +65,7 @@ once).
 
 import hashlib
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -69,7 +73,7 @@ from pathlib import Path
 import yaml
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
-from django.db import transaction
+from django.db import InterfaceError, OperationalError, transaction
 from django.db.models import F
 from django.utils.text import slugify
 from wagtail.images import get_image_model
@@ -117,6 +121,7 @@ class Report:
     unchanged: list = field(default_factory=list)
     conflicts: list = field(default_factory=list)
     errors: list = field(default_factory=list)
+    timings: dict = field(default_factory=dict)  # phase → seconds (import_site)
 
     def summary(self) -> str:
         return (
@@ -453,40 +458,76 @@ def ensure_site_root(site_key: str, root: Path, config: dict, repo_root: Path) -
     return page
 
 
-def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
+# The database is gone (Postgres restarting, the connection dropped): every file after this one would fail the same
+# way, so the run stops there, and what each file before it committed stays.
+STOPS = (OperationalError, InterfaceError)
+
+
+def import_site(root, site_key: str, *, force=False, repo_root=None, progress=None, check=None, report=None) -> Report:
+    """Import the site at `root` as `site_key`; returns the report (`report`,
+    when the caller gives one to fill, so what a run that stopped early did is
+    still known). Each file commits on its own, so a run that stops — a
+    `check()` that raises (a job's cancel, between files), the database gone
+    (`STOPS`) — keeps what it imported, and the next run, which skips what is
+    unchanged, picks up the rest. `progress(n, total)` hears of each file: 0
+    when the files start, after the site's images, then after each one.
+    `report.timings` says what each phase took, in seconds: `scan` (the
+    catalog), `images`, `documents` and `index` (relinking the pages that name
+    what changed, apart from `documents`)."""
     from django.conf import settings
 
     from graph.services import one_link_index_per_site, site_links
 
+    clock = time.monotonic()
     root = Path(root)
     repo_root = Path(repo_root or settings.REPO_ROOT)
     config = read_config(root)
-    report = Report(site_key=site_key)
+    report = report if report is not None else Report(site_key=site_key)
     docs = documents(root, config, report.errors)
     importer = ensure_legacy_import_user()
-    with transaction.atomic(), one_link_index_per_site():
-        site_root = ensure_site_root(site_key, root, config, repo_root)
-        collection = Collection.objects.filter(name=f"site: {site_key}").first()
-        if collection is None:
-            collection = Collection.get_first_root_node().add_child(name=f"site: {site_key}")
+    report.timings["scan"], clock = _since(clock)
+    with one_link_index_per_site():
+        with transaction.atomic():
+            site_root = ensure_site_root(site_key, root, config, repo_root)
+        with transaction.atomic():
+            collection = Collection.objects.filter(name=f"site: {site_key}").first()
+            if collection is None:
+                collection = Collection.get_first_root_node().add_child(name=f"site: {site_key}")
         run = _Run(site_key, site_root, config, importer, force, report)
         run.images = import_images(root, config, docs, collection)
         sources = ImportedSource.objects.filter(site_key=site_key).annotate(page_type=F("page__content_type"))
         run.sources = {source.legacy_path: source for source in sources}
+        report.timings["images"], clock = _since(clock)
         # Books before chapters, so a chapter finds its book.
         ordered = sorted(docs, key=lambda d: (page_class(d) is ChapterPage, d.rel))
-        for doc in ordered:
-            if _unchanged(doc, run):
-                continue
-            try:
-                with transaction.atomic():
-                    written = _import_document(doc, run)
-                    if written:
-                        run.links().update(written)
-            except Exception as e:  # noqa: BLE001 — one bad file is reported; the rest of the site still imports
-                report.errors.append(f"{doc.rel}: {type(e).__name__}: {e}")
-                site_links(site_root, fresh=True)  # what it had read of the failed document's pages went with it
+        report.timings["index"] = 0.0
+        if progress is not None:
+            progress(0, len(ordered))
+        for n, doc in enumerate(ordered, 1):
+            if check is not None:
+                check()
+            if not _unchanged(doc, run):
+                try:
+                    with transaction.atomic():
+                        written = _import_document(doc, run)
+                        if written:
+                            started = time.monotonic()
+                            run.links().update(written)
+                            report.timings["index"] += time.monotonic() - started
+                except STOPS:
+                    raise
+                except Exception as e:  # noqa: BLE001 — one bad file is reported; the rest of the site still imports
+                    report.errors.append(f"{doc.rel}: {type(e).__name__}: {e}")
+                    site_links(site_root, fresh=True)  # what it had read of the failed document's pages went with it
+            if progress is not None:
+                progress(n, len(ordered))
+        report.timings["documents"] = _since(clock)[0] - report.timings["index"]
     return report
+
+
+def _since(clock: float) -> tuple[float, float]:
+    now = time.monotonic()
+    return round(now - clock, 3), now
 
 
 def _unchanged(doc: Document, run: _Run) -> bool:

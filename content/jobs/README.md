@@ -29,7 +29,7 @@ job = jobs.start("sync", user=person, site=site, params={})  # queued; runs afte
 
 `jobs.services.execute` is the worker's half (`jobs.tasks.run_job`): it marks the job running, calls the handler, and records how it ended — `Failed` ends it as failed with its reason, any other exception as failed with the exception (logged), `Cancelled` as cancelled. A command runs a job in-process with `start(..., enqueue=False)` and `execute` (`manage.py site_job`). An `exclusive` kind runs one at a time per site together with every other exclusive kind (sync and write-back are), so two of them never race on one checkout: starting one while another is queued or running is `Busy` (409 `job.busy`).
 
-Cancelling is cooperative: a queued job is cancelled at once and never runs; a running one is asked to stop and stops at its handler's next `ctx.check()`; an ended one cannot be cancelled (409 `job.final`).
+Cancelling is cooperative: a queued job is cancelled at once and never runs; a running one is asked to stop and stops at its handler's next `ctx.check()` — a sync and a write-back check between files, the doctor before it records its findings — and keeps what it committed; an ended one cannot be cancelled (409 `job.final`).
 
 ## The API
 

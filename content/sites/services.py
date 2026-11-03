@@ -47,13 +47,13 @@ from pathlib import Path
 
 import yaml
 from django.conf import settings
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from wagtail.models import Site
 
 from exporters.jekyll import site_files
-from importers.jekyll import ensure_site_root, import_site, read_config
+from importers.jekyll import Report, ensure_site_root, import_site, read_config
 from importers.models import ImportedSource
 from jobs import services as jobs
 
@@ -213,15 +213,44 @@ def start(kind: str, managed: ManagedSite, *, user=None, params: dict | None = N
 # ── sync ────────────────────────────────────────────────────────────────────
 
 
+# A sync logs a line every this many files, so its log — the studio's, the extension's — moves while it runs.
+PROGRESS_EVERY = 25
+
+
 @jobs.handler("sync", exclusive=True)
 def run_sync(job, ctx):
     managed = job.site.managed
     ctx.log(f"Reading {managed.checkout} the way Jekyll 4.4 reads it …")
+    report = Report(site_key=managed.key)
+
+    def progress(n, total):
+        if n == 0:
+            ctx.log(f"{total} file(s) …")
+        elif n % PROGRESS_EVERY == 0 and n < total:
+            ctx.log(f"{n}/{total}")
+
     try:
-        report = import_site(managed.root, managed.key, force=bool(job.params.get("force")))
+        import_site(
+            managed.root,
+            managed.key,
+            force=bool(job.params.get("force")),
+            progress=progress,
+            check=ctx.check,
+            report=report,
+        )
     except (OSError, ValueError, catalog.UnsafePath) as e:
         ctx.log(str(e), "error")
         raise jobs.Failed(str(e)) from e
+    except DatabaseError:
+        raise  # the database is gone: nothing more can be recorded; each file it imported is committed
+    except Exception:
+        _synced(managed, report, ctx)  # stopped part way (cancelled, out of time): what it read is the site's now
+        raise
+    return _synced(managed, report, ctx)
+
+
+def _synced(managed, report, ctx) -> dict:
+    """Record what a sync read — its log, each file's digest on the site — and say what each phase took."""
     for rel in report.created:
         ctx.log(f"new page from {rel}")
     for rel in report.updated:
@@ -242,6 +271,9 @@ def run_sync(job, ctx):
     managed.digests, managed.last_synced_at = digests, timezone.now()
     managed.save(update_fields=["digests", "last_synced_at"])
     ctx.log(report.summary())
+    if report.timings:
+        took = ", ".join(f"{phase} {seconds:.1f} s" for phase, seconds in report.timings.items())
+        ctx.log(f"Took {sum(report.timings.values()):.1f} s: {took}.")
     return {
         "created": len(report.created),
         "updated": len(report.updated),
@@ -255,6 +287,11 @@ def run_sync(job, ctx):
 # ── write-back ──────────────────────────────────────────────────────────────
 
 
+# A write-back records what it wrote (each file's text on its page's ImportedSource, its digest on the site) in
+# batches this size, so a write-back stopped part way has recorded all but its last batch.
+RECORD_EVERY = 200
+
+
 @jobs.handler("export", exclusive=True)
 def run_export(job, ctx):
     managed = job.site.managed
@@ -264,43 +301,50 @@ def run_export(job, ctx):
     what = "the latest revisions" if include_drafts else "the live pages, taking down those that are not live,"
     ctx.log(f"Writing {what} of {managed.key} into {managed.checkout} …")
     digests, counts, planned = dict(managed.digests), Counter(), set()
-    for file in site_files(managed.key, include_drafts=include_drafts):
-        ctx.check()
-        owner = (
-            ImportedSource.objects.filter(site_key=managed.key, legacy_path=file.rel)
-            .exclude(page_id=file.page.pk)
-            .first()
-        )
-        if owner is not None:  # a page made here whose path is another page's file — a draft's, say
-            outcome = "conflict"
-            note = f"the file of another page (#{owner.page_id}); this page was not written — change its slug"
-        elif file.rel in planned:
-            outcome, note = "conflict", "two pages want this file; the second was not written"
-        else:
-            planned.add(file.rel)
-            outcome, note = _write(root, file, digests, base, managed.key)
-        counts[outcome] += 1
-        if outcome != "unchanged":
-            ctx.log(
-                f"{file.rel}: {note}",
-                "warning" if outcome == "conflict" else "error" if outcome == "refused" else "info",
-            )
-    for rel in sorted(set(digests) - planned):
-        ctx.check()
-        sources = ImportedSource.objects.filter(site_key=managed.key)
-        if sources.filter(legacy_path=rel).exists() or sources.filter(sidecars__has_key=rel).exists():
-            continue  # its page is still here, at another path now (a page moved: its old file stays), or a book's sidecar
-        outcome, note = _remove(root, rel, digests)
-        counts[outcome] += 1
-        ctx.log(f"{rel}: {note}", "warning" if outcome == "conflict" else "info")
-    managed.digests, managed.last_exported_at = digests, timezone.now()
-    managed.save(update_fields=["digests", "last_exported_at"])
+    # The site's index, read once: which page each file is, and the files written with a page's (sidecars).
+    sources = ImportedSource.objects.filter(site_key=managed.key)
+    owners = dict(sources.values_list("legacy_path", "page_id"))
+    sidecars = {rel for files in sources.values_list("sidecars", flat=True) for rel in files}
+    records = _Records(managed, digests)
+    try:
+        for file in site_files(managed.key, include_drafts=include_drafts):
+            ctx.check()
+            owner = owners.get(file.rel)
+            if owner is not None and owner != file.page.pk:  # a page made here whose path is another page's file
+                outcome = "conflict"
+                note = f"the file of another page (#{owner}); this page was not written — change its slug"
+            elif file.rel in planned:
+                outcome, note = "conflict", "two pages want this file; the second was not written"
+            else:
+                planned.add(file.rel)
+                outcome, note = _write(root, file, digests, base, records)
+            counts[outcome] += 1
+            if outcome != "unchanged":
+                ctx.log(
+                    f"{file.rel}: {note}",
+                    "warning" if outcome == "conflict" else "error" if outcome == "refused" else "info",
+                )
+        for rel in sorted(set(digests) - planned):
+            ctx.check()
+            if rel in owners or rel in sidecars:
+                continue  # its page is still here, at another path now (a page moved: its old file stays), or a book's sidecar
+            outcome, note = _remove(root, rel, digests)
+            counts[outcome] += 1
+            ctx.log(f"{rel}: {note}", "warning" if outcome == "conflict" else "info")
+    except DatabaseError:
+        raise  # the database is gone: what the batches before this one recorded stays
+    except Exception:
+        records.flush()  # stopped part way (cancelled): what it wrote is recorded, so nothing it wrote is a conflict
+        raise
+    records.flush()
+    managed.last_exported_at = timezone.now()
+    managed.save(update_fields=["last_exported_at"])
     summary = ", ".join(f"{n} {k}" for k, n in sorted(counts.items())) or "nothing to write"
     ctx.log(f"Done: {summary}.")
     return dict(counts)
 
 
-def _write(root, file, digests, base, key) -> tuple[str, str]:
+def _write(root, file, digests, base, records) -> tuple[str, str]:
     indexed = digests.get(file.rel)
     if file.take_down and indexed != file.source.source_digest:
         # Not the file the platform last read or wrote for this page (it never had
@@ -314,7 +358,7 @@ def _write(root, file, digests, base, key) -> tuple[str, str]:
     if disk == data:
         digests[file.rel] = writer.sha256(data)
         if not file.verbatim:
-            _record(file, key)
+            records.add(file)
         return "unchanged", "unchanged"
     if (writer.sha256(disk) if disk is not None else None) != indexed:
         state = "deleted" if disk is None else "changed"
@@ -328,31 +372,64 @@ def _write(root, file, digests, base, key) -> tuple[str, str]:
     except writer.Refused as e:
         return "refused", str(e)
     digests[file.rel] = writer.sha256(data)
-    _record(file, key)
+    records.add(file)
     if file.take_down:
         return "written", "taken down: its page is not live (published: false)"
     return "written", "written" if disk is not None else "created"
 
 
-def _record(file, key) -> None:
-    """The file as written is what the page was last exported as. A take-down
-    moved only the marker, so the content it holds — and the hash that says the
-    page is still that content — stays. An ABC book's sidecar is kept beside its
-    page's source."""
-    if file.sidecar:
-        source = ImportedSource.objects.get(pk=file.source.pk)
-        source.sidecars = {**source.sidecars, file.rel: file.text}
-        source.save(update_fields=["sidecars"])
-        return
-    fields = {"source_text": file.text, "source_digest": writer.sha256(file.text)}
-    if not file.take_down:
-        fields["import_hash"] = file.rendered.compute_content_hash()
-    if file.source is not None:
-        ImportedSource.objects.filter(pk=file.source.pk).update(**fields)
-    else:
-        ImportedSource.objects.update_or_create(
-            page=file.page, defaults={"site_key": key, "legacy_path": file.rel, **fields}
-        )
+class _Records:
+    """What a write-back wrote, recorded in batches (`RECORD_EVERY`): the file
+    as written is what its page was last exported as, on its `ImportedSource`,
+    and its digest is the site's. A take-down moved only the marker, so the
+    content it holds — and the hash that says the page is still that content —
+    stays. An ABC book's sidecar is kept beside its page's source."""
+
+    def __init__(self, managed, digests: dict):
+        self.managed, self.digests = managed, digests
+        self.texts: dict[int, ImportedSource] = {}  # the files of pages that have a source
+        self.sidecars: dict[int, dict] = {}  # source id → its sidecars as written so far, kept across batches
+        self.touched: set[int] = set()  # the sources whose sidecars this batch moved
+        self.pending = 0
+
+    def add(self, file) -> None:
+        fields = {"source_text": file.text, "source_digest": writer.sha256(file.text)}
+        if file.sidecar:
+            self.sidecars.setdefault(file.source.pk, dict(file.source.sidecars))[file.rel] = file.text
+            self.touched.add(file.source.pk)
+        elif file.source is None:  # a page made here: its first file, recorded now
+            ImportedSource.objects.update_or_create(
+                page=file.page,
+                defaults={
+                    "site_key": self.managed.key,
+                    "legacy_path": file.rel,
+                    "import_hash": file.rendered.compute_content_hash(),
+                    **fields,
+                },
+            )
+        else:
+            row = self.texts.setdefault(
+                file.source.pk, ImportedSource(pk=file.source.pk, import_hash=file.source.import_hash)
+            )
+            row.source_text, row.source_digest = fields["source_text"], fields["source_digest"]
+            if not file.take_down:
+                row.import_hash = file.rendered.compute_content_hash()
+        self.pending += 1
+        if self.pending >= RECORD_EVERY:
+            self.flush()
+
+    def flush(self) -> None:
+        """Record the batch, and every digest the write-back has moved so far (a removal's too), in one transaction."""
+        with transaction.atomic():
+            if self.texts:
+                ImportedSource.objects.bulk_update(self.texts.values(), ["source_text", "source_digest", "import_hash"])
+            if self.touched:
+                rows = [ImportedSource(pk=pk, sidecars=self.sidecars[pk]) for pk in self.touched]
+                ImportedSource.objects.bulk_update(rows, ["sidecars"])
+            self.managed.digests = dict(self.digests)
+            self.managed.save(update_fields=["digests"])
+        self.texts, self.pending = {}, 0
+        self.touched.clear()
 
 
 def _remove(root, rel, digests) -> tuple[str, str]:
@@ -378,6 +455,7 @@ def run_doctor(job, ctx):
     managed = job.site.managed
     ctx.log(f"Checking {managed.checkout} …")
     report = doctor.run(managed.root)
+    ctx.check()  # asked to stop while it checked: it records nothing
     for line in doctor.to_text(report).splitlines()[1:]:
         ctx.log(line, "error" if "ERROR" in line or (line.startswith("result") and report.errors) else "info")
     ctx.artifact("findings.jsonl", doctor.to_jsonl(report) + "\n", "application/x-ndjson")

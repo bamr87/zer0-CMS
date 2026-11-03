@@ -32,6 +32,28 @@ def fresh_rate_limits():
     yield
 
 
+@pytest.fixture(autouse=True)
+def wagtail_tree(request):
+    """A transactional test (`django_db(transaction=True)`) starts from what
+    the last one's flush left: the apps' post_migrate seeds come back by
+    themselves, but not what Wagtail's own migrations create — the default
+    locale, the page tree's root, the root collection — so those are made
+    again here, whichever transactional test runs first."""
+    marker = request.node.get_closest_marker("django_db")
+    if marker is None or not (marker.kwargs.get("transaction") or "transactional_db" in request.fixturenames):
+        return
+    from django.conf import settings
+    from wagtail.coreutils import get_supported_content_language_variant
+    from wagtail.models import Collection, Locale
+
+    request.getfixturevalue("transactional_db")
+    Locale.objects.get_or_create(language_code=get_supported_content_language_variant(settings.LANGUAGE_CODE))
+    if Page.get_first_root_node() is None:
+        Page.add_root(instance=Page(title="Root", slug="root"))
+    if Collection.get_first_root_node() is None:
+        Collection.add_root(name="Root")
+
+
 @pytest.fixture
 def root_page(db):
     return Page.get_first_root_node()

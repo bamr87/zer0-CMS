@@ -101,8 +101,9 @@ def test_a_second_sync_of_unchanged_files_runs_a_fixed_number_of_queries(n, tmp_
     with CaptureQueriesContext(connection) as queries:
         again = import_site(site, f"generated-{n}")
     assert again.created == again.updated == [] and len(again.unchanged) == n + 1
-    # The site root is the one page it reads: no page of a document is loaded, none is indexed.
-    assert len(queries) <= 6 and len(page_loads) <= 1, [q["sql"] for q in queries.captured_queries]
+    # The site root is the one page it reads: no page of a document is loaded, none is indexed. (Eight statements
+    # with the savepoints of the site root's and the collection's own short transactions.)
+    assert len(queries) <= 8 and len(page_loads) <= 1, [q["sql"] for q in queries.captured_queries]
 
 
 # ── the graph it leaves ────────────────────────────────────────────────────
