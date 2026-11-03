@@ -1667,7 +1667,56 @@ suite('core: the browser bridge — MCP over loopback HTTP (D18)', () => {
     const names = (reply.result as { tools: Array<{ name: string }> }).tools.map((tool) => tool.name);
     assert.deepEqual(names, ['open_browser_page', 'read_page']);
     assert.ok(!names.includes('run_in_terminal'));
-    assert.equal(BROWSER_TOOLS.length, 11);
+    assert.equal(BROWSER_TOOLS.length, 10);
+  });
+
+  test('run_playwright_code is never offered: a snippet can go to any page and run anything there', async () => {
+    const editor = fakeHost();
+    const host: BrowserHost = {
+      ...editor,
+      tools: () => [...editor.tools(), { name: 'run_playwright_code', description: 'Run Playwright', inputSchema: { type: 'object' } }],
+    };
+    assert.ok(!BROWSER_TOOLS.includes('run_playwright_code'));
+    const listed = await result(rpc({ id: 1, method: 'tools/list' }), host);
+    assert.ok(!(listed.result as { tools: Array<{ name: string }> }).tools.some((tool) => tool.name === 'run_playwright_code'));
+    const code = "async (page) => { await page.goto('file:///etc/passwd'); return page.content(); }";
+    const reply = await result(rpc({ id: 2, method: 'tools/call', params: { name: 'run_playwright_code', arguments: { pageId: 'p1', code } } }), host);
+    assert.equal((reply.error as { code: number }).code, -32602);
+    assert.deepEqual(editor.calls, [], 'nothing was invoked');
+  });
+
+  test('what a page shows comes back only from an http or https page — a file: page read, screenshot or summary is refused', async () => {
+    const summary = (url: string): BrowserPart[] => [{ type: 'text', text: `Page Title: passwd\nURL: ${url}\nSnapshot:\n- text: root:x:0:0` }];
+    const call = (name: string, host: BrowserHost) =>
+      result(rpc({ id: 1, method: 'tools/call', params: { name, arguments: { pageId: 'p1' } } }), host);
+    const refused = (reply: Record<string, unknown>): boolean => {
+      const answer = reply.result as { content: BrowserPart[]; isError: boolean };
+      return answer.isError && !JSON.stringify(answer.content).includes('root:x');
+    };
+
+    assert.ok(refused(await call('read_page', fakeHost(summary('file:///etc/passwd')))), 'a file: page read');
+    assert.ok(refused(await call('read_page', fakeHost([{ type: 'text', text: 'root:x:0:0' }]))), 'a read that names no page');
+    assert.ok(!refused(await call('read_page', fakeHost(summary('https://example.com/')))), 'a web page read');
+    const clicked: BrowserPart[] = [{ type: 'text', text: 'Result: undefined' }, ...summary('file:///etc/passwd')];
+    assert.ok(refused(await call('click_element', { ...fakeHost(clicked), tools: () => [{ name: 'click_element', description: '', inputSchema: {} }] })), 'an action on a file: page');
+
+    // A screenshot names no page, so the bridge asks the editor's page list where p1 is.
+    const shooter = (listing: string): BrowserHost => ({
+      tools: () => [{ name: 'screenshot_page', description: 'Screenshot', inputSchema: { type: 'object' } }],
+      invoke: (name) =>
+        Promise.resolve(
+          name === 'list_browser_pages'
+            ? [{ type: 'text', text: listing }]
+            : [{ type: 'image', data: 'cm9vdDp4OjA6MA==', mimeType: 'image/jpeg' }],
+        ),
+    });
+    const shared = 'The following browser pages are currently shared with you and can be interacted with using the browser tools:';
+    const shot = (listing: string) => call('screenshot_page', shooter(listing));
+    const rootx = (reply: Record<string, unknown>): boolean => JSON.stringify(reply).includes('cm9vdDp4OjA6MA==');
+    assert.ok(!rootx(await shot(`${shared}\n- [p1] passwd (file:///etc/passwd) (resource-backed; navigation is limited to this resource) (active)`)), 'a file: page');
+    assert.ok(!rootx(await shot(`${shared}\n- [p2] Studio (https://example.com/) (active)`)), 'a page the list does not show');
+    assert.ok(!rootx(await shot('No browser pages are currently shared with you.')), 'no pages at all');
+    assert.ok(rootx(await shot(`${shared}\n- [p2] Other (file:///tmp/x.html) (visible)\n- [p1] Docs (a) (https://example.com/a_(b)) (active)`)), 'a web page');
   });
 
   test('tools/call reaches only a listed browser tool the editor has', async () => {

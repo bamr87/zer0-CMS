@@ -3,12 +3,12 @@
  * request is held to is testable without an editor and reads in one place.
  *
  * VS Code's integrated browser ships agent tools — open a page, read it, click,
- * type, screenshot, run a Playwright snippet — that only the editor's own chat
- * and its extensions can call. The bridge offers exactly those tools to an agent
- * outside the editor (Claude Code, any MCP client) as an MCP server over
- * Streamable HTTP on this machine: one POST endpoint, JSON-RPC 2.0 answered with
- * JSON, no event stream and no session. The shell (`src/browserBridge.ts`) owns
- * the socket and the editor call; this file decides what a request may do:
+ * type, screenshot — that only the editor's own chat and its extensions can
+ * call. The bridge offers exactly those tools to an agent outside the editor
+ * (Claude Code, any MCP client) as an MCP server over Streamable HTTP on this
+ * machine: one POST endpoint, JSON-RPC 2.0 answered with JSON, no event stream
+ * and no session. The shell (`src/browserBridge.ts`) owns the socket and the
+ * editor call; this file decides what a request may do:
  *
  *   - **Loopback, and never from a web page.** The `Host` must name this
  *     machine, and a request that carries an `Origin` is refused: browsers send
@@ -18,10 +18,15 @@
  *   - **Browser tools only.** `tools/list` and `tools/call` see the editor's
  *     integrated-browser tools named in `BROWSER_TOOLS` and nothing else, so the
  *     bridge never reaches a terminal, a file edit or any other tool the editor
- *     has registered.
+ *     has registered. `run_playwright_code` is not one of them: a snippet can go
+ *     to any URL and run anything in the page, so no rule here could hold it.
  *   - **Web pages only.** A URL handed to `open_browser_page` or `navigate_page`
- *     is http or https; `file:` and every other scheme are refused, so the
- *     browser cannot be used to read the disk.
+ *     is http or https, and what a page shows comes back only from an http or
+ *     https page: a `read_page` result must name its page's URL, a
+ *     `screenshot_page` result is returned only when the editor's page list
+ *     gives that page a web URL, and any result whose page summary names
+ *     another scheme is withheld. A page the person opened on a file, say, is
+ *     neither read nor shown, so the browser cannot be used to read the disk.
  */
 
 import { timingSafeEqual } from 'node:crypto';
@@ -38,7 +43,6 @@ export const BROWSER_TOOLS: readonly string[] = [
   'type_in_page',
   'drag_element',
   'handle_dialog',
-  'run_playwright_code',
 ];
 
 /** The one path the bridge answers on. */
@@ -50,13 +54,18 @@ export const BRIDGE_SERVER_NAME = 'zer0-cms-browser';
 const TOOL_SET: ReadonlySet<string> = new Set(BROWSER_TOOLS);
 /** The tools that take a URL, which must be a web page's. */
 const URL_TOOLS: ReadonlySet<string> = new Set(['open_browser_page', 'navigate_page']);
+/**
+ * One page in `list_browser_pages`' answer, as VS Code 1.144 writes it: a bullet,
+ * `[<id>] <title> (<url>)`, an optional resource note, then where the page is.
+ */
+const LISTED_PAGE = /^\s*(?:-|\d+\.) \[([^\]]*)\] (.*?)(?: \(resource-backed; [^)]*\))? \((?:active|visible|not visible)\)$/;
 const LOOPBACK_HOST = /^(?:localhost|127(?:\.\d{1,3}){3}|\[::1\])(?::\d{1,5})?$/;
 const SUPPORTED_PROTOCOLS: ReadonlySet<string> = new Set(['2024-11-05', '2025-03-26', '2025-06-18']);
 const DEFAULT_PROTOCOL = '2025-06-18';
 const INSTRUCTIONS =
   'Tools that drive the VS Code integrated browser of the editor window that started this bridge. ' +
   'Open a page with open_browser_page, then pass the page id it returns to the other tools. ' +
-  'Only http and https pages can be opened. A person may be asked to confirm a step in the editor.';
+  'Only http and https pages can be opened, read or captured. A person may be asked to confirm a step in the editor.';
 
 /** A tool as the editor describes it. */
 export interface BrowserTool {
@@ -136,6 +145,58 @@ export function isWebUrl(value: string): boolean {
   }
 }
 
+/**
+ * The page a browser tool's result describes, from its page summary: VS Code's
+ * tools answer with `URL: <url>`, after a `Page Title: <title>` line when the
+ * page has one (a title never spans lines). `undefined` when the text is not a
+ * summary.
+ */
+function summaryPageUrl(text: string): string | undefined {
+  const [first = '', second = ''] = text.split('\n', 2);
+  const line = first.startsWith('Page Title: ') ? second : first;
+  return line.startsWith('URL: ') ? line.slice('URL: '.length) : undefined;
+}
+
+/**
+ * The URL `list_browser_pages` gives the page `id`, or `undefined` when the
+ * list does not show it with one. A URL never holds a space, so it is what
+ * follows the line's last ` (`, whatever the page's title says.
+ */
+function listedPageUrl(listing: string, id: string): string | undefined {
+  for (const line of listing.split('\n')) {
+    const match = LISTED_PAGE.exec(line);
+    if (match?.[1] !== id) {
+      continue;
+    }
+    const rest = match[2] ?? '';
+    const open = rest.lastIndexOf(' (');
+    return open >= 0 && rest.endsWith(')') ? rest.slice(open + 2, -1) : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Every page this result shows: the URLs its page summaries name and, for a
+ * screenshot (an image, which names nothing), the URL the editor lists for the
+ * page it was taken of. An entry that is not a web URL withholds the result;
+ * `''` stands for a page the bridge could not place.
+ */
+async function pagesShown(name: string, input: Record<string, unknown>, content: readonly BrowserPart[], host: BrowserHost): Promise<string[]> {
+  const pages = content.flatMap((part) => {
+    const url = part.type === 'text' ? summaryPageUrl(part.text) : undefined;
+    return url === undefined ? [] : [url];
+  });
+  if (name === 'read_page' && pages.length === 0) {
+    pages.push('');
+  }
+  if (name === 'screenshot_page') {
+    const listing = await host.invoke('list_browser_pages', {});
+    const text = listing.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('\n');
+    pages.push(listedPageUrl(text, typeof input.pageId === 'string' ? input.pageId : '') ?? '');
+  }
+  return pages;
+}
+
 /** The transport's rules, in order; `undefined` means the request may be read. */
 function refusal(request: BridgeRequest, token: string): BridgeReply | undefined {
   if (request.path !== BRIDGE_PATH) {
@@ -174,6 +235,9 @@ async function callTool(id: unknown, params: Record<string, unknown>, host: Brow
   }
   try {
     const content = await host.invoke(name, input);
+    if ((await pagesShown(name, input, content, host)).some((page) => !isWebUrl(page))) {
+      return toolText(id, `refused: ${name} returns what http and https pages show only`, true);
+    }
     return rpcResult(id, { content, isError: false });
   } catch (error) {
     // A tool that throws is answered as a flagged result; the next call still works.
