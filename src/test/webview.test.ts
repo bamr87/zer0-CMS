@@ -598,12 +598,15 @@ suite('studio: the host side of the webview transport (G10)', () => {
     went: Record<string, unknown>[];
     opened: string[];
     streams: FakeStream[];
+    saved: Array<[string, string]>;
+    told: string[];
   }
 
   interface FakeOptions {
     origin?: string | undefined;
     answer?: boolean;
     respond?: () => Promise<Response>;
+    trusted?: boolean;
   }
 
   function fake(options: FakeOptions = {}): Fake {
@@ -613,6 +616,8 @@ suite('studio: the host side of the webview transport (G10)', () => {
     const went: Record<string, unknown>[] = [];
     const opened: string[] = [];
     const streams: FakeStream[] = [];
+    const saved: Array<[string, string]> = [];
+    const told: string[] = [];
     const origin = 'origin' in options ? options.origin : ORIGIN;
     const deps: BridgeDeps = {
       post: (message) => void posted.push(message as Record<string, unknown>),
@@ -638,8 +643,11 @@ suite('studio: the host side of the webview transport (G10)', () => {
       },
       go: (to) => void went.push(to),
       openExternal: (url) => void opened.push(url),
+      trusted: () => options.trusted ?? true,
+      save: (filename, text) => Promise.resolve(void saved.push([filename, text])),
+      tell: (message) => void told.push(message),
     };
-    return { deps, posted, sent, asked, went, opened, streams };
+    return { deps, posted, sent, asked, went, opened, streams, saved, told };
   }
 
   const api = (path: string, method = 'GET', body?: string) => ({
@@ -942,6 +950,62 @@ suite('studio: the host side of the webview transport (G10)', () => {
     await bridge.receive({ type: 'stream', id: 5, path: `/api/v2/agent-runs/${OTHER_RUN}/stream/`, events: ['step'] });
     bridge.dispose();
     assert.equal(f.streams[1]?.closed, true, 'a closed webview leaves no stream open');
+  });
+
+  test('a download is fetched again through the gates and saved where the person chooses, in a trusted workspace only', async () => {
+    const reply = (status: number, body: unknown) => () =>
+      Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
+    const MANUSCRIPT = { filename: 'impairment-manuscript.md', markdown: '# The Impairment\n', word_count: 2 };
+    const book = { type: 'save', path: '/api/v2/books/20/manuscript/?include_outline=false', field: 'markdown', filename: 'impairment-manuscript.md' };
+
+    const f = fake({ respond: reply(200, MANUSCRIPT) });
+    await new StudioBridge(f.deps).receive(book);
+    assert.equal(f.sent.length, 1);
+    assert.equal(f.sent[0]?.url, `${ORIGIN}/api/v2/books/20/manuscript/?include_outline=false`);
+    assert.equal(f.sent[0]?.init.method, 'GET');
+    assert.equal((f.sent[0]?.init.headers as Record<string, string>).Authorization, `Bearer ${TOKEN}`);
+    assert.deepEqual(f.saved, [['impairment-manuscript.md', '# The Impairment\n']]);
+    assert.deepEqual(f.posted, [], 'nothing of the file goes back to the webview');
+    assert.deepEqual(f.told, []);
+
+    // No field: the whole answer, indented as the studio's export shows it.
+    const document = { name: 'Headliner', instructions: 'Write headlines.' };
+    const whole = fake({ respond: reply(200, document) });
+    await new StudioBridge(whole.deps).receive({ type: 'save', path: '/api/v2/ai/assistants/a1/export/', filename: 'headliner.json' });
+    assert.deepEqual(whole.saved, [['headliner.json', JSON.stringify(document, null, 2)]]);
+
+    // A name is only a name: the dialog offers its last segment, never a path.
+    const named = fake({ respond: reply(200, MANUSCRIPT) });
+    await new StudioBridge(named.deps).receive({ ...book, filename: '../../.ssh\\authorized_keys' });
+    assert.deepEqual(named.saved.map(([filename]) => filename), ['authorized_keys']);
+
+    // An untrusted workspace asks the platform nothing and writes nothing, and says why.
+    const untrusted = fake({ trusted: false, respond: reply(200, MANUSCRIPT) });
+    await new StudioBridge(untrusted.deps).receive(book);
+    assert.equal(untrusted.sent.length, 0);
+    assert.deepEqual(untrusted.saved, []);
+    assert.match(untrusted.told[0] ?? '', /trusted workspace/);
+
+    // Every gate applies; a refusal, or an answer without the text, saves nothing and is said.
+    const refusals: Array<[Record<string, unknown>, FakeOptions]> = [
+      [{ ...book, path: '/admin/pages/5/' }, {}],
+      [{ ...book, path: '/api/v2/content/pages/5/%70ublish/' }, {}],
+      [book, { respond: reply(401, { error: { code: 'auth.failed', message: 'unknown, expired or revoked token', status: 401, details: [] } }) }],
+      [book, { respond: reply(200, { filename: 'x.md' }) }],
+      [book, { respond: () => Promise.resolve(new Response('not json', { status: 200 })) }],
+    ];
+    for (const [message, options] of refusals) {
+      const refused = fake(options);
+      await new StudioBridge(refused.deps).receive(message);
+      assert.deepEqual(refused.saved, [], JSON.stringify(message));
+      assert.match(refused.told[0] ?? '', /impairment-manuscript\.md was not saved/, JSON.stringify(message));
+    }
+    // A message that is not a save intent is dropped without a request.
+    for (const message of [{ ...book, path: 7 }, { ...book, filename: '' }, { ...book, filename: '..' }, { ...book, field: 'a/b' }, { ...book, text: 'x', path: undefined }]) {
+      const dropped = fake({ respond: reply(200, MANUSCRIPT) });
+      await new StudioBridge(dropped.deps).receive(message);
+      assert.equal(dropped.sent.length + dropped.saved.length + dropped.told.length, 0, JSON.stringify(message));
+    }
   });
 
   test('a destination is handed on as data, and a link opens against the platform or not at all', async () => {

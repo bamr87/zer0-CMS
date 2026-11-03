@@ -7,9 +7,11 @@
 // platform URL and the person's token from SecretStorage, sends it, and posts
 // back the status, the body and the headers a workspace reads. A body that is
 // not JSON — an upload — is refused here, with the platform's envelope, rather
-// than sent as text it is not.
+// than sent as text it is not. A download is an intent too (`save`): the path
+// that answers the file, its field and its name, which the host fetches again
+// and writes where the person chooses — never the file's text.
 import { createSessionClient, type ApiClient } from '@zer0/api';
-import type { Destination, OpenStream } from '@zer0/ui';
+import type { Destination, OpenStream, SaveIntent } from '@zer0/ui';
 
 /** Where messages go and come from: `acquireVsCodeApi()` and `window` in a webview, a fake in tests. */
 export interface Port {
@@ -30,6 +32,8 @@ export interface Connection {
   /** Follow what the host says outside a request: the open file, a destination to show. */
   onFile: (handler: (file: OpenFile | null) => void) => () => void;
   onGo: (handler: (to: Destination) => void) => () => void;
+  /** Hands the host a file to save (@zer0/ui's `Host.save`). */
+  save: (file: SaveIntent) => void;
   post: (message: unknown) => void;
 }
 
@@ -130,6 +134,7 @@ export function connect(port: Port): Connection {
     stream,
     onFile: subscribe(files),
     onGo: subscribe(goes),
+    save: ({ path, filename, field }) => port.post({ type: 'save', path, filename, ...(field === undefined ? {} : { field }) }),
     post: port.post,
   };
 }

@@ -16,7 +16,8 @@
  *   - **one `StudioBridge` per webview**, which re-checks every request and adds
  *     the platform URL (`settingsPlatformUrl`, the settings layer only) and the
  *     person's token (SecretStorage, one per platform origin) — the webview
- *     never holds the token;
+ *     never holds the token — and saves a download through the save dialog,
+ *     in a trusted workspace only (`saveFile`);
  *   - **the token's two commands**, which `src/commands/platform.ts` registers;
  *     a token is kept only when the platform does not refuse it (`keepToken`).
  *
@@ -25,12 +26,13 @@
  */
 
 import { randomBytes } from 'node:crypto';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { EventSource } from 'eventsource';
 import * as vscode from 'vscode';
 
-import { currentConfig, onConfigChange, settingsPlatformUrl } from '../config';
+import { currentConfig, onConfigChange, settingsPlatformUrl, workspaceTrusted } from '../config';
 import { keepToken, pageMode, platformOrigin, StudioBridge, studioPage, tokenKey, type StudioView } from '../core';
 import { describeError, log } from '../logger';
 import { confirm, isEditableDocument, notifyError, notifyInfo, notifyWarning } from '../uiState';
@@ -285,6 +287,9 @@ class Session implements vscode.Disposable {
       openStream: (url, headers, events, onEvent) => followStream(studio.network, url, headers, events, onEvent),
       go: (to) => studio.openDashboard(to),
       openExternal: (url) => void vscode.env.openExternal(vscode.Uri.parse(url, true)),
+      trusted: () => workspaceTrusted(),
+      save: saveFile,
+      tell: (message) => void notifyWarning(message),
     });
     this.disposables.push(webview.onDidReceiveMessage((message: unknown) => this.receive(message)));
     if (view === 'page') {
@@ -356,6 +361,29 @@ class Session implements vscode.Disposable {
     }
     const source = sourcePath(document.uri);
     this.post({ type: 'file', file: source === undefined ? null : { path: source, name: path.basename(document.uri.fsPath) } });
+  }
+}
+
+/**
+ * A file a webview asked to download, written where the person picks in the
+ * save dialog (the bridge has fetched it and checked the workspace is
+ * trusted). It starts beside the open file's folder, else in the home folder.
+ */
+async function saveFile(filename: string, text: string): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  const folder = editor === undefined ? undefined : vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  const target = await vscode.window.showSaveDialog({
+    defaultUri: folder === undefined ? vscode.Uri.file(path.join(os.homedir(), filename)) : vscode.Uri.joinPath(folder.uri, filename),
+    title: `zer0-CMS: save ${filename}`,
+  });
+  if (target === undefined) {
+    return;
+  }
+  try {
+    await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(text));
+    void notifyInfo(`saved ${filename} to ${target.fsPath}.`);
+  } catch (error) {
+    void notifyError(`${filename} was not saved: ${describeError(error)}`);
   }
 }
 

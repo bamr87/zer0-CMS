@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { DiffView } from '../DiffView';
+import { DownloadButton } from '../DownloadButton';
 import { FieldsPanel, type FieldValues } from '../FieldsPanel';
 import { StatusBadge } from '../StatusBadge';
 import { BookAssist } from './BookAssist';
@@ -373,9 +374,17 @@ function Manuscript({ bookId }: { bookId: number }) {
             <Text size="sm">
               {built.data.word_count.toLocaleString()} words · title page, act headings, the prose of every chapter
             </Text>
-            <Anchor href={`data:text/markdown;charset=utf-8,${encodeURIComponent(built.data.markdown)}`} download={built.data.filename}>
+            <DownloadButton
+              path={`/api/v2/books/${bookId}/manuscript/?${new URLSearchParams({ include_outline: String(withOutline) }).toString()}`}
+              field="markdown"
+              filename={built.data.filename}
+              text={built.data.markdown}
+              type="text/markdown"
+              variant="light"
+              size="xs"
+            >
               Download {built.data.filename}
-            </Anchor>
+            </DownloadButton>
           </Group>
           <Text size="sm" mt="sm" className="zer0-prose" lineClamp={40}>
             {built.data.markdown}

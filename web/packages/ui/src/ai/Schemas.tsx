@@ -144,7 +144,11 @@ function SchemaForm({ schema }: { schema?: OutputSchema }) {
         </Group>
         {schema ? (
           <Group gap="xs">
-            <ExportButton name={schema.name} load={() => call(api.GET('/api/v2/ai/output-schemas/{public_id}/export/', { params: { path: { public_id: schema.id } } }))} />
+            <ExportButton
+              name={schema.name}
+              load={() => call(api.GET('/api/v2/ai/output-schemas/{public_id}/export/', { params: { path: { public_id: schema.id } } }))}
+              path={`/api/v2/ai/output-schemas/${schema.id}/export/`}
+            />
             {editable ? <ConfirmButton label="Delete" question={`Delete ${schema.name}? Assistants that use it lose it.`} busy={remove.isPending} onConfirm={() => remove.mutate()} /> : null}
           </Group>
         ) : null}

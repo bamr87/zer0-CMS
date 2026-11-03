@@ -1,7 +1,7 @@
 // The host contract of @zer0/ui. Everything a workspace needs from the page
 // it runs in — the API client, a way to follow a server-sent event stream,
-// navigation, and (where there is a browser session) signing in — comes
-// through <StudioProvider>. The studio supplies a
+// navigation, (where there is a browser session) signing in, and (where the
+// page cannot save a file itself) saving one — comes through <StudioProvider>. The studio supplies a
 // session client, EventSource and React Router; the extension's webviews
 // (PLAN G10) supply a postMessage client and their own panels. Nothing in
 // this package reads a URL, a cookie, storage or a global (eslint.config.js).
@@ -74,6 +74,19 @@ export type OpenStream = (
   onEvent: (event: string, data: unknown) => void,
 ) => () => void;
 
+/**
+ * A file a workspace offers to save, as a host that saves files itself is
+ * asked for it: the GET path under `/api/v2/` that answers it, the JSON field
+ * of that answer holding its text (none: the whole answer, indented two
+ * spaces) and the name to offer. An intent and a target, never the text: the
+ * host fetches the path again through its own gates.
+ */
+export interface SaveIntent {
+  path: string;
+  filename: string;
+  field?: string;
+}
+
 export interface Host {
   api: ApiClient;
   stream: OpenStream;
@@ -85,12 +98,18 @@ export interface Host {
    * it out, and the account workspace offers what the token can do.
    */
   auth?: AuthHost;
+  /**
+   * Saving a file the page cannot save itself — the extension's webviews,
+   * whose host writes it where the person chooses. A host that leaves it out
+   * (the studio) saves in the page (`DownloadButton`).
+   */
+  save?: (file: SaveIntent) => void;
 }
 
 const HostContext = createContext<Host | null>(null);
 
-export function StudioProvider({ api, stream, go, auth, children }: Host & { children: ReactNode }) {
-  return <HostContext value={{ api, stream, go, auth }}>{children}</HostContext>;
+export function StudioProvider({ api, stream, go, auth, save, children }: Host & { children: ReactNode }) {
+  return <HostContext value={{ api, stream, go, auth, save }}>{children}</HostContext>;
 }
 
 function useHost(): Host {
@@ -104,3 +123,5 @@ export const useStream = () => useHost().stream;
 export const useGo = () => useHost().go;
 /** allauth's headless API from the host, or undefined where the host has no browser session. */
 export const useAuthHost = () => useHost().auth;
+/** The host's way to save a file, or undefined where the page saves it itself. */
+export const useSave = () => useHost().save;

@@ -12,7 +12,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AutomationEditor, AutomationList, shortId } from '../src';
-import { fakePlatform, renderUi, type Handler } from '../../../test/harness';
+import { downloads, fakePlatform, nth, renderUi, type Handler } from '../../../test/harness';
 import { EMPTY, page, RUN } from './ai/fixtures';
 
 const automation = (overrides: Record<string, unknown> = {}) => ({
@@ -261,7 +261,10 @@ describe('<AutomationEditor>', () => {
     renderUi(<AutomationEditor id="au1" />, { api });
     await userEvent.click(await screen.findByRole('button', { name: 'Export' }));
     expect(await screen.findByLabelText('The exported document')).toHaveTextContent('hook: monitor.finding');
-    expect(screen.getByRole('link', { name: 'Download findings-to-ideas.yaml' })).toHaveAttribute('download', 'findings-to-ideas.yaml');
+    const saved = downloads();
+    await userEvent.click(screen.getByRole('button', { name: 'Download findings-to-ideas.yaml' }));
+    expect(saved.map((file) => [file.filename, file.type])).toEqual([['findings-to-ideas.yaml', 'application/yaml']]);
+    expect(await nth(saved).text()).toBe(yaml);
   });
 
   it('is read-only for someone it is shared with, whose runs stay its owner’s', async () => {

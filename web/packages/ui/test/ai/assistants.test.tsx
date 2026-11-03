@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { AssistantEditor, AssistantList, shortId } from '../../src';
-import { fakePlatform, renderUi } from '../../../../test/harness';
+import { downloads, fakePlatform, nth, renderUi } from '../../../../test/harness';
 import { agentRun, assistant, EMPTY, liveStream, page, RUN, runRef, schema } from './fixtures';
 
 const lists = {
@@ -111,9 +111,10 @@ describe('<AssistantEditor>', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Export' }));
     const dialog = await screen.findByRole('dialog', { name: 'Export Headliner' });
     expect(within(dialog).getByLabelText('The exported document')).toHaveTextContent('"instructions": "Write headlines."');
-    const download = within(dialog).getByRole('link', { name: 'Download headliner.json' });
-    expect(download).toHaveAttribute('download', 'headliner.json');
-    expect(decodeURIComponent(download.getAttribute('href') ?? '')).toContain('"name": "Headliner"');
+    const saved = downloads();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Download headliner.json' }));
+    expect(saved.map((file) => [file.filename, file.type])).toEqual([['headliner.json', 'application/json']]);
+    expect(await nth(saved).text()).toContain('"name": "Headliner"');
     expect(within(dialog).getByRole('button', { name: 'Copy' })).toBeInTheDocument();
   });
 

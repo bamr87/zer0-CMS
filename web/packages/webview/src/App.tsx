@@ -110,7 +110,7 @@ function Workbench({ connection, ids }: { connection: Connection; ids: readonly 
   const current = shown.find((w) => w.id === place.id) ?? shown[0];
   if (!current) return null;
   return (
-    <StudioProvider api={connection.api} stream={connection.stream} go={go}>
+    <StudioProvider api={connection.api} stream={connection.stream} go={go} save={connection.save}>
       <Stack p="sm" gap="sm">
         {shown.length > 1 ? (
           <Group justify="space-between" wrap="nowrap" align="flex-end">
@@ -137,7 +137,7 @@ function PageView({ connection }: { connection: Connection }) {
   useEffect(() => connection.onFile(setFile), [connection]);
   const go = useCallback((to: Destination) => connection.post({ type: 'go', to }), [connection]);
   return (
-    <StudioProvider api={connection.api} stream={connection.stream} go={go}>
+    <StudioProvider api={connection.api} stream={connection.stream} go={go} save={connection.save}>
       <Stack p="xs">
         {file ? (
           <PageForFile key={file.path} file={file} />

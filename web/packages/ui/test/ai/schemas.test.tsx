@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { SchemaEditor, SchemaList, schemaProblem } from '../../src';
-import { fakePlatform, renderUi, Reply } from '../../../../test/harness';
+import { downloads, fakePlatform, renderUi, Reply } from '../../../../test/harness';
 import { me, page, schema } from './fixtures';
 
 describe('schemaProblem', () => {
@@ -60,7 +60,9 @@ describe('<SchemaEditor>', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Export' }));
     const dialog = await screen.findByRole('dialog', { name: 'Export Story' });
     expect(within(dialog).getByLabelText('The exported document')).toHaveTextContent('"render_template": "## {{ headline }}"');
-    expect(within(dialog).getByRole('link', { name: 'Download story.json' })).toHaveAttribute('download', 'story.json');
+    const saved = downloads();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Download story.json' }));
+    expect(saved.map((file) => file.filename)).toEqual(['story.json']);
   });
 
   it('creates a schema and opens it', async () => {

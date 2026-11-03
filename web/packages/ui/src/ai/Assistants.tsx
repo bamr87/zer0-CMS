@@ -175,6 +175,7 @@ function AssistantForm({ assistant }: { assistant?: Assistant }) {
             <ExportButton
               name={assistant.name}
               load={() => call(api.GET('/api/v2/ai/assistants/{public_id}/export/', { params: { path: { public_id: assistant.id } } }))}
+              path={`/api/v2/ai/assistants/${assistant.id}/export/`}
             />
             {editable ? <ConfirmButton label="Delete" question={`Delete ${assistant.name}? Pipelines that use it keep it from going.`} busy={remove.isPending} onConfirm={() => remove.mutate()} /> : null}
           </Group>

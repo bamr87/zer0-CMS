@@ -12,7 +12,7 @@ import { createSessionClient, type ApiClient } from '@zer0/api';
 import { theme } from '@zer0/tokens';
 import { StudioProvider, type AuthHost, type Destination, type OpenStream } from '@zer0/ui';
 import type { ReactNode } from 'react';
-import { vi } from 'vitest';
+import { onTestFinished, vi } from 'vitest';
 
 export class Reply {
   constructor(
@@ -124,6 +124,33 @@ export function held(body: unknown = {}) {
     answer = () => resolve(body);
   });
   return { reply, answer: () => answer() };
+}
+
+/**
+ * The files the studio saves in the page (`DownloadButton`: a Blob behind a
+ * link it clicks), recorded instead of downloaded — jsdom has no object URLs
+ * and no downloads. Each is read back as its name, media type and text. The
+ * test that asks gets jsdom back as it was when it finishes.
+ */
+export function downloads() {
+  const blobs = new Map<string, Blob>();
+  const saved: { filename: string; type: string; text: () => Promise<string> }[] = [];
+  const { createObjectURL, revokeObjectURL } = URL;
+  URL.createObjectURL = (blob: Blob) => {
+    const url = `blob:studio.test/${blobs.size + 1}`;
+    blobs.set(url, blob);
+    return url;
+  };
+  URL.revokeObjectURL = (url: string) => void blobs.delete(url);
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    const blob = blobs.get(this.href);
+    if (blob) saved.push({ filename: this.download, type: blob.type, text: () => blob.text() });
+  });
+  onTestFinished(() => {
+    click.mockRestore();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+  });
+  return saved;
 }
 
 /** The `at`-th of a list a query found, or a failed test that says so. */

@@ -16,7 +16,7 @@ import { ChannelPanel } from '../src/distribution/Channels';
 import { ComposeForm } from '../src/distribution/Compose';
 import { Ledger, Statistics } from '../src/distribution/Ledger';
 import { PostPanel } from '../src/distribution/PostPanel';
-import { fakePlatform, renderUi, Reply } from '../../../test/harness';
+import { downloads, fakePlatform, nth, renderUi, Reply } from '../../../test/harness';
 
 const API = '/api/v2/distribution';
 const listOf = (results: unknown[]) => ({ count: results.length, next: null, previous: null, results });
@@ -308,9 +308,10 @@ describe('a channel', () => {
     const { container } = renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
     await userEvent.click(await screen.findByRole('button', { name: 'Connect with LinkedIn' }));
     expect(await screen.findByRole('link', { name: 'Continue to LinkedIn' })).toHaveAttribute('href', consent);
-    const download = await screen.findByRole('link', { name: 'Download the ledger file' });
-    expect(download).toHaveAttribute('href', `data:application/json;charset=utf-8,${encodeURIComponent(ledger)}`);
-    expect(download).toHaveAttribute('download', 'linkedin-c1.json');
+    const saved = downloads();
+    await userEvent.click(await screen.findByRole('button', { name: 'Download the ledger file' }));
+    expect(saved.map((file) => [file.filename, file.type])).toEqual([['linkedin-c1.json', 'application/json']]);
+    expect(await nth(saved).text()).toBe(ledger);
     const input = container.ownerDocument.querySelector('input[type="file"]');
     if (!(input instanceof HTMLInputElement)) throw new Error('no file input');
     await userEvent.upload(input, new File(['{"https://example.test/b/": {"urn": "urn:li:share:2"}}'], 'ledger.json', { type: 'application/json' }));

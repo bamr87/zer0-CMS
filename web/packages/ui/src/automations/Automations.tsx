@@ -443,7 +443,13 @@ function State({ automation, secret, onSecret }: { automation: Automation; secre
             </Text>
           </Group>
           <Group gap="xs">
-            <ExportButton name={automation.name} format="yaml" load={async () => (await call(api.GET('/api/v2/automations/{public_id}/export/', path))).yaml} />
+            <ExportButton
+              name={automation.name}
+              format="yaml"
+              load={async () => (await call(api.GET('/api/v2/automations/{public_id}/export/', path))).yaml}
+              path={`/api/v2/automations/${automation.id}/export/`}
+              field="yaml"
+            />
             {automation.can_edit || automation.enabled ? (
               <Button color={automation.enabled ? 'gray' : 'green'} loading={toggle.isPending} onClick={oneClick(() => toggle.mutate())}>
                 {automation.enabled ? 'Pause' : 'Enable'}

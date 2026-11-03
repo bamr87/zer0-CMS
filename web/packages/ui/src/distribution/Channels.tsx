@@ -35,6 +35,7 @@ import { useState } from 'react';
 import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
+import { DownloadButton } from '../DownloadButton';
 import { CONNECTS, KINDS, kindLabel, MEASURED, RENEWS, SETTINGS, secretLabel, useChannel, useChannels, when } from './shared';
 
 type Settings = Record<string, string>;
@@ -375,9 +376,17 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
       </Text>
       <Group>
         {ledger.data ? (
-          <Anchor href={`data:application/json;charset=utf-8,${encodeURIComponent(ledger.data.content)}`} download={ledger.data.filename}>
+          <DownloadButton
+            path={`/api/v2/distribution/channels/${channel.id}/ledger-file/`}
+            field="content"
+            filename={ledger.data.filename}
+            text={ledger.data.content}
+            type="application/json"
+            variant="default"
+            size="xs"
+          >
             Download the ledger file
-          </Anchor>
+          </DownloadButton>
         ) : null}
         <FileButton accept="application/json" onChange={(file) => file && void file.text().then((text) => importLedger.mutate(text))}>
           {(props) => (

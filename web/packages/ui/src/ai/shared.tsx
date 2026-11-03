@@ -35,6 +35,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { ApiError, call, errorText } from '../call';
 import { useApi, useGo } from '../context';
+import { DownloadButton } from '../DownloadButton';
 import { RunStatus, shortId, useLiveRun } from '../RunTimeline';
 
 /** Every row of a list in one page: the AI lists are short. */
@@ -291,8 +292,14 @@ export type DocumentFormat = 'json' | 'yaml';
 const fileName = (name: string, format: DocumentFormat = 'json') =>
   `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export'}.${format}`;
 
-/** Export a row as a document: shown, copied, or saved as a file. A YAML document is the text `load` gives. */
-export function ExportButton({ name, load, format = 'json' }: { name: string; load: () => Promise<unknown>; format?: DocumentFormat }) {
+/**
+ * Export a row as a document: shown, copied, or saved as a file. A YAML
+ * document is the text `load` gives. `path` is the GET that `load` asks (and
+ * `field` the part of its answer `load` keeps), so a host that saves files
+ * itself can fetch the same document again.
+ */
+export function ExportButton(props: { name: string; load: () => Promise<unknown>; path: string; field?: string; format?: DocumentFormat }) {
+  const { name, load, path, field, format = 'json' } = props;
   const [text, setText] = useState<string | null>(null);
   const exported = useMutation({ mutationFn: load, onSuccess: (data) => setText(typeof data === 'string' ? data : JSON.stringify(data, null, 2)) });
   return (
@@ -308,9 +315,9 @@ export function ExportButton({ name, load, format = 'json' }: { name: string; lo
           </Code>
           <Group>
             <CopyButton value={text ?? ''}>{({ copied, copy }) => <Button onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>}</CopyButton>
-            <Button component="a" variant="light" href={`data:application/${format};charset=utf-8,${encodeURIComponent(text ?? '')}`} download={fileName(name, format)}>
+            <DownloadButton path={path} field={field} filename={fileName(name, format)} text={text ?? ''} type={`application/${format}`} variant="light">
               Download {fileName(name, format)}
-            </Button>
+            </DownloadButton>
           </Group>
         </Stack>
       </Modal>

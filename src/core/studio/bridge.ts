@@ -32,6 +32,11 @@
  *   - **Nothing waits forever.** A request the platform has not answered, body
  *     and all, in `PLATFORM_TIMEOUT_MS` is answered 504 `platform.timeout`; the
  *     Metadata view waits `MODE_TIMEOUT_MS` and keeps file mode (`pageMode`).
+ *   - **A download is the host's.** A webview cannot save a file, so it posts
+ *     an intent — the path that answers the file, the field of its JSON that
+ *     holds the text, the name to offer — and the host GETs that path through
+ *     every gate above and writes the text where the person chooses, in a
+ *     trusted workspace only. The file's text never crosses from the webview.
  *
  * A refusal answers like the platform would — the error envelope with a status
  * and a code — so the workspace shows it where the request was made. A body is
@@ -106,6 +111,12 @@ export interface BridgeDeps {
   go(to: Record<string, unknown>): void;
   /** Opens a URL outside the editor. */
   openExternal(url: string): void;
+  /** Whether the workspace is trusted (D13): only a trusted one has a file written. */
+  trusted(): boolean;
+  /** Asks the person where to save `filename` and writes `text` there, and nowhere they did not pick. */
+  save(filename: string, text: string): Promise<void>;
+  /** Tells the person, outside the webview, why something they asked for did not happen. */
+  tell(message: string): void;
 }
 
 /**
@@ -423,6 +434,32 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
+/** A JSON field a save may name: one plain key, never a path into the answer. */
+const SAVE_FIELD = /^[a-z_]{1,64}$/;
+
+/** The name a save dialog offers: the last segment of what the webview named, never a path; undefined when that is no name. */
+function saveName(filename: unknown): string | undefined {
+  if (typeof filename !== 'string') {
+    return undefined;
+  }
+  const last = filename.split(/[/\\]/).pop() ?? '';
+  const name = [...last].filter((c) => c >= ' ' && c !== '\x7f').join('').trim(); // no control character is part of a name
+  return name === '' || name === '.' || name === '..' || name.length > 255 ? undefined : name;
+}
+
+/** A file's text from the platform's answer: `field`'s string, or with no field the whole answer, indented two spaces. */
+function fileText(body: string, field: string | undefined): string | undefined {
+  const answer = json(body);
+  if (answer === undefined) {
+    return undefined;
+  }
+  if (field === undefined) {
+    return JSON.stringify(answer, null, 2);
+  }
+  const text = record(answer)?.[field];
+  return typeof text === 'string' ? text : undefined;
+}
+
 /** A destination is the dashboard's to read: a small JSON object with a string `to`, nothing more. */
 function destination(value: unknown): Record<string, unknown> | undefined {
   const to = record(value);
@@ -466,6 +503,8 @@ export class StudioBridge {
         }
         return;
       }
+      case 'save':
+        return this.save(m);
       default:
         return;
     }
@@ -482,6 +521,27 @@ export class StudioBridge {
     if (typeof m.id === 'number') {
       this.deps.post({ type: 'api', id: m.id, ...(await sendToPlatform(this.deps, m)) });
     }
+  }
+
+  /** A download the webview asked for: fetched again here, through every gate, and saved where the person says. */
+  private async save(m: Record<string, unknown>): Promise<void> {
+    const filename = saveName(m.filename);
+    const field = m.field;
+    if (filename === undefined || typeof m.path !== 'string' || (field !== undefined && (typeof field !== 'string' || !SAVE_FIELD.test(field)))) {
+      return;
+    }
+    if (!this.deps.trusted()) {
+      this.deps.tell(`${filename} was not saved: saving a file needs a trusted workspace.`);
+      return;
+    }
+    const reply = await sendToPlatform(this.deps, { method: 'GET', path: m.path });
+    const text = reply.status === 200 ? fileText(reply.body, field) : undefined;
+    if (text === undefined) {
+      const why = reply.status === 200 ? `the platform's answer holds no ${field ?? 'document'} to save` : refusalOf(reply).message;
+      this.deps.tell(`${filename} was not saved: ${why.replace(/\.$/, '')}.`);
+      return;
+    }
+    await this.deps.save(filename, text);
   }
 
   private async stream(m: Record<string, unknown>): Promise<void> {

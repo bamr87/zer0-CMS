@@ -33,6 +33,7 @@ export {
   useApi,
   useAuthHost,
   useGo,
+  useSave,
   useStream,
   type AccountSection,
   type AieoSection,
@@ -41,10 +42,12 @@ export {
   type Host,
   type OpenStream,
   type OutboxTab,
+  type SaveIntent,
 } from './context';
 export type { DistributionTab } from './context';
 export { CreatePage } from './CreatePage';
 export { DiffView } from './DiffView';
+export { DownloadButton } from './DownloadButton';
 export { Distribute } from './distribution/Compose';
 export { Distribution } from './distribution/Distribution';
 export { FieldsPanel, fromLocalInput, toLocalInput, type FieldValues } from './FieldsPanel';

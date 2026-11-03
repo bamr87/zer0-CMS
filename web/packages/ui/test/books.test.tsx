@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { BookAssist, BookShelf, BookView, ChapterWriter, PremiseToBook } from '../src';
-import { fakePlatform, pageDetail, renderUi } from '../../../test/harness';
+import { downloads, fakePlatform, nth, pageDetail, renderUi } from '../../../test/harness';
 
 const summary = (overrides: Record<string, unknown> = {}) => ({
   id: 20,
@@ -243,9 +243,10 @@ describe('<BookView>', () => {
     expect(screen.getByText(/unresolved placeholder \[Company Name\]/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'Manuscript' }));
     await userEvent.click(screen.getByRole('button', { name: 'Build the manuscript' }));
-    const link = await screen.findByRole('link', { name: 'Download impairment-manuscript.md' });
-    expect(link).toHaveAttribute('download', 'impairment-manuscript.md');
-    expect(link.getAttribute('href')).toBe(`data:text/markdown;charset=utf-8,${encodeURIComponent('# The Impairment\n\n---\n')}`);
+    const saved = downloads();
+    await userEvent.click(await screen.findByRole('button', { name: 'Download impairment-manuscript.md' }));
+    expect(saved.map((file) => [file.filename, file.type])).toEqual([['impairment-manuscript.md', 'text/markdown']]);
+    expect(await nth(saved).text()).toBe('# The Impairment\n\n---\n');
   });
 
   it('edits an act guide as a draft revision of the book, against the revision it was read from', async () => {
