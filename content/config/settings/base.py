@@ -165,6 +165,12 @@ DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / '
 # Every request is one transaction, so an admin publish and the outbox row its
 # signal writes commit together or not at all (outbox/README.md).
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# W1-11: each role names itself to Postgres (compose sets DATABASE_APPLICATION_NAME per service), so pg_stat_activity
+# and the server's log (its line prefix carries %a) say which role held a connection — a backend that crashed included.
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    DATABASES["default"].setdefault("OPTIONS", {})["application_name"] = env(
+        "DATABASE_APPLICATION_NAME", default=APP_NAME
+    )
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── Accounts: sign-in, MFA, sessions, password policy (accounts/README.md) ──
@@ -476,6 +482,9 @@ CELERY_TASK_ROUTES = {
     **{f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")},
     "automations.tasks.execute_run": {"queue": "research"},
 }
+# W1-11: a site's sync and write-back jobs have a queue of their own, which the compose `worker` consumes beside the
+# default one (`-Q celery,sites`), so a long first sync can move to a worker of its own without touching agent runs.
+CELERY_TASK_ROUTES["jobs.tasks.run_job"] = {"queue": "sites"}
 # W1-9: every agent run ends. `run_agent` stops at AGENT_RUN_SOFT_SECONDS (SoftTimeLimitExceeded fails the run; the
 # hard limit is 30 seconds later), unless the caller passes its own (AIEO does). A run no worker will finish — its
 # worker died, or the broker lost its message — is failed by beat once it has been queued or running for

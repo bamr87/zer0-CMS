@@ -29,6 +29,13 @@
 # Every service carries the fleet's labels and log rotation (UPS-OPS-17), so
 # the hub's log plane can pick it up by label; GIT_SHA and BUILT_AT reach the
 # platform image from the environment (`GIT_SHA=$(git rev-parse --short HEAD)`).
+#
+# Every role of the platform (W1-11) runs under an init and restarts unless a
+# person stopped it (`x-always-on`), is health-checked — the roles without HTTP
+# by the heartbeat file their loop touches (content/ops/heartbeat.py) — runs the
+# one image `content` builds (`x-content-image`), and names itself to Postgres
+# (DATABASE_APPLICATION_NAME), whose log carries that name and the backend's PID
+# on every line, so a crashed backend can be traced to the role that held it.
 
 x-fleet-logging: &fleet-logging
   driver: json-file
@@ -46,6 +53,16 @@ x-content-build: &content-build
   args:
     GIT_SHA: ${GIT_SHA:-unknown}
     BUILT_AT: ${BUILT_AT:-unknown}
+
+# The platform image: `content` builds it, every other role runs that build (pull_policy: never — it is in no
+# registry), so the image is built once and no two roles run different builds.
+x-content-image: &content-image zer0-cms-content:${GIT_SHA:-local}
+
+# tini as PID 1, so a stop's SIGTERM reaches the server (a shell or Python as PID 1 ignored it, and every stop ended in
+# SIGKILL, exit 137) and the processes a healthcheck leaves behind are reaped; and a restart after a crash or a reboot.
+x-always-on: &always-on
+  init: true
+  restart: unless-stopped
 
 services:
   # zer0-image-generator's web panel (full preview runs, compositions, the
@@ -91,7 +108,18 @@ services:
   # ── The platform (profile: content) ─────────────────────────────────────
   db:
     profiles: ["content"]
+    <<: *always-on
     image: pgvector/pgvector:pg16
+    # Who connects and leaves, and on every line the time, the backend's PID and the client's application_name, so a
+    # backend that dies ("server process (PID …) exited with exit code 2") can be traced to its role.
+    command:
+      - postgres
+      - -c
+      - log_connections=on
+      - -c
+      - log_disconnections=on
+      - -c
+      - "log_line_prefix=%m [%p] %q%a %u@%d "
     environment:
       POSTGRES_USER: zer0
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zer0}
@@ -111,6 +139,7 @@ services:
 
   redis:
     profiles: ["content"]
+    <<: *always-on
     image: redis:7-alpine
     labels:
       <<: *fleet-labels
@@ -125,11 +154,14 @@ services:
 
   content:
     profiles: ["content"]
+    <<: *always-on
+    image: *content-image
     build: *content-build
+    # exec: gunicorn replaces the shell, so a stop's SIGTERM reaches it and it shuts down gracefully.
     command: >-
       sh -c "python manage.py migrate --noinput &&
              python manage.py sync_agents --publish &&
-             gunicorn config.wsgi:application"
+             exec gunicorn config.wsgi:application"
     ports:
       - "127.0.0.1:${CONTENT_PORT:-8000}:8000"
     environment: &content-env
@@ -196,11 +228,19 @@ services:
       retries: 12
       start_period: 60s
 
+  # Agent runs, publishing, and the sites' sync and write-back jobs on a queue of their own (`sites`, CELERY_TASK_ROUTES),
+  # which can move to a worker of its own when load says so. A stop lets the tasks in hand finish (Celery's warm
+  # shutdown) before it is forced.
   worker:
     profiles: ["content"]
-    build: *content-build
-    command: celery -A config worker --loglevel=INFO
-    environment: *content-env
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
+    command: celery -A config worker -Q celery,sites --loglevel=INFO
+    stop_grace_period: 60s
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-worker
     volumes:
       - ${SITES_DIR:-.}:/sites
       - content-media:/app/content/media
@@ -221,9 +261,17 @@ services:
   # worker consumes: a slow site holds it, never the worker that runs agents and publishes pages.
   research-worker:
     profiles: ["content"]
-    build: *content-build
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
     command: celery -A config worker -Q research --hostname research@%h --concurrency 4 --loglevel=INFO
-    environment: *content-env
+    stop_grace_period: 60s
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-research-worker
+    # An AIEO audit's screenshot is saved here, and the web role serves it from the same volume.
+    volumes:
+      - content-media:/app/content/media
     labels: *content-labels
     logging: *fleet-logging
     depends_on:
@@ -235,38 +283,60 @@ services:
       retries: 5
       start_period: 30s
 
+  # Beat ticks at least once a minute (the shortest schedule), and its scheduler touches the `beat` heartbeat each tick.
   beat:
     profiles: ["content"]
-    build: *content-build
-    command: celery -A config beat --loglevel=INFO --schedule /tmp/celerybeat-schedule
-    environment: *content-env
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
+    command: celery -A config beat --loglevel=INFO --schedule /tmp/celerybeat-schedule --scheduler ops.beat.HeartbeatScheduler
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-beat
     labels: *content-labels
     logging: *fleet-logging
     depends_on:
       content: {condition: service_healthy}
     healthcheck:
-      disable: true
+      test: ["CMD", "python", "-m", "ops.heartbeat", "beat", "600"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
+  # Its loop waits out a database or Redis blip (content/outbox/loop.py) and touches the `relay` heartbeat each pass.
   relay:
     profiles: ["content"]
-    build: *content-build
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
     command: python manage.py relay_outbox
-    environment: *content-env
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-relay
     labels: *content-labels
     logging: *fleet-logging
     depends_on:
       content: {condition: service_healthy}
     healthcheck:
-      disable: true
+      test: ["CMD", "python", "-m", "ops.heartbeat", "relay", "120"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   # The outbox desk's publisher (content/outboxdesk/README.md): this plane's own stream, read through a consumer group
   # of its own, puts a `published` handoff on the outbox harness's belt for every page that goes live — from the
   # transactional outbox's event, never from the request that published the page.
   belt-publisher:
     profiles: ["content"]
-    build: *content-build
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
     command: python manage.py consume_events --stream zer0:content --group outboxdesk --name outboxdesk-1
-    environment: *content-env
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-belt-publisher
     volumes:
       - outbox-data:/app/content/var/outbox
     labels: *content-labels
@@ -274,7 +344,11 @@ services:
     depends_on:
       content: {condition: service_healthy}
     healthcheck:
-      disable: true
+      test: ["CMD", "python", "-m", "ops.heartbeat", "consumer-outboxdesk-1", "120"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   # The platform's own consumers of its own events (content/outbox/README.md), read back from the stream the relay
   # writes (EVENTS_STREAM) by a consumer group of its own: a page going live drafts a post for every channel of its site
@@ -286,10 +360,13 @@ services:
   # event automations are accepted and enabled but never fire.
   events:
     profiles: ["content"]
-    build: *content-build
+    <<: *always-on
+    image: *content-image
+    pull_policy: never
     command: python manage.py consume_events --own --group platform --name platform-1
-    restart: unless-stopped
-    environment: *content-env
+    environment:
+      <<: *content-env
+      DATABASE_APPLICATION_NAME: zer0-events
     volumes:
       - ${SITES_DIR:-.}:/sites:ro
       - outbox-data:/app/content/var/outbox
@@ -298,7 +375,11 @@ services:
     depends_on:
       content: {condition: service_healthy}
     healthcheck:
-      disable: true
+      test: ["CMD", "python", "-m", "ops.heartbeat", "consumer-platform-1", "120"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
 volumes:
   imagegen-storage:

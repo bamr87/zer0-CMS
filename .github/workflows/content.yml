@@ -24,6 +24,8 @@ on:
       - "schemas/graphql/**"
       - "schemas/content/**"
       - "schemas/openapi/**"
+      # tests/ops/test_compose.py holds every platform role in it to its restart, init, healthcheck and image rules.
+      - "docker-compose.yml"
       - ".github/workflows/content.yml"
   pull_request:
     paths:
@@ -32,6 +34,8 @@ on:
       - "schemas/graphql/**"
       - "schemas/content/**"
       - "schemas/openapi/**"
+      # tests/ops/test_compose.py holds every platform role in it to its restart, init, healthcheck and image rules.
+      - "docker-compose.yml"
       - ".github/workflows/content.yml"
 
 permissions:

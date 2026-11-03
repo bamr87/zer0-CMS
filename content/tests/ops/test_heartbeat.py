@@ -36,3 +36,17 @@ def test_the_probe_runs_without_django(tmp_path):
     )
     result = subprocess.run([sys.executable, "-c", probe], cwd=settings.BASE_DIR, env=env, capture_output=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_beat_touches_its_heartbeat_on_every_tick(monkeypatch, tmp_path):
+    from celery.beat import PersistentScheduler
+
+    from config.celery import app
+    from ops.beat import HeartbeatScheduler
+
+    monkeypatch.setenv("HEARTBEAT_DIR", str(tmp_path))
+    monkeypatch.setattr(PersistentScheduler, "tick", lambda self, *args, **kwargs: 42.0)
+    scheduler = HeartbeatScheduler(app=app, schedule_filename=str(tmp_path / "celerybeat-schedule"), lazy=True)
+    assert heartbeat.age("beat") is None
+    assert scheduler.tick() == 42.0  # beat's own answer: how long it sleeps before the next tick
+    assert heartbeat.main(["beat", "600"]) == 0
