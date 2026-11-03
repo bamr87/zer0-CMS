@@ -73,6 +73,7 @@ def test_the_overlays_type_key_resolves_a_file_only_where_zer0_json_names_the_ov
     assert content_model.resolve(bare, "pages/_docs/landing.md", {"fmContentType": "page"})["name"] == "doc"
     hugo = {"id": "hugo", "overrides": {"frontMatter": {"typeKey": "kind"}}}
     assert content_model.type_key({"id": "hugo"}) == "type" and content_model.type_key(hugo) == "kind"
+    assert content_model.type_key({"overlay": ["not", "a", "name"]}) is None, "a malformed block names no overlay"
 
 
 @pytest.mark.parametrize("name", [site["name"] for site in CASES["sites"]])

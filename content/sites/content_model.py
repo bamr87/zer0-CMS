@@ -248,7 +248,8 @@ def type_key(platform) -> str | None:
     platform = platform if isinstance(platform, dict) else {}
     platform_id = platform.get("id") if platform.get("id") in PLATFORM_IDS else "auto"
     key = PROFILE_TYPE_KEYS.get(platform_id)
-    if platform_id in ("auto", "jekyll") and platform.get("overlay") in _named_overlays():
+    overlay = platform.get("overlay")
+    if platform_id in ("auto", "jekyll") and isinstance(overlay, str) and overlay in _named_overlays():
         key = OVERLAY_TYPE_KEY
     overrides = platform.get("overrides") if isinstance(platform.get("overrides"), dict) else {}
     front_matter = overrides.get("frontMatter") if isinstance(overrides.get("frontMatter"), dict) else {}
