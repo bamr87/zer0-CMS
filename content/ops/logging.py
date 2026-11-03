@@ -28,12 +28,23 @@ from .context import current_request_id
 # Token shapes the fleet knows (UPS-OPS-12) plus this platform's own: an
 # agent's `zer0_` and a person's `zer0u_`, each followed by 43 url-safe
 # characters; the prefix the admin and `user_token --list` show is
-# deliberately shorter than the match.
+# deliberately shorter than the match. Then every other shape the platform
+# handles (SEC-15): OpenAI's `sk-` keys (classic, project, service account,
+# admin), xAI's, AWS access key ids, GitHub's other tokens and a Fernet
+# ciphertext (`ai/crypto.py`). A prefix that can end a word (`risk-…`,
+# `weighs_…`) must start one to count.
+_WORD = r"(?<![A-Za-z0-9])"
 SECRET = re.compile(
     r"(?:sk-ant-[A-Za-z0-9_-]{8,}|ghp_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,}|AIza[A-Za-z0-9_-]{8,}"
-    r"|zer0u?_[A-Za-z0-9_-]{32,})"
+    r"|zer0u?_[A-Za-z0-9_-]{32,}"
+    rf"|{_WORD}sk-(?:proj|svcacct|admin)-[A-Za-z0-9_-]{{20,}}|{_WORD}sk-[A-Za-z0-9]{{20,}}"
+    rf"|{_WORD}xai-[A-Za-z0-9]{{20,}}|\b(?:AKIA|ASIA)[0-9A-Z]{{16}}\b"
+    rf"|{_WORD}gh[orsu]_[A-Za-z0-9]{{20,}}|{_WORD}gAAAAA[A-Za-z0-9_-]{{40,}}={{0,2}})"
 )
 AUTHORIZATION = re.compile(r"(?i)(authorization\s*[:=]\s*)(?:bearer|basic|token)?\s*\S+")
+# An OAuth credential has no shape of its own (LinkedIn's and X's tokens are
+# opaque), so it is found by its name: a JSON body, a form, a `key: value`.
+NAMED = re.compile(r"(?i)\b((?:access|refresh)_token|client_secret)([\"']?\s*[:=]\s*[\"']?)[^\s\"'&,;}]+")
 REDACTED = "[REDACTED]"
 
 # Attributes every LogRecord has; anything else on a record came from `extra=`
@@ -42,6 +53,7 @@ _STANDARD = set(vars(logging.LogRecord("", 0, "", 0, "", (), None))) | {"message
 
 
 def redact(text: str) -> str:
+    text = NAMED.sub(rf"\1\2{REDACTED}", text)
     return SECRET.sub(REDACTED, AUTHORIZATION.sub(rf"\1{REDACTED}", text))
 
 

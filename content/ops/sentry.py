@@ -1,9 +1,15 @@
 """Error reporting (UPS-OPS-13): on when `SENTRY_DSN` is set, otherwise every
 function here is a no-op. Events are tagged with the release and the request
 id, carry no personal data by default, and go through the same redaction as
-the logs before they leave the process."""
+the logs before they leave the process. Sentry's own scrubber runs first and
+drops a value by its key, nested dicts included: the headers a channel client
+signs a request with are a local of every frame below it, and an OAuth token
+has no shape `redact()` could find."""
 
 from django.conf import settings
+
+# Sentry's denylist plus the names the platform's credentials go by.
+DENIED = ("access_token", "refresh_token", "client_secret", "credential")
 
 
 def _scrub(event, hint=None):
@@ -21,20 +27,27 @@ def _scrub(event, hint=None):
     return event
 
 
+def options() -> dict:
+    """What `init` gives `sentry_sdk.init`; a test builds a client from the same."""
+    from sentry_sdk.scrubber import DEFAULT_DENYLIST, EventScrubber
+
+    return {
+        "dsn": settings.SENTRY_DSN,
+        "release": f"{settings.APP_NAME}@{settings.APP_VERSION}",
+        "environment": settings.SENTRY_ENVIRONMENT,
+        "send_default_pii": False,
+        "traces_sample_rate": settings.SENTRY_TRACES_SAMPLE_RATE,
+        "event_scrubber": EventScrubber(denylist=[*DEFAULT_DENYLIST, *DENIED], recursive=True),
+        "before_send": _scrub,
+    }
+
+
 def init() -> bool:
-    dsn = getattr(settings, "SENTRY_DSN", "")
-    if not dsn:
+    if not getattr(settings, "SENTRY_DSN", ""):
         return False
     import sentry_sdk
 
-    sentry_sdk.init(
-        dsn=dsn,
-        release=f"{settings.APP_NAME}@{settings.APP_VERSION}",
-        environment=settings.SENTRY_ENVIRONMENT,
-        send_default_pii=False,
-        traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
-        before_send=_scrub,
-    )
+    sentry_sdk.init(**options())
     return True
 
 
