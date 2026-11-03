@@ -2,8 +2,9 @@
 (PLAN-D3).
 
     queued ──► running ──► succeeded
-                  │  └───► failed     (an error, the budget, the step limit)
-                  └──────► refused    (policy off, not live, no principal)
+       │          │  └───► failed     (an error, the budget, the step limit, the time limit)
+       │          └──────► refused    (policy off, not live, no principal, its provider disabled or spent)
+       └──────────────────► failed     (stale: no worker took it, or its worker was lost)
 
 `start_run` creates a queued run and hands it to Celery once the creating
 transaction commits; `execute` is what the worker runs. A run either calls a
@@ -20,20 +21,31 @@ checks; the runner only decides which tool the model asked for.
 that records it, whether or not its handler ever ran — so whatever the run was
 filling (an AI layer brief or reply) can take the run's outcome even when the
 run was refused before the handler started.
+
+A run executes once. The task is acked late, so a worker that dies hands it to
+another; a run already `running` when its task arrives is that redelivery, and
+it fails ("worker lost") rather than calling the model and billing it again.
+`settle_stale` (beat) fails a run queued or running for longer than
+AGENT_RUN_STALE_SECONDS, which no worker will finish.
 """
 
 import copy
 import json
 import time
+from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Q
 from django.dispatch import Signal
 from django.utils import timezone
 from django.utils.module_loading import import_string
 from wagtail.log_actions import log
+
+from ops.errors import ApiError
 
 from .llm import RecordingMissing, RecordingStale, get_llm
 from .models import AgentRun, AgentStep
@@ -50,6 +62,10 @@ class RunRefused(Exception):
 
 class BudgetExceeded(Exception):
     """The run spent its budget or its steps without a final answer."""
+
+
+class ProviderRefused(Exception):
+    """The provider the agent's model runs on may not spend: its row is disabled or this month's budget is spent."""
 
 
 def start_run(
@@ -105,6 +121,10 @@ def execute(run: AgentRun) -> AgentRun:
 def _execute(run: AgentRun) -> AgentRun:
     if run.is_final:
         return run
+    if run.status == AgentRun.RUNNING:
+        # Only a redelivery finds its run already running: the worker that started it died, or the run outlived the
+        # broker's visibility timeout, and acks_late handed the task on. Running it again would call the model twice.
+        return _finish(run, AgentRun.FAILED, error="worker lost: the run was already running when its task came back")
     config = apply_profile(run.config(), run)
     from .schema import schema_version
 
@@ -126,6 +146,8 @@ def _execute(run: AgentRun) -> AgentRun:
             output = import_string(config.handler)(run, ctx)
         else:
             output = model_loop(run, ctx, config)
+    except ProviderRefused as e:
+        return _finish(run, AgentRun.REFUSED, error=str(e))
     except BudgetExceeded as e:
         return _finish(run, AgentRun.FAILED, error=str(e))
     except (RecordingMissing, RecordingStale) as e:
@@ -191,7 +213,11 @@ def model_loop(
     passes its own client, persona, history, output schema and parameters, and
     `step_offset` when it calls the loop again within one run (the recording
     step numbers keep counting)."""
-    llm = llm or get_llm()
+    if llm is None:
+        try:
+            llm = get_llm(run.trigger)  # an eval replays what it is given; any other run spends through a provider row
+        except ApiError as e:
+            raise ProviderRefused(e.message) from e
     run.llm_backend = getattr(llm, "name", type(llm).__name__)
     run.save(update_fields=["llm_backend"])
     tools = [t.spec() for t in registry.for_context(ctx)]
@@ -275,6 +301,29 @@ def final_output(text: str) -> dict:
         return {"text": text, "json": json.loads(stripped)}
     except (ValueError, TypeError):
         return {"text": text}
+
+
+def settle_stale(now=None) -> int:
+    """Fail the runs no worker will finish — queued, or running, for longer than AGENT_RUN_STALE_SECONDS — so whatever
+    each was filling settles (`run_finished`); returns how many."""
+    cutoff = (now or timezone.now()) - timedelta(seconds=settings.AGENT_RUN_STALE_SECONDS)
+    stale = AgentRun.objects.filter(
+        Q(status=AgentRun.QUEUED, created_at__lt=cutoff) | Q(status=AgentRun.RUNNING, started_at__lt=cutoff)
+    )
+    settled = 0
+    for pk in list(stale.values_list("pk", flat=True)[:500]):
+        # Read again, so a run its worker finished since the query keeps its outcome.
+        open_runs = AgentRun.objects.select_related("agent").filter(status__in=(AgentRun.QUEUED, AgentRun.RUNNING))
+        run = open_runs.filter(pk=pk).first()
+        if run is None:
+            continue
+        if run.status == AgentRun.QUEUED:
+            error = f"stale: queued for more than {settings.AGENT_RUN_STALE_SECONDS} s and no worker took it"
+        else:
+            error = f"worker lost: running for more than {settings.AGENT_RUN_STALE_SECONDS} s with no word from it"
+        _finish(run, AgentRun.FAILED, error=error)
+        settled += 1
+    return settled
 
 
 def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:

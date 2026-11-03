@@ -50,6 +50,7 @@ from wagtail.models import Page, Revision
 from accounts.auth import READ_ONLY
 from accounts.models import WRITE, UserToken
 from agents.auth import bearer
+from agents.llm import check_backend
 from agents.models import AgentDefinition, AgentRun, AgentToken
 from agents.registry import ToolContext, registry
 from agents.runner import RunRefused, start_run
@@ -205,6 +206,8 @@ def _create_run(request, slug):
     allowed, reason = may_request_run(request.user, definition, page)
     if not allowed:
         raise Forbidden(reason)
+    if not definition.handler:
+        check_backend("rest")  # a model-loop agent's provider: refused now (409, 429), as the worker would refuse it
     try:
         run = start_run(
             definition, trigger="rest", target=page, input=request.data.get("input") or {}, user=request.user

@@ -151,7 +151,7 @@ def generate(run: AgentRun, ctx: ToolContext, persona: Persona, messages: list[d
     """One answer from the persona's provider: text, and — with a schema — the
     validated JSON (`json`) rendered to Markdown."""
     if run.trigger == "eval":
-        llm = get_llm()
+        llm = get_llm(run.trigger)
     else:
         llm = providers.get(check_provider(persona.provider or providers.default_slug()))
     config = ctx.agent
