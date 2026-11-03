@@ -5,7 +5,11 @@ and wrong for a browser session: a page elsewhere could post a mutation with
 the editor's cookie. `ContentGraphQLView` authenticates a bearer token itself
 — an agent's (`zer0_…`, the agent user) or a person's (`zer0u_…`, that person;
 one without the `write` scope runs queries only) — and enforces Django's CSRF
-check on any POST that is authenticated by session instead — DRF's rule. Its `format_error` keeps
+check on any POST that is authenticated by session instead — DRF's rule. It
+spends the same anonymous and principal buckets a REST request does (429
+`rate.limited` with `Retry-After`, ops/throttling.py), refuses a query nested
+deeper than `MAX_DEPTH` and, for an anonymous caller, the schema's
+introspection, before anything resolves. Its `format_error` keeps
 GraphQL's own `errors` array and adds the platform's `code` and `request_id`
 in `extensions`; a resolver crash is reported as `internal.error` with the
 traceback in the log, never in the response.
@@ -38,10 +42,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from graphene.validation import DisableIntrospection, depth_limit_validator
 from graphene_django.views import GraphQLView
-from graphql import ExecutionResult, GraphQLError, OperationType, get_operation_ast, parse
+from graphql import ExecutionResult, GraphQLError, OperationType, get_operation_ast, parse, specified_rules
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
+from rest_framework.exceptions import Throttled
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
@@ -57,6 +63,7 @@ from graph import services as graph
 from ops.context import current_request_id
 from ops.errors import ApiError, Conflict, Forbidden, Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
+from ops.throttling import RunThrottle, refusal
 from suggestions.models import Suggestion
 from suggestions.services import accept, pending_for, reject
 
@@ -66,6 +73,20 @@ from .serializers import RunListSerializer, RunSerializer
 
 log = logging.getLogger("ops.graphql")
 KEEPALIVE_SECONDS = 15
+MAX_DEPTH = 10
+
+
+class SchemaIntrospection(DisableIntrospection):
+    """graphene's rule, `__typename` allowed: a client needs a page's type name, and it tells nothing more."""
+
+    def enter_field(self, node, *args):
+        if node.name.value != "__typename":
+            super().enter_field(node, *args)
+
+
+# The specification's rules are the default only when no rules are given, so they are named here.
+RULES = (*specified_rules, depth_limit_validator(max_depth=MAX_DEPTH))
+ANONYMOUS_RULES = (*RULES, SchemaIntrospection)
 
 
 class EventStreamRenderer(BaseRenderer):
@@ -86,14 +107,31 @@ class _CSRFCheck(CsrfViewMiddleware):
         return reason
 
 
-def _graphql_error(message, code, status_code):
+def _graphql_error(message, code, status_code, retry_after=None):
     extensions = {"code": code, "request_id": current_request_id()}
-    return JsonResponse({"errors": [{"message": message, "extensions": extensions}]}, status=status_code)
+    if retry_after is not None:
+        extensions["retry_after"] = retry_after
+    response = JsonResponse({"errors": [{"message": message, "extensions": extensions}]}, status=status_code)
+    if retry_after is not None:
+        response["Retry-After"] = str(retry_after)
+    return response
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ContentGraphQLView(GraphQLView):
     def dispatch(self, request, *args, **kwargs):
+        refused = self._authenticate(request)
+        # After authenticating, so the bucket is the caller's; a refused token is no one's, the address's.
+        if (wait := refusal(request, auth=getattr(request, "agent_token", None))) is not None:
+            return _graphql_error(f"too many requests; try again in {wait} s", "rate.limited", 429, wait)
+        if refused is not None:
+            return refused
+        self.validation_rules = RULES if request.user.is_authenticated else ANONYMOUS_RULES
+        return super().dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def _authenticate(request):
+        """Set the caller from a bearer token, or check a session's POST for CSRF; the error answer, or None."""
         raw = bearer(request.headers.get("Authorization"))
         if raw is not None and raw.startswith(UserToken.PREFIX):
             token = UserToken.authenticate(raw)
@@ -113,7 +151,7 @@ class ContentGraphQLView(GraphQLView):
             reason = check.process_view(request, None, (), {})
             if reason:
                 return _graphql_error(f"CSRF failed: {reason}", "auth.csrf_failed", 403)
-        return super().dispatch(request, *args, **kwargs)
+        return None
 
     def execute_graphql_request(self, request, data, query, variables, operation_name, show_graphiql=False):
         """A person's read-only token runs queries; a mutation is refused before anything resolves."""
@@ -193,6 +231,8 @@ def step_json(s) -> dict:
 
 
 def _create_run(request, slug):
+    if (wait := refusal(request, throttles=(RunThrottle,))) is not None:
+        raise Throttled(wait)
     definition = AgentDefinition.objects.filter(slug=slug).first()
     if definition is None:
         raise NotFound(f"no agent {slug}")

@@ -16,5 +16,6 @@ python manage.py mcp_stdio --agent seo                    # stdio, for a client 
 - **Audit.** Every `tools/call` is a one-step `AgentRun` with trigger `mcp` and the call's trace id. A tool's answer names a run or a suggestion by its public id (`run_id`, `suggestion_id`: UUIDs), as every other surface does.
 - **Errors.** A tool's refusal (policy, permission, invalid arguments) is a result with `isError: true`, which the model can read and act on; an unknown tool or a malformed request is a JSON-RPC error.
 - **Transport.** POST only (GET is 405: no server-initiated streams), no batches, `MCP-Protocol-Version` checked when sent, and any `Origin` header outside `MCP_ALLOWED_ORIGINS` refused — MCP's rule against DNS rebinding.
+- **Rate limits.** Every request spends a bucket first, as a REST request does (`ops/throttling.py`): the token's own, or the address's for a request without a valid token — so a failed sign-in is not free. Over the limit is HTTP 429 with `Retry-After` and a JSON-RPC error (`-32000`) whose `data` holds `code: rate.limited` and `retry_after`; a tool's own `rate` still holds inside it.
 
 It is a Django view rather than a mounted FastMCP app (ADR 0001): the protocol surface is three methods, and one process with one auth path is simpler to secure than two.

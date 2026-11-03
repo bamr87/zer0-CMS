@@ -318,7 +318,9 @@ def test_an_agent_never_asks_for_suggestions_through_a_persons_screens(helper, f
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw}")
     body = {"prompt": "x", "page_id": article.pk, "suggest": True}
     refused = client.post(f"{BASE}/assistants/{helper.public_id}/run/", body, format="json")
-    assert refused.status_code == 403 and "asked for by a person" in refused.json()["error"]["message"]
+    assert refused.status_code == 403 and refused.json()["error"]["code"] == "auth.forbidden"  # at the door: IsPerson
+    with pytest.raises(Forbidden, match="asked for by a person"):  # and the service refuses on its own
+        services.suggest_on_page(helper, user=seo, page=article, prompt="x")
     with pytest.raises(Forbidden, match="a person applies a brief"):
         services.apply_brief(ready_brief, user=seo)
     # A page run an agent started on another surface fails in the worker before it reads anything.

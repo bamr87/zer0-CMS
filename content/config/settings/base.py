@@ -326,6 +326,10 @@ REST_FRAMEWORK = {
         # Per person, what makes the research library reach the web: a page captured or fetched again, a search,
         # a feed subscribed to or read now (research/views.py).
         "research_fetch": env("THROTTLE_RESEARCH_FETCH_RATE", default="30/min") or None,
+        # W1-13: per caller, starting a model run on REST and GraphQL (ops/throttling.py `RunThrottle`, the rate
+        # ai.run_assistant has over MCP); per caller, a newsletter's public subscribe and confirm, each a mail.
+        "ai_run": env("THROTTLE_AI_RUN_RATE", default="30/min") or None,
+        "newsletter_subscribe": env("THROTTLE_NEWSLETTER_SUBSCRIBE_RATE", default="5/min") or None,
     },
     # How many proxies sit in front, so the anonymous bucket keys on the client
     # address rather than the load balancer's.

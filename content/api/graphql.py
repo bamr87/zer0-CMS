@@ -5,7 +5,8 @@ module adds what is not a model field:
 
 - queries: `semanticSearch`, `related`, `graphSearch` (GraphRAG), `entities`,
   `suggestions` (authenticated), `agentRun` (authenticated), `aiSchema`;
-- mutations: `requestAgentRun`, `acceptSuggestion`, `rejectSuggestion`;
+- mutations: `requestAgentRun` (spending the caller's `ai_run` allowance, as
+  REST's run starts do), `acceptSuggestion`, `rejectSuggestion`;
 - and `PublicMedia`, Grapple's own `image(s)` and `document(s)` narrowed to
   the files a live page references, as REST's are (api/public.py).
 
@@ -33,6 +34,7 @@ from agents.models import AgentDefinition, AgentRun
 from agents.runner import RunRefused, start_run
 from agents.schema import export
 from graph import services as graph
+from ops.throttling import RunThrottle, refusal
 from suggestions.models import Suggestion
 from suggestions.services import SuggestionError, accept, pending_for, reject
 
@@ -238,6 +240,11 @@ class RequestAgentRun(graphene.Mutation):
     def mutate(self, info, agent, page_id=None, input=None):
         from .access import may_request_run
 
+        # REST's agent-run creation and every AI action that starts a run spend the same allowance.
+        if (wait := refusal(info.context, throttles=(RunThrottle,))) is not None:
+            raise GraphQLError(
+                f"too many runs; try again in {wait} s", extensions={"code": "rate.limited", "retry_after": wait}
+            )
         user = _user(info)
         definition = AgentDefinition.objects.filter(slug=agent).first()
         if definition is None:

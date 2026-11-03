@@ -8,8 +8,9 @@ ranges). A move the newsroom workflow refuses is a 409 that says which moves
 it allows; a page right the person lacks is a 403 from `cms.services`. Asking
 the AI answers `202` with the run (followed on `/api/v2/agent-runs/<id>/stream/`)
 and honours an `Idempotency-Key`. The three subscription endpoints are public,
-for a site's own forms; the links in the email open `subscription_page`, which
-changes nothing until its button is pressed.
+for a site's own forms, and subscribe and confirm spend an allowance of their
+own (`SubscribeThrottle`); the links in the email open `subscription_page`,
+which changes nothing until its button is pressed.
 """
 
 from django.contrib.auth import get_user_model
@@ -21,11 +22,12 @@ from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
 from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import SAFE_METHODS, AllowAny, BasePermission
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from wagtail.models import Site
 
 from ai.serializers import RunAcceptedSerializer, RunRefSerializer
@@ -33,6 +35,7 @@ from ai.views import IDEMPOTENCY, idempotent
 from api.pages import IsPerson, service_errors
 from ops.errors import ApiError, Conflict, Forbidden, Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
+from ops.throttling import AnonThrottle, PrincipalThrottle
 
 from . import serializers as s
 from . import services
@@ -433,6 +436,16 @@ class IssueViewSet(Scoped):
 # ── subscriptions: public, for a site's forms and the email's links ────────
 
 
+class SubscribeThrottle(UserRateThrottle):
+    """Per caller, a newsletter's public subscribe and confirm (`THROTTLE_NEWSLETTER_SUBSCRIBE_RATE`, 5 a minute):
+    each new address is a confirmation email, so the anonymous bucket alone let one address send a hundred."""
+
+    scope = "newsletter_subscribe"
+
+
+SUBSCRIBING = [AnonThrottle, PrincipalThrottle, SubscribeThrottle]
+
+
 def _subscription(subscriber) -> Response:
     return Response(s.SubscriptionSerializer(subscriber).data)
 
@@ -444,6 +457,7 @@ def _subscription(subscriber) -> Response:
 )
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes(SUBSCRIBING)
 def subscribe(request, public_id):
     newsletter = Newsletter.objects.filter(public_id=public_id).first()
     if newsletter is None:
@@ -469,6 +483,7 @@ TOKEN = OpenApiParameter("token", OpenApiTypes.STR, description="The token from 
 )
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes(SUBSCRIBING)
 def confirm(request):
     return _subscription(services.confirm(_token(request)))
 

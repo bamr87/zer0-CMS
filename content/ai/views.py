@@ -6,8 +6,11 @@ requester may not see is a 404; changing one is its owner's or staff's (a
 403); running a visible assistant or pipeline is anyone's who can see it, and
 so is applying a brief an agent asked for; configuring providers needs the
 `ai.change_providerconfig` permission. Anything that reaches a model answers `202`
-with the agent run, followed on `/api/v2/agent-runs/<id>/stream/`, and honours
-an `Idempotency-Key` (a repeat within a day replays the first answer). Every
+with the agent run, followed on `/api/v2/agent-runs/<id>/stream/`, honours
+an `Idempotency-Key` (a repeat within a day replays the first answer) and
+spends the caller's `ai_run` allowance (`RunThrottle`, the rate MCP's
+`ai.run_assistant` has). The rows are people's: an agent's token is refused
+(`IsPerson`) — an agent asks for a brief through the tool registry. Every
 failure is the platform's error envelope (ops/errors.py).
 """
 
@@ -30,8 +33,10 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAdminUser
 from rest_framework.response import Response
 from wagtail.models import Page, Site
 
+from api.pages import IsPerson
 from ops.errors import Conflict, Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
+from ops.throttling import RunThrottle
 
 from . import serializers as s
 from . import services
@@ -163,6 +168,17 @@ class CanEdit(BasePermission):
         return obj.can_edit(request.user)
 
 
+# A viewset whose `run_actions`, posted, start a model run: those spend the caller's `ai_run` allowance on top
+# of the default buckets. A comment, not a docstring: drf-spectacular would document every operation with it.
+class StartsRuns:
+    run_actions: tuple[str, ...] = ()
+
+    def get_throttles(self):
+        throttles = super().get_throttles()
+        starts = self.action in self.run_actions and self.request.method == "POST"
+        return [*throttles, RunThrottle()] if starts else throttles
+
+
 class ConfiguresProviders(BasePermission):
     """Provider configuration: a person granted `ai.change_providerconfig` (superusers have every permission)."""
 
@@ -171,9 +187,9 @@ class ConfiguresProviders(BasePermission):
 
 
 @extend_schema_view(list=extend_schema(parameters=[SITE]))
-class OwnedViewSet(viewsets.ModelViewSet):
+class OwnedViewSet(StartsRuns, viewsets.ModelViewSet):
     lookup_field = "public_id"
-    permission_classes = [IsAuthenticated, CanEdit]
+    permission_classes = [IsPerson, CanEdit]
     pagination_class = Paged
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     ordering_fields = ["created_at", "updated_at"]
@@ -215,9 +231,10 @@ class ProviderFilter(filters.FilterSet):
     ),
 )
 class ProviderViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+    StartsRuns, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
 ):
     queryset = ProviderConfig.objects.all()
+    run_actions = ("test", "sync_models")
     serializer_class = s.ProviderSerializer
     lookup_field = "public_id"
     pagination_class = Paged
@@ -335,6 +352,7 @@ class AssistantViewSet(OwnedViewSet):
     filterset_class = AssistantFilter
     ordering_fields = ["name", "created_at", "updated_at"]
     open_actions = ("run",)
+    run_actions = ("run",)
 
     @extend_schema(
         summary="Run the assistant on a prompt — or on a page, its answer proposed there as suggestions; follow the "
@@ -380,6 +398,7 @@ class PipelineViewSet(OwnedViewSet):
     filterset_fields = ["visibility"]
     ordering_fields = ["name", "created_at", "updated_at"]
     open_actions = ("run",)
+    run_actions = ("run",)
 
     @extend_schema(
         summary="Run the pipeline — a parent run with one child run per step — on a prompt, or on a page with its "
@@ -414,6 +433,7 @@ class BriefViewSet(OwnedViewSet):
     filterset_class = BriefFilter
     ordering_fields = ["created_at", "updated_at", "status"]
     open_actions = ("apply",)  # the service lets the owner, staff, or anyone shown an agent's brief apply it
+    run_actions = ("generate",)
 
     @extend_schema(
         summary="Generate: a structured result, rendered, then its metadata — as a run",
@@ -475,6 +495,7 @@ class ConversationViewSet(OwnedViewSet):
     serializer_class = s.ConversationSerializer
     filterset_class = ConversationFilter
     ordering_fields = ["created_at", "updated_at", "title"]
+    run_actions = ("messages", "run_pipeline")  # a posted message an assistant answers is a run
 
     def _assistant(self, public_id):
         if public_id is None:
@@ -571,12 +592,13 @@ class ConversationViewSet(OwnedViewSet):
     destroy=extend_schema(summary="Delete a message from its conversation"),
 )
 class MessageViewSet(
-    mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet
+    StartsRuns, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet
 ):
     queryset = Message.objects.select_related("conversation", "assistant", "run")
     serializer_class = s.MessageSerializer
     lookup_field = "public_id"
-    permission_classes = [IsAuthenticated, CanEdit]
+    permission_classes = [IsPerson, CanEdit]
+    run_actions = ("rerun", "promote")
     http_method_names = ["get", "patch", "post", "delete"]
 
     def get_queryset(self):

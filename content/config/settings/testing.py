@@ -16,7 +16,13 @@ ALLOWED_HOSTS = ["testserver", "localhost"]
 # nothing reports errors anywhere.
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_RATES": {"anon": None, "principal": None, "research_fetch": None},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": None,
+        "principal": None,
+        "research_fetch": None,
+        "ai_run": None,
+        "newsletter_subscribe": None,
+    },
 }
 API_DOCS_ENABLED = True
 CORS_ALLOWED_ORIGINS = ["https://allowed.example"]
