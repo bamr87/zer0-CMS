@@ -92,6 +92,8 @@ test/**
 .pre-commit-config.yaml
 .env.example
 SECURITY.md
+# The product requirements document is a contributor artifact, not extension payload.
+PRD.md
 schemas/openapi/**
 media/fleet-feedback.js
 media/fleet-feedback-capture.js

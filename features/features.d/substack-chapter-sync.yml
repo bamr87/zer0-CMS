@@ -1,0 +1,18 @@
+# features/features.d/substack-chapter-sync.yml — one feature, in the features/v1 shape of features/features.yml.
+# The id's number is assigned at merge (ZER0-NEW is the placeholder); then this entry moves into features/features.yml.
+schema: features/v1
+repo: bamr87/zer0-CMS
+features:
+  - id: ZER0-NEW
+    title: "Substack: a book's chapters to a Substack publication"
+    description: "An author carries a serial's chapters (e.g. The Cost Line) to their Substack publication — an RSS feed for Substack's importer or a paste-ready copy by default, an unofficial draft/publish adapter only when the deployment arms it — idempotently by canonical URL, with retries and unconfirmed attempts held for a person."
+    implemented: true
+    surface: cli
+    link: content/distribution/management/commands/substack.py
+    docs: docs/SUBSTACK.md
+    prd: [FR2, NFR2]
+    tags: [ distribution, substack, books, fiction, series ]
+    date: 2026-11-01
+    tests:
+      - content/tests/distribution/test_substack.py
+    evidence: []

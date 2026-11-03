@@ -26,6 +26,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
 | [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | The standards of behaviour for everyone taking part. |
+| [`PRD.md`](../PRD.md) | What the product must do, with stable requirement ids (`FRn`, `NFRn`) that features in [`features/features.yml`](../features/features.yml) name under `prd:`. The constitution (§ 3) ranks this document under AGENTS.md and above the feature… |
 | [`ATTRIBUTION.md`](../ATTRIBUTION.md) | Where zer0-CMS came from — a fork of Front Matter CMS, since rewritten from scratch — what of its design remains, and the MIT notice that covers it. |
 | [`content/`](../content/README.md) | The Django 5.2 + Wagtail 7.4 platform — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, the operational baseline, and its GraphQL, REST and MCP surfaces — and how to run it. |
 | [`media/`](../media/README.md) | The extension's design system: four stylesheets, the `--z-*` token layer, themes, metrics and icons, and the rules for adding a style. |
@@ -43,6 +44,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/DISTRIBUTION.md`](DISTRIBUTION.md) | Distribution on the platform — channels (LinkedIn, X, WordPress, GitHub pull requests, newsletters), the queue, the brand guard, a person's approval, the ledger and statistics — and the LinkedIn and X lanes a site that is still files runs… |
 | [`docs/MONOREPO.md`](MONOREPO.md) | Every project under `packages/`, `sites/` and `apps/` — the sources the platform is absorbing (ADR 0006) — how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs… |
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
+| [`docs/SUBSTACK.md`](SUBSTACK.md) | Carrying a book's chapters — a serial such as the books library's `cost-line` pilot — to a Substack publication: the sanctioned routes (an RSS feed for Substack's importer, a paste-ready copy), the unofficial adapter that is off by… |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
 | [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
 | [`docs/amendments/`](amendments/README.md) | The numbered, append-only record of every change to the constitution, with its status. |
