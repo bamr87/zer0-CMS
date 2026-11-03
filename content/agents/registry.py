@@ -55,7 +55,9 @@ PAGE_PERMISSION_TESTS = {
 
 class ToolError(Exception):
     """A refused or failed call. `code` is one of: not_found, not_allowed,
-    invalid_args, permission_denied, policy, rate_limited, failed."""
+    invalid_args, permission_denied, policy, rate_limited, locked (a Wagtail
+    lock keeps the agent from the page), conflict (the page moved on from the
+    revision the call named), failed."""
 
     def __init__(self, code: str, message: str):
         self.code = code

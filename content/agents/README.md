@@ -33,6 +33,8 @@ Every tool declares an effect. The registry compares it with the narrower of the
 | `write` | `draft`, and a live definition | `content.draft_revision` |
 | `publish` | `auto`, never a review agent | `content.publish` |
 
+A `write` or `publish` tool keeps the rules a person's save and publish keep, through `cms.services`: a page a Wagtail lock keeps from the agent is refused with `locked`; `content.draft_revision` given a `base_revision_id` the page has moved on from is refused with `conflict`, and its ops pass the brand guard with the page's site's rules, as an accepted suggestion does; `content.publish` is `publish_now`, so a future go-live time or a passed expiry is cleared.
+
 Every agent starts at `suggest`. Promotion to `draft` or `auto` is a new definition revision, and publishing that revision needs the agent's suggestions to have been accepted at `AGENT_PROMOTION_ACCEPT_RATE` (0.8) over `AGENT_PROMOTION_MIN_DECISIONS` (10) decisions, on top of a passing eval suite.
 
 ## Definitions are code

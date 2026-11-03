@@ -6,16 +6,23 @@ Effects, lowest first: `content.get_schema`, `content.get_page`,
 `content.search` and `media.describe` read; `content.propose_edit` and
 `media.propose_alt` propose (they create Suggestions — the default path for
 every agent); `content.draft_revision` writes a draft revision directly and
-needs policy `draft`; `content.publish` needs `auto`.
+needs policy `draft`; `content.publish` needs `auto`. Both writers go through
+`cms.services` as a person's save and publish do: a page a Wagtail lock keeps
+from the agent is refused (`locked`), a draft that names the revision it was
+written from is refused when a newer one exists (`conflict`), a draft is held
+to its site's brand rules as an accepted suggestion is, and publishing is
+`publish_now` — a future go-live time or a passed expiry is cleared.
 """
 
+from django.core.exceptions import PermissionDenied
 from wagtail.images import get_image_model
 from wagtail.models import Page
 
 from agents.registry import ToolError, obj, tool
 from agents.schema import export
+from suggestions.guard import builtin_bans, site_of
 from suggestions.models import BlockProvenance, Suggestion
-from suggestions.services import SuggestionError, apply_op, guard, propose
+from suggestions.services import SuggestionError, _block_value, apply_op, guard, propose
 
 BLOCK = {
     "type": "object",
@@ -65,6 +72,16 @@ def _page(page_id: int):
     if page is None:
         raise ToolError("not_found", f"no page {page_id}")
     return page.specific
+
+
+def _writable(page_id: int, user):
+    """The page, its row locked for the call's transaction (`cms.services.writable`)."""
+    from cms.services import PageLocked, writable
+
+    try:
+        return writable(_page(page_id), user)
+    except PageLocked as e:
+        raise ToolError("locked", str(e)) from e
 
 
 @tool(
@@ -174,11 +191,13 @@ def propose_edit(ctx, page_id, op, rationale, block_id="", block=None, field="",
     effect="write",
     description=(
         "Write a new draft revision of a page directly, applying ops in order (each like content.propose_edit's). "
-        "Needs policy draft; the default path is content.propose_edit."
+        "Needs policy draft; the default path is content.propose_edit. Give base_revision_id (content.get_page's "
+        "revision_id) to be refused with conflict when someone saved since; a locked page is refused with locked."
     ),
     input_schema=obj(
         {
             "page_id": {"type": "integer"},
+            "base_revision_id": {"type": "integer"},
             "ops": {
                 "type": "array",
                 "minItems": 1,
@@ -202,17 +221,26 @@ def propose_edit(ctx, page_id, op, rationale, block_id="", block=None, field="",
     page_arg="page_id",
     rate="20/m",
 )
-def draft_revision(ctx, page_id, ops, rationale):
+def draft_revision(ctx, page_id, ops, rationale, base_revision_id=None):
     from cms.services import save_draft
 
-    page = _page(page_id)
+    page = _writable(page_id, ctx.user)
+    if base_revision_id is not None and page.latest_revision_id != base_revision_id:
+        raise ToolError(
+            "conflict",
+            f"page {page_id} has a newer revision ({page.latest_revision_id}) than the one given ({base_revision_id})",
+        )
     latest = page.get_latest_revision_as_object()
+    site, builtin = site_of(page), builtin_bans(page)
     written = []
     try:
         for op in ops:
             payload = op.get("block") if op["op"] in ("insert", "replace") else {"value": op.get("value")}
             if op["op"] != "delete":
-                guard(payload.get("value"), payload.get("type"))
+                # What accepting the same suggestion checks: the site's rules, and
+                # on a replace only what it adds to the block's own words.
+                before = _block_value(latest, op.get("block_id", "")) if op["op"] == "replace" else None
+                guard(payload.get("value"), payload.get("type"), before=before, site=site, builtin=builtin)
             block = apply_op(
                 latest, op["op"], block_id=op.get("block_id", ""), payload=payload, field=op.get("field", "")
             )
@@ -242,11 +270,17 @@ def draft_revision(ctx, page_id, ops, rationale):
     rate="10/m",
 )
 def publish_page(ctx, page_id):
+    from cms.services import PageLocked, publish_now
+
     page = _page(page_id)
-    revision = page.get_latest_revision()
-    if revision is None:
+    if page.get_latest_revision() is None:
         raise ToolError("not_found", f"page {page_id} has no revision to publish")
-    revision.publish(user=ctx.user, skip_permission_checks=True)
+    try:
+        revision = publish_now(page, ctx.user)
+    except PageLocked as e:
+        raise ToolError("locked", str(e)) from e
+    except PermissionDenied as e:
+        raise ToolError("permission_denied", str(e)) from e
     return {"page_id": page_id, "revision_id": revision.pk, "live": True}
 
 
