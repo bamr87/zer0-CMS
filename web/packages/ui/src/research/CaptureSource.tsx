@@ -1,11 +1,14 @@
 // Gather a source: a web page (fetched by the platform behind its guard —
 // this only asks), a document upload (PDF, text, Markdown), a note, or a web
 // search through a provider's own search tool, whose hits arrive as sources.
+// A page, a note and a search carry their Idempotency-Key, so a repeat of one
+// fetches, adds or searches nothing twice.
 import { Alert, Button, FileInput, Group, NumberInput, SegmentedControl, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi } from '../context';
 import { useRun } from './runs';
@@ -43,13 +46,14 @@ export function CaptureSource({ collection, initialUrl = '' }: Props) {
     void qc.invalidateQueries({ queryKey: ['sources'] });
   };
   const capture = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (key: string) => {
+      const params = { header: once(key) };
       if (way === 'url') {
-        await call(api.POST('/api/v2/research/sources/', { body: { kind: 'url', url, collection } }));
+        await call(api.POST('/api/v2/research/sources/', { params, body: { kind: 'url', url, collection } }));
       } else if (way === 'note') {
-        await call(api.POST('/api/v2/research/sources/', { body: { kind: 'note', title, text, collection } }));
+        await call(api.POST('/api/v2/research/sources/', { params, body: { kind: 'note', title, text, collection } }));
       } else if (way === 'search') {
-        const started = await call(api.POST('/api/v2/research/sources/search/', { body: { query, max_results: hits, collection } }));
+        const started = await call(api.POST('/api/v2/research/sources/search/', { params, body: { query, max_results: hits, collection } }));
         setSearchRun(started.run.id);
       } else if (file) {
         await call(
@@ -102,7 +106,7 @@ export function CaptureSource({ collection, initialUrl = '' }: Props) {
       {searchRun !== null && run.data && !run.data.is_final ? <Text size="sm" c="dimmed">Searching the web…</Text> : null}
       {run.data?.is_final && run.data.status !== 'succeeded' ? <Alert color="red">{run.data.error || `The search ${run.data.status}.`}</Alert> : null}
       <Group>
-        <Button disabled={!ready} loading={capture.isPending} onClick={() => capture.mutate()}>
+        <Button disabled={!ready} loading={capture.isPending} onClick={oneClick(() => capture.mutate(newKey()))}>
           {{ url: 'Capture', upload: 'Upload', note: 'Add note', search: 'Search' }[way]}
         </Button>
       </Group>

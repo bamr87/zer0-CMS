@@ -2,8 +2,9 @@
 // is one request; capture sends one line (or the topic template); a
 // brainstorm's reply is followed until it finishes and only the picked ideas
 // are kept; duplicates are merged on a person's word; an idea is promoted to a
-// draft that then opens. Each test drives the components against a fake
-// platform behind the real client.
+// draft that then opens. A brainstorm and a promotion each carry an
+// Idempotency-Key, and a double click asks once. Each test drives the
+// components against a fake platform behind the real client.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Board } from '@zer0/api';
@@ -141,8 +142,11 @@ describe('<Brainstorm>', () => {
     renderUi(<Brainstorm boardId={null} />, { api });
     await userEvent.click(screen.getByRole('radio', { name: 'Headlines' }));
     await userEvent.type(screen.getByLabelText('What should we brainstorm?'), 'nightly backups');
-    await userEvent.click(screen.getByRole('button', { name: 'Brainstorm' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Brainstorm' }));
     await waitFor(() => expect(calls.find((c) => c.path === '/api/v2/ideas/brainstorm/')?.body).toEqual({ prompt: 'nightly backups', kind: 'headlines', count: 8, board: null, conversation: null }));
+    const asked = calls.filter((c) => c.path === '/api/v2/ideas/brainstorm/');
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.idempotencyKey).toBeTruthy();
     expect(await screen.findByText('The assistant is thinking…')).toBeInTheDocument();
     status = 'completed';
     const second = await screen.findByLabelText('Will you notice? (headline)', {}, { timeout: 4000 });
@@ -222,6 +226,7 @@ describe('<IdeaDrawer> to a brief', () => {
     const { go } = renderUi(<IdeaDrawer ideaId="i1" boards={[]} onClose={() => undefined} />, { api });
     await userEvent.click(await screen.findByRole('button', { name: 'Promote' }));
     await waitFor(() => expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ into: 'brief', generate: true }));
+    expect(calls.find((c) => c.method === 'POST')?.idempotencyKey).toBeTruthy();
     expect(await screen.findByText('Being written…')).toBeInTheDocument();
     status = 'ready';
     expect(await screen.findByText(/Run one every quarter\./, {}, { timeout: 4000 })).toBeInTheDocument();
@@ -290,5 +295,6 @@ describe('<IdeaDrawer>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Promote' }));
     await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'page', id: 12 }));
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ into: 'article', generate: false, parent: 3 });
+    expect(calls.find((c) => c.method === 'POST')?.idempotencyKey).toBeTruthy();
   });
 });

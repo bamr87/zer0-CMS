@@ -4,10 +4,13 @@
 // person reads before anything is made. Accepting it makes the book as a draft
 // with a stub per planned chapter; nothing is published. Books live in the
 // library, not in a site, so the shelf is the same whichever site is picked.
+// Outlining a premise carries its Idempotency-Key, so a repeat of it starts no
+// second run.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Progress, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import type { BookSummary } from './types';
@@ -125,7 +128,7 @@ export function PremiseToBook() {
   const [premise, setPremise] = useState('');
   const [briefId, setBriefId] = useState<string | null>(null);
   const outline = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/books/premise/', { body: { premise } })),
+    mutationFn: (key: string) => call(api.POST('/api/v2/books/premise/', { params: { header: once(key) }, body: { premise } })),
     onSuccess: (accepted) => setBriefId(accepted.brief.id),
   });
   const brief = useQuery({
@@ -154,7 +157,7 @@ export function PremiseToBook() {
         />
         {briefId === null ? (
           <Group>
-            <Button disabled={!premise.trim()} loading={outline.isPending} onClick={() => outline.mutate()}>
+            <Button disabled={!premise.trim()} loading={outline.isPending} onClick={oneClick(() => outline.mutate(newKey()))}>
               Outline it
             </Button>
           </Group>

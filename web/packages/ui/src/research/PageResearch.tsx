@@ -3,13 +3,15 @@
 // chosen — that says what it read and what it left out, and whose corrections
 // (exact words, and what they should say) arrive as suggestions to accept in
 // Review; and capturing an idea that came up while writing. Nothing here edits
-// the page.
+// the page. A fact-check carries its Idempotency-Key, so a repeat of it starts
+// no second run.
 import { Alert, Anchor, Badge, Button, Card, Divider, Group, Loader, Select, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { FactCheck } from '@zer0/api';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { CaptureIdea } from '../ideas/CaptureIdea';
@@ -52,7 +54,7 @@ export function PageResearch({ pageId, pageTitle }: { pageId: number; pageTitle:
     onSuccess: refreshCited,
   });
   const check = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/research/fact-checks/', { body: { page_id: pageId, collection } })),
+    mutationFn: (key: string) => call(api.POST('/api/v2/research/fact-checks/', { params: { header: once(key) }, body: { page_id: pageId, collection } })),
     onSuccess: () => {
       notifications.show({ message: 'Checking the draft against its sources…' });
       void qc.invalidateQueries({ queryKey: ['fact-checks', pageId] });
@@ -109,7 +111,7 @@ export function PageResearch({ pageId, pageTitle }: { pageId: number; pageTitle:
             value={collection}
             onChange={setCollection}
           />
-          <Button loading={check.isPending || latest?.status === 'pending'} onClick={() => check.mutate()}>
+          <Button loading={check.isPending || latest?.status === 'pending'} onClick={oneClick(() => check.mutate(newKey()))}>
             Fact-check
           </Button>
         </Group>

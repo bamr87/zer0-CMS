@@ -7,7 +7,8 @@
 // take; the chapter writer — the page editor, the book assistant's chapter tasks
 // and that chapter's own findings — and the assistant, whose writing comes back
 // as suggestions to review and whose continuity check comes back as findings.
-// The platform is a fake behind the real client.
+// Outlining a premise and every assistant run carry an Idempotency-Key, and a
+// double click asks once. The platform is a fake behind the real client.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -170,7 +171,7 @@ describe('<PremiseToBook>', () => {
     });
     const { go } = renderUi(<PremiseToBook />, { api });
     await userEvent.type(screen.getByLabelText(/^Premise/), 'A speechwriter starts telling the truth.');
-    await userEvent.click(screen.getByRole('button', { name: 'Outline it' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Outline it' }));
     expect(await screen.findByText('The outliner is writing…')).toBeInTheDocument();
     const plan = await screen.findByRole('table', { name: 'Chapter plan' }, { timeout: 3000 });
     expect(within(plan).getByText('Opening Remarks')).toBeInTheDocument();
@@ -179,6 +180,7 @@ describe('<PremiseToBook>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create this book' }));
     await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'book', id: 42 }));
     expect(calls.find((c) => c.path === '/api/v2/books/premise/')?.body).toEqual({ premise: 'A speechwriter starts telling the truth.' });
+    expect(calls.filter((c) => c.path === '/api/v2/books/premise/').map((c) => Boolean(c.idempotencyKey))).toEqual([true]);
   });
 });
 
@@ -298,6 +300,7 @@ describe('<BookAssist> beside a chapter', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
     expect(await screen.findByText('1 suggestion to review')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ task: 'draft', chapter: 31, instruction: 'Keep it short.', selection: '' });
+    expect(calls.find((c) => c.method === 'POST')?.idempotencyKey).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Review this run' }));
     expect(go).toHaveBeenCalledWith({ to: 'review', runId: 'r77' });
   });

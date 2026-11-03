@@ -7,7 +7,8 @@
 // once it is live, Distribute — a draft post of it for one of its site's
 // channels, a newsletter among them.
 // Every change is a request the platform checks again; nothing here publishes
-// without the person saying so.
+// without the person saying so. Each ask of the AI carries its Idempotency-Key,
+// so a repeat of it starts no second run.
 import {
   Alert,
   Anchor,
@@ -31,6 +32,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components, StoryDetail, StoryStatus } from '@zer0/api';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { fromLocalInput, toLocalInput } from '../FieldsPanel';
@@ -111,8 +113,8 @@ function Panel({ story }: { story: StoryDetail }) {
     onSuccess: refresh,
   });
   const ask = useMutation({
-    mutationFn: ({ kind, text }: { kind: Kind; text?: string }) =>
-      call(api.POST('/api/v2/newsroom/stories/{public_id}/ai/', { ...path, body: { kind, text } })),
+    mutationFn: ({ kind, text, key }: { kind: Kind; text?: string; key: string }) =>
+      call(api.POST('/api/v2/newsroom/stories/{public_id}/ai/', { params: { ...path.params, header: once(key) }, body: { kind, text } })),
     onSuccess: refresh,
   });
   const applyDraft = useMutation({
@@ -242,15 +244,15 @@ function Panel({ story }: { story: StoryDetail }) {
 
       <Divider label="AI help" labelPosition="left" />
       <Group gap="xs">
-        <Button size="xs" variant="default" loading={ask.isPending} onClick={() => ask.mutate({ kind: 'pitch' })}>
+        <Button size="xs" variant="default" loading={ask.isPending} onClick={oneClick(() => ask.mutate({ kind: 'pitch', key: newKey() }))}>
           Suggest a pitch
         </Button>
         {!story.page ? (
-          <Button size="xs" variant="default" loading={ask.isPending} onClick={() => ask.mutate({ kind: 'draft' })}>
+          <Button size="xs" variant="default" loading={ask.isPending} onClick={oneClick(() => ask.mutate({ kind: 'draft', key: newKey() }))}>
             Draft it from the pitch
           </Button>
         ) : (
-          <Button size="xs" variant="default" loading={ask.isPending} onClick={() => ask.mutate({ kind: 'headlines' })}>
+          <Button size="xs" variant="default" loading={ask.isPending} onClick={oneClick(() => ask.mutate({ kind: 'headlines', key: newKey() }))}>
             Suggest headlines and a summary
           </Button>
         )}
@@ -331,8 +333,13 @@ function Corrections({ story }: { story: StoryDetail }) {
   const [changed, setChanged] = useState('');
   const [note, setNote] = useState('');
   const ask = useMutation({
-    mutationFn: () =>
-      call(api.POST('/api/v2/newsroom/stories/{public_id}/ai/', { params: { path: { public_id: story.id } }, body: { kind: 'correction', text: changed } })),
+    mutationFn: (key: string) =>
+      call(
+        api.POST('/api/v2/newsroom/stories/{public_id}/ai/', {
+          params: { path: { public_id: story.id }, header: once(key) },
+          body: { kind: 'correction', text: changed },
+        }),
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['newsroom'] }),
   });
   const drafted = story.ai_runs.find((r) => r.kind === 'correction');
@@ -375,7 +382,7 @@ function Corrections({ story }: { story: StoryDetail }) {
       />
       <Group align="flex-end">
         <TextInput label="What changed?" description="For the AI to write the note from." value={changed} onChange={(e) => setChanged(e.currentTarget.value)} flex={1} />
-        <Button variant="default" disabled={!changed.trim()} loading={ask.isPending} onClick={() => ask.mutate()}>
+        <Button variant="default" disabled={!changed.trim()} loading={ask.isPending} onClick={oneClick(() => ask.mutate(newKey()))}>
           Draft the note with AI
         </Button>
       </Group>

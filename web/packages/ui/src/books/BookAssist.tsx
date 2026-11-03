@@ -4,10 +4,12 @@
 // reads is one click away); its writing arrives as suggestions on the chapter
 // to accept or reject, its continuity findings and critique are shown here, and
 // an outline is handed to the caller to offer. Nothing is written by running.
+// A run carries its Idempotency-Key, so a repeat of it starts no second run.
 import { Alert, Badge, Blockquote, Button, Card, Code, Group, Loader, Paper, ScrollArea, SegmentedControl, Stack, Text, Textarea } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { RunStatus, shortId } from '../RunTimeline';
@@ -37,10 +39,10 @@ export function BookAssist({ bookId, chapterId, onOutline }: Props) {
   const [runId, setRunId] = useState<string | null>(null);
   const [showContext, setShowContext] = useState(false);
   const start = useMutation({
-    mutationFn: () =>
+    mutationFn: (key: string) =>
       call(
         api.POST('/api/v2/books/{id}/assist/', {
-          params: { path: { id: bookId } },
+          params: { path: { id: bookId }, header: once(key) },
           body: { task: chosen?.key ?? 'draft', chapter: chapterId, instruction, selection: chosen?.key === 'revise' ? selection : '' },
         }),
       ),
@@ -104,7 +106,7 @@ export function BookAssist({ bookId, chapterId, onOutline }: Props) {
             size="xs"
             loading={start.isPending || (runId !== null && !run.data?.is_final)}
             disabled={chosen.key === 'revise' && !selection.trim()}
-            onClick={() => start.mutate()}
+            onClick={oneClick(() => start.mutate(newKey()))}
           >
             {chosen.label}
           </Button>

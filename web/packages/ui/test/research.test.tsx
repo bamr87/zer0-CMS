@@ -3,8 +3,9 @@
 // source shows its text, summary and entities, a summary is asked for, and a
 // suggested passage becomes a quote only when kept; a question's answer shows
 // its citations, checked or not; and from the editor a draft cites a source
-// and is fact-checked, its corrections waiting in Review. A fake platform
-// stands behind the real client.
+// and is fact-checked, its corrections waiting in Review. Every request that
+// fetches, searches or starts a run carries its own Idempotency-Key. A fake
+// platform stands behind the real client.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -151,7 +152,7 @@ describe('<CaptureSource>', () => {
     });
     const { container } = renderUi(<CaptureSource collection="c1" />, { api });
     await userEvent.type(screen.getByLabelText('Page address'), 'https://example.com/backups');
-    await userEvent.click(screen.getByRole('button', { name: 'Capture' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Capture' }));
     await waitFor(() => expect(posts(calls)).toHaveLength(1));
     expect(calls.at(-1)?.body).toEqual({ kind: 'url', url: 'https://example.com/backups', collection: 'c1' });
     await userEvent.click(screen.getByRole('radio', { name: 'Note' }));
@@ -171,6 +172,10 @@ describe('<CaptureSource>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/agent-runs/r41/')).toBe(true));
     expect(posts(calls).at(-1)?.body).toEqual({ query: 'nightly backups', max_results: 5, collection: 'c1' });
+    // The page, the note and the search are each asked once, under a key of their own.
+    const keyed = posts(calls).filter((c) => c.path !== '/api/v2/research/sources/upload/');
+    expect(keyed.map((c) => c.path)).toEqual(['/api/v2/research/sources/', '/api/v2/research/sources/', '/api/v2/research/sources/search/']);
+    expect(new Set(keyed.map((c) => c.idempotencyKey).filter(Boolean)).size).toBe(3);
   });
 });
 
@@ -213,6 +218,7 @@ describe('<SourceView>', () => {
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ source: 's1', text: 'A nightly backup to a second disk costs almost nothing.' }));
     await userEvent.click(screen.getByRole('button', { name: 'Summarize again' }));
     await waitFor(() => expect(posts(calls).at(-1)?.path).toBe('/api/v2/research/sources/s1/summarize/'));
+    expect(posts(calls).at(-1)?.idempotencyKey).toBeTruthy();
     await userEvent.click(await screen.findByRole('button', { name: 'Nightly backups' }));
     expect(go).toHaveBeenCalledWith({ to: 'page', id: 5 });
   });
@@ -248,6 +254,7 @@ describe('<AskPanel>', () => {
     await userEvent.type(screen.getByLabelText(/Ask your sources/), 'Which disk?');
     await userEvent.click(screen.getByRole('button', { name: 'Ask' }));
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ text: 'Which disk?', collection: 'c1' }));
+    expect(posts(calls).at(-1)?.idempotencyKey).toBeTruthy();
   });
 });
 
@@ -266,6 +273,7 @@ describe('<ResearchBrief>', () => {
     await userEvent.type(screen.getByLabelText('Topic'), 'restores');
     await userEvent.click(screen.getByRole('button', { name: 'Write a research brief' }));
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ topic: 'restores' }));
+    expect(posts(calls).at(-1)?.idempotencyKey).toBeTruthy();
     final = true;
     expect(await screen.findByLabelText('Research brief', {}, { timeout: 4000 })).toHaveTextContent('Restore with confidence.');
     await userEvent.click(screen.getByRole('button', { name: 'Keep it as a note' }));
@@ -321,6 +329,7 @@ describe('<PageResearch>', () => {
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ source: 's1', page: 5 }));
     await userEvent.click(screen.getByRole('button', { name: 'Fact-check' }));
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ page_id: 5, collection: null }));
+    expect(posts(calls).at(-1)?.idempotencyKey).toBeTruthy();
     expect(screen.getByLabelText('Capture an idea')).toBeInTheDocument();
   });
 });

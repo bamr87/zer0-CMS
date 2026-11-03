@@ -3,11 +3,13 @@
 // assistant agent, followed here until it finishes, and its ideas are kept
 // only when a person picks them — nothing becomes an idea unseen. Asking
 // again continues the same conversation, so "more like the second" works.
+// Each ask carries its Idempotency-Key, so a repeat of it starts no second run.
 import { Alert, Button, Checkbox, Group, Loader, NumberInput, Paper, SegmentedControl, Stack, Text, Textarea } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi } from '../context';
 
@@ -35,8 +37,13 @@ export function Brainstorm({ boardId }: { boardId?: string | null }) {
   const [session, setSession] = useState<{ conversation: string; reply: string } | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const ask = useMutation({
-    mutationFn: () =>
-      call(api.POST('/api/v2/ideas/brainstorm/', { body: { prompt, kind, count, board: boardId ?? null, conversation: session?.conversation ?? null } })),
+    mutationFn: (key: string) =>
+      call(
+        api.POST('/api/v2/ideas/brainstorm/', {
+          params: { header: once(key) },
+          body: { prompt, kind, count, board: boardId ?? null, conversation: session?.conversation ?? null },
+        }),
+      ),
     onSuccess: (started) => {
       setSession({ conversation: started.conversation, reply: started.reply.id });
       setPicked([]);
@@ -82,7 +89,7 @@ export function Brainstorm({ boardId }: { boardId?: string | null }) {
       />
       <Group align="end">
         <NumberInput label="How many" min={1} max={20} w={120} value={count} onChange={(value) => setCount(Number(value) || 8)} />
-        <Button disabled={!prompt.trim()} loading={thinking} onClick={() => ask.mutate()}>
+        <Button disabled={!prompt.trim()} loading={thinking} onClick={oneClick(() => ask.mutate(newKey()))}>
           {session ? 'Brainstorm more' : 'Brainstorm'}
         </Button>
         {session ? (

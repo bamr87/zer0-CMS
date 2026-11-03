@@ -8,7 +8,8 @@
 // that publishes nothing else; fronts are edited and saved as a whole; an issue
 // is composed from stories found on the platform, previewed, sent and resumed;
 // and pitching from a wire item asks the AI and opens the story, saying so if
-// the AI could not be asked.
+// the AI could not be asked. Each ask of the AI and each send carries an
+// Idempotency-Key, and a double click pitches once.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -177,6 +178,7 @@ describe('a story’s panel', () => {
     await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ headline: 'Bridge closes Monday' }));
     await userEvent.click(screen.getByRole('button', { name: 'Suggest headlines and a summary' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'headlines' }));
+    expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.idempotencyKey).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Use this pitch' }));
     await waitFor(() =>
       expect(platform.calls.filter((c) => c.method === 'PATCH').at(-1)?.body).toEqual({ headline: 'Bridge shut for six weeks', summary: 'Commuters lose their route.' }),
@@ -210,6 +212,7 @@ describe('a story’s panel', () => {
     renderUi(<StoryPanel storyId="s1" />, { api: platform.api });
     await userEvent.click(await screen.findByRole('button', { name: 'Draft it from the pitch' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'draft' }));
+    expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.idempotencyKey).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: "Make the AI's draft the story's page" }));
     await waitFor(() => expect(platform.calls.some((c) => c.method === 'POST' && c.path.endsWith('/apply-draft/'))).toBe(true));
   });
@@ -246,6 +249,7 @@ describe('a story’s panel', () => {
     await userEvent.type(await screen.findByLabelText(/What changed\?/), 'the vote is Tuesday');
     await userEvent.click(screen.getByRole('button', { name: 'Draft the note with AI' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'correction', text: 'the vote is Tuesday' }));
+    expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.idempotencyKey).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: "Use the AI's note" }));
     await userEvent.click(screen.getByRole('button', { name: 'Add a correction' }));
     await waitFor(() =>
@@ -310,6 +314,7 @@ describe('fronts and newsletters', () => {
     expect(await screen.findByText(/1\. Bridge closes/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send to 2 confirmed subscribers' }));
     await waitFor(() => expect(platform.calls.some((c) => c.path === '/api/v2/newsroom/issues/i1/send/')).toBe(true));
+    expect(platform.calls.find((c) => c.path === '/api/v2/newsroom/issues/i1/send/')?.idempotencyKey).toBeTruthy();
   });
 });
 
@@ -368,12 +373,13 @@ describe('pitching', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument(); // the dialog's close button has a name
     await userEvent.type(screen.getByLabelText('From a wire or feed item: its link'), 'https://wire.example/1');
     await userEvent.type(screen.getByLabelText('Its title'), 'BRIDGE SHUT');
-    await userEvent.click(screen.getByRole('button', { name: 'Pitch it' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Pitch it' }));
     await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'story', id: 's9' }));
     const posted = platform.calls.filter((c) => c.method === 'POST');
     expect(posted.map((c) => c.path)).toEqual([STORIES, `${STORIES}s9/ai/`]);
     expect(posted[0]?.body).toEqual({ desk: 'd1', headline: '', summary: '', source: { url: 'https://wire.example/1', title: 'BRIDGE SHUT', text: '' } });
     expect(posted[1]?.body).toEqual({ kind: 'pitch' });
+    expect(posted[1]?.idempotencyKey).toBeTruthy();
   });
 
   it('opens a story that was pitched even when the AI could not be asked, and says so', async () => {

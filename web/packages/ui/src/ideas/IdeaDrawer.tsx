@@ -1,12 +1,14 @@
 // One idea, beside its board: edit it, move it, tag it, link the research it
 // rests on, say who sees it, and promote it — to a brief an assistant writes,
 // an article draft or a book draft. What it became is shown and one step away.
+// A promotion carries its Idempotency-Key, so a repeat of it makes nothing twice.
 import { Alert, Anchor, Button, Divider, Drawer, Group, Loader, MultiSelect, SegmentedControl, Select, Stack, Switch, TagsInput, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Board, Idea, IdeaStatus } from '@zer0/api';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
@@ -76,8 +78,13 @@ function IdeaForm({ idea, boards, onGone }: { idea: Idea; boards: Board[]; onGon
     },
   });
   const promote = useMutation({
-    mutationFn: () =>
-      call(api.POST('/api/v2/ideas/{public_id}/promote/', { ...path, body: { into, generate: into === 'brief' && now, ...(parent ? { parent } : {}) } })),
+    mutationFn: (key: string) =>
+      call(
+        api.POST('/api/v2/ideas/{public_id}/promote/', {
+          params: { ...path.params, header: once(key) },
+          body: { into, generate: into === 'brief' && now, ...(parent ? { parent } : {}) },
+        }),
+      ),
     onSuccess: (promoted) => {
       done(into === 'brief' ? 'Promoted to a brief' : 'Promoted to a draft');
       if (promoted.page_id) go({ to: 'page', id: promoted.page_id });
@@ -152,7 +159,7 @@ function IdeaForm({ idea, boards, onGone }: { idea: Idea; boards: Board[]; onGon
             <Switch label="Have the Article writer write it now" checked={now} onChange={(e) => setNow(e.currentTarget.checked)} />
           ) : null}
           <PagePicker label={into === 'brief' ? 'Where its draft will go (optional)' : 'Where the draft goes'} parents value={parent} onChange={setParent} />
-          <Button loading={promote.isPending} disabled={into !== 'brief' && !parent} onClick={() => promote.mutate()}>
+          <Button loading={promote.isPending} disabled={into !== 'brief' && !parent} onClick={oneClick(() => promote.mutate(newKey()))}>
             Promote
           </Button>
         </Stack>

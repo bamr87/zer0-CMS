@@ -3,12 +3,14 @@
 // an issue from published stories (newest first, searched as one types), its
 // preview exactly as it is sent, and sending it: as a job on the platform, to
 // the confirmed subscribers, once each — a send that failed part way, or that
-// a worker left unfinished, is sent again to those who have not had it.
+// a worker left unfinished, is sent again to those who have not had it. A
+// send carries its Idempotency-Key, so a repeat of it starts no second job.
 import { Alert, Badge, Button, Card, Code, Group, Loader, MultiSelect, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Issue, Newsletter } from '@zer0/api';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi } from '../context';
 import { slugify } from './Fronts';
@@ -139,7 +141,7 @@ function IssueView({ issue, confirmed }: { issue: Issue; confirmed: number }) {
     queryFn: () => call(api.GET('/api/v2/newsroom/issues/{public_id}/preview/', path)),
   });
   const send = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/newsroom/issues/{public_id}/send/', path)),
+    mutationFn: (key: string) => call(api.POST('/api/v2/newsroom/issues/{public_id}/send/', { params: { ...path.params, header: once(key) } })),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['newsroom', 'issues'] }),
   });
   const sendable = issue.status === 'draft' || issue.status === 'failed' || issue.status === 'sending';
@@ -164,7 +166,7 @@ function IssueView({ issue, confirmed }: { issue: Issue; confirmed: number }) {
           </Text>
         ) : null}
         {sendable ? (
-          <Button w="fit-content" color="green" variant={issue.status === 'sending' ? 'light' : 'filled'} loading={send.isPending} onClick={() => send.mutate()}>
+          <Button w="fit-content" color="green" variant={issue.status === 'sending' ? 'light' : 'filled'} loading={send.isPending} onClick={oneClick(() => send.mutate(newKey()))}>
             {issue.status === 'draft'
               ? `Send to ${confirmed} confirmed subscriber${confirmed === 1 ? '' : 's'}`
               : issue.status === 'failed'

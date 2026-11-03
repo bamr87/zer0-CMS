@@ -1,11 +1,13 @@
 // Ask the sources: a question answered by a run from the closest sources (a
 // collection's, or all a person sees), every claim marked with its source and
 // every quote checked against the source's own text — shown as checked or
-// not, so a reader knows which to trust.
+// not, so a reader knows which to trust. A question carries its
+// Idempotency-Key, so a repeat of it starts no second run.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Stack, Text, Textarea } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 
@@ -21,7 +23,7 @@ export function AskPanel({ collection }: { collection: string | null }) {
     refetchInterval: (q) => (q.state.data?.results.some((question) => question.status === 'pending') ? 1500 : false),
   });
   const ask = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/research/questions/', { body: { text, collection } })),
+    mutationFn: (key: string) => call(api.POST('/api/v2/research/questions/', { params: { header: once(key) }, body: { text, collection } })),
     onSuccess: () => {
       setText('');
       void qc.invalidateQueries({ queryKey: ['questions'] });
@@ -39,7 +41,7 @@ export function AskPanel({ collection }: { collection: string | null }) {
         onChange={(e) => setText(e.currentTarget.value)}
       />
       <Group>
-        <Button disabled={!text.trim()} loading={ask.isPending} onClick={() => ask.mutate()}>
+        <Button disabled={!text.trim()} loading={ask.isPending} onClick={oneClick(() => ask.mutate(newKey()))}>
           Ask
         </Button>
       </Group>

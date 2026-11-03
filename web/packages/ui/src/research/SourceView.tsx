@@ -2,13 +2,15 @@
 // entities it names and the passages an assistant suggests quoting (each
 // kept as a quote only when a person says so), its quotes, the pages that
 // cite it — and citing it on another — who sees it, and the text the platform
-// extracted.
+// extracted. A summary carries its Idempotency-Key, so a repeat of it starts
+// no second run.
 import { Alert, Anchor, Badge, Button, Card, Divider, Group, Loader, ScrollArea, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Source } from '@zer0/api';
 import { useState } from 'react';
 
+import { newKey, once, oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
@@ -32,7 +34,10 @@ export function SourceView({ sourceId }: { sourceId: string }) {
     void qc.invalidateQueries({ queryKey: ['source', sourceId] });
     void qc.invalidateQueries({ queryKey: ['sources'] });
   };
-  const summarize = useMutation({ mutationFn: () => call(api.POST('/api/v2/research/sources/{public_id}/summarize/', path)), onSuccess: refresh });
+  const summarize = useMutation({
+    mutationFn: (key: string) => call(api.POST('/api/v2/research/sources/{public_id}/summarize/', { params: { ...path.params, header: once(key) } })),
+    onSuccess: refresh,
+  });
   const refetch = useMutation({ mutationFn: () => call(api.POST('/api/v2/research/sources/{public_id}/refetch/', path)), onSuccess: refresh });
   const remove = useMutation({
     mutationFn: () => call(api.DELETE('/api/v2/research/sources/{public_id}/', path)),
@@ -85,7 +90,7 @@ export function SourceView({ sourceId }: { sourceId: string }) {
       <Card withBorder>
         <Group justify="space-between" mb="xs">
           <Title order={4}>Summary</Title>
-          <Button size="xs" variant="light" disabled={!s.text || summarizing} loading={summarize.isPending || summarizing} onClick={() => summarize.mutate()}>
+          <Button size="xs" variant="light" disabled={!s.text || summarizing} loading={summarize.isPending || summarizing} onClick={oneClick(() => summarize.mutate(newKey()))}>
             {s.summary ? 'Summarize again' : 'Summarize'}
           </Button>
         </Group>
