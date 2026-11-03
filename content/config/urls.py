@@ -21,7 +21,8 @@
 /api/v2/distribution/ channels, the publishing queue, the ledger and statistics, LinkedIn's OAuth callback
 /api/v2/automations/ automations: triggers, conditions, actions, runs, YAML, each webhook trigger's endpoint
 /api/v2/aieo/     AIEO: scores, audits, patterns, rewrites, agents, citations, connectors, priorities, reports
-/api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
+/api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py); the document is
+                  anyone's while the UI is mounted (API_DOCS_ENABLED), else a signed-in caller's
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
 /studio/          the studio (web/studio), built; every path under it is its index.html (api/studio.py)
@@ -45,6 +46,7 @@ from api.urls import router
 from api.views import ContentGraphQLView
 from mcp_server.views import mcp_endpoint
 from newsroom.urls import subscription_pages
+from ops.openapi import DocsOrSignedIn
 from ops.views import healthz, readyz, version
 
 handler400 = "ops.errors.bad_request"
@@ -64,7 +66,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("api/v2/account/", include("accounts.urls")),
     path("documents/", include(wagtaildocs_urls)),
-    path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(), name="openapi"),
+    path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(permission_classes=[DocsOrSignedIn]), name="openapi"),
     path("api/v2/ai/", include("ai.urls")),
     path("api/v2/ideas/", include("ideas.urls")),
     path("api/v2/research/", include("research.urls")),

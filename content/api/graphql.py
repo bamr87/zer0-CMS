@@ -5,7 +5,9 @@ module adds what is not a model field:
 
 - queries: `semanticSearch`, `related`, `graphSearch` (GraphRAG), `entities`,
   `suggestions` (authenticated), `agentRun` (authenticated), `aiSchema`;
-- mutations: `requestAgentRun`, `acceptSuggestion`, `rejectSuggestion`.
+- mutations: `requestAgentRun`, `acceptSuggestion`, `rejectSuggestion`;
+- and `PublicMedia`, Grapple's own `image(s)` and `document(s)` narrowed to
+  the files a live page references, as REST's are (api/public.py).
 
 Mutations route through the same functions the admin and REST views call
 (`runner.start_run`, `suggestions.services.accept` / `reject`), and every
@@ -22,6 +24,9 @@ from django.core.exceptions import PermissionDenied
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
 from grapple.types.interfaces import get_page_interface
+from grapple.utils import resolve_queryset
+from wagtail.documents import get_document_model
+from wagtail.images import get_image_model
 from wagtail.models import Page, Revision
 
 from agents.models import AgentDefinition, AgentRun
@@ -30,6 +35,8 @@ from agents.schema import export
 from graph import services as graph
 from suggestions.models import Suggestion
 from suggestions.services import SuggestionError, accept, pending_for, reject
+
+from .public import referenced_by_live_pages
 
 
 class Hit(graphene.ObjectType):
@@ -109,6 +116,35 @@ class AgentRunType(graphene.ObjectType):
                 for s in run.steps.all()
             ],
         )
+
+
+def _public_images():
+    images = get_image_model().objects.filter(collection__view_restrictions__isnull=True)
+    return referenced_by_live_pages(images).prefetch_renditions()
+
+
+def _public_documents():
+    return referenced_by_live_pages(get_document_model().objects.filter(collection__view_restrictions__isnull=True))
+
+
+class PublicMedia:
+    """Grapple's `image`, `images`, `document` and `documents` resolvers over the
+    files a live page references. A plain mixin that api/wagtail_hooks.py puts
+    first among the schema's query mixins, so these win over Grapple's own
+    whichever app's hook runs first; the fields and their arguments stay
+    Grapple's."""
+
+    def resolve_image(parent, info, id, **kwargs):
+        return _public_images().filter(pk=id).first()
+
+    def resolve_images(parent, info, **kwargs):
+        return resolve_queryset(_public_images(), info, **kwargs)
+
+    def resolve_document(parent, info, id, **kwargs):
+        return _public_documents().filter(pk=id).first()
+
+    def resolve_documents(parent, info, **kwargs):
+        return resolve_queryset(_public_documents(), info, **kwargs)
 
 
 def _hits(hits):

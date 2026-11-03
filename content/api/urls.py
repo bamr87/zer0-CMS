@@ -1,5 +1,6 @@
 """`/api/v2/`: Wagtail's page, image and document endpoints (public, live
-content only) plus the content plane's own endpoints: agent runs, the graph,
+content only: an image or a document only when a live page references it,
+api/public.py) plus the content plane's own endpoints: agent runs, the graph,
 suggestions and the tool registry (api/views.py), and what the studio and the
 extension work with — who is signed in (api/session.py; signing in is
 allauth's headless API, accounts/README.md), pages, revisions and
@@ -15,6 +16,7 @@ from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 
 from . import pages, review, session, views
+from .public import referenced_by_live_pages
 
 
 class PublicPages(PagesAPIViewSet):
@@ -24,9 +26,15 @@ class PublicPages(PagesAPIViewSet):
 class PublicImages(ImagesAPIViewSet):
     permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        return referenced_by_live_pages(super().get_queryset())
+
 
 class PublicDocuments(DocumentsAPIViewSet):
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return referenced_by_live_pages(super().get_queryset())
 
 
 router = WagtailAPIRouter("wagtailapi")

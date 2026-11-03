@@ -15,11 +15,16 @@ probes are root-level, not `/api/v2`, so they stay out too.
 `urlpatterns` is built when first read (a module `__getattr__`), not at
 import: the API's views import `ERROR_RESPONSES` from here, so an eager
 `include("api.urls")` made importing a view before the URLconf an import cycle.
+
+The served document (`/api/v2/openapi.json`) is anyone's while the docs UI is
+(`API_DOCS_ENABLED`), and a signed-in caller's otherwise (`DocsOrSignedIn`):
+off in production, the map of every endpoint is not handed to strangers.
 """
 
+from django.conf import settings
 from django.urls import include, path
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
-from rest_framework import serializers
+from rest_framework import permissions, serializers
 
 
 def __getattr__(name):
@@ -40,6 +45,13 @@ def __getattr__(name):
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+class DocsOrSignedIn(permissions.BasePermission):
+    """The served document's rule: anyone while `API_DOCS_ENABLED`, else a signed-in caller (401 for no one)."""
+
+    def has_permission(self, request, view):
+        return settings.API_DOCS_ENABLED or bool(request.user and request.user.is_authenticated)
 
 
 class AgentTokenScheme(OpenApiAuthenticationExtension):
