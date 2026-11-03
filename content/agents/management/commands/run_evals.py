@@ -3,8 +3,9 @@
 Runs each agent's eval suite against its latest revision and prints one line
 per case. `--recorded` forces the recorded model backend (CI uses it: no
 network, no keys, no cost). `--publish` publishes revisions whose gate
-passes. Exit status 1 when any case fails — which is how an eval regression
-fails CI (M14).
+passes, each a `wagtail.publish` entry in Wagtail's log with no user: the
+command acts for the definitions' YAML, not for a person. Exit status 1 when
+any case fails — which is how an eval regression fails CI (M14).
 """
 
 from django.core.management.base import BaseCommand, CommandError
@@ -45,7 +46,7 @@ class Command(BaseCommand):
                 if publish:
                     g = gate(definition, revision)
                     if g.passed and not (definition.live and definition.live_revision_id == revision.pk):
-                        revision.publish(log_action=False)
+                        revision.publish(log_action=True)
                         self.stdout.write(f"      published {definition.slug} revision {revision.pk}")
         if failed:
             raise SystemExit(1)

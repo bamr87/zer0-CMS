@@ -39,7 +39,7 @@ Every agent starts at `suggest`. Promotion to `draft` or `auto` is a new definit
 
 ## Definitions are code
 
-`definitions/<slug>.yaml` holds a definition and its eval cases. `manage.py sync_agents` creates the definition (not live) or saves a new draft revision when the file changed — the live configuration does not move until a new revision passes its evals. `sync_agents --publish` (or `run_evals --agent <slug> --publish`) runs the suite against the latest revision and publishes it if the gate passes. In the admin, publishing a definition goes through the same gate.
+`definitions/<slug>.yaml` holds a definition and its eval cases. `manage.py sync_agents` creates the definition (not live) or saves a new draft revision when the file changed — the live configuration does not move until a new revision passes its evals. `sync_agents --publish` (or `run_evals --agent <slug> --publish`) runs the suite against the latest revision and publishes it if the gate passes, logged in Wagtail's log as `wagtail.publish` with no user. The admin's Agents snippet is inspect-only (ADR 0004 decision 8): it shows a definition, its revisions and its history, and never adds, edits, deletes or publishes one, since an edit there is a revision the YAML never sees and the next `sync_agents` saves over.
 
 A definition may carry `profile.profiles.<name>`: an alternative handler or system prompt a run selects with `input.profile`, or by its target's own `profile` field — the drafter's `abc` (a deterministic handler, falling back to the model for themes without a lexicon) and `story`.
 

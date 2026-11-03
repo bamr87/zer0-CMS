@@ -2,7 +2,8 @@
 
 With `--publish`, every definition with an unpublished revision then runs its
 eval suite against that revision and goes live if the gate passes
-(agents/evals.py). Exit status 1 if any definition was refused.
+(agents/evals.py), logged as `wagtail.publish` with no user (the YAML is the
+author, not a person). Exit status 1 if any definition was refused.
 """
 
 from django.core.management.base import BaseCommand
@@ -33,7 +34,7 @@ class Command(BaseCommand):
                     result = gate(definition, revision)
                     if result.passed:
                         try:
-                            revision.publish(log_action=False)
+                            revision.publish(log_action=True)
                             line += f", evals {passed}/{len(results)}, published revision {revision.pk}"
                         except EvalGateError as e:
                             refused += 1

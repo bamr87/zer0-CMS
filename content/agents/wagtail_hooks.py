@@ -1,19 +1,32 @@
-"""Admin wiring for the harness: agent definitions as a snippet with revisions
-(publishing one runs through the eval gate), and an "Agent runs" report with
-cost and failure rates (note §4, observability)."""
+"""Admin wiring for the harness: agent definitions as an inspect-only snippet,
+and an "Agent runs" report with cost and failure rates (note §4,
+observability).
 
-from django.contrib import messages
+A definition is its YAML file (ADR 0004 decision 8): the admin shows one, its
+revisions and its history, and never adds, edits, deletes or publishes one —
+an edit there would be a revision the file never sees, saved over by the next
+`sync_agents`. Changing an agent is a pull request on
+`agents/definitions/<slug>.yaml`; `sync_agents --publish` runs the eval gate.
+"""
+
 from django.db.models import Count, Q, Sum
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 from wagtail.models import ModelLogEntry
+from wagtail.permission_policies import ModelPermissionPolicy
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
-from .evals import gate
 from .models import AgentDefinition, AgentRun, Memory
+
+
+class InspectOnly(ModelPermissionPolicy):
+    """Django's model permissions, `view` alone honoured — a superuser included."""
+
+    def user_has_permission(self, user, action):
+        return action == "view" and super().user_has_permission(user, action)
 
 
 class AgentDefinitionViewSet(SnippetViewSet):
@@ -21,6 +34,11 @@ class AgentDefinitionViewSet(SnippetViewSet):
     icon = "cogs"
     menu_label = "Agents"
     list_display = ["slug", "name", "role", "policy", "live"]
+    inspect_view_enabled = True
+
+    @property
+    def permission_policy(self):
+        return InspectOnly(self.model)
 
 
 class MemoryViewSet(SnippetViewSet):
@@ -40,25 +58,6 @@ def run_log_actions(actions):
     actions.register_model(AgentRun, ModelLogEntry)
     actions.register_action("zer0.run.start", "Start an agent run", "Agent run started")
     actions.register_action("zer0.run.finish", "Finish an agent run", "Agent run finished")
-
-
-@hooks.register("before_publish")
-def eval_gate_before_publish(request, obj):
-    """The admin's view of the gate `AgentDefinition.publish()` enforces: say
-    why, instead of a server error."""
-    if not isinstance(obj, AgentDefinition):
-        return None
-    revision = obj.get_latest_revision()
-    result = gate(obj, revision)
-    if result.passed:
-        return None
-    from django.shortcuts import redirect
-
-    messages.error(
-        request,
-        "Not published: " + "; ".join(result.reasons) + f" — run manage.py run_evals --agent {obj.slug} --publish",
-    )
-    return redirect(reverse("wagtailsnippets_agents_agentdefinition:edit", args=[obj.pk]))
 
 
 def runs_report(request):

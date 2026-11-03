@@ -6,6 +6,8 @@ The tool registry, served to MCP clients (M15). Three surfaces, one definition: 
 
 ```bash
 python manage.py agent_token seo --name "my editor"     # prints a bearer token once
+python manage.py agent_token seo --list                    # the agent's tokens, by prefix
+python manage.py agent_token seo --revoke zer0_AbCdEfG     # revoke one (logged as zer0.token.revoke)
 # HTTP (Streamable HTTP, JSON responses): POST http://localhost:8000/mcp/ with Authorization: Bearer <token>
 python manage.py mcp_stdio --agent seo                    # stdio, for a client on this machine
 ```
