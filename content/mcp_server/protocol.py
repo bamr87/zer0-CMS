@@ -73,6 +73,19 @@ def result(id_, value):
     return {"jsonrpc": "2.0", "id": id_, "result": value}
 
 
+def initialize_result(info: dict, instructions: str, requested) -> dict:
+    """What `initialize` answers, for every Python MCP server here (this one,
+    the LinkedIn lane and the X lane): the client's protocol version when we
+    speak it, else our newest, and `serverInfo` with the platform's version,
+    which MCP's Implementation requires and a strict client checks."""
+    return {
+        "protocolVersion": requested if requested in SUPPORTED_VERSIONS else SUPPORTED_VERSIONS[0],
+        "capabilities": {"tools": {"listChanged": False}},
+        "serverInfo": {**info, "version": settings.APP_VERSION},
+        "instructions": instructions,
+    }
+
+
 def tool_entry(t) -> dict:
     return {
         "name": t.name,
@@ -143,17 +156,7 @@ def handle(message, principal: Principal):
     if method.startswith("notifications/"):
         return None
     if method == "initialize":
-        requested = params.get("protocolVersion")
-        version = requested if requested in SUPPORTED_VERSIONS else SUPPORTED_VERSIONS[0]
-        reply = result(
-            id_,
-            {
-                "protocolVersion": version,
-                "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {**SERVER_INFO, "version": settings.APP_VERSION},
-                "instructions": INSTRUCTIONS,
-            },
-        )
+        reply = result(id_, initialize_result(SERVER_INFO, INSTRUCTIONS, params.get("protocolVersion")))
     elif method == "ping":
         reply = result(id_, {})
     elif method == "tools/list":

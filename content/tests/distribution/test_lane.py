@@ -10,6 +10,7 @@ import threading
 
 import httpx
 import pytest
+from django.conf import settings
 from django.core.management import call_command
 
 from distribution.lane import cli, drafts
@@ -17,6 +18,7 @@ from distribution.lane.pipeline import Pipeline, banned_patterns
 from distribution.lane.site import Config, ConfigError, default_commentary, hashtags, slug
 from distribution.ledger import Ledger, LedgerError, serialize
 from distribution.linkedin.session import Credentials
+from tests.mcp.conformance import check_initialize
 
 from .conftest import AUTHOR, GOLDEN, MCP_POST, MCP_URL, NOW, TOKEN, tree
 
@@ -677,6 +679,8 @@ def test_the_mcp_server_lists_tools_previews_and_keeps_publish_off(checkout, web
     replies = [json.loads(line) for line in out.getvalue().splitlines()]
     assert [r.get("id") for r in replies] == [1, 2, 3, 4, 5, None]
     assert replies[0]["result"]["protocolVersion"] == "2025-03-26"
+    info = check_initialize(replies[0]["result"])  # a strict client refused this lane when serverInfo had no version
+    assert info["name"] == "zer0-linkedin" and info["version"] == settings.APP_VERSION
     names = [t["name"] for t in replies[1]["result"]["tools"]]
     assert "linkedin_publish" in names and not any("approve" in n for n in names), "approval is not a tool"
     assert json.loads(replies[2]["result"]["content"][0]["text"])["key"] == MCP_URL

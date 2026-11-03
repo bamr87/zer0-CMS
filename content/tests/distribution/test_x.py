@@ -9,6 +9,7 @@ import json
 
 import httpx
 import pytest
+from django.conf import settings
 
 from distribution.lane import drafts
 from distribution.lane.x_cli import main
@@ -17,6 +18,7 @@ from distribution.lane.x_site import XConfig
 from distribution.ledger import Ledger
 from distribution.x import Client, Credentials, Error, HTTPError, Refused, oauth, oauth2, plan, posts
 from distribution.x.session import Session, UserToken
+from tests.mcp.conformance import check_initialize
 
 from .conftest import MCP_POST, MCP_URL, NOW, tree
 
@@ -349,7 +351,8 @@ def test_the_mcp_server_lists_x_tools_previews_and_keeps_publish_off(x_checkout)
     stdin = io.StringIO("".join(json.dumps(line) + "\n" for line in lines))
     code, out, _ = run(root, "mcp", env=ARMED, stdin=stdin)
     replies = [json.loads(line) for line in out.splitlines()]
-    assert code == 0 and replies[0]["result"]["serverInfo"]["name"] == "zer0-x"
+    info = check_initialize(replies[0]["result"])
+    assert code == 0 and info["name"] == "zer0-x" and info["version"] == settings.APP_VERSION
     names = [t["name"] for t in replies[1]["result"]["tools"]]
     assert names == ["x_status", "x_plan", "x_sources", "x_queue", "x_preview", "x_draft", "x_posts", "x_publish"]
     drafted = json.loads(replies[2]["result"]["content"][0]["text"])

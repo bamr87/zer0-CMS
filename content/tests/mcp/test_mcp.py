@@ -17,6 +17,7 @@ from agents.registry import ToolContext, registry
 from mcp_server.protocol import SUPPORTED_VERSIONS
 
 from ..conftest import make_article
+from .conformance import check_initialize
 
 
 def token_for(slug, **kwargs):
@@ -49,6 +50,7 @@ def test_initialize_negotiates_a_supported_version():
     ).json()
     assert reply["result"]["protocolVersion"] == "2025-06-18"
     assert reply["result"]["capabilities"] == {"tools": {"listChanged": False}}
+    assert check_initialize(reply["result"])["name"] == "zer0-content"
     old = rpc(token_for("seo"), "initialize", {"protocolVersion": "1999-01-01"}).json()
     assert old["result"]["protocolVersion"] == SUPPORTED_VERSIONS[0]
     assert rpc(token_for("seo"), "notifications/initialized", id_=None).status_code == 202

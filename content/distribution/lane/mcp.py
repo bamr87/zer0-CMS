@@ -16,7 +16,7 @@ platform's queue: `distribution.compose` and `distribution.publish`.
 
 import json
 
-from mcp_server.protocol import INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR, SUPPORTED_VERSIONS, error, result
+from mcp_server.protocol import INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR, error, initialize_result, result
 
 from ..ledger import LedgerError
 from ..linkedin import Error, plan
@@ -131,15 +131,7 @@ class Server:
             return None  # a notification
         if method == "initialize":
             asked = (message.get("params") or {}).get("protocolVersion")
-            return result(
-                id_,
-                {
-                    "protocolVersion": asked if asked in SUPPORTED_VERSIONS else SUPPORTED_VERSIONS[0],
-                    "capabilities": {"tools": {"listChanged": False}},
-                    "serverInfo": self.INFO,
-                    "instructions": self.INSTRUCTIONS,
-                },
-            )
+            return result(id_, initialize_result(self.INFO, self.INSTRUCTIONS, asked))
         if method == "ping":
             return result(id_, {})
         if method == "tools/list":
