@@ -58,6 +58,7 @@ export const ZER0_MISTAKES_OVERLAY: Partial<PlatformProfile> = {
     typeKey: 'fmContentType',
     draft: { name: 'draft', type: 'boolean' },
     draftFolders: ['_drafts'],
+    publishedKey: 'published',
     dateKeys: {
       publish: ['date'],
       modified: ['lastmod', 'last_modified_at', 'lastModified', 'modified', 'updated'],
@@ -71,6 +72,7 @@ export const ZER0_MISTAKES_OVERLAY: Partial<PlatformProfile> = {
     // 218 false `tags-not-array` errors. Sites that do want it split can say so
     // with `frontMatter.commaSeparatedFields`.
     taxonomyKeys: ['categories', 'tags'],
+    splitTaxonomyStrings: true,
     slugKey: 'slug',
     permalinkKeys: ['permalink', 'canonical_url', 'canonicalUrl', 'url'],
     thumbnailKeys: ['preview', 'image', 'thumbnail', 'cover', 'featured_image', 'banner'],

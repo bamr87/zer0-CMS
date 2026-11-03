@@ -54,6 +54,7 @@ export const HUGO_PROFILE: PlatformProfile = {
     typeKey: 'type',
     draft: { name: 'draft', type: 'boolean' },
     draftFolders: [],
+    publishedKey: null,
     dateKeys: {
       publish: ['date', 'publishDate'],
       modified: ['lastmod'],
@@ -61,6 +62,7 @@ export const HUGO_PROFILE: PlatformProfile = {
     dateFormat: 'rfc3339',
     filenameDate: null,
     taxonomyKeys: ['tags', 'categories', 'series'],
+    splitTaxonomyStrings: false,
     slugKey: 'slug',
     // `url:` is Hugo's absolute override; `aliases` emit redirects and are not
     // a page's own address, so they are not listed here.

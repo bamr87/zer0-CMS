@@ -33,6 +33,7 @@ import * as path from 'node:path';
 
 import { CONVENTIONAL_MODIFIED_KEYS } from '../core/content/article';
 import { filePrefixFor } from '../core/content/folders';
+import { buildIndex, pageToRecord } from '../core/content/pageIndex';
 import { splitFrontMatter, type FrontMatter } from '../core/content/frontmatter';
 import { THUMBNAIL_KEYS } from '../core/governance/publish';
 import { briefFor } from '../core/media/media';
@@ -61,7 +62,7 @@ import { HUGO_PROFILE } from '../core/platform/profiles/hugo';
 import { JEKYLL_PROFILE } from '../core/platform/profiles/jekyll';
 import { MKDOCS_PROFILE } from '../core/platform/profiles/mkdocs';
 import { WIKIJS_PROFILE } from '../core/platform/profiles/wikijs';
-import { resolveConfig } from '../core/shared/config';
+import { resolveConfig, withPlatformDefaults } from '../core/shared/config';
 import { SKIP_DIRS } from '../core/shared/glob';
 import { PLATFORM_IDS, type PlatformId, type PlatformProfile } from '../core/shared/types';
 
@@ -735,3 +736,49 @@ suite('the zer0-mistakes overlay and anchored quoted scalars, as the real sites 
   });
 });
 
+
+// ---------------------------------------------------------------------------
+
+suite('file mode reads drafts and taxonomy the way Jekyll builds them', () => {
+  /** The fixture site indexed as the shell indexes it: detected, its folders derived, no `zer0.json`. */
+  async function indexed(rel: string) {
+    const root = path.join(SITES, 'jekyll-zer0-mistakes');
+    const resolved = await detectPlatform(root, ioFor(root));
+    const cfg = withPlatformDefaults(resolveConfig(root, {}, {}), resolved);
+    const { pages } = await buildIndex(cfg, undefined, undefined, resolved.profile);
+    const page = pages.find((entry) => entry.relPath === rel);
+    assert.ok(page, `${rel} is indexed`);
+    return { cfg, page, profile: resolved.profile };
+  }
+
+  test('`published: false` holds a page back even when `draft: false` says live', async () => {
+    // Jekyll's Publisher reads `published` and never `draft`, so the build
+    // leaves this page out; file mode used to list it as live.
+    const { cfg, page, profile } = await indexed('pages/_posts/2026-07-10-held-back-by-the-build.md');
+    assert.equal(page.data.draft, false, 'the theme key really does say live');
+    assert.equal(page.draft, true);
+    assert.equal(pageToRecord(cfg, page, undefined, profile).draft, true);
+    // A page that says nothing about `published` keeps its draft key's answer.
+    const live = await indexed('pages/_posts/2026-07-01-tokei-honest-review.md');
+    assert.equal(live.page.draft, false);
+    // It is Jekyll's switch, so only Jekyll (and the overlay on it) reads it.
+    assert.equal(JEKYLL_PROFILE.frontMatter.publishedKey, 'published');
+    assert.equal(mergeProfile(JEKYLL_PROFILE, ZER0_MISTAKES_OVERLAY).frontMatter.publishedKey, 'published');
+    for (const id of PLATFORM_IDS.filter((other) => other !== 'jekyll')) {
+      assert.equal(PLATFORM_PROFILES[id].frontMatter.publishedKey, null, id);
+    }
+  });
+
+  test('a scalar `tags:` value reads as Jekyll splits it, and a list as written', async () => {
+    const { page } = await indexed('pages/_posts/2026-07-10-held-back-by-the-build.md');
+    assert.deepEqual(page.tags, ['Bootstrap', 'jekyll'], '`tags: Bootstrap jekyll` is two tags, as in the build');
+    assert.deepEqual(page.categories, ['How-To']);
+    const listed = await indexed('pages/_posts/2026-07-01-tokei-honest-review.md');
+    assert.deepEqual(listed.page.tags, ['cli', 'metrics']);
+    // Jekyll's rule, not every platform's: elsewhere a string stays one term.
+    assert.equal(JEKYLL_PROFILE.frontMatter.splitTaxonomyStrings, true);
+    for (const id of PLATFORM_IDS.filter((other) => other !== 'jekyll')) {
+      assert.equal(PLATFORM_PROFILES[id].frontMatter.splitTaxonomyStrings, false, id);
+    }
+  });
+});

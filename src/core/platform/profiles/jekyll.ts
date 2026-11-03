@@ -19,6 +19,11 @@
  * | `contentRoots[posts].filename.datePrefix` | `governance/publish.ts` `filePrefixFor`'s `_posts` rule |
  * | `commands.previewImages` | `media/media.ts` `briefFor`'s `jekyll preview-images` |
  *
+ * `publishedKey` and `splitTaxonomyStrings` were not lifted from anywhere:
+ * they are the two rules of Jekyll's own reader (4.4.1's `Publisher` and
+ * `Utils.pluralized_array_from_hash`) that file mode had missed, so a page the
+ * build leaves out, or a `tags: a b` it reads as two tags, reads that way here.
+ *
  * `typeKey` is deliberately `null`. `resolveContentType` already reads the
  * conventional `type` key as its first step for every platform; a profile's
  * `typeKey` is the *extra* key a platform's own vocabulary adds, which for bare
@@ -87,6 +92,10 @@ export const JEKYLL_PROFILE: PlatformProfile = {
     // profile agrees with it so a bare Jekyll site behaves exactly as before.
     draft: { name: 'draft', type: 'boolean' },
     draftFolders: ['_drafts'],
+    // And `published: false` still holds a page back whatever `draft:` says:
+    // Jekyll 4.4's Publisher reads `published` and never `draft`, and so does
+    // the platform's catalog (`content/sites/catalog.py` `Entry.live`).
+    publishedKey: 'published',
     dateKeys: {
       publish: ['date'],
       // `article.ts` `CONVENTIONAL_MODIFIED_KEYS`, in its order.
@@ -95,6 +104,9 @@ export const JEKYLL_PROFILE: PlatformProfile = {
     dateFormat: 'date',
     filenameDate: FILENAME_DATE_RE,
     taxonomyKeys: ['categories', 'tags'],
+    // `Utils.pluralized_array_from_hash`: a string `tags:` or `categories:` is
+    // `String#split`, so `tags: Bootstrap jekyll` builds as two tags.
+    splitTaxonomyStrings: true,
     slugKey: 'slug',
     permalinkKeys: ['permalink', 'canonical_url', 'canonicalUrl', 'url'],
     thumbnailKeys: ['image', 'preview', 'thumbnail', 'cover', 'featured_image', 'banner'],

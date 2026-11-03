@@ -53,7 +53,7 @@ import {
 } from '../shared/types';
 import { resolveContentType } from './contentType';
 import { resolveFolders } from './folders';
-import { asBool, asList, asString, splitFrontMatter, type FmValue, type FrontMatter } from './frontmatter';
+import { asBool, asString, asTerms, ownValue, splitFrontMatter, type FmValue, type FrontMatter } from './frontmatter';
 import type { ArticleDetails } from './seo';
 import { applyCommaSeparatedFields } from './serialize';
 
@@ -72,7 +72,7 @@ import { applyCommaSeparatedFields } from './serialize';
  * run parses zero files" would be false in any real repository.
  */
 export interface IndexCache {
-  version: 2;
+  version: 3;
   entries: Record<string, { mtime: number; page: PageEntry }>;
   /** Absolute path → mtime of files that hold no front matter. */
   skipped?: Record<string, number>;
@@ -84,9 +84,11 @@ export interface IndexCache {
  * Bumped to 2 when the fingerprint learned about the site's platform: a v1
  * entry was built by code that could not tell a Jekyll site from an MkDocs one,
  * so its slugs, dates and draft flags are not answers this version would give.
- * A stale cache must cost a rescan, never a wrong page list.
+ * Bumped to 3 when Jekyll's `published: false` and its split of a string
+ * `tags:` reached the projection: a v2 entry lists such a page as live, with
+ * one tag. A stale cache must cost a rescan, never a wrong page list.
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 export function emptyIndexCache(): IndexCache {
   return { version: CACHE_VERSION, entries: {}, skipped: {}, fingerprint: '' };
@@ -317,8 +319,16 @@ function previewImageOf(profile: PlatformProfile, data: FrontMatter, ct: Content
  * The draft flag as the workspace has configured it. A `choice` draft field
  * keeps its raw string — `status: in-review` is information the dashboard's
  * state tabs need, and flattening it to `true` would throw it away.
+ *
+ * The platform's own publish switch is read first: on Jekyll `published:
+ * false` keeps a page out of the build whatever its draft field says, so it
+ * is a draft here too, never a live page the site does not serve.
  */
-function draftValue(cfg: Zer0Config, data: FrontMatter): boolean | string {
+function draftValue(cfg: Zer0Config, data: FrontMatter, profile: PlatformProfile): boolean | string {
+  const switchKey = profile.frontMatter.publishedKey;
+  if (switchKey !== null && ownValue(data, switchKey) === false) {
+    return true;
+  }
   const raw = data[cfg.draftField.name];
   if (typeof raw === 'string') {
     return raw;
@@ -375,9 +385,9 @@ function toPageEntry(
     date,
     modified,
     published: published === null ? null : published.getTime(),
-    draft: draftValue(cfg, data),
-    tags: asList(data.tags),
-    categories: asList(data.categories),
+    draft: draftValue(cfg, data, profile),
+    tags: asTerms(data.tags, profile.frontMatter.splitTaxonomyStrings),
+    categories: asTerms(data.categories, profile.frontMatter.splitTaxonomyStrings),
     previewImage: previewImageOf(profile, data, ct),
     data: { ...data },
   };

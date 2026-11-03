@@ -1029,6 +1029,22 @@ export function asList(value: FmValue | undefined): string[] {
   return [];
 }
 
+/** Ruby's `String#split` with no pattern: ASCII whitespace, runs as one, ends ignored. */
+const RUBY_WHITESPACE = /[ \t\n\v\f\r]+/;
+
+/**
+ * A taxonomy value (`tags`, `categories`) as the build reads it. A list is
+ * `asList`'s; a string is one term, or, where the platform splits one
+ * (`splitString`, Jekyll's `Utils.pluralized_array_from_hash`), each word of it:
+ * `tags: Bootstrap jekyll` is two tags on a Jekyll site.
+ */
+export function asTerms(value: FmValue | undefined, splitString: boolean): string[] {
+  if (splitString && typeof value === 'string') {
+    return value.split(RUBY_WHITESPACE).filter((word) => word !== '');
+  }
+  return asList(value);
+}
+
 const TRUTHY = new Set(['true', 'yes', 'y', '1', 'on']);
 
 /** A front-matter value as a boolean. Anything unrecognised is `false`. */

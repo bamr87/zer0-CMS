@@ -72,10 +72,12 @@ export const DOCUSAURUS_PROFILE: PlatformProfile = {
     typeKey: null,
     draft: { name: 'draft', type: 'boolean' },
     draftFolders: [],
+    publishedKey: null,
     dateKeys: { publish: ['date'], modified: ['last_update'] },
     dateFormat: 'date',
     filenameDate: null,
     taxonomyKeys: ['tags'],
+    splitTaxonomyStrings: false,
     slugKey: 'slug',
     // `slug:` is Docusaurus' own route override and is handled by the slug key
     // rather than as a permalink, because a relative `slug: my-page` is not a

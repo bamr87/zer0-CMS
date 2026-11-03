@@ -47,6 +47,8 @@ Decision **D12**: a site's platform is a *profile*, resolved once, never guessed
 | `contentRoots[posts].filename.datePrefix` | `governance/publish.ts` `filePrefixFor`'s `_posts` rule |
 | `commands.previewImages` | `media/media.ts` `briefFor` |
 
+Two fields were not lifted from anywhere: `frontMatter.publishedKey` (`published`) and `frontMatter.splitTaxonomyStrings` (`true`) are rules of Jekyll 4.4.1's own reader — its `Publisher` and `Utils.pluralized_array_from_hash` — that file mode had missed. A page the build leaves out reads as a draft, and `tags: a b` reads as the two tags the build makes. Every other profile says `null` and `false`: Wiki.js already reads its `published` through an inverted draft field.
+
 Every reader that used to hold one of those takes `profile: PlatformProfile = JEKYLL_PROFILE` as its **last** parameter, so a call site that has not resolved a platform behaves exactly as it did before: `buildIndex`, `pageToRecord`, `resolveFolders`, `filePrefixFor`, `resolveContentType`, `createContent`, `alignedFilePath`, `byPath`, `loadContractOrScan`, `briefFor`, `resolveMedia`, `mediaCoverage`. `walkGlobs` takes an injected `skip` set for the same reason.
 
 ## What a profile does *not* decide
@@ -67,7 +69,7 @@ The **platform gets one veto and no vote** over filenames. Where a content root 
 
 ## Testing
 
-`src/test/platform.test.ts` (42 tests) and the byte-identity golden at `src/test/fixtures/golden/platform/`. Six fixture sites live under `src/test/fixtures/sites/`, each written in its platform's own idiom — TOML `+++` for Hugo, `published:`/`dateCreated:` for a Wiki.js export, a number-prefixed filename and `sidebar_position` for Docusaurus, `pubDate` under `src/content/` for Astro, and a YAML anchor in the fleet's `_config.yml` so the anchor warning is exercised against a real file rather than a contrived string.
+`src/test/platform.test.ts` (44 tests) and the byte-identity golden at `src/test/fixtures/golden/platform/`. Six fixture sites live under `src/test/fixtures/sites/`, each written in its platform's own idiom — TOML `+++` for Hugo, `published:`/`dateCreated:` for a Wiki.js export, a number-prefixed filename and `sidebar_position` for Docusaurus, `pubDate` under `src/content/` for Astro, and a YAML anchor in the fleet's `_config.yml` so the anchor warning is exercised against a real file rather than a contrived string.
 
 The golden is the load-bearing one. Run it after any change in this package:
 

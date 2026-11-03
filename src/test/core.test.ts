@@ -997,15 +997,17 @@ suite('core: the page index', () => {
   });
 
   test('a cache from before the platform existed is refused, not trusted', () => {
-    // Version 2 is not bookkeeping. A v1 entry was built by code that could not
-    // tell a Jekyll site from an MkDocs one, so its slug, its date and its
-    // draft flag are not answers this version would give. Reusing one would
-    // show a person a page list computed under the wrong rules, which is worse
-    // than rescanning.
+    // The version is not bookkeeping. A v1 entry was built by code that could
+    // not tell a Jekyll site from an MkDocs one, and a v2 entry by code that
+    // read Jekyll's `published: false` as live and `tags: a b` as one tag, so
+    // neither holds answers this version would give. Reusing one would show a
+    // person a page list computed under the wrong rules, which is worse than
+    // rescanning.
     const current = emptyIndexCache();
-    assert.equal(current.version, 2);
+    assert.equal(current.version, 3);
     assert.notEqual(asIndexCache(current), undefined, 'a current cache is usable');
     assert.equal(asIndexCache({ ...current, version: 1 }), undefined, 'a v1 cache must be refused');
+    assert.equal(asIndexCache({ ...current, version: 2 }), undefined, 'a v2 cache must be refused');
   });
 
   test('changed is false over an unchanged tree, and true once an mtime has moved', async () => {

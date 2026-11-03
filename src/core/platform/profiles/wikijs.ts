@@ -50,6 +50,7 @@ export const WIKIJS_PROFILE: PlatformProfile = {
     typeKey: null,
     draft: { name: 'published', type: 'boolean', invert: true },
     draftFolders: [],
+    publishedKey: null,
     // Wiki.js rewrites `date` on every save, so it is the *modified* stamp and
     // `dateCreated` is the publication one. Reading them the other way round is
     // how a wiki export looks like it was all written this morning.
@@ -57,6 +58,7 @@ export const WIKIJS_PROFILE: PlatformProfile = {
     dateFormat: 'iso-ms',
     filenameDate: null,
     taxonomyKeys: ['tags'],
+    splitTaxonomyStrings: false,
     slugKey: 'slug',
     permalinkKeys: [],
     thumbnailKeys: [],

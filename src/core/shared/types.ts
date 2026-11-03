@@ -777,10 +777,22 @@ export interface PlatformProfile {
     typeKey: string | null;
     draft: DraftFieldConfig;
     draftFolders: string[];
+    /**
+     * The build's own publish switch beside the draft field: a page whose
+     * `<key>: false` is not built, whatever the draft field says (Jekyll's
+     * `published`). `null` when the platform has none of its own.
+     */
+    publishedKey: string | null;
     dateKeys: { publish: string[]; modified: string[] };
     dateFormat: 'date' | 'iso-ms' | 'rfc3339';
     filenameDate: RegExp | null;
     taxonomyKeys: string[];
+    /**
+     * Whether the build splits a taxonomy key written as one string on
+     * whitespace, as Jekyll's `String#split` does (`tags: a b` is two tags).
+     * `false` keeps the string one term.
+     */
+    splitTaxonomyStrings: boolean;
     slugKey: string;
     permalinkKeys: string[];
     thumbnailKeys: string[];
