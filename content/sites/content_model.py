@@ -30,6 +30,9 @@ tests/sites/test_content_model.py that this module still does.
   `fields` group is walked against its own mapping, and a blank string or
   `<failed to process>` is empty. PyYAML reads a date as a date, the
   extension as its text: a `when` compares a date by its ISO text.
+* `from_front_matter` and `differences` compare Front Matter CMS's project
+  file (frontmatter.json) with zer0.json: the content types (fields after
+  inlining: present, type, required), the content folders and the draft field.
 
 It needs nothing but the standard library (jsonschema for `validate`), so the
 doctor, which runs outside the platform, can use it.
@@ -94,6 +97,14 @@ DEFAULT_CONTENT_TYPE = {
         {"title": "Tags", "name": "tags", "type": "tags"},
         {"title": "Categories", "name": "categories", "type": "categories"},
     ],
+}
+
+# Front Matter CMS's keys for what zer0.json also holds; frontmatter.json's are flat, dotted names.
+FRONT_MATTER_KEYS = {
+    "contentTypes": "frontMatter.taxonomy.contentTypes",
+    "fieldGroups": "frontMatter.taxonomy.fieldGroups",
+    "contentFolders": "frontMatter.content.pageFolders",
+    "draftField": "frontMatter.content.draftField",
 }
 
 
@@ -477,3 +488,118 @@ def _compare(operator: str, left, right) -> bool:
     if not (_number(left) and _number(right)):
         return True
     return {"gt": left > right, "gte": left >= right, "lt": left < right, "lte": left <= right}.get(operator, True)
+
+
+# ── frontmatter.json beside zer0.json ───────────────────────────────────────
+
+
+def from_front_matter(project: dict) -> dict:
+    """frontmatter.json (Front Matter CMS's project file) as the zer0.json keys the two share."""
+    return {ours: project[theirs] for ours, theirs in FRONT_MATTER_KEYS.items() if theirs in project}
+
+
+def differences(front_matter: dict, zer0: dict) -> list[str]:
+    """Where frontmatter.json (as `from_front_matter` reads it) and zer0.json
+    disagree, one sentence each: content types and their fields (after both
+    inline their field groups: present, type, required), content folders and
+    what each binds, and the draft field. Field types are compared as written,
+    so a type D6 dropped (`dataFile`, `json`) shows as a difference."""
+    out = []
+    fm_types, z_types = _types_view(front_matter), _types_view(zer0)
+    out += [f"content type {n} is in frontmatter.json, not in zer0.json" for n in _only_in(fm_types, z_types)]
+    out += [f"content type {n} is in zer0.json, not in frontmatter.json" for n in _only_in(z_types, fm_types)]
+    for name in [n for n in z_types if n in fm_types]:
+        fm, z = fm_types[name], z_types[name]
+        out += [f"content type {name}: field {k} is in frontmatter.json, not in zer0.json" for k in _only_in(fm, z)]
+        out += [f"content type {name}: field {k} is in zer0.json, not in frontmatter.json" for k in _only_in(z, fm)]
+        for key in [k for k in z if k in fm]:
+            (fm_type, fm_required), (z_type, z_required) = fm[key], z[key]
+            if fm_type != z_type:
+                out.append(f"content type {name}: field {key} is {fm_type} in frontmatter.json, {z_type} in zer0.json")
+            if fm_required != z_required:
+                where = ("frontmatter.json", "zer0.json") if fm_required else ("zer0.json", "frontmatter.json")
+                out.append(f"content type {name}: field {key} is required in {where[0]}, not in {where[1]}")
+    fm_folders, z_folders = _folders_view(front_matter), _folders_view(zer0)
+    out += [f"content folder {p} is in frontmatter.json, not in zer0.json" for p in _only_in(fm_folders, z_folders)]
+    out += [f"content folder {p} is in zer0.json, not in frontmatter.json" for p in _only_in(z_folders, fm_folders)]
+    for path in [p for p in z_folders if p in fm_folders and fm_folders[p] != z_folders[p]]:
+        fm_bound, z_bound = _binds(fm_folders[path]), _binds(z_folders[path])
+        out.append(f"content folder {path} binds {fm_bound} in frontmatter.json, {z_bound} in zer0.json")
+    fm_draft, z_draft = _draft_view(front_matter.get("draftField")), _draft_view(zer0.get("draftField"))
+    if fm_draft != z_draft:
+        out.append(f"draftField is {_draft_text(fm_draft)} in frontmatter.json, {_draft_text(z_draft)} in zer0.json")
+    return out
+
+
+def _only_in(first: dict, second: dict) -> list:
+    """The keys of `first` that `second` lacks, in `first`'s order."""
+    return [key for key in first if key not in second]
+
+
+def _types_view(data: dict) -> dict:
+    """{type name: {dotted field name: (type, required)}}, field groups inlined, any type string kept."""
+    groups = [
+        {"id": g["id"], "fields": _loose_fields(g.get("fields"))}
+        for g in _list(data.get("fieldGroups"))
+        if isinstance(g, dict) and isinstance(g.get("id"), str)
+    ]
+    out: dict = {}
+    for t in _list(data.get("contentTypes")):
+        if isinstance(t, dict) and isinstance(t.get("name"), str) and t["name"] not in out:
+            out[t["name"]] = _flatten(inline_field_collections(_loose_fields(t.get("fields")), groups))
+    return out
+
+
+def _loose_fields(value) -> list:
+    out = []
+    for raw in _list(value):
+        if isinstance(raw, dict) and isinstance(raw.get("name"), str) and isinstance(raw.get("type"), str):
+            loose = {k: raw[k] for k in ("name", "type", "fieldGroup") if k in raw}
+            loose["required"] = raw.get("required") is True
+            if isinstance(raw.get("fields"), list):
+                loose["fields"] = _loose_fields(raw["fields"])
+            out.append(loose)
+    return out
+
+
+def _flatten(fields: list, parents: tuple = ()) -> dict:
+    out: dict = {}
+    for f in fields:
+        if f["type"] in PRESENTATION_TYPES:
+            continue
+        key = ".".join((*parents, f["name"]))
+        out.setdefault(key, (f["type"], f["required"]))
+        if f["type"] == "fields":
+            for child, spec in _flatten(f.get("fields") or [], (*parents, f["name"])).items():
+                out.setdefault(child, spec)
+    return out
+
+
+def _folders_view(data: dict) -> dict:
+    """{site-relative folder path: the type names it binds, or None for every type}."""
+    out: dict = {}
+    for f in _list(data.get("contentFolders")):
+        if isinstance(f, dict) and isinstance(f.get("path"), str):
+            rel = posixpath.normpath(f["path"].replace(WORKSPACE, "").replace("\\", "/").strip("/") or ".")
+            bound = f.get("contentTypes")
+            out.setdefault(rel, tuple(n for n in bound if isinstance(n, str)) if isinstance(bound, list) else None)
+    return out
+
+
+def _binds(bound) -> str:
+    return "every type" if bound is None else ", ".join(bound) or "no type"
+
+
+def _draft_view(value) -> tuple:
+    """(name, type, choices, inverted), with zer0.json's and Front Matter's default: a boolean `draft`."""
+    value = value if isinstance(value, dict) else {}
+    name = value.get("name") if isinstance(value.get("name"), str) else "draft"
+    kind = value.get("type") if value.get("type") in ("boolean", "choice") else "boolean"
+    choices = tuple(c for c in _list(value.get("choices")) if isinstance(c, str)) if kind == "choice" else ()
+    return name, kind, choices, value.get("invert") is True
+
+
+def _draft_text(view: tuple) -> str:
+    name, kind, choices, inverted = view
+    detail = f"{kind}: {', '.join(choices)}" if choices else kind
+    return f"{name} ({detail}{', inverted' if inverted else ''})"

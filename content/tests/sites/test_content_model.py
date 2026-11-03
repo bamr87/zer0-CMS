@@ -124,3 +124,8 @@ def test_a_when_compares_as_javascript_does():
     assert not content_model.evaluate_when(field, {}, [field]), "undefined === 1 is false"
     assert content_model.is_empty(field, " \t") and not content_model.is_empty(field, 0)
     assert not content_model.is_empty({"name": "b", "type": "boolean"}, False)
+
+
+def test_frontmatter_json_keys_map_onto_zer0_json():
+    project = {"frontMatter.taxonomy.contentTypes": [], "frontMatter.content.pageFolders": [], "frontMatter.x": 1}
+    assert content_model.from_front_matter(project) == {"contentTypes": [], "contentFolders": []}

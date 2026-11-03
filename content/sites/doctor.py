@@ -11,7 +11,7 @@ them:
 |--------------|---------------------------------------------------------|--------------|
 | config       | `_config.yml` unreadable, does not parse, not a mapping | — |
 | image-engine | a vendored preview-generator fork exists                | no `preview_images:`; a Gemfile without the image generator |
-| cms          | `zer0.json` invalid JSON(C), or a content folder missing | no `zer0.json`; no `$schema`; it breaks schemas/zer0.schema.json |
+| cms          | `zer0.json` invalid JSON(C), or a content folder missing | no `zer0.json`; no `$schema`; it breaks schemas/zer0.schema.json; frontmatter.json disagrees with it |
 | fleet        | `fleet.manifest.yml` present but not strict YAML        | — |
 | distribution | the `distribution.linkedin` or `distribution.x` block invalid, its ledger unreadable | a setting it does not know, a missing author, account or URL; a vendored per-site publisher |
 | content      | a catalogued file whose front matter does not parse     | a field its content type (zer0.json) requires is empty |
@@ -31,6 +31,9 @@ leaves this repository and no doctor rule may name it):
   inlined, `when` clauses evaluated, a blank string empty), and `zer0.json`
   itself is checked against schemas/zer0.schema.json. A site with no
   `zer0.json` has no required keys — the cms check already says so;
+* the cms check also compares Front Matter CMS's frontmatter.json, when a
+  site still carries one, with `zer0.json` (`frontmatter-json-drift`, one
+  warning per difference), since nothing else reads it;
 * a YAML or JSON syntax error's evidence is this parser's wording, so its
   text (and fingerprint) differs from libyaml's; its rule, file and line do not.
 
@@ -206,7 +209,24 @@ def check_cms(root: Path, findings: list) -> dict | None:
             findings.append(finding("cms", "error", "content-folder-missing", evidence, file=rel))
     for message in content_model.validate(data):
         findings.append(finding("cms", "warning", "zer0-json-schema", message, file=rel))
+    for evidence in frontmatter_json_drift(root, data):
+        findings.append(finding("cms", "warning", "frontmatter-json-drift", evidence, file="frontmatter.json"))
     return data
+
+
+def frontmatter_json_drift(root: Path, zer0: dict) -> list[str]:
+    """Each way the site's frontmatter.json (Front Matter CMS's project file,
+    which nothing here reads) disagrees with its zer0.json; none without one."""
+    path = root / "frontmatter.json"
+    if not path.is_file():
+        return []
+    try:
+        project = jsonc_loads(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError) as e:
+        return [f"frontmatter.json is not valid JSON(C), so it cannot be compared: {str(e).splitlines()[0][:160]}"]
+    if not isinstance(project, dict):
+        return ["frontmatter.json is not an object, so it cannot be compared"]
+    return content_model.differences(content_model.from_front_matter(project), zer0)
 
 
 def content_folder(root: Path, path: str) -> Path:

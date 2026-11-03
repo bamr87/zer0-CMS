@@ -37,7 +37,7 @@ from .doctor_scenarios import ALIGNED, SCENARIOS, aligned, build, digest
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 RECORDING = json.loads((FIXTURES / "doctor" / "ruby-recording.json").read_text())
 RECORDED_ON = date(2026, 10, 22)
-NEW_RULES = ("zer0-json-schema",)
+NEW_RULES = ("zer0-json-schema", "frontmatter-json-drift")
 SYNTAX = (
     "front matter:",
     "_config.yml does not parse:",
