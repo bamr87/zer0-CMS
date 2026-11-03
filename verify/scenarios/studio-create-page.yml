@@ -3,14 +3,15 @@
 # =============================================================================
 # The studio (web/studio, served by the platform at /studio/) on the demo the
 # platform seeds (`manage.py seed_demo`, verify/verify.yml's start command):
-# sign in, create an article under the demo site, land in its editor as a draft.
+# sign in, create an article under the demo site's Posts (chosen in the Where
+# picker, which searches the platform), land in its editor as a draft.
 # The page carries the platform's enforced nonce CSP, so a console error here
 # would also be a CSP violation.
 # =============================================================================
 id: studio-create-page
 feature: ZER0-040
 title: "Create a page in the studio"
-description: "An editor signs in to the studio, creates an article under the demo site from the Create area, and lands in the editor with the new page as a draft — nothing published."
+description: "An editor signs in to the studio, creates an article under the demo site's Posts from the Create area, and lands in the editor with the new page as a draft — nothing published."
 viewports: [desktop]
 steps:
   - goto: /studio/
@@ -20,6 +21,8 @@ steps:
   - wait: { selector: "role=heading[name='Home']" }
   - click: "role=link[name='Create']"
   - wait: { url: /studio/create }
+  - click: "role=combobox[name='Where']"
+  - click: "role=option[name='Posts (Collection page)']"
   - click: "role=combobox[name='Type']"
   - click: "role=option[name='Article page']"
   - fill: { selector: "role=textbox[name='Title']", value: "A page from the studio scenario" }

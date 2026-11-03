@@ -1,28 +1,25 @@
 // Create: a new page of a type its parent allows, as a draft — optionally
 // with a brief (topic, audience, notes), and optionally handed to the drafter
 // agent, whose first draft comes back as suggestions to review rather than
-// as an edit (the agent only proposes).
-import { Alert, Button, Checkbox, Group, Loader, Select, Stack, Textarea, TextInput } from '@mantine/core';
+// as an edit (the agent only proposes). Where it goes is a PagePicker over the
+// pages that can hold children, searched on the platform, so every section of
+// a large site can be chosen; nothing is created until the person chooses.
+import { Alert, Button, Checkbox, Group, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { call, errorText } from './call';
 import { useApi, useGo, type Destination } from './context';
+import { PagePicker } from './PagePicker';
 
 export function CreatePage({ siteId }: { siteId?: number }) {
   const api = useApi();
   const go = useGo();
-  const [parent, setParent] = useState<string | null>(null);
+  const [parentId, setParentId] = useState<number | null>(null);
   const [type, setType] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [brief, setBrief] = useState({ topic: '', audience: '', notes: '' });
   const [draft, setDraft] = useState(false);
-  const parentQuery = { site: siteId, can_have_children: true, ordering: 'path', page_size: 100 };
-  const parents = useQuery({
-    queryKey: ['pages', parentQuery],
-    queryFn: () => call(api.GET('/api/v2/content/pages/', { params: { query: parentQuery } })),
-  });
-  const parentId = Number(parent ?? parents.data?.results[0]?.id ?? 0) || null;
   const types = useQuery({
     queryKey: ['types', parentId],
     enabled: parentId !== null,
@@ -44,19 +41,16 @@ export function CreatePage({ siteId }: { siteId?: number }) {
     onSuccess: (to) => go(to),
   });
 
-  if (parents.isPending) return <Loader />;
-  if (parents.isError) return <Alert color="red">{errorText(parents.error)}</Alert>;
-
   return (
     <Stack maw={640}>
-      <Select
+      <PagePicker
         label="Where"
         description="The section or page the new page goes under"
-        data={parents.data.results.map((p) => ({ value: String(p.id), label: `${p.title} (${p.type_label})` }))}
-        value={parentId ? String(parentId) : null}
-        allowDeselect={false}
-        onChange={(value) => {
-          setParent(value);
+        parents
+        siteId={siteId}
+        value={parentId}
+        onChange={(id) => {
+          setParentId(id);
           setType(null);
         }}
       />
