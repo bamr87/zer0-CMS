@@ -18,7 +18,7 @@ Definitions, runs and the one tool registry every surface dispatches through (no
 | `evals.py` | scoring, the publish gate and the promotion rule |
 | `sync.py` | `definitions/*.yaml` → definitions and eval cases |
 | `handlers/` | deterministic agents: `reviews.brand`, `reviews.a11y`, `abc.draft` |
-| `tools.py` | `memory.recall`, `memory.remember`, `brand.rules` |
+| `tools.py` | `memory.recall`, `memory.remember`, `brand.rules`, and `runs.get`: a run the agent may read (`AgentRun.objects.visible_to` — its own, and those it started with a tool such as `ai.run_assistant`), `api.views.run_json`'s fields with `steps` optional, so an MCP client follows what it asked for |
 | `definitions/` | the agents, as reviewable YAML — including `assistant`, which runs the AI content layer's user-managed assistants (`ai/handlers.py`), and `books`, the book assistant (`books/handlers.py`); an eval's fixture page may have `children` (a book's chapters) |
 | `recordings/` | recorded model responses for the eval scenarios |
 | `data/abc_lexicons/` | the ABC lexicons (the only copy since the Rails generator went, ADR 0008) |

@@ -1,16 +1,19 @@
-"""The harness's own tools: scoped memory and the house style.
+"""The harness's own tools: scoped memory, the house style and the runs an agent may read.
 
 `memory.remember` writes to `Memory`, the agent-owned layer editors can read
 and correct (note §4); it is `propose`, not `write`, because it changes no
-content. Agents read the brand rules before writing (`brand.rules`).
+content. Agents read the brand rules before writing (`brand.rules`). A tool
+that starts a run (`ai.run_assistant`, `ai.generate_brief`) answers with its
+id; `runs.get` reads it back, scoped as REST is (`AgentRun.objects.visible_to`).
 """
 
+import uuid
 from datetime import timedelta
 
 from django.utils import timezone
 
-from .models import Memory
-from .registry import obj, tool
+from .models import AgentRun, Memory
+from .registry import ToolError, obj, tool
 
 SCOPE = {"type": "string", "enum": Memory.SCOPES}
 
@@ -73,3 +76,25 @@ def brand_rules(ctx):
 
     target = ctx.extra.get("target")
     return told(resolve(site_of(target), page=target))
+
+
+@tool(
+    "runs.get",
+    effect="read",
+    description="A run you may read — your own, or one you started with a tool such as ai.run_assistant: its status, "
+    "output and error, and with steps each model and tool call it made.",
+    input_schema=obj(
+        {"run_id": {"type": "string", "format": "uuid"}, "steps": {"type": "boolean"}}, required=["run_id"]
+    ),
+)
+def get_run(ctx, run_id, steps=False):
+    from api.views import run_json  # noqa: PLC0415 — the one JSON shape of a run; api imports the harness
+
+    try:
+        key = uuid.UUID(str(run_id))
+    except ValueError as e:
+        raise ToolError("invalid_args", f"{run_id!r} is not a uuid") from e
+    run = AgentRun.objects.visible_to(ctx.user).select_related("agent", "target_ct").filter(public_id=key).first()
+    if run is None:
+        raise ToolError("not_found", f"no run {run_id}")
+    return run_json(run, steps=steps)

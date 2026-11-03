@@ -135,10 +135,12 @@ class AgentDefinition(DraftStateMixin, RevisionMixin, models.Model):
 
 class AgentRunQuerySet(models.QuerySet):
     def visible_to(self, user):
-        """The runs `user` may read: every run for a superuser, its own runs
-        for an agent user, and for a person the runs they started and the runs
-        whose suggestions they may decide — a reviewer reads the run behind
-        what they review."""
+        """The runs `user` may read: every run for a superuser; for an agent
+        user its own runs and the runs it started (through a tool such as
+        `ai.run_assistant`, whose run is the `assistant` agent's), so an MCP
+        client reads back what it asked for; and for a person the runs they
+        started and the runs whose suggestions they may decide — a reviewer
+        reads the run behind what they review."""
         from suggestions.models import Suggestion
 
         if user is None or not user.is_authenticated or not user.is_active:
@@ -146,7 +148,7 @@ class AgentRunQuerySet(models.QuerySet):
         if user.is_superuser:
             return self
         if user.username.startswith("agent:"):
-            return self.filter(agent__slug=user.username.removeprefix("agent:"))
+            return self.filter(models.Q(agent__slug=user.username.removeprefix("agent:")) | models.Q(started_by=user))
         reviewed = Suggestion.objects.visible_to(user).filter(run__isnull=False).values("run_id")
         return self.filter(models.Q(started_by=user) | models.Q(pk__in=reviewed))
 
