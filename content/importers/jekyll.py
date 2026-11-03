@@ -50,7 +50,14 @@ page's export, not a new page: it is skipped. An updated page takes the state
 its file now has: a live page whose file is held back comes down (and a
 draft's schedule is cancelled, `cms.services.take_down`), so a re-import of an
 unchanged file never flips a page, and a changed one moves it with the file.
-Links are indexed in a second pass, once every page of the site exists.
+**Links follow the pages they name.** A run reads the site's link targets
+once (`graph.services.SiteLinks`, shared with every publish of the run), and
+each document that writes a page relinks, in its own transaction, the live
+pages whose links name what that page took or gave up — a link to a page
+imported later in the run resolves when that page arrives. A run that writes
+nothing indexes nothing: an unchanged sync costs a fixed number of queries
+whatever the site's size (the site's sources, slugs and images are each read
+once).
 """
 
 import hashlib
@@ -60,8 +67,10 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.db import transaction
+from django.db.models import F
 from django.utils.text import slugify
 from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
@@ -302,17 +311,20 @@ def import_images(root: Path, config: dict, docs: list[Document], collection: Co
     source = catalog.confine(real_root, real_root, config.get("source"), "source")
     source = "" if source == real_root else source.relative_to(real_root).as_posix()
     Image = get_image_model()
-    out = {}
+    files = {}
     for doc in docs:
         value = doc.front_matter.get("preview") or doc.front_matter.get("image")
-        if not isinstance(value, str) or value in out:
+        if not isinstance(value, str) or value in files:
             continue
         path = preview_file(real_root, source, value)
-        if path is None:
-            continue
-        data = path.read_bytes()
-        digest = hashlib.sha256(data).hexdigest()
-        image = Image.objects.filter(content_hash=digest).first()
+        if path is not None:
+            files[value] = (path, hashlib.sha256(path.read_bytes()).hexdigest())
+    known = {}  # one query for the images the platform already has, the first of each kept
+    for image in Image.objects.filter(content_hash__in={digest for _, digest in files.values()}).order_by("pk"):
+        known.setdefault(image.content_hash, image)
+    out = {}
+    for value, (path, digest) in files.items():
+        image = known.get(digest)
         if image is None:
             with path.open("rb") as fh:
                 image = Image(title=path.stem, collection=collection, content_hash=digest)
@@ -321,6 +333,7 @@ def import_images(root: Path, config: dict, docs: list[Document], collection: Co
                     image.save()
                 except Exception:  # noqa: BLE001 — an unreadable image is skipped, the page still imports
                     continue
+            known[digest] = image
         out[value] = image
     return out
 
@@ -328,19 +341,51 @@ def import_images(root: Path, config: dict, docs: list[Document], collection: Co
 # ── the import ─────────────────────────────────────────────────────────────
 
 
-def _container(site_root: SiteRootPage, doc: Document, collections: dict, books: dict):
+@dataclass
+class _Run:
+    """One import's state: the site, and what the run has read and made so far
+    — the site's sources (read once), its collections and books, and the
+    slugs taken under each parent it adds to."""
+
+    site_key: str
+    site_root: SiteRootPage
+    config: dict
+    importer: object
+    force: bool
+    report: Report
+    images: dict = field(default_factory=dict)
+    sources: dict = field(default_factory=dict)  # legacy_path → ImportedSource, with its page's `page_type`
+    collections: dict = field(default_factory=dict)
+    books: dict = field(default_factory=dict)
+    siblings: dict = field(default_factory=dict)  # parent id → the slugs of its children
+
+    def links(self):
+        """The site's link targets as the run found them, read before its first write moves any."""
+        from graph.services import site_links
+
+        return site_links(self.site_root)
+
+    def slug(self, parent, slug: str) -> str:
+        taken = self.siblings.get(parent.pk)
+        if taken is None:
+            taken = self.siblings[parent.pk] = set(parent.get_children().values_list("slug", flat=True))
+        return _unique_slug(parent, slug, siblings=taken)
+
+
+def _container(run: _Run, doc: Document, made: list):
     if page_class(doc) is ChapterPage:
         book_dir = Path(doc.rel).parent.as_posix()
-        if book_dir in books:
-            return books[book_dir]
+        if book_dir in run.books:
+            return run.books[book_dir]
     if doc.collection is None:
-        return site_root
-    if doc.collection not in collections:
+        return run.site_root
+    if doc.collection not in run.collections:
+        site_root = run.site_root
         existing = CollectionPage.objects.child_of(site_root).filter(collection=doc.collection).first()
         if existing is None:
             page = CollectionPage(
                 title=doc.collection.replace("_", " ").title(),
-                slug=_unique_slug(site_root, slugify(doc.collection) or "collection"),
+                slug=run.slug(site_root, slugify(doc.collection) or "collection"),
                 collection=doc.collection,
                 output_dir="/".join(
                     p
@@ -352,18 +397,24 @@ def _container(site_root: SiteRootPage, doc: Document, collections: dict, books:
                 ),
             )
             site_root.add_child(instance=page)
-            publish(page, user=ensure_legacy_import_user())
+            publish(page, user=run.importer)
+            made.append(page)
             existing = page
-        collections[doc.collection] = existing
-    return collections[doc.collection]
+        run.collections[doc.collection] = existing
+    return run.collections[doc.collection]
 
 
-def _unique_slug(parent, slug: str, exclude_pk=None) -> str:
-    siblings = set(parent.get_children().exclude(pk=exclude_pk).values_list("slug", flat=True))
+def _unique_slug(parent, slug: str, exclude_pk=None, siblings: set | None = None) -> str:
+    """`slug`, or `slug-2`, `slug-3` … — the first no other child of `parent`
+    has. `siblings` is a run's own set of those slugs (an import's, kept per
+    parent), read instead of the database; the slug chosen joins it."""
+    if siblings is None:
+        siblings = set(parent.get_children().exclude(pk=exclude_pk).values_list("slug", flat=True))
     candidate, n = slug, 2
     while candidate in siblings:
         candidate = f"{slug}-{n}"[:255]
         n += 1
+    siblings.add(candidate)
     return candidate
 
 
@@ -405,84 +456,104 @@ def ensure_site_root(site_key: str, root: Path, config: dict, repo_root: Path) -
 def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
     from django.conf import settings
 
+    from graph.services import one_link_index_per_site, site_links
+
     root = Path(root)
     repo_root = Path(repo_root or settings.REPO_ROOT)
     config = read_config(root)
     report = Report(site_key=site_key)
     docs = documents(root, config, report.errors)
     importer = ensure_legacy_import_user()
-    with transaction.atomic():
+    with transaction.atomic(), one_link_index_per_site():
         site_root = ensure_site_root(site_key, root, config, repo_root)
         collection = Collection.objects.filter(name=f"site: {site_key}").first()
         if collection is None:
             collection = Collection.get_first_root_node().add_child(name=f"site: {site_key}")
-        images = import_images(root, config, docs, collection)
-        collections, books = {}, {}
+        run = _Run(site_key, site_root, config, importer, force, report)
+        run.images = import_images(root, config, docs, collection)
+        sources = ImportedSource.objects.filter(site_key=site_key).annotate(page_type=F("page__content_type"))
+        run.sources = {source.legacy_path: source for source in sources}
         # Books before chapters, so a chapter finds its book.
         ordered = sorted(docs, key=lambda d: (page_class(d) is ChapterPage, d.rel))
         for doc in ordered:
+            if _unchanged(doc, run):
+                continue
             try:
                 with transaction.atomic():
-                    _import_document(
-                        doc, site_key, site_root, collections, books, images, importer, force, report, config
-                    )
+                    written = _import_document(doc, run)
+                    if written:
+                        run.links().update(written)
             except Exception as e:  # noqa: BLE001 — one bad file is reported; the rest of the site still imports
                 report.errors.append(f"{doc.rel}: {type(e).__name__}: {e}")
-        from graph.services import index_page
-
-        for source in ImportedSource.objects.filter(site_key=site_key).select_related("page"):
-            page = source.page.specific
-            if page.live:
-                index_page(page)
+                site_links(site_root, fresh=True)  # what it had read of the failed document's pages went with it
     return report
 
 
-def _import_document(doc, site_key, site_root, collections, books, images, importer, force, report, config):
+def _unchanged(doc: Document, run: _Run) -> bool:
+    """Whether the file is the one last read (its digest), so nothing of its
+    page is written — only its sidecar, refreshed while the page has not
+    changed here. Costs no query unless the page is a book, whose row its
+    chapters need."""
+    source = run.sources.get(doc.rel)
+    if source is None or source.source_digest != hashlib.sha256(doc.text.encode()).hexdigest():
+        return False
+    page = None
+    if issubclass(ContentType.objects.get_for_id(source.page_type).model_class() or Page, BookPage) or source.sidecars:
+        page = source.page.specific
+    if isinstance(page, BookPage):
+        run.books[Path(doc.rel).parent.as_posix()] = page
+    sidecars = _sidecars(doc, page) if page is not None else {}
+    if sidecars != source.sidecars and (not source.sidecars or source.unchanged(page.get_latest_revision_as_object())):
+        source.sidecars = sidecars
+        source.save(update_fields=["sidecars"])
+    run.report.unchanged.append(doc.rel)
+    return True
+
+
+def _import_document(doc: Document, run: _Run) -> list:
+    """Import one changed or new file; returns the pages it wrote (its page,
+    and a collection made for it), none when it is a conflict or the
+    platform's own."""
+    report = run.report
     digest = hashlib.sha256(doc.text.encode()).hexdigest()
-    source = ImportedSource.objects.filter(site_key=site_key, legacy_path=doc.rel).select_related("page").first()
+    source = run.sources.get(doc.rel)
     cls = page_class(doc)
     if source is not None:
         page = source.page.specific
         if isinstance(page, BookPage):
-            books[Path(doc.rel).parent.as_posix()] = page
-        if source.source_digest == digest:
-            sidecars = _sidecars(doc, page)
-            if sidecars != source.sidecars and (
-                not source.sidecars or source.unchanged(page.get_latest_revision_as_object())
-            ):
-                source.sidecars = sidecars
-                source.save(update_fields=["sidecars"])
-            report.unchanged.append(doc.rel)
-            return
+            run.books[Path(doc.rel).parent.as_posix()] = page
         current = page.get_latest_revision_as_object()
-        if not source.unchanged(current) and not force:
+        if not source.unchanged(current) and not run.force:
             report.conflicts.append(f"{doc.rel}: changed in Wagtail since the last import (pass --force to overwrite)")
-            return
-        apply_document(current, doc, images)
-        _save(current, doc, importer, goes_live_at(doc, config))
+            return []
+        run.links()
+        apply_document(current, doc, run.images)
+        _save(current, doc, run.importer, goes_live_at(doc, run.config))
         source.source_text, source.source_digest = doc.text, digest
         source.import_hash = current.compute_content_hash()
         source.sidecars = _sidecars(doc, current)
         source.save()
         report.updated.append(doc.rel)
-        return
-    if holder_of(doc.rel, site_root):  # a page made or moved here writes this file: the platform's, not a new page
+        return [current]
+    if holder_of(doc.rel, run.site_root):  # a page made or moved here writes this file: the platform's, not a new page
         report.unchanged.append(doc.rel)
-        return
-    parent = _container(site_root, doc, collections, books)
+        return []
+    run.links()
+    made = []
+    parent = _container(run, doc, made)
     page = cls(slug="")
-    apply_document(page, doc, images)
-    page.slug = _unique_slug(parent, page.slug)
+    apply_document(page, doc, run.images)
+    page.slug = run.slug(parent, page.slug)
     page.live = False
     parent.add_child(instance=page)
-    _save(page, doc, importer, goes_live_at(doc, config))
+    _save(page, doc, run.importer, goes_live_at(doc, run.config))
     page.refresh_from_db()
     page = page.specific
     if isinstance(page, BookPage):
-        books[Path(doc.rel).parent.as_posix()] = page
+        run.books[Path(doc.rel).parent.as_posix()] = page
     ImportedSource.objects.create(
         page=page,
-        site_key=site_key,
+        site_key=run.site_key,
         legacy_path=doc.rel,
         source_text=doc.text,
         source_digest=digest,
@@ -490,6 +561,7 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         sidecars=_sidecars(doc, page),
     )
     report.created.append(doc.rel)
+    return [page, *made]
 
 
 def _sidecars(doc: Document, page) -> dict:

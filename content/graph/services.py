@@ -10,6 +10,14 @@ entities) and translations (`translation_of`). Structural edges are derived,
 so they are deleted and rewritten; agent, editor and Rails edges are never
 touched here.
 
+A link resolves through its site's `SiteLinks`: what every page of the site
+answers to, read once from `values_list` (no page loaded). Outside an import,
+`index_page` reads one for the call; an import shares one per site for the
+whole run (`one_link_index_per_site`), keeps it current as it writes
+(`SiteLinks.update`), and relinks then and there every live page whose links
+name what moved — so a link to a page imported later in the run resolves in
+that page's transaction, and nothing is indexed again when nothing changed.
+
 Reading: `related` (vector neighbours plus one hop of edges), `semantic_search`,
 `neighbors` (≤ 2 hops), `path`, and `graph_rag` — search, expand one or two
 hops, rerank by similarity to the query (note §5).
@@ -18,9 +26,13 @@ Nodes are addressed as `"<kind>:<id>"`: `page:12`, `entity:7`, `image:3`.
 """
 
 import re
-from collections import deque
+from collections import defaultdict, deque
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
+from functools import cache
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
@@ -163,47 +175,202 @@ def site_root_of(page):
     return SiteRootPage.objects.ancestor_of(page, inclusive=True).first()
 
 
-def resolve_internal_link(page, href: str):
-    """A Markdown link or wikilink target → a page in the same site, or None.
-    Matches the Jekyll permalink in front matter, the page's URL under its site
-    root, and the source path for wikilinks."""
+# ── internal links ─────────────────────────────────────────────────────────
+
+
+@cache
+def _page_models() -> tuple:
+    """The concrete page types a link can name (every `BasePage`: they carry a
+    permalink, a source path and a body)."""
     from cms.models import BasePage
 
-    root = site_root_of(page)
-    if root is None:
-        return None
-    candidates = Page.objects.descendant_of(root).specific()
+    return tuple(model for model in apps.get_models() if issubclass(model, BasePage))
+
+
+def _target(href: str) -> tuple:
+    """What a link names: a site URL (`/…`, matched with its slashes evened
+    out) or, for a wikilink, a source path without `.md`."""
     target = href.strip()
     if target.startswith("/"):
-        wanted = "/" + target.strip("/") + "/"
-        prefix = root.url_path.rstrip("/")
-        for p in candidates:
-            if not isinstance(p, BasePage):
+        return ("url", "/" + target.strip("/") + "/")
+    return ("stem", target.removesuffix(".md").strip("/"))
+
+
+class SiteLinks:
+    """What a Markdown link or wikilink in one site can name. A link to a URL
+    matches a page's Jekyll permalink or its URL under the site root; a
+    wikilink matches a page's source path without `.md`, whole or from any
+    `/` on. Where two pages answer to one target, the first in tree order
+    wins, as when every page of the site was scanned for every link.
+
+    `of(root)` reads it in one query per page type. An import also asks it
+    which live pages name what (read on the first change of the run), so that
+    `update` can relink the pages that name a target an imported page took or
+    gave up."""
+
+    def __init__(self, root):
+        self.root = root
+        self.prefix = root.url_path.rstrip("/")
+        self._owners: dict[tuple, dict[int, str]] = {}  # target → {page id: tree path}
+        self._targets: dict[int, frozenset] = {}  # page id → what it answers to
+        self._hrefs: dict[int, list] | None = None  # live page id → its links, once read
+        self._named_by: dict[tuple, set] = defaultdict(set)  # target → the live pages whose links name it
+
+    @classmethod
+    def of(cls, root) -> "SiteLinks":
+        links = cls(root)
+        for model in _page_models():
+            for row in model.objects.descendant_of(root).values_list(
+                "pk", "path", "url_path", "legacy_path", "front_matter"
+            ):
+                links._put(*row)
+        return links
+
+    def _first(self, target) -> int | None:
+        owners = self._owners.get(target)
+        return min(owners, key=owners.__getitem__) if owners else None
+
+    def resolve(self, href: str) -> int | None:
+        """The id of the page `href` names, or None."""
+        return self._first(_target(href))
+
+    def _put(self, pk, path, url_path, legacy_path, front_matter) -> set:
+        """Record what page `pk` answers to now; returns the targets that now resolve to another page."""
+        new = set()
+        permalink = str((front_matter or {}).get("permalink", "")).strip()
+        if permalink:
+            new.add(("url", "/" + permalink.strip("/") + "/"))
+        new.add(("url", url_path.removeprefix(self.prefix)))
+        if legacy_path:
+            stem = legacy_path.removesuffix(".md")
+            new.add(("stem", stem))
+            new.update(("stem", stem[i + 1 :]) for i, char in enumerate(stem) if char == "/")
+        old = self._targets.get(pk, frozenset())
+        before = {target: self._first(target) for target in old | new}
+        for target in old:
+            owners = self._owners[target]
+            owners.pop(pk, None)
+            if not owners:
+                del self._owners[target]
+        for target in new:
+            self._owners.setdefault(target, {})[pk] = path
+        self._targets[pk] = frozenset(new)
+        return {target for target, was in before.items() if self._first(target) != was}
+
+    def _read_links(self, models_pks) -> None:
+        """(Re)read the links of the live pages among `models_pks` ({model: ids}, or None for the whole site)."""
+        if self._hrefs is None:
+            self._hrefs = {}
+        for model in _page_models():
+            if models_pks is None:
+                rows = model.objects.descendant_of(self.root).live().values_list("pk", "live", "body")
+            elif models_pks.get(model):
+                rows = model.objects.filter(pk__in=models_pks[model]).values_list("pk", "live", "body")
+                for pk in models_pks[model]:
+                    self._forget_links(pk)
+            else:
                 continue
-            permalink = str((p.front_matter or {}).get("permalink", "")).strip()
-            if permalink and "/" + permalink.strip("/") + "/" == wanted:
-                return p
-            if p.url_path.removeprefix(prefix) == wanted:
-                return p
-        return None
-    stem = target.removesuffix(".md").strip("/")
-    for p in candidates:
-        legacy = getattr(p, "legacy_path", "")
-        if legacy and (legacy.removesuffix(".md") == stem or legacy.removesuffix(".md").endswith("/" + stem)):
-            return p
-    return None
+            for pk, live, body in rows:
+                hrefs = links_in(body) if live else []
+                if hrefs:
+                    self._hrefs[pk] = hrefs
+                    for href in hrefs:
+                        self._named_by[_target(href)].add(pk)
+
+    def _forget_links(self, pk) -> None:
+        for href in self._hrefs.pop(pk, ()):
+            self._named_by[_target(href)].discard(pk)
+
+    def update(self, pages) -> int:
+        """`pages` were just written (an import's document, and a collection
+        made for it): read what they answer to and link to again, and relink
+        every live page whose links name a target that now resolves to another
+        page. Returns how many pages were relinked."""
+        by_model = defaultdict(list)
+        for page in pages:
+            by_model[page.specific_class].append(page.pk)
+        moved = set()
+        for model, pks in by_model.items():
+            for row in model.objects.filter(pk__in=pks).values_list(
+                "pk", "path", "url_path", "legacy_path", "front_matter"
+            ):
+                moved |= self._put(*row)
+        if self._hrefs is None:
+            if not moved:
+                return 0
+            self._read_links(None)
+        else:
+            self._read_links(by_model)
+        linkers = sorted({pk for target in moved for pk in self._named_by.get(target, ())})
+        for pk in linkers:
+            self.relink(pk)
+        return len(linkers)
+
+    def relink(self, pk) -> None:
+        """Bring one live page's `links_to` edges to what its links resolve to
+        now: the edges that no longer resolve go, the new ones come."""
+        ct = ContentType.objects.get_for_model(Page)
+        hrefs = (self._hrefs or {}).get(pk, ())
+        want = {target for href in hrefs if (target := self.resolve(href)) not in (None, pk)}
+        edges = Edge.objects.filter(src_ct=ct, src_id=pk, rel="links_to", source="structural", dst_ct=ct)
+        have = set(edges.values_list("dst_id", flat=True))
+        if have - want:
+            edges.filter(dst_id__in=have - want).delete()
+        for dst in sorted(want - have):
+            _link(ct, pk, dst)
 
 
-def internal_links(page) -> list[str]:
+_RUN: ContextVar[dict | None] = ContextVar("graph_site_links", default=None)
+
+
+@contextmanager
+def one_link_index_per_site():
+    """Within this block every `index_page` of a site shares one `SiteLinks`
+    (an import's), which the block's writer keeps current with `update`."""
+    token = _RUN.set({})
+    try:
+        yield
+    finally:
+        _RUN.reset(token)
+
+
+def site_links(root, *, fresh: bool = False) -> SiteLinks:
+    """The links of the site under `root`: the run's (read once, or again with
+    `fresh` — after a document that failed), else read for this call."""
+    memo = _RUN.get()
+    if memo is None:
+        return SiteLinks.of(root)
+    if fresh or root.pk not in memo:
+        memo[root.pk] = SiteLinks.of(root)
+    return memo[root.pk]
+
+
+def links_in(body) -> list[str]:
     hrefs = []
-    for block in getattr(page, "body", []) or []:
+    for block in body or []:
         if block.block_type == "markdown":
             hrefs += MD_LINK.findall(block.value) + WIKILINK.findall(block.value)
     return hrefs
 
 
-def index_page(page) -> dict:
-    """Re-embed (if changed) and rebuild this page's structural edges."""
+def internal_links(page) -> list[str]:
+    return links_in(getattr(page, "body", None))
+
+
+def _link(ct, src_id: int, dst_id: int) -> None:
+    Edge.objects.update_or_create(
+        src_ct=ct,
+        src_id=src_id,
+        rel="links_to",
+        dst_ct=ct,
+        dst_id=dst_id,
+        defaults={"weight": 1.0, "confidence": 1.0, "source": "structural", "run": None, "valid_to": None},
+    )
+
+
+def index_page(page, links: SiteLinks | None = None) -> dict:
+    """Re-embed (if changed) and rebuild this page's structural edges; its
+    links resolve through `links`, else its site's (`site_links`)."""
     from wagtail.models import ReferenceIndex
 
     _, recomputed = embed_object(page, page_text(page), page.compute_content_hash(), "page")
@@ -222,10 +389,14 @@ def index_page(page) -> dict:
         if target is not None and target.pk != page.pk:
             _edge(page, "references", target, source="structural")
             count += 1
-    for href in internal_links(page):
-        target = resolve_internal_link(page, href)
-        if target is not None and target.pk != page.pk:
-            _edge(page, "links_to", target, source="structural")
+    hrefs = internal_links(page)
+    if hrefs and links is None:
+        root = site_root_of(page)
+        links = site_links(root) if root is not None else None
+    for href in hrefs if links is not None else ():
+        target = links.resolve(href)
+        if target is not None and target != page.pk:
+            _link(_ct(page), page.pk, target)
             count += 1
     tags = page.tags.all() if hasattr(page, "tags") else []
     for tag in tags:
