@@ -1,15 +1,16 @@
 // The Sites area (PLAN G4): the registry with what the platform manages of
-// each site, registering a checkout (its first sync starts and the site
-// opens), a site's sync, write-back and doctor started with an
+// each site, AIEO opened from it (the extension's Sites tab has no other way
+// there), registering a checkout (its first sync starts and the site opens), a site's sync, write-back and doctor started with an
 // Idempotency-Key and followed live, cancel, the registry fields and the
 // per-site settings saved, the doctor's findings filtered, and a person who
 // may not manage the site seeing no actions. The platform is a fake behind the
 // real client; the job's log arrives over a fake stream.
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { JobLog, SitesWorkspace, SiteView, type OpenStream } from '../src';
+import { JobLog, SitesWorkspace, SiteView, WORKSPACES, type Destination, type OpenStream } from '../src';
 import { fakePlatform, nth, Reply, renderUi } from '../../../test/harness';
 
 const managed = (overrides: Record<string, unknown> = {}) => ({
@@ -100,6 +101,28 @@ describe('<SitesWorkspace>', () => {
     expect(screen.getByText('Not managed: register its checkout below.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'drsai' }));
     expect(go).toHaveBeenCalledWith({ to: 'site', id: 3 });
+  });
+
+  it('opens AIEO, which works across the sites, from the registry', async () => {
+    const { api } = fakePlatform({
+      'GET /api/v2/sites/': () => [site()],
+      'GET /api/v2/me': () => me([]),
+    });
+    // The registry's Sites workspace, placed as a host places it: a destination it shows is where it goes.
+    const Sites = nth(WORKSPACES.filter((w) => w.id === 'sites')).View;
+    let place: (to: Destination) => void = () => undefined;
+    function Host() {
+      const [at, setAt] = useState<Destination>();
+      place = setAt;
+      return <Sites siteId={3} at={at} />;
+    }
+    const go = vi.fn((to: Destination) => place(to));
+    renderUi(<Host />, { api, go });
+    await userEvent.click(within(await screen.findByRole('group', { name: 'Across the sites' })).getByRole('button', { name: 'AIEO' }));
+    expect(go).toHaveBeenCalledWith({ to: 'aieo' });
+    expect(await screen.findByRole('tab', { name: 'Audit', selected: true })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Patterns' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'drsai' })).not.toBeInTheDocument();
   });
 
   it('registers a checkout the workspace declares and opens the new site', async () => {

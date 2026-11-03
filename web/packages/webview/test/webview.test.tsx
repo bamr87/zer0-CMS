@@ -246,6 +246,15 @@ describe('the extension webviews', () => {
     expect(await screen.findByText('about.md: changed since the last import')).toBeInTheDocument();
   });
 
+  it('reaches AIEO from the Sites tab, in the tab, without asking the host', async () => {
+    const host = open('dashboard');
+    await userEvent.click(await screen.findByRole('tab', { name: 'Sites' }));
+    await userEvent.click(within(await screen.findByRole('group', { name: 'Across the sites' })).getByRole('button', { name: 'AIEO' }));
+    expect(within(screen.getByRole('tablist', { name: 'Workspaces' })).getByRole('tab', { name: 'Sites', selected: true })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Audit', selected: true })).toBeInTheDocument();
+    expect(host.sent.some((m) => m.type === 'go')).toBe(false);
+  });
+
   it('compares and reverts revisions, publishes and accepts a suggestion — each a request the host sends', async () => {
     const host = open('page');
     await host.deliver({ type: 'file', file: { path: '_posts/backups.md', name: 'backups.md' } });

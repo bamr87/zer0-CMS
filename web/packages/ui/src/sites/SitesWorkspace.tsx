@@ -2,7 +2,9 @@
 // its files live, when it was last synced and what its last doctor run found;
 // and, for someone who may manage sites, registering another — one the
 // repository's workspace.yml declares, a checkout under SITES_DIR, or a path
-// typed in — whose first sync starts at once. Opening a site goes to its view.
+// typed in — whose first sync starts at once. Opening a site goes to its view;
+// AIEO, which works across the sites, opens from here too (the extension's
+// Sites tab has no navigation of its own to reach it).
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ManagedSite, Site } from '@zer0/api';
@@ -41,6 +43,11 @@ export function SitesWorkspace() {
   if (sites.isError) return <Alert color="red">{errorText(sites.error)}</Alert>;
   return (
     <Stack>
+      <Group gap="xs" role="group" aria-label="Across the sites">
+        <Button size="xs" variant="light" onClick={() => go({ to: 'aieo' })}>
+          AIEO
+        </Button>
+      </Group>
       {sites.data.length === 0 ? <Text c="dimmed">No sites yet.</Text> : null}
       {sites.data.length ? (
         <Table highlightOnHover verticalSpacing="xs">
