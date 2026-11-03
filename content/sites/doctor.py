@@ -26,9 +26,11 @@ leaves this repository and no doctor rule may name it):
 * the content check no longer reads the theme's front-matter schema (the
   vendored copy, a site's own copy, or `--schema`): a required key is one the
   site's own content types declare (`zer0.json` `contentTypes[].fields[]`
-  with `required: true`, resolved per file as the extension resolves them),
-  and `zer0.json` itself is checked against schemas/zer0.schema.json. A site
-  with no `zer0.json` has no required keys — the cms check already says so;
+  with `required: true`, resolved per file as the extension resolves them —
+  sites/content_model.py, held to the extension by a golden: field groups
+  inlined, `when` clauses evaluated, a blank string empty), and `zer0.json`
+  itself is checked against schemas/zer0.schema.json. A site with no
+  `zer0.json` has no required keys — the cms check already says so;
 * a YAML or JSON syntax error's evidence is this parser's wording, so its
   text (and fingerprint) differs from libyaml's; its rule, file and line do not.
 
@@ -55,10 +57,10 @@ from pathlib import Path
 
 import yaml
 
-from . import catalog, frontmatter
+from . import catalog, content_model, frontmatter
+from .content_model import jsonc_loads
 
 CHECKS = ("config", "image-engine", "cms", "fleet", "distribution", "content")
-SCHEMA = Path(__file__).resolve().parents[2] / "schemas" / "zer0.schema.json"
 IMAGE_GEM = "zer0-image-generator"
 PREVIEW_FORKS = (
     "_plugins/preview_image_generator.rb",
@@ -202,21 +204,9 @@ def check_cms(root: Path, findings: list) -> dict | None:
         if isinstance(folder_path, str) and not content_folder(root, folder_path).is_dir():
             evidence = f"contentFolders[{index}].path {folder_path} does not exist"
             findings.append(finding("cms", "error", "content-folder-missing", evidence, file=rel))
-    for message in schema_problems(data):
+    for message in content_model.validate(data):
         findings.append(finding("cms", "warning", "zer0-json-schema", message, file=rel))
     return data
-
-
-def schema_problems(data: dict) -> list[str]:
-    """Where `zer0.json` breaks schemas/zer0.schema.json, one sentence each."""
-    import jsonschema
-
-    validator = jsonschema.Draft7Validator(json.loads(SCHEMA.read_text(encoding="utf-8")))
-    problems = []
-    for error in sorted(validator.iter_errors(data), key=lambda e: [str(p) for p in e.absolute_path]):
-        where = "/".join(str(p) for p in error.absolute_path) or "(root)"
-        problems.append(f"zer0.json {where}: {error.message[:200]}")
-    return problems
 
 
 def content_folder(root: Path, path: str) -> Path:
@@ -227,19 +217,6 @@ def content_folder(root: Path, path: str) -> Path:
     if wild:
         text = re.sub(r"[^/]*\Z", "", text[: wild.start()])
     return Path(os.path.normpath(os.path.join(root, os.path.expanduser(text or "."))))
-
-
-# JSON with comments and trailing commas (the zer0.json dialect): comments go
-# first, kept as blank space so line numbers hold, then a comma before a
-# closing bracket; strings are matched whole so neither is touched inside one.
-_COMMENTS = re.compile(r'"(?:\\.|[^"\\])*"|//[^\n]*|/\*.*?\*/', re.S)
-_TRAILING = re.compile(r'"(?:\\.|[^"\\])*"|,(?=\s*[\]}])', re.S)
-
-
-def jsonc_loads(text: str):
-    text = text.removeprefix("\ufeff")
-    text = _COMMENTS.sub(lambda m: m.group() if m.group().startswith('"') else re.sub(r"[^\n]", " ", m.group()), text)
-    return json.loads(_TRAILING.sub(lambda m: m.group() if m.group().startswith('"') else "", text))
 
 
 # ── fleet ───────────────────────────────────────────────────────────────────
@@ -549,18 +526,15 @@ def check_distribution(root: Path, findings: list, today: date | None = None) ->
 
 def check_content(root: Path, zer0: dict | None, findings: list) -> int:
     """Front matter that does not parse is an error; an empty field the file's
-    content type requires is a warning. Returns how many content types applied."""
+    content type requires is a warning (sites/content_model.py: the type the
+    extension resolves, its field groups inlined). Returns how many content
+    types applied."""
     try:
         result = catalog.scan(root)
     except catalog.UnsafePath as e:
         findings.append(finding("content", "error", "unsafe-path", str(e), file="_config.yml"))
         return 0
-    types = content_types(zer0)
-    folders = [
-        (content_folder(root, f["path"]), f.get("contentTypes") or [])
-        for f in (zer0 or {}).get("contentFolders") or []
-        if isinstance(f, dict) and isinstance(f.get("path"), str)
-    ]
+    site = content_model.model(zer0, root)
     for entry in result.entries:
         if entry.error and entry.error.startswith("front matter:"):
             evidence = entry.error
@@ -570,62 +544,11 @@ def check_content(root: Path, zer0: dict | None, findings: list) -> int:
                 )
             )
             continue
-        ctype = resolve_type(types, folders, entry)
-        if ctype is None:
-            continue
-        for key in missing_fields(ctype.get("fields") or [], entry.data):
+        ctype = content_model.resolve(site, entry.relative, entry.data)
+        for key in content_model.missing_fields(site, ctype, entry.data):
             evidence = f"{ctype['name']} requires {key}"
             findings.append(finding("content", "warning", f"missing-key:{key}", evidence, file=entry.relative))
-    return len(types)
-
-
-def content_types(zer0: dict | None) -> list[dict]:
-    """The site's content types, or none when it has no zer0.json or switched validation off."""
-    if not isinstance(zer0, dict):
-        return []
-    validation = zer0.get("validation")
-    if isinstance(validation, dict) and validation.get("enabled") is False:
-        return []
-    types = zer0.get("contentTypes")
-    return (
-        [t for t in types if isinstance(t, dict) and isinstance(t.get("name"), str)] if isinstance(types, list) else []
-    )
-
-
-def resolve_type(types: list[dict], folders: list, entry) -> dict | None:
-    """The extension's chain (src/core/content/contentType.ts): the file's own
-    `type`, the folder's one bound type, the only type, the type named
-    `default` — else the built-in one, which requires nothing."""
-    by_name = {t["name"]: t for t in types}
-    declared = entry.data.get("type")
-    if isinstance(declared, str) and declared in by_name:
-        return by_name[declared]
-    owning = [(len(str(d)), bound) for d, bound in folders if entry.path.startswith(str(d).rstrip("/") + "/")]
-    if owning:
-        bound = max(owning, key=lambda pair: pair[0])[1]
-        if isinstance(bound, list) and len(bound) == 1 and bound[0] in by_name:
-            return by_name[bound[0]]
-    if len(types) == 1:
-        return types[0]
-    return by_name.get("default")
-
-
-def missing_fields(fields: list, data, parents: tuple = ()) -> list[str]:
-    """Every required field that is empty, depth-first in declaration order; a
-    `fields` group is walked against its own sub-mapping. A field shown only
-    `when` something holds is not checked (the doctor does not evaluate the clause)."""
-    out = []
-    data = data if isinstance(data, dict) else {}
-    for f in fields:
-        if not isinstance(f, dict) or not isinstance(f.get("name"), str) or "when" in f:
-            continue
-        name = ".".join((*parents, f["name"]))
-        value = data.get(f["name"])
-        if f.get("type") == "fields" and isinstance(f.get("fields"), list):
-            out += missing_fields(f["fields"], value, (*parents, f["name"]))
-        elif f.get("required") is True and (value is None or (hasattr(value, "__len__") and len(value) == 0)):
-            out.append(name)
-    return out
+    return site.declared if site.validation else 0
 
 
 # ── output ──────────────────────────────────────────────────────────────────

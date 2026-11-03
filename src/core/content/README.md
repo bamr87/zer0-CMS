@@ -59,6 +59,8 @@ Write side: `serializeFrontMatter` joins a listed key's array with `', '` onto o
 
 **A content type is resolved in five steps**, in order: the file's own `type` key → a content folder that binds exactly one type → the sole registered type → the type named `default` → the synthesized `DEFAULT_CONTENT_TYPE`. Step 1 is `type`, not FM's branded `fmContentType`. A folder that lists *two* content types binds nothing: guessing between them would apply the wrong schema silently.
 
+**The platform reads the same content model.** `content/sites/content_model.py` is the Python twin of `inlineFieldCollections`, `resolveContentType` (steps 1–5, 1b from `zer0.json`'s own `platform` block as `profileFor` reads it without detection), `folderForFile`, `evaluateWhen`, `isEmpty` and `validateFields`; the doctor's content check runs on it. The golden at `src/test/fixtures/golden/content-model/` is written from the Python and asserted by `golden.test.ts`, so change one side and the other suite fails until the two agree again.
+
 **Placeholders run in one documented order** — article (`{{title}}`, `{{slug}}`) → front matter (`{{fm.x}}`) → path (`{{pathToken.n}}`) → file index (`{{filePrefix.index}}`) → custom (`{{id}}`) → time (`{{now}}`, `{{year}}`, …)
 → `{{date|pattern}}`. FM used two different orders for field defaults and file
 prefixes and documented neither. A token whose source is missing is **left in the text**: a visible `{{fm.author}}` in a filename is a bug somebody fixes, an empty string is one nobody notices. A custom placeholder whose script fails yields `FAULTY_PLACEHOLDER` (`<failed to process>`), which `isEmpty` reads as empty — scripts run through `execFile` with an argv array and no shell.

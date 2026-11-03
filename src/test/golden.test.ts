@@ -10,6 +10,14 @@
  * `worklist-inputs.json` and `worklist.md` are inherited verbatim from
  * BASH-CMS, whose Python lane produced them; our renderer already reproduces
  * them byte for byte, which is what makes them worth keeping.
+ *
+ * `content-model/cases.json` is the platform's reading of the Front Matter
+ * content model (`content/sites/content_model.py`): for each site's
+ * `zer0.json`, every type's fields after inlining, and for each file the type
+ * it resolves to and the required fields it leaves empty. The extension's
+ * `getContentTypes`, `resolveContentType` and `validateFields` must give the
+ * same answers, so a site's files mean the same in file mode and on the
+ * platform.
  */
 
 import { strict as assert } from 'node:assert';
@@ -19,10 +27,15 @@ import * as path from 'node:path';
 
 import { buildCatering } from '../core/catering/catering';
 import { renderWorklist } from '../core/catering/worklist';
+import { getContentTypes, resolveContentType } from '../core/content/contentType';
+import { validateFields } from '../core/content/fields';
+import type { FrontMatter } from '../core/content/frontmatter';
 import { markStatus } from '../core/governance/drafts';
+import { profileFor } from '../core/platform/detect';
+import { resolveConfig } from '../core/shared/config';
 import { pyJsonDump } from '../core/shared/jsonio';
 import type { Contract } from '../core/contract/contract';
-import type { ContentRecord, Freshness, PerfStats } from '../core/shared/types';
+import type { ContentRecord, Field, Freshness, PerfStats } from '../core/shared/types';
 
 const FIXTURES = path.resolve(__dirname, '../../src/test/fixtures');
 const GOLDEN = path.join(FIXTURES, 'golden');
@@ -84,6 +97,30 @@ function toPerfStats(raw: { impressions: number; engagements: number }): PerfSta
     shares: 0,
     engagements: raw.engagements,
   };
+}
+
+/** The shape `generate.py` writes into `content-model/cases.json`. */
+interface ContentModelGolden {
+  root: string;
+  sites: Array<{
+    name: string;
+    zer0: Record<string, unknown>;
+    types: Record<string, string[]>;
+    files: Array<{ path: string; data: FrontMatter; type: string; missing: string[] }>;
+  }>;
+}
+
+/** A type's fields, depth-first, a nested one as `parent.child` — `generate.py`'s `field_names`. */
+function fieldNames(fields: readonly Field[], parents: readonly string[] = []): string[] {
+  const out: string[] = [];
+  for (const field of fields) {
+    const name = [...parents, field.name];
+    out.push(name.join('.'));
+    if (field.type === 'fields') {
+      out.push(...fieldNames(field.fields ?? [], name));
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,5 +226,44 @@ suite('golden: a draft status flip is a one-line diff', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+suite('golden: the content model (content/sites/content_model.py)', () => {
+  const cases = JSON.parse(golden('content-model/cases.json')) as ContentModelGolden;
+
+  test('every content type inlines its field groups as the platform does', () => {
+    for (const site of cases.sites) {
+      const cfg = resolveConfig(cases.root, site.zer0, {});
+      const types = Object.fromEntries(getContentTypes(cfg).map((ct) => [ct.name, fieldNames(ct.fields)]));
+      assert.deepEqual(types, site.types, site.name);
+    }
+  });
+
+  test('every file resolves to the platform`s type and lacks the same required fields', () => {
+    for (const site of cases.sites) {
+      const cfg = resolveConfig(cases.root, site.zer0, {});
+      // No detection: the platform reads `zer0.json`'s own `platform` block, as `profileFor` does.
+      const profile = profileFor(cfg);
+      for (const file of site.files) {
+        const ct = resolveContentType(cfg, file.data, path.join(cases.root, file.path), profile);
+        const missing = validateFields(ct.fields, file.data, cfg).map((v) => v.path.join('.'));
+        assert.deepEqual({ type: ct.name, missing }, { type: file.type, missing: file.missing }, `${site.name}: ${file.path}`);
+      }
+    }
+  });
+
+  test('the cases exercise what they exist to pin', () => {
+    const files = cases.sites.flatMap((site) => site.files);
+    const lifehacker = cases.sites.find((site) => site.name === 'lifehacker');
+    assert.ok(lifehacker !== undefined);
+    assert.deepEqual(lifehacker.types.hack?.slice(0, 6), ['title', 'description', 'date', 'excerpt', 'tags', 'preview']);
+    const operators = new Set(
+      cases.sites.flatMap((site) =>
+        JSON.stringify(site.zer0).match(/"operator":"(\w+)"/g)?.map((hit) => hit.slice(12, -1)) ?? [],
+      ),
+    );
+    assert.equal(operators.size, 10, 'all ten `when` operators');
+    assert.ok(files.some((file) => file.missing.length > 0) && files.some((file) => file.missing.length === 0));
   });
 });

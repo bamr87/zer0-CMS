@@ -231,6 +231,34 @@ def test_required_fields_come_from_the_sites_own_content_types(tmp_path):
     assert all(f["severity"] == "warning" for f in report.findings) and report.content_types == 3
 
 
+def missing_keys(report) -> list:
+    return sorted((f["file"], f["rule"]) for f in report.findings if f["rule"].startswith("missing-key:"))
+
+
+def test_a_required_field_from_a_field_collection_is_checked(tmp_path):
+    # lifehacker.dev's shape: every section takes title, excerpt and the rest from `news-core`.
+    zer0 = {
+        "$schema": "x",
+        "contentFolders": [{"path": "[[workspace]]/pages/_posts", "contentTypes": ["hack"]}],
+        "fieldGroups": [{"id": "news-core", "fields": [{"name": "excerpt", "type": "string", "required": True}]}],
+        "contentTypes": [
+            {"name": "hack", "fields": [{"name": "core", "type": "fieldCollection", "fieldGroup": "news-core"}]}
+        ],
+    }
+    files = {**ALIGNED, "zer0.json": json.dumps(zer0), "pages/_posts/2026-01-05-blank.md": "---\nexcerpt: '  '\n---\n"}
+    assert missing_keys(doctor.run(site(tmp_path, files))) == [
+        ("pages/_posts/2026-01-01-hello.md", "missing-key:excerpt"),
+        ("pages/_posts/2026-01-05-blank.md", "missing-key:excerpt"),  # a blank string is empty
+    ]
+
+
+def test_a_when_field_is_checked_when_its_condition_holds(tmp_path):
+    files = {**TYPED, "pages/_posts/2026-01-02-thin.md": "---\ntitle: Thin\nsummary: s\nx: 1\nseo: {title: t}\n---\n"}
+    found = missing_keys(doctor.run(site(tmp_path, files)))
+    assert ("pages/_posts/2026-01-02-thin.md", "missing-key:teaser") in found  # `x: 1` shows it
+    assert ("pages/_posts/2026-01-01-hello.md", "missing-key:teaser") not in found  # no `x`: hidden, not checked
+
+
 def test_validation_off_means_no_required_fields(tmp_path):
     data = json.loads(TYPED["zer0.json"])
     data["validation"] = {"enabled": False}

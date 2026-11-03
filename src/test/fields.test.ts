@@ -67,6 +67,23 @@ suite('fields: the 18 types', () => {
     assert.equal(FIELD_TYPES.includes('json' as FieldType), false);
   });
 
+  test('FIELD_TYPES and WHEN_OPERATORS are the schema`s own enums, in its order', () => {
+    // schemas/zer0.schema.json is the contract every surface validates
+    // against, and the platform's content/sites/content_model.py is held to
+    // the same enums; a type added here and not there is a field nothing else
+    // accepts.
+    const schema = JSON.parse(
+      fs.readFileSync(path.resolve(__dirname, '../../schemas/zer0.schema.json'), 'utf8'),
+    ) as {
+      definitions: {
+        fieldType: { enum: string[] };
+        whenClause: { properties: { operator: { enum: string[] } } };
+      };
+    };
+    assert.deepEqual([...FIELD_TYPES], schema.definitions.fieldType.enum);
+    assert.deepEqual([...WHEN_OPERATORS], schema.definitions.whenClause.properties.operator.enum);
+  });
+
   test('emptyValueFor answers for all 18, and `multiple` changes four of them', () => {
     const cfg = fixtureConfig();
     const expected: Record<FieldType, unknown> = {

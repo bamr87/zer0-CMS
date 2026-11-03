@@ -1,0 +1,870 @@
+{
+  "generated_by": "generate.py from content/sites/content_model.py",
+  "root": "/site",
+  "sites": [
+    {
+      "name": "lifehacker",
+      "about": "lifehacker.dev's shape: news-core inlined into each section, a folder each, the overlay's type key",
+      "zer0": {
+        "platform": {
+          "id": "jekyll",
+          "overlay": "zer0-mistakes"
+        },
+        "contentFolders": [
+          {
+            "title": "Hacks",
+            "path": "[[workspace]]/pages/_posts/hacks",
+            "contentTypes": [
+              "hack"
+            ]
+          },
+          {
+            "title": "Field Notes",
+            "path": "[[workspace]]/pages/_posts/field-notes",
+            "contentTypes": [
+              "field-note"
+            ]
+          },
+          {
+            "path": "[[workspace]]/pages/_posts",
+            "contentTypes": [
+              "field-note"
+            ],
+            "excludeSubdir": true
+          },
+          {
+            "title": "Docs",
+            "path": "[[workspace]]/pages/_docs",
+            "contentTypes": [
+              "doc"
+            ]
+          },
+          {
+            "title": "Pages",
+            "path": "[[workspace]]/pages",
+            "contentTypes": [
+              "page"
+            ],
+            "excludeSubdir": true
+          }
+        ],
+        "fieldGroups": [
+          {
+            "id": "news-core",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "single": true,
+                "required": true
+              },
+              {
+                "name": "description",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "date",
+                "type": "datetime",
+                "isPublishDate": true,
+                "default": "{{now}}",
+                "required": true
+              },
+              {
+                "name": "excerpt",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "tags",
+                "type": "tags",
+                "required": true
+              },
+              {
+                "name": "preview",
+                "type": "image",
+                "isPreviewImage": true
+              }
+            ]
+          }
+        ],
+        "contentTypes": [
+          {
+            "name": "hack",
+            "fields": [
+              {
+                "name": "core",
+                "type": "fieldCollection",
+                "fieldGroup": "news-core"
+              },
+              {
+                "name": "categories",
+                "type": "categories",
+                "required": true,
+                "default": [
+                  "Hacks"
+                ]
+              },
+              {
+                "name": "author",
+                "type": "choice",
+                "required": true,
+                "default": "claude",
+                "choices": [
+                  "amr",
+                  "claude"
+                ]
+              },
+              {
+                "name": "permalink",
+                "type": "string",
+                "single": true
+              },
+              {
+                "name": "featured",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "name": "field-note",
+            "fields": [
+              {
+                "name": "core",
+                "type": "fieldCollection",
+                "fieldGroup": "news-core"
+              },
+              {
+                "name": "categories",
+                "type": "categories",
+                "required": true,
+                "default": [
+                  "Field Notes"
+                ]
+              },
+              {
+                "name": "author",
+                "type": "choice",
+                "required": true,
+                "default": "claude",
+                "choices": [
+                  "amr",
+                  "claude"
+                ]
+              },
+              {
+                "name": "series",
+                "type": "string",
+                "single": true
+              }
+            ]
+          },
+          {
+            "name": "doc",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "single": true,
+                "required": true
+              },
+              {
+                "name": "description",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "sidebar",
+                "type": "fields",
+                "fields": [
+                  {
+                    "name": "nav",
+                    "type": "string",
+                    "default": "tree"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "page",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "single": true,
+                "required": true
+              },
+              {
+                "name": "layout",
+                "type": "string",
+                "single": true,
+                "default": "default"
+              }
+            ]
+          }
+        ],
+        "draftField": {
+          "name": "draft",
+          "type": "boolean"
+        },
+        "validation": {
+          "enabled": true
+        }
+      },
+      "types": {
+        "hack": [
+          "title",
+          "description",
+          "date",
+          "excerpt",
+          "tags",
+          "preview",
+          "categories",
+          "author",
+          "permalink",
+          "featured"
+        ],
+        "field-note": [
+          "title",
+          "description",
+          "date",
+          "excerpt",
+          "tags",
+          "preview",
+          "categories",
+          "author",
+          "series"
+        ],
+        "doc": [
+          "title",
+          "description",
+          "sidebar",
+          "sidebar.nav"
+        ],
+        "page": [
+          "title",
+          "layout"
+        ]
+      },
+      "files": [
+        {
+          "path": "pages/_posts/hacks/2026-09-01-alias.md",
+          "data": {
+            "title": "Alias your way out of it",
+            "description": "Three shell aliases that save a morning.",
+            "date": "2026-09-01",
+            "excerpt": "Type less.",
+            "tags": [
+              "shell"
+            ],
+            "categories": [
+              "Hacks"
+            ],
+            "author": "claude"
+          },
+          "type": "hack",
+          "missing": []
+        },
+        {
+          "path": "pages/_posts/hacks/2026-09-02-thin.md",
+          "data": {
+            "title": "Alias your way out of it",
+            "description": "   ",
+            "date": "2026-09-01",
+            "excerpt": "<failed to process>",
+            "tags": [],
+            "categories": [
+              "Hacks"
+            ],
+            "author": "claude"
+          },
+          "type": "hack",
+          "missing": [
+            "description",
+            "excerpt",
+            "tags"
+          ]
+        },
+        {
+          "path": "pages/_posts/field-notes/2026-09-03-note.md",
+          "data": {
+            "title": "A note"
+          },
+          "type": "field-note",
+          "missing": [
+            "description",
+            "date",
+            "excerpt",
+            "tags",
+            "categories",
+            "author"
+          ]
+        },
+        {
+          "path": "pages/_posts/2026-09-04-loose.md",
+          "data": {
+            "title": "Alias your way out of it",
+            "description": "Three shell aliases that save a morning.",
+            "date": "2026-09-01",
+            "excerpt": "Type less.",
+            "tags": [
+              "shell"
+            ],
+            "categories": [
+              "Field Notes"
+            ],
+            "author": "claude"
+          },
+          "type": "field-note",
+          "missing": []
+        },
+        {
+          "path": "pages/_docs/guide.md",
+          "data": {
+            "type": "hack",
+            "title": "A guide that says it is a hack"
+          },
+          "type": "hack",
+          "missing": [
+            "description",
+            "date",
+            "excerpt",
+            "tags",
+            "categories",
+            "author"
+          ]
+        },
+        {
+          "path": "pages/_docs/landing.md",
+          "data": {
+            "fmContentType": "page",
+            "title": "Named by the overlay's key"
+          },
+          "type": "page",
+          "missing": []
+        },
+        {
+          "path": "pages/_docs/unknown.md",
+          "data": {
+            "fmContentType": "nope",
+            "title": "T",
+            "description": "D"
+          },
+          "type": "doc",
+          "missing": []
+        },
+        {
+          "path": "pages/about.md",
+          "data": {
+            "title": "About"
+          },
+          "type": "page",
+          "missing": []
+        },
+        {
+          "path": "notes/elsewhere.md",
+          "data": {},
+          "type": "default",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "rules",
+      "about": "every rule lifehacker does not exercise: when, a hidden parent, nested groups, a cycle, a wildcard",
+      "zer0": {
+        "contentFolders": [
+          {
+            "path": "[[workspace]]/content/*/posts",
+            "contentTypes": [
+              "article"
+            ]
+          },
+          {
+            "path": "[[workspace]]/content",
+            "contentTypes": [
+              "article",
+              "default"
+            ]
+          },
+          {
+            "path": "pages/_quests",
+            "contentTypes": [
+              "quest"
+            ]
+          }
+        ],
+        "fieldGroups": [
+          {
+            "id": "seo",
+            "fields": [
+              {
+                "name": "seoTitle",
+                "type": "string",
+                "required": true
+              }
+            ]
+          },
+          {
+            "id": "loop",
+            "fields": [
+              {
+                "name": "again",
+                "type": "fieldCollection",
+                "fieldGroup": "loop"
+              },
+              {
+                "name": "looped",
+                "type": "string",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "contentTypes": [
+          {
+            "name": "article",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "status",
+                "type": "choice",
+                "choices": [
+                  "draft",
+                  "reviewed"
+                ],
+                "default": "draft"
+              },
+              {
+                "name": "verdict",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "status",
+                  "operator": "eq",
+                  "value": "reviewed"
+                }
+              },
+              {
+                "name": "shout",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "status",
+                  "operator": "eq",
+                  "value": "REVIEWED",
+                  "caseSensitive": false
+                }
+              },
+              {
+                "name": "followup",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "verdict",
+                  "operator": "startsWith",
+                  "value": "re"
+                }
+              },
+              {
+                "name": "sidebar",
+                "type": "fields",
+                "fields": [
+                  {
+                    "name": "nav",
+                    "type": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "seo",
+                    "type": "fieldCollection",
+                    "fieldGroup": "seo"
+                  }
+                ]
+              },
+              {
+                "name": "section",
+                "type": "heading",
+                "title": "More"
+              },
+              {
+                "name": "ghost",
+                "type": "fieldCollection",
+                "fieldGroup": "no-such-group"
+              },
+              {
+                "name": "nothing",
+                "type": "fieldCollection"
+              },
+              {
+                "name": "loop",
+                "type": "fieldCollection",
+                "fieldGroup": "loop"
+              }
+            ]
+          },
+          {
+            "name": "quest",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string"
+              },
+              {
+                "name": "level",
+                "type": "number"
+              },
+              {
+                "name": "tags",
+                "type": "tags"
+              },
+              {
+                "name": "boss",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "level",
+                  "operator": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "name": "mentor",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "level",
+                  "operator": "lt",
+                  "value": 3
+                }
+              },
+              {
+                "name": "rank",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "level",
+                  "operator": "gt",
+                  "value": 99
+                }
+              },
+              {
+                "name": "unlisted",
+                "type": "boolean",
+                "required": true,
+                "when": {
+                  "fieldRef": "level",
+                  "operator": "lte",
+                  "value": 1
+                }
+              },
+              {
+                "name": "side",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "tags",
+                  "operator": "contains",
+                  "value": "side"
+                }
+              },
+              {
+                "name": "main",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "tags",
+                  "operator": "notContains",
+                  "value": "side"
+                }
+              },
+              {
+                "name": "epilogue",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "title",
+                  "operator": "endsWith",
+                  "value": "end"
+                }
+              },
+              {
+                "name": "secret",
+                "type": "string",
+                "required": true,
+                "when": {
+                  "fieldRef": "status",
+                  "operator": "neq",
+                  "value": "open"
+                }
+              }
+            ]
+          },
+          {
+            "name": "default",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "required": true
+              }
+            ]
+          }
+        ]
+      },
+      "types": {
+        "article": [
+          "title",
+          "status",
+          "verdict",
+          "shout",
+          "followup",
+          "sidebar",
+          "sidebar.nav",
+          "sidebar.seoTitle",
+          "section",
+          "looped"
+        ],
+        "quest": [
+          "title",
+          "level",
+          "tags",
+          "boss",
+          "mentor",
+          "rank",
+          "unlisted",
+          "side",
+          "main",
+          "epilogue",
+          "secret"
+        ],
+        "default": [
+          "title"
+        ]
+      },
+      "files": [
+        {
+          "path": "content/blog/posts/one.md",
+          "data": {
+            "title": "One",
+            "status": "reviewed",
+            "verdict": "",
+            "sidebar": {
+              "nav": "n"
+            }
+          },
+          "type": "article",
+          "missing": [
+            "verdict",
+            "shout",
+            "sidebar.seoTitle",
+            "looped"
+          ]
+        },
+        {
+          "path": "content/blog/posts/two.md",
+          "data": {
+            "title": "Two",
+            "status": "draft",
+            "verdict": "recommended"
+          },
+          "type": "article",
+          "missing": [
+            "sidebar.nav",
+            "sidebar.seoTitle",
+            "looped"
+          ]
+        },
+        {
+          "path": "content/blog/posts/three.md",
+          "data": {
+            "title": "Three",
+            "status": "Reviewed",
+            "verdict": "recommended",
+            "shout": "yes",
+            "sidebar": {
+              "nav": "t",
+              "seoTitle": "s"
+            },
+            "looped": "l"
+          },
+          "type": "article",
+          "missing": []
+        },
+        {
+          "path": "content/blog/posts/four.md",
+          "data": {
+            "title": "Four",
+            "status": "reviewed",
+            "verdict": "recommended",
+            "shout": "ok",
+            "sidebar": {
+              "nav": "t",
+              "seoTitle": "s"
+            },
+            "looped": "l"
+          },
+          "type": "article",
+          "missing": [
+            "followup"
+          ]
+        },
+        {
+          "path": "content/blog/posts/five.md",
+          "data": {
+            "title": "Five"
+          },
+          "type": "article",
+          "missing": [
+            "sidebar.nav",
+            "sidebar.seoTitle",
+            "looped"
+          ]
+        },
+        {
+          "path": "content/blog/posts/six.md",
+          "data": {
+            "type": "nope",
+            "fmContentType": "quest",
+            "title": "Six",
+            "status": "x"
+          },
+          "type": "article",
+          "missing": [
+            "sidebar.nav",
+            "sidebar.seoTitle",
+            "looped"
+          ]
+        },
+        {
+          "path": "content/index.md",
+          "data": {},
+          "type": "default",
+          "missing": [
+            "title"
+          ]
+        },
+        {
+          "path": "pages/_quests/q1.md",
+          "data": {
+            "title": "The end",
+            "level": 12,
+            "tags": [
+              "side"
+            ],
+            "status": "open"
+          },
+          "type": "quest",
+          "missing": [
+            "boss",
+            "side",
+            "epilogue"
+          ]
+        },
+        {
+          "path": "pages/_quests/q2.md",
+          "data": {
+            "level": "high",
+            "tags": "side quest",
+            "unlisted": false
+          },
+          "type": "quest",
+          "missing": [
+            "boss",
+            "mentor",
+            "rank",
+            "side",
+            "epilogue",
+            "secret"
+          ]
+        },
+        {
+          "path": "pages/_quests/q3.md",
+          "data": {
+            "title": "Start",
+            "level": 0,
+            "tags": []
+          },
+          "type": "quest",
+          "missing": [
+            "mentor",
+            "unlisted",
+            "main",
+            "secret"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no-types",
+      "about": "a zer0.json that declares no content type: the built-in one, which requires nothing",
+      "zer0": {
+        "contentFolders": [
+          {
+            "path": "[[workspace]]/pages"
+          }
+        ]
+      },
+      "types": {
+        "default": [
+          "title",
+          "description",
+          "date",
+          "preview",
+          "draft",
+          "tags",
+          "categories"
+        ]
+      },
+      "files": [
+        {
+          "path": "pages/index.md",
+          "data": {
+            "title": ""
+          },
+          "type": "default",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "one-type",
+      "about": "one content type governs every file; validation off reports nothing",
+      "zer0": {
+        "contentTypes": [
+          {
+            "name": "only",
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "validation": {
+          "enabled": false
+        }
+      },
+      "types": {
+        "only": [
+          "title"
+        ]
+      },
+      "files": [
+        {
+          "path": "anywhere/at/all.md",
+          "data": {},
+          "type": "only",
+          "missing": []
+        }
+      ]
+    }
+  ]
+}

@@ -9,11 +9,12 @@ Every site the platform manages, its generated file tree, and keeping the two in
 | `catalog.py` | The Jekyll 4.4 reader rules, ported from the Rails catalog: which files are pages, posts, drafts and documents. `tests/sites/test_catalog.py` holds it to the lists Jekyll 4.4.1's own reader produced for the fixture sites, byte for byte. The importer reads sites through it, so the platform has one Jekyll reader |
 | `frontmatter.py` | Front-matter line surgery: `update_keys` rewrites only the lines a change touches — comments, quoting, list style, CRLF, a BOM and a `...` fence survive — and verifies every edit by reading it back. The exporter renders a changed page over its original file with it |
 | `writer.py` | The confined writer: plain relative paths only, no symlink at any component (`lstat`), realpath inside the root; O_EXCL for a new file; an atomic replace that compares the bytes again right before the rename; file-name slugs |
-| `doctor.py` | zer0 doctor: config, image engine, cms, fleet, distribution and content checks as findings (`findings.jsonl`). Its docstring says what changed from the Ruby doctor and why (the theme's rules are gone) |
+| `content_model.py` | A site's Front Matter content model, its `zer0.json` read the way the extension reads it (src/core/content/{fields,contentType,folders}.ts; the 18 field types of decision D6): the JSONC reader and the schemas/zer0.schema.json check, field groups inlined, the type each file resolves to (the file's `type`, the overlay's type key, its folder, the only type, `default`) and the required fields it leaves empty (`when` evaluated, a blank string empty). Held to the extension by `src/test/fixtures/golden/content-model/`, which `src/test/fixtures/golden/generate.py` writes from it (`tests/sites/test_content_model.py`) |
+| `doctor.py` | zer0 doctor: config, image engine, cms, fleet, distribution and content checks as findings (`findings.jsonl`). Its docstring says what changed from the Ruby doctor and why (the theme's rules are gone); its content check resolves types and required fields through `content_model.py` |
 | `services.py` | Registering and discovering sites, changing them, and the work of their jobs: `sync`, `export` (the write-back) and `doctor` |
 | `views.py`, `serializers.py`, `urls.py` | `/api/v2/sites/` (its `voice/` paths are `../voice/`'s views) |
 
-None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Django: `python -m sites.doctor PATH [--format findings]` (from `content/`) is what `bin/zer0 doctor` and the reusable `zer0-doctor.yml` run, with PyYAML and jsonschema.
+None of `catalog.py`, `content_model.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Django: `python -m sites.doctor PATH [--format findings]` (from `content/`) is what `bin/zer0 doctor` and the reusable `zer0-doctor.yml` run, with PyYAML and jsonschema.
 
 ## Sync and write-back
 
