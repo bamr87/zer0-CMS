@@ -1,0 +1,101 @@
+# The platform's image: content/Dockerfile built (the studio's Node stage
+# included), Django's deploy checks run on it, then the compose stack's roles —
+# db, redis, the web role, the worker, the relay and the events consumer —
+# booted on that one image and probed: /healthz and /readyz answer, /version
+# names this commit, and the studio is served. AGENTS.md's Definition of Done
+# asks for exactly this after a change to content/Dockerfile or
+# docker-compose.yml; until this workflow it was checked only by hand
+# (docs/CICD.md lists the same commands).
+#
+# A workflow of its own because GitHub filters paths per workflow, not per job:
+# the image is built from content/, web/ (the studio) and schemas/ and run by
+# docker-compose.yml, while content.yml's suites need neither web/ nor the
+# compose file and web.yml's need no image. Every role runs the image built
+# here — a compose override names it, so compose builds and pulls nothing of
+# ours — under a compose project of its own. No step calls a model provider:
+# the stack's LLM backend is the recorded one.
+name: image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "content/**"
+      - "web/**"
+      - "schemas/**"
+      - "docker-compose.yml"
+      - ".github/workflows/image.yml"
+  pull_request:
+    paths:
+      - "content/**"
+      - "web/**"
+      - "schemas/**"
+      - "docker-compose.yml"
+      - ".github/workflows/image.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    name: builds, passes the deploy checks, boots and answers /readyz
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: zer0-cms-ci
+      COMPOSE_PROFILES: content
+      IMAGE: zer0-cms-content:ci-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: docker-compose.yml parses
+        run: docker compose config -q
+      # GIT_SHA and BUILT_AT are what /version reports and every log line carries. No layer cache: the Dockerfile
+      # reads GIT_SHA before its dependency layers, so a cache would hold a new 1 GB layer per commit and push the
+      # other workflows' caches out.
+      - name: Build content/Dockerfile
+        run: |
+          docker build --file content/Dockerfile --tag "$IMAGE" \
+            --build-arg GIT_SHA="$GITHUB_SHA" --build-arg BUILT_AT="$(date -u +%FT%TZ)" .
+      # The image's production settings with what a deployment gives them: a generated SECRET_KEY and a fresh
+      # Fernet key as AI_CREDENTIAL_KEYS, never the placeholder compose falls back to, which the platform's own
+      # deploy check refuses. Warnings are printed; an error fails the job.
+      - name: manage.py check --deploy
+        run: |
+          SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')"
+          AI_CREDENTIAL_KEYS="$(python3 -c 'import base64, os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"
+          export SECRET_KEY AI_CREDENTIAL_KEYS
+          docker run --rm --network none -e SECRET_KEY -e AI_CREDENTIAL_KEYS -e DATABASE_URL=sqlite:///:memory: \
+            "$IMAGE" python manage.py check --deploy --fail-level ERROR
+      - name: Every role on the built image
+        run: |
+          {
+            echo "services:"
+            for role in content worker relay events; do printf '  %s:\n    image: %s\n    pull_policy: never\n' "$role" "$IMAGE"; done
+          } > "$RUNNER_TEMP/image.override.yml"
+          echo "COMPOSE_FILE=docker-compose.yml:$RUNNER_TEMP/image.override.yml" >> "$GITHUB_ENV"
+      - name: Boot the stack and wait for it
+        run: |
+          CONTENT_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')"
+          export CONTENT_SECRET_KEY
+          docker compose up --detach --wait --wait-timeout 600 --no-build db redis content worker relay events
+      - name: The probes answer
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8000/healthz
+          curl -fsS http://127.0.0.1:8000/readyz | tee "$RUNNER_TEMP/readyz.json"
+          python3 -c 'import json, sys; ready = json.load(open(sys.argv[1])); sys.exit(ready["status"] != "ok")' "$RUNNER_TEMP/readyz.json"
+          curl -fsS http://127.0.0.1:8000/version | tee "$RUNNER_TEMP/version.json"
+          python3 -c 'import json, os, sys; sys.exit(json.load(open(sys.argv[1]))["commit"] != os.environ["GITHUB_SHA"])' "$RUNNER_TEMP/version.json"
+          test "$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/studio/)" = 200
+      - name: The stack's logs
+        if: failure()
+        run: docker compose logs --no-color --timestamps
+      - name: Tear the stack down
+        if: always()
+        run: docker compose down --volumes --remove-orphans

@@ -54,3 +54,8 @@ jobs:
         run: npm run check:api
       - name: Build the studio
         run: npm run build
+      # Known vulnerabilities, high or critical, in what the studio ships (its production dependencies). Report-only
+      # until the first findings are triaged — then drop continue-on-error and it gates.
+      - name: npm audit (report-only)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

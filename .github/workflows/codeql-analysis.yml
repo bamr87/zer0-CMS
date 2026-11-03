@@ -1,25 +1,27 @@
-# CodeQL over both halves of the repository.
+# CodeQL over every language of the repository.
 #
 # `javascript-typescript` covers the VS Code extension (`src/`, `esbuild.js`,
-# `test-runner.js`); `ruby` covers the Ruby still being absorbed (`packages/zer0-image-generator/`, `sites/zer0-pages/`). Both
+# `test-runner.js`) and the studio (`web/`); `python` covers the platform
+# (`content/`, the only server), the tools (`tools/`, `bin/zer0`'s) and the
+# Python of the sources being absorbed; `ruby` covers the Ruby still being absorbed (`packages/zer0-image-generator/`, `sites/zer0-pages/`). All three
 # run with `build-mode: none`, the supported mode for interpreted languages —
 # CodeQL extracts straight from source and there is nothing to compile. The
 # `autobuild` step this file used to carry only ever did anything for C/C++, C#
-# and Java, so it did nothing for either language here.
+# and Java, so it did nothing for any language here.
 name: "CodeQL"
 
 # `build-mode: none` means CodeQL extracts straight from the source files of the
-# two languages below and nothing else, so a change touching none of them
-# produces a byte-identical analysis to the run before it. Half of this
-# repository's pull requests are exactly that — the content plane is Python,
-# which is not a language scanned here, and the docs, schemas and recordings are
-# not code at all — so the event triggers are filtered to the extensions the two
-# extractors read. The weekly `schedule:` below is the backstop: it scans the
+# three languages below and nothing else, so a change touching none of them
+# produces a byte-identical analysis to the run before it. Many of this
+# repository's pull requests are exactly that — the docs, schemas and recordings
+# are not code at all — so the event triggers are filtered to the extensions the
+# three extractors read. The weekly `schedule:` below is the backstop: it scans the
 # whole tree regardless of what changed, so nothing stays unscanned for longer
 # than seven days even if this list is ever incomplete. The two lists are
 # written out twice because GitHub's workflow parser does not accept YAML
 # anchors; keep them identical, and keep both in step with the matrix — a new
-# language needs its extensions added.
+# language needs its extensions added (tools/tests/test_workflows.py holds the
+# two lists equal).
 on:
   push:
     branches: [main]
@@ -35,6 +37,8 @@ on:
       - "**/*.html"
       - "**/package.json"
       - "**/package-lock.json"
+      # python
+      - "**/*.py"
       # ruby
       - "**/*.rb"
       - "**/*.erb"
@@ -60,6 +64,8 @@ on:
       - "**/*.html"
       - "**/package.json"
       - "**/package-lock.json"
+      # python
+      - "**/*.py"
       # ruby
       - "**/*.rb"
       - "**/*.erb"
@@ -97,6 +103,8 @@ jobs:
       matrix:
         include:
           - language: javascript-typescript
+            build-mode: none
+          - language: python
             build-mode: none
           - language: ruby
             build-mode: none

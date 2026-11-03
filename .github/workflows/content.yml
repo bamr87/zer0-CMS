@@ -13,6 +13,10 @@
 # purpose (see `PRIMARY_PYTHON` below): the version-independent checks run once,
 # and on a pull request the secondary interpreter skips the `slow` tier. A push
 # to main always runs everything on both.
+#
+# A third job, `audit`, reports the known vulnerabilities in the plane's pinned
+# dependencies (pip-audit). The image itself is built, booted and probed by
+# image.yml, which also runs on web/ and docker-compose.yml.
 name: content
 
 on:
@@ -156,3 +160,26 @@ jobs:
       # No makemigrations check here: the sqlite leg above already runs it, and
       # it reads the migration graph, not the database.
       - run: python -m pytest -q -m "not slow"
+
+  # Every version in content/requirements*.txt is exact, so nothing moves one when a fix is published: this lists the
+  # known vulnerabilities in them (and in what they pull in) in the job summary. Report-only until the first findings
+  # are triaged — then drop continue-on-error and it gates. The outbox harness installs from git and is not on PyPI,
+  # so pip-audit names it as skipped.
+  audit:
+    name: known vulnerabilities in the pinned dependencies (report)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: content/requirements*.txt
+      - run: python -m pip install --quiet pip-audit
+      - name: pip-audit (report-only)
+        continue-on-error: true
+        shell: bash
+        run: pip-audit -r requirements.txt -r requirements-providers.txt --desc on --format markdown | tee -a "$GITHUB_STEP_SUMMARY"
