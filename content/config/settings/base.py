@@ -587,6 +587,10 @@ EVENTS_SOURCE = "zer0-cms/content"
 EVENTS_STREAM = env("EVENTS_STREAM", default="zer0:content")
 # OUTBOX_RELAY: redis (Redis Streams, PLAN-D6) | memory (tests)
 OUTBOX_RELAY = env("OUTBOX_RELAY", default="redis")
+# W1-10: when /readyz calls the event pipeline behind (ops/readiness.py) — the oldest event the relay has not sent,
+# in seconds, and the entries a consumer group on EVENTS_STREAM has not read. It reports them and still answers 200.
+OUTBOX_LAG_SECONDS = env.int("OUTBOX_LAG_SECONDS", default=300)
+EVENTS_LAG_ENTRIES = env.int("EVENTS_LAG_ENTRIES", default=1000)
 
 # ── The outbox desk (outboxdesk/README.md, ADR 0007) ─────────────────────────
 # The outbox harness (bamr87/outbox) run from the platform. Its belt lives in files that are the record — each

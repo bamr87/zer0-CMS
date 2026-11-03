@@ -8,15 +8,17 @@ Every installed app's `consumers` module registers its handlers
 (`autodiscover_modules`), and the automations' are registered by a call
 (`automations.consumers.register`), so no other consumer's test sees them; each
 handler runs once per event (outbox/consumers.py). The command loops until
-interrupted. A read blocks for up to five seconds (`consume_stream`), so the
-connection waits longer than that: redis-py's own default of five seconds would
-end the first quiet read with a timeout.
+interrupted, waiting out a database or Redis blip and touching the
+`consumer-<name>` heartbeat after every pass (outbox/loop.py). A read blocks for
+up to five seconds (`consume_stream`), so the connection waits longer than that:
+redis-py's own default of five seconds would end the first quiet read with a timeout.
 """
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.module_loading import autodiscover_modules
 
+from outbox import loop
 from outbox.consumers import consume_stream
 
 BLOCK_MS = 5000  # how long one read waits on an idle stream
@@ -45,9 +47,11 @@ class Command(BaseCommand):
         # An idle stream holds the read for the whole block, so the socket timeout must outlast it; redis-py 8
         # defaults socket_timeout to 5 s, the same as the block, and the process then died on its first quiet spell.
         client = redis.Redis.from_url(settings.REDIS_URL, socket_timeout=SOCKET_TIMEOUT)
-        while True:
+
+        def consume() -> int:
             handled = consume_stream(client, stream, group, name, block_ms=BLOCK_MS)
             if handled:
                 self.stdout.write(f"handled {handled} event(s)")
-            if once:
-                return
+            return handled
+
+        loop.run(consume, heartbeat=f"consumer-{name}", once=once)

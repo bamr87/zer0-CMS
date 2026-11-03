@@ -1,7 +1,7 @@
 """URL map of the platform.
 
 /healthz          liveness: the process answers, touching nothing
-/readyz           readiness: database, cache and Redis, 503 when one is down
+/readyz           readiness: database, cache and Redis, 503 when one is down; `degraded` when the outbox lags
 /version          name, version, commit, built_at
 /admin/           Wagtail admin (pages, snippets, suggestions, agent runs); its sign-in is the studio's
 /django-admin/    Django admin; its sign-in is the studio's too (accounts/views.py)

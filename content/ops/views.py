@@ -12,7 +12,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
-from .readiness import run_checks
+from .readiness import reports, run_checks
 
 
 def _json(payload, status=200):
@@ -31,10 +31,13 @@ def healthz(request):
 @transaction.non_atomic_requests
 @require_GET
 def readyz(request):
-    """Readiness: every dependency answers, else 503 and which one did not."""
+    """Readiness: every dependency answers, else 503 and which one did not. A report that is not ok (the event
+    pipeline behind) makes the status `degraded` and leaves the answer 200 (readiness.py)."""
     checks = run_checks()
-    ok = all(state == "ok" for state in checks.values())
-    return _json({"status": "ok" if ok else "degraded", "checks": checks}, status=200 if ok else 503)
+    ready = all(state == "ok" for state in checks.values())
+    reported = run_checks(reports())
+    ok = ready and all(state == "ok" for state in reported.values())
+    return _json({"status": "ok" if ok else "degraded", "checks": {**checks, **reported}}, status=200 if ready else 503)
 
 
 @transaction.non_atomic_requests

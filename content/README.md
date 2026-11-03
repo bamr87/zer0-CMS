@@ -87,7 +87,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
 | `/mcp/` | MCP, bearer-token authenticated (`manage.py agent_token <slug> --name …`) |
 
 REST takes a session (the studio, signed in through django-allauth's headless API, with its CSRF token), an agent's token (`zer0_…`, `manage.py agent_token`) or a person's token (`zer0u_…`, issued in the studio's account menu or by `manage.py user_token`, which the VS Code extension sends from the editor's secret storage; one without the `write` scope only reads). GraphQL takes the same three.
-| `/healthz`, `/readyz`, `/version` | liveness (touches nothing), readiness (database, cache, Redis — 503 with `checks` when one is down), the build (`name`, `version`, `commit`, `built_at`) |
+| `/healthz`, `/readyz`, `/version` | liveness (touches nothing), readiness (database, cache, Redis — 503 with `checks` when one is down; `degraded`, still 200, when the outbox or a consumer group lags), the build (`name`, `version`, `commit`, `built_at`) |
 | `/api/v2/openapi.json`, `/api/v2/docs/` | the OpenAPI document (committed at [`schemas/openapi/openapi.json`](../schemas/openapi/openapi.json), drift-checked) and its UI where `API_DOCS_ENABLED` |
 
 Every response carries `X-Request-Id` (echoed when a client sent one) and `X-App-Version`; every non-2xx a REST path returns is the envelope in [`ops/README.md`](ops/README.md), and GraphQL and MCP carry the same `code` and `request_id` in their own error shapes.

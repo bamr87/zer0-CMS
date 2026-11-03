@@ -33,7 +33,7 @@ def test_readyz_reports_every_check_ok(client, monkeypatch):
     monkeypatch.setattr("ops.readiness.redis_client", lambda: fakeredis.FakeRedis())
     response = client.get("/readyz")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "checks": {"db": "ok", "cache": "ok", "redis": "ok"}}
+    assert response.json() == {"status": "ok", "checks": {"db": "ok", "cache": "ok", "redis": "ok", "outbox": "ok"}}
 
 
 @pytest.mark.django_db

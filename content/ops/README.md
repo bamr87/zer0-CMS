@@ -4,8 +4,9 @@ What an operator, a load balancer and a log pipeline need from the platform, and
 
 | Module | What it is | Rows |
 |---|---|---|
-| `views.py` | `/healthz` (liveness, touches nothing), `/readyz` (database, cache, Redis — 503 with `checks` when one is down), `/version` (`name`, `version`, `commit`, `built_at`). Plain Django views outside `ATOMIC_REQUESTS`, so a dead database cannot turn liveness into a 500. | BE-10, BE-11 |
-| `readiness.py` | The checks `/readyz` runs, each bounded (0.5 s on Redis). | BE-10 |
+| `views.py` | `/healthz` (liveness, touches nothing), `/readyz` (database, cache, Redis — 503 with `checks` when one is down; the event pipeline reported beside them), `/version` (`name`, `version`, `commit`, `built_at`). Plain Django views outside `ATOMIC_REQUESTS`, so a dead database cannot turn liveness into a 500. | BE-10, BE-11 |
+| `readiness.py` | The checks `/readyz` runs, each bounded (0.5 s on Redis), and what it reports without gating on: the outbox's oldest undispatched event and each consumer group's lag on `EVENTS_STREAM`, `degraded` past `OUTBOX_LAG_SECONDS` / `EVENTS_LAG_ENTRIES` but still 200 — the web role serves, and the relay waits for this probe before it starts. | BE-10 |
+| `heartbeat.py` | The liveness file of a role that answers no HTTP (the relay, the consumers, beat): its loop touches `zer0-<name>.heartbeat` in `HEARTBEAT_DIR` after every pass, and `python -m ops.heartbeat <name> <max-age>` is its healthcheck, without booting Django. | — |
 | `context.py` | The request id: bound for the request's duration, echoed from `X-Request-Id` when it is safe to log, else a UUID4. | BE-04 |
 | `middleware.py` | `RequestIdMiddleware` (first in `MIDDLEWARE`: `X-Request-Id` and `X-App-Version` on every response), `AccessLogMiddleware` (one line per request, probes excepted), `SecurityHeadersMiddleware` (`Permissions-Policy`, a report-only CSP). | BE-04, OPS-11, OPS-23 |
 | `logging.py` | `JsonFormatter` (`ts level msg logger request_id trace_id app version` + extras), `TextFormatter`, `RedactionFilter` and `ContextFilter`; `redact()` scrubs `sk-ant-`, `ghp_`, `github_pat_`, `AIza`, this platform's `zer0_` (agent) and `zer0u_` (person) tokens and `Authorization` values. `ExceptionReporterFilter` (`DEFAULT_EXCEPTION_REPORTER_FILTER`) redacts the same shapes in the frame variables of Django's error reports and keeps `sensitive_variables` hidden with `DEBUG` on too. `LOG_FORMAT` is `json` or `text`. | OPS-10, OPS-12 |
@@ -64,4 +65,4 @@ cd content && python manage.py spectacular --format openapi-json --urlconf ops.o
 
 ## Settings
 
-`LOG_FORMAT`, `LOG_LEVEL`, `CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_CREDENTIALS`, `THROTTLE_ANON_RATE`, `THROTTLE_PRINCIPAL_RATE`, `NUM_PROXIES`, `PERMISSIONS_POLICY`, `CSP_REPORT_ONLY`, `CSP_REPORT_URI`, `API_DOCS_ENABLED`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE`, `GIT_SHA`, `BUILT_AT` — all in `content/.env.example`, all read once in `config/settings/base.py`.
+`OUTBOX_LAG_SECONDS`, `EVENTS_LAG_ENTRIES`, `LOG_FORMAT`, `LOG_LEVEL`, `CORS_ALLOWED_ORIGINS`, `CORS_ALLOW_CREDENTIALS`, `THROTTLE_ANON_RATE`, `THROTTLE_PRINCIPAL_RATE`, `NUM_PROXIES`, `PERMISSIONS_POLICY`, `CSP_REPORT_ONLY`, `CSP_REPORT_URI`, `API_DOCS_ENABLED`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE`, `GIT_SHA`, `BUILT_AT` — all in `content/.env.example`, all read once in `config/settings/base.py`; `HEARTBEAT_DIR` is read by `heartbeat.py` itself, because its probe runs without settings.
