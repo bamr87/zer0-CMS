@@ -2,19 +2,27 @@
 
 Each test pins one way the absorption can go wrong silently: Ruby added in a
 new place, Ruby growing under an old one, a directory deleted before its
-capabilities moved, a capability marked done with nothing proving it, or one
-dropped without the owner's word. Run: `python3 -m unittest discover tools/tests`.
+capabilities moved, a capability marked done with nothing proving it — or with a
+proof that names a test its file no longer has —, a studio capability whose
+extension cell is simply absent, one dropped without the owner's word, or the CI
+step that runs the gate passing when the gate fails. Run:
+`python3 -m unittest discover tools/tests`.
 """
 
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
 
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent.parent
 _spec = importlib.util.spec_from_file_location(
     "check_absorption", Path(__file__).resolve().parent.parent / "check_absorption.py"
 )
@@ -154,7 +162,7 @@ def platform_cap(**surfaces):
 
 class PlatformTest(unittest.TestCase):
     def test_valid_catalog_passes(self):
-        self.assertEqual(ca.check_platform([platform_cap(studio="missing", api="partial")], lambda p: True), [])
+        self.assertEqual(ca.check_platform([platform_cap(studio="missing", extension="missing", api="partial")], lambda p: True), [])
 
     def test_unknown_surface_and_status_fail(self):
         errors = ca.check_platform([platform_cap(desktop="done", studio="soon")], lambda p: True)
@@ -174,9 +182,173 @@ class PlatformTest(unittest.TestCase):
         self.assertTrue(any("no what" in e for e in errors))
         self.assertTrue(any("no surfaces" in e for e in errors))
 
-    def test_parity_gaps_compare_studio_and_extension_only(self):
-        caps = [platform_cap(studio="done", extension="missing"), dict(platform_cap(studio="done"), id="b"), dict(platform_cap(studio="partial", extension="partial"), id="c")]
-        self.assertEqual(ca.parity_gaps(caps), ["content.create: studio done, extension missing"])
+    def test_parity_gaps_list_every_studio_row_the_extension_does_not_match(self):
+        caps = [
+            platform_cap(studio="done", extension="missing"),
+            dict(platform_cap(studio="done"), id="b"),
+            dict(platform_cap(studio="partial", extension="partial"), id="c"),
+            dict(platform_cap(studio="done"), id="d", extension_gap="first-run setup precedes any token"),
+            dict(platform_cap(api="done"), id="e"),
+        ]  # fmt: skip
+        self.assertEqual(ca.parity_gaps(caps), [
+            "content.create: studio done, extension missing",
+            "b: studio done, no extension cell",
+            "d: studio done, extension not owed — first-run setup precedes any token",
+        ])  # fmt: skip
+
+    def test_a_studio_row_without_an_extension_cell_needs_a_reason(self):
+        self.assertEqual(
+            ca.check_platform([platform_cap(studio="partial")], lambda p: True),
+            ["platform/content.create: a studio surface and no extension cell (give it an extension status, or extension_gap: <why the extension does not owe it>)"],
+        )
+        gap = dict(platform_cap(studio="missing"), extension_gap="the install wizard runs before anyone holds a token")
+        self.assertEqual(ca.check_platform([gap], lambda p: True), [])
+        for bad in ("", "  ", None):
+            with self.subTest(extension_gap=bad):
+                errors = ca.check_platform([dict(platform_cap(studio="missing"), extension_gap=bad)], lambda p: True)
+                self.assertTrue(any("extension_gap needs its reason" in e for e in errors), errors)
+        both = dict(platform_cap(studio="missing", extension="missing"), extension_gap="not owed")
+        self.assertIn("extension_gap on a row that has an extension cell", ca.check_platform([both], lambda p: True)[0])
+        self.assertEqual(ca.check_platform([platform_cap(api="partial")], lambda p: True), [])  # no studio, nothing owed
+
+
+TEST_PY = b'''
+import pytest
+
+def test_alone():
+    pass
+
+@pytest.mark.parametrize("case", [1, 2])
+def test_cases(case):
+    pass
+
+class SyncTest:
+    def test_runs(self):
+        def test_hidden():
+            pass
+
+    class Nested:
+        async def test_deep(self):
+            pass
+
+if True:
+    def test_conditional():
+        pass
+'''
+
+TEST_TSX = b"""
+describe('Distribute', () => {
+  it('drafts a post of the page for a channel and leads to the queue', async () => {});
+  it("shows the guard's findings", () => {});
+  test(
+    `follows its log live`,
+    () => {},
+  );
+  it.skip('a test that does not run', () => {});
+});
+const label = 'a string that is no test';
+"""
+
+
+class ProofResolutionTest(unittest.TestCase):
+    """A proof's `::` id is looked up in its file: a Python test by its name, a TypeScript test by its title."""
+
+    files = {"content/tests/test_sync.py": TEST_PY, "web/packages/ui/test/distribution.test.tsx": TEST_TSX, "src/test/core.test.ts": b"suite('core', () => { test('reads front matter', () => {}); });"}  # fmt: skip
+
+    def problem(self, proof):
+        return ca.proof_problem(proof, lambda p: p in self.files, heads(self.files))
+
+    def test_a_proof_naming_a_test_that_is_not_in_the_file_fails(self):
+        self.assertEqual(self.problem("content/tests/test_sync.py::test_alone"), None)
+        self.assertEqual(
+            self.problem("content/tests/test_sync.py::test_renamed"),
+            "proof names test_renamed, which is not in content/tests/test_sync.py",
+        )
+        for gone in ("test_hidden", "test_conditional", "test_runs", "SyncTest::test_hidden", "test_alone::test_x", "SyncTest::test_deep"):
+            with self.subTest(test=gone):
+                self.assertIn("which is not in", self.problem(f"content/tests/test_sync.py::{gone}"))
+        cap = platform_cap(api="done")
+        cap["proof"] = {"api": "content/tests/test_sync.py::test_renamed"}
+        errors = ca.check_platform([cap], lambda p: p in self.files, heads(self.files))
+        self.assertEqual(errors, ["platform/content.create: api proof names test_renamed, which is not in content/tests/test_sync.py"])
+        row = source(status="done", proof="content/tests/test_sync.py::test_renamed")
+        self.assertIn("which is not in", ca.check_ledger([row], lambda p: True, read=heads(self.files))[0])
+
+    def test_a_class_and_method_id_resolves(self):
+        for found in ("SyncTest", "SyncTest::test_runs", "SyncTest::Nested::test_deep", "test_cases[1]", "SyncTest::test_runs[x-y]"):
+            with self.subTest(test=found):
+                self.assertIsNone(self.problem(f"content/tests/test_sync.py::{found}"))
+        self.assertIn("is not a test", self.problem('content/tests/test_sync.py::"test_alone"'))
+
+    def test_a_quoted_vitest_title_resolves(self):
+        tsx = "web/packages/ui/test/distribution.test.tsx"
+        for title in ("drafts a post of the page for a channel and leads to the queue", "shows the guard's findings", "follows its log live", "Distribute"):
+            with self.subTest(title=title):
+                self.assertIsNone(self.problem(f'{tsx}::"{title}"'))
+        self.assertIsNone(self.problem('src/test/core.test.ts::"reads front matter"'))  # Mocha's tdd suite and test
+        for absent in ("drafts a post", "a test that does not run", "a string that is no test"):
+            with self.subTest(title=absent):
+                self.assertEqual(self.problem(f'{tsx}::"{absent}"'), f'proof names "{absent}", which is not in {tsx}')
+        for unquoted in (f"{tsx}::Distribute", f"{tsx}::''", f'{tsx}::""'):
+            with self.subTest(proof=unquoted):
+                self.assertIn("is not a test", self.problem(unquoted))
+
+    def test_without_a_reader_only_the_file_is_checked(self):
+        self.assertIsNone(ca.proof_problem("content/tests/test_sync.py::test_renamed", lambda p: True))
+
+
+class ProofListTest(unittest.TestCase):
+    def test_a_surface_may_name_several_proofs(self):
+        files = {"content/tests/test_a.py": b"def test_a(): pass\n", "content/tests/test_b.py": b"class BTest:\n    def test_b(self): pass\n"}
+        exists, read = (lambda p: p in files), heads(files)
+        cap = platform_cap(ops="done")
+        cap["proof"] = {"ops": ["content/tests/test_a.py::test_a", "content/tests/test_b.py::BTest::test_b", "content/tests/test_b.py"]}
+        self.assertEqual(ca.check_platform([cap], exists, read), [])
+        cap["proof"]["ops"] = ["content/tests/test_a.py::test_a", "content/tests/test_gone.py", "tools/site_manifest.py"]
+        self.assertEqual(ca.check_platform([cap], exists, read), [
+            "platform/content.create: ops proof content/tests/test_gone.py does not exist",
+            "platform/content.create: ops proof 'tools/site_manifest.py' is not a test (a test file, optionally ::<test id>, or ::\"<title>\" in a .ts/.tsx test)",
+        ])  # fmt: skip
+        cap["proof"]["ops"] = []
+        self.assertEqual(ca.check_platform([cap], exists, read), ["platform/content.create: ops done without a proof"])
+
+    def test_a_proof_named_on_an_open_cell_must_hold_too(self):
+        cap = platform_cap(api="partial")
+        cap["proof"] = {"api": "content/tests/test_gone.py::test_x"}
+        self.assertEqual(ca.check_platform([cap], lambda p: False), ["platform/content.create: api proof content/tests/test_gone.py does not exist"])
+
+
+# The shell GitHub runs a `run:` step with on Linux (docs: workflow syntax, `jobs.<job_id>.steps[*].shell`):
+# with no `shell:`, `bash -e {0}` — so a pipeline's status is its last command's —, and with `shell: bash`,
+# `bash --noprofile --norc -eo pipefail {0}`.
+GITHUB_SHELLS = {None: ["bash", "-e"], "bash": ["bash", "--noprofile", "--norc", "-eo", "pipefail"]}
+FAILING_GATE = '#!/bin/sh\ncase "$*" in *check_absorption.py*) echo "absorption gate: 1 problem(s)" >&2; exit 1;; esac\n'
+
+
+class WorkflowTest(unittest.TestCase):
+    def test_the_gate_step_fails_when_the_gate_fails(self):
+        workflow = yaml.safe_load((ROOT / ".github/workflows/zer0-workspace.yml").read_text())
+        found = [
+            (job, step) for job in workflow["jobs"].values() for step in job.get("steps", [])
+            if "check_absorption.py" in str(step.get("run", ""))
+        ]  # fmt: skip
+        self.assertEqual(len(found), 1, "one step runs the gate")
+        job, step = found[0]
+        defaults = lambda node: ((node.get("defaults") or {}).get("run") or {}).get("shell")  # noqa: E731
+        shell = step.get("shell") or defaults(job) or defaults(workflow)
+        self.assertIn(shell, GITHUB_SHELLS, f"the gate step runs under {shell!r}, which this test does not model")
+        with tempfile.TemporaryDirectory() as d:
+            bin_dir = Path(d) / "bin"
+            bin_dir.mkdir()
+            python = bin_dir / "python"  # the step's `python`: every other command passes, the gate fails
+            python.write_text(FAILING_GATE)
+            python.chmod(0o755)
+            script = Path(d) / "step.sh"
+            script.write_text(step["run"])
+            env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}", "GITHUB_STEP_SUMMARY": str(Path(d) / "summary.md")}
+            ran = subprocess.run([*GITHUB_SHELLS[shell], str(script)], cwd=d, env=env, capture_output=True, text=True)
+        self.assertIn("absorption gate: 1 problem(s)", ran.stderr)
+        self.assertNotEqual(ran.returncode, 0, "the gate failed and its step passed")
 
 
 class ThemeDependencyTest(unittest.TestCase):

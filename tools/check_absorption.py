@@ -36,8 +36,17 @@ It asserts:
     content, and content is kept;
   * **the platform catalog** — unique ids, a known surface and status for each
     surface, and for every surface marked `done` a `proof` that is a test: a
-    test file that exists, optionally `::` a test id in it — not a tool, a
-    command line or a CI job, which prove nothing by existing;
+    test file that exists, optionally `::` a test it holds — not a tool, a
+    command line or a CI job, which prove nothing by existing. The test is
+    looked up in the file: in Python, a top-level function or class, then a
+    method or class inside that class (`SyncTest::test_runs`, a `[param]`
+    suffix ignored), read with `ast`; in a `.ts`/`.tsx` test, `::"<title>"`, an
+    `it`, `test`, `describe` or `suite` of that title. A surface's proof may be
+    a list of such tests, each checked; a proof named on a cell that is not
+    `done` must hold too. A row with a `studio` surface has an `extension` cell,
+    or `extension_gap:` with the reason the extension does not owe it (ADR 0006
+    decision 9: a studio capability the extension lacks is a gap the ledger
+    reports, never one it omits);
   * **the sources** — every capability has a unique id, a known status and a
     `target` that is a platform capability id; a `done` capability names a `proof` that is such a test; a `dropped`
     one names the owner's decision in `decided_by`; a `specified` one — its source deleted by the owner's decision
@@ -49,8 +58,9 @@ It asserts:
     decided it and what each capability did survives as its spec (`specified`).
 
 `--report` prints the burn-down: Ruby files per prefix, capability status per
-source, surface coverage per platform domain, and every capability the studio
-and the extension disagree on (ADR 0006 decision 9 — reported, not failed). Exits 0 when everything holds, 1 with every violation listed, and
+source, surface coverage per platform domain, and every studio capability the
+extension does not match — a different status or a recorded `extension_gap`
+(ADR 0006 decision 9 — reported, not failed). Exits 0 when everything holds, 1 with every violation listed, and
 2 when the ledger is unreadable.
 
 Run it from anywhere (`python3 tools/check_absorption.py`); CI runs it in
@@ -61,6 +71,7 @@ Run it from anywhere (`python3 tools/check_absorption.py`); CI runs it in
 from __future__ import annotations
 
 import argparse
+import ast
 import re
 import subprocess
 import sys
@@ -87,9 +98,13 @@ THEME_SKIP_PREFIXES = (
     "web/site/fixtures/",
 )
 # A proof is a test: a test file (under tests/ or test/, test_*, *.test.ts, *_test.py), optionally
-# followed by `::` and a test id in it (`test_x`, `SomeTest`, `SomeTest::test_x`, `test_x[case]`).
+# followed by `::` and a test in it — in Python its id (`test_x`, `SomeTest`, `SomeTest::test_x`,
+# `test_x[case]`), in TypeScript its title in double quotes (`::"drafts a post"`).
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*$|[._]test\.[a-z]+$")
 TEST_ID = re.compile(r"[A-Za-z_]\w*(\[[^\]]*\])?(::[A-Za-z_]\w*(\[[^\]]*\])?)*")
+TS_TESTS = (".ts", ".tsx")
+TS_TITLE = re.compile(r'"[^"]+"')
+TEST_DEFS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
 STATUSES = ("missing", "partial", "done", "dropped", "specified")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
@@ -154,17 +169,51 @@ def check_ratchet(
     return errors, counts
 
 
-def proof_problem(proof: str, exists: Callable[[str], bool]) -> str | None:
-    """What is wrong with a `done` row's proof, or None: it must name a test file that exists and, after
-    `::`, a test in it — not a tool, a command line or a CI job, which can pass without proving anything."""
+def python_test_in(source: bytes, test_id: str) -> bool:
+    """True when the module defines `test_id`: a top-level function or class, then a function or class inside
+    that class, and so on (`SyncTest::test_runs`); a `[param]` suffix names a case of it and is ignored."""
+    try:
+        body: list[ast.stmt] = ast.parse(source).body
+    except (SyntaxError, ValueError):
+        return False
+    for name in re.sub(r"\[[^\]]*\]", "", test_id).split("::"):
+        node = next((n for n in body if isinstance(n, TEST_DEFS) and n.name == name), None)
+        if node is None:
+            return False
+        body = node.body if isinstance(node, ast.ClassDef) else []
+    return True
+
+
+def titled_test_in(source: bytes, title: str) -> bool:
+    """True when a Vitest or Mocha test (or its describe or suite) of that title is written in the file:
+    `it(`, `test(`, `describe(` or `suite(` and the title in any quotes — never `it.skip(`."""
+    quoted = "|".join(f"{q}{re.escape(title)}{q}" for q in ("'", '"', "`"))
+    return re.search(rf"\b(?:it|test|describe|suite)\(\s*(?:{quoted})", source.decode("utf-8", "replace")) is not None
+
+
+def proof_problem(proof: str, exists: Callable[[str], bool], read: Callable[[str], bytes] | None = None) -> str | None:
+    """What is wrong with a row's proof, or None: it must name a test file that exists and, after `::`, a test
+    in it — not a tool, a command line or a CI job, which can pass without proving anything. Given `read`, the
+    test is looked up in the file, so a renamed or deleted test fails here rather than proving nothing."""
     path, named, test = proof.partition("::")
     if not path:
         return "done without a proof"
-    if not TEST_FILE.search(path) or (named and not TEST_ID.fullmatch(test)):
-        return f"proof {proof!r} is not a test (a test file, optionally ::<test id>)"
+    titled = path.endswith(TS_TESTS)
+    if not TEST_FILE.search(path) or (named and not (TS_TITLE.fullmatch(test) if titled else TEST_ID.fullmatch(test))):
+        return f"proof {proof!r} is not a test (a test file, optionally ::<test id>, or ::\"<title>\" in a .ts/.tsx test)"
     if not exists(path):
         return f"proof {path} does not exist"
+    if named and read is not None:
+        found = titled_test_in(read(path), test[1:-1]) if titled else python_test_in(read(path), test)
+        if not found:
+            return f"proof names {test}, which is not in {path}"
     return None
+
+
+def proofs_of(value) -> list[str]:
+    """A proof field as its list of tests: one string, or a list of them."""
+    items = value if isinstance(value, list) else [value]
+    return [str(item) for item in items if item]
 
 
 def spec_problem(spec: str, exists: Callable[[str], bool]) -> str | None:
@@ -177,7 +226,9 @@ def spec_problem(spec: str, exists: Callable[[str], bool]) -> str | None:
     return None
 
 
-def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[str]:
+def check_platform(
+    platform: list[dict], exists: Callable[[str], bool], read: Callable[[str], bytes] | None = None
+) -> list[str]:
     errors: list[str] = []
     seen: set[str] = set()
     for cap in platform:
@@ -196,22 +247,50 @@ def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[
                 errors.append(f"platform/{cid}: unknown surface {surface!r} (one of {', '.join(SURFACES)})")
             if status not in SURFACE_STATUSES:
                 errors.append(f"platform/{cid}: {surface} status {status!r} is not one of {', '.join(SURFACE_STATUSES)}")
-            if status == "done" and (problem := proof_problem(str(proofs.get(surface) or ""), exists)):
-                errors.append(f"platform/{cid}: {surface} {problem}")
+            named = proofs_of(proofs.get(surface))
+            if status == "done" and not named:
+                errors.append(f"platform/{cid}: {surface} done without a proof")
+            for proof in named:
+                if problem := proof_problem(proof, exists, read):
+                    errors.append(f"platform/{cid}: {surface} {problem}")
+        if "extension_gap" in cap:
+            if "extension" in surfaces:
+                errors.append(f"platform/{cid}: extension_gap on a row that has an extension cell (one or the other)")
+            elif not str(cap["extension_gap"] or "").strip():
+                errors.append(f"platform/{cid}: extension_gap needs its reason (why the extension does not owe it)")
+        elif "studio" in surfaces and "extension" not in surfaces:
+            errors.append(
+                f"platform/{cid}: a studio surface and no extension cell "
+                "(give it an extension status, or extension_gap: <why the extension does not owe it>)"
+            )
     return errors
 
 
 def parity_gaps(platform: list[dict]) -> list[str]:
-    """Capabilities the studio and the extension both owe, at different statuses."""
+    """Every capability the studio offers that the extension does not match: a different status, a recorded
+    `extension_gap`, or no extension cell at all (which check_platform also fails)."""
     gaps = []
     for cap in platform:
         surfaces = cap.get("surfaces") or {}
-        if "studio" in surfaces and "extension" in surfaces and surfaces["studio"] != surfaces["extension"]:
-            gaps.append(f"{cap.get('id')}: studio {surfaces['studio']}, extension {surfaces['extension']}")
+        if "studio" not in surfaces:
+            continue
+        cid, studio = cap.get("id"), surfaces["studio"]
+        if "extension" in surfaces:
+            if studio != surfaces["extension"]:
+                gaps.append(f"{cid}: studio {studio}, extension {surfaces['extension']}")
+        elif cap.get("extension_gap"):
+            gaps.append(f"{cid}: studio {studio}, extension not owed — {cap['extension_gap']}")
+        else:
+            gaps.append(f"{cid}: studio {studio}, no extension cell")
     return gaps
 
 
-def check_ledger(sources: list[dict], exists: Callable[[str], bool], targets: set[str] | None = None) -> list[str]:
+def check_ledger(
+    sources: list[dict],
+    exists: Callable[[str], bool],
+    targets: set[str] | None = None,
+    read: Callable[[str], bytes] | None = None,
+) -> list[str]:
     errors: list[str] = []
     seen: set[str] = set()
     for source in sources:
@@ -237,7 +316,7 @@ def check_ledger(sources: list[dict], exists: Callable[[str], bool], targets: se
                 errors.append(f"{where}: no target (where in the platform it goes)")
             elif targets is not None and status != "dropped" and cap["target"] not in targets:
                 errors.append(f"{where}: target {cap['target']!r} is not a platform capability")
-            if status == "done" and (problem := proof_problem(str(cap.get("proof") or ""), exists)):
+            if (status == "done" or cap.get("proof")) and (problem := proof_problem(str(cap.get("proof") or ""), exists, read)):
                 errors.append(f"{where}: {problem}")
             if status == "dropped" and not cap.get("decided_by"):
                 errors.append(f"{where}: dropped without decided_by (only the owner drops a capability)")
@@ -333,9 +412,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     errors += theme_errors
     platform = ledger.get("platform") or []
-    errors += check_platform(platform, exists)
+    errors += check_platform(platform, exists, read)
     sources = ledger.get("sources") or []
-    errors += check_ledger(sources, exists, {c.get("id") for c in platform})
+    errors += check_ledger(sources, exists, {c.get("id") for c in platform}, read)
 
     if args.tighten:
         write_ratchet(LEDGER, tighten(ratchet, counts))

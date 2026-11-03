@@ -49,8 +49,12 @@ jobs:
         run: bin/zer0 check
       # ADR 0006: the Ruby ratchet and the capability ledger
       # (docs/plan/capabilities.yml) — no new Ruby, no source deleted before its
-      # capabilities moved, no capability marked done without its proof.
+      # capabilities moved, no capability marked done without its proof. `shell:
+      # bash` is GitHub's `bash -eo pipefail`: without it the step's status is
+      # tee's, and a failing gate passed (tools/tests/test_check_absorption.py
+      # runs this step's script under that shell with a gate that fails).
       - name: Absorption gate (ADR 0006)
+        shell: bash
         run: |
           python -m unittest discover tools/tests
           python tools/check_absorption.py --report | tee -a "$GITHUB_STEP_SUMMARY"
