@@ -1,4 +1,4 @@
-// Downloads in the extension's webviews (W1-18): a webview cannot save a file,
+// Downloads in the extension's webviews (PLAN G10): a webview cannot save a file,
 // so a download button there hands the host an intent — the path that answers
 // the file, the JSON field that holds its text, and the name to offer — never
 // the file's text, and never as a link the host would try to open. The host

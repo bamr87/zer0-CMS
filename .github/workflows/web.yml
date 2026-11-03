@@ -2,8 +2,10 @@
 # workspaces are built from, ADR 0006): lint, types, the Vitest suites, the
 # generated API client against the committed OpenAPI document, and the
 # production build. Filtered to web/ and to the document the client is
-# generated from, so a platform change that moves the API runs this too; the
-# platform itself is gated by content.yml, and the extension by extension.yml.
+# generated from, so a platform change that moves the API runs this too, and
+# to the extension's host gate (src/core/studio/), which the webview's
+# host.test.tsx runs every extension proof through; the platform itself is
+# gated by content.yml, and the extension by extension.yml.
 name: web
 
 on:
@@ -12,11 +14,13 @@ on:
     paths:
       - "web/**"
       - "schemas/openapi/**"
+      - "src/core/studio/**"
       - ".github/workflows/web.yml"
   pull_request:
     paths:
       - "web/**"
       - "schemas/openapi/**"
+      - "src/core/studio/**"
       - ".github/workflows/web.yml"
 
 permissions:
