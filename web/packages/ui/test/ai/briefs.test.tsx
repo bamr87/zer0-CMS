@@ -213,11 +213,11 @@ describe('<BriefList>', () => {
     const { api } = fakePlatform({ 'GET /api/v2/ai/briefs/': () => page([pulled, brief({ id: 'b2', title: 'My own' })]) });
     const { go } = renderUi(<BriefList siteId={1} />, { api });
     const table = await screen.findByRole('table', { name: 'Briefs' });
-    const chips = within(table).getAllByRole('link', { name: /editorial directive/ });
-    expect(chips).toHaveLength(1);
-    expect(chips[0]).toHaveAttribute('href', issue);
-    expect(chips[0]).toHaveTextContent('directive #38');
-    await userEvent.click(chips[0]!);
+    // getByRole throws unless exactly one link matches: only the pulled brief carries a chip
+    const chip = within(table).getByRole('link', { name: /editorial directive/ });
+    expect(chip).toHaveAttribute('href', issue);
+    expect(chip).toHaveTextContent('directive #38');
+    await userEvent.click(chip);
     expect(go).not.toHaveBeenCalled(); // the chip opens the issue, not the brief
   });
 });
