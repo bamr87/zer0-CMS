@@ -15,9 +15,10 @@ the generated client types them as the unions they are. Beyond the schemas:
 * a webhook's URL is http(s), carries no credentials, is not a private address written out — the research
   fetcher's guard (`research.fetch`) checks the address it resolves to when it is called — and is no automation's
   webhook endpoint, so one automation never sets off another (`endpoint_problem`);
-* the rows an automation names — assistants, pipelines, output schemas, boards, collections, feeds, agents — are
-  ones its owner may use (`check_rows`), an agent it starts lists no tool that publishes, and an email goes to the
-  platform's people unless its owner may email anyone (`strangers`).
+* the rows an automation names — assistants, pipelines, output schemas, boards, collections, feeds, agents, the
+  managed site whose directives it pulls — are ones its owner may use (`check_rows`, `site_problem`), an agent it
+  starts lists no tool that publishes, and an email goes to the platform's people unless its owner may email anyone
+  (`strangers`).
 """
 
 import json
@@ -120,6 +121,18 @@ ACTIONS = {
             "generate": {"type": "boolean"},
         },
         ["prompt"],
+    ),
+    "directives": _kind(
+        "directives",
+        "Pull a managed site's open `editorial:directive` issues (from the repository of its GitHub pull-request "
+        "channel) into briefs, one per new write or refresh directive, for a person to apply — written now by "
+        "`assistant` when `generate` is set. Nothing is published.",
+        {
+            "site": {"type": "string", "pattern": r"^[-a-zA-Z0-9_]+$", "maxLength": 80, "description": "Its key."},
+            "assistant": UUID,
+            "generate": {"type": "boolean"},
+        },
+        ["site"],
     ),
     "idea": _kind(
         "idea",
@@ -367,6 +380,20 @@ def unstartable(definition) -> str:
     return ""
 
 
+def site_problem(key, owner) -> str:
+    """Why `owner`'s automation may not pull the directives of the managed site `key`, or '': a brief belongs only to
+    a site its owner edits (`ai.models.Owned.clean`), so the owner must edit this one."""
+    from ai.models import is_staff, sites_for
+    from sites.models import ManagedSite
+
+    managed = ManagedSite.objects.filter(key=key or "").first()
+    if managed is None:
+        return f"site: no managed site {str(key)[:80]!r}"
+    if not (is_staff(owner) or managed.site_id in sites_for(owner)):
+        return f"site: {managed.key} is not a site its owner edits"
+    return ""
+
+
 def check_rows(trigger, actions, owner) -> None:
     """Raise ValidationError unless every row the trigger and the actions name is one `owner` may use."""
     from agents.models import AgentDefinition
@@ -395,6 +422,8 @@ def check_rows(trigger, actions, owner) -> None:
                 return f"agent: {problem}"
         if spec.get("kind") == "email" and (outside := strangers(spec.get("to"), owner)):
             return f"to: {', '.join(outside)} — {NOT_PEOPLE}"
+        if spec.get("kind") == "directives" and (problem := site_problem(spec.get("site"), owner)):
+            return problem
         return ""
 
     if isinstance(trigger, dict) and (problem := missing({k: v for k, v in trigger.items() if k != "kind"})):

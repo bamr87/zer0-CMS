@@ -10,7 +10,7 @@ Every site the platform manages, its generated file tree, and keeping the two in
 | `frontmatter.py` | Front-matter line surgery: `update_keys` rewrites only the lines a change touches — comments, quoting, list style, CRLF, a BOM and a `...` fence survive — and verifies every edit by reading it back. The exporter renders a changed page over its original file with it |
 | `writer.py` | The confined writer: plain relative paths only, no symlink at any component (`lstat`), realpath inside the root; O_EXCL for a new file; an atomic replace that compares the bytes again right before the rename; file-name slugs |
 | `doctor.py` | zer0 doctor: config, image engine, cms, fleet, distribution and content checks as findings (`findings.jsonl`). Its docstring says what changed from the Ruby doctor and why (the theme's rules are gone) |
-| `services.py` | Registering and discovering sites, changing them, and the work of their jobs: `sync`, `export` (the write-back) and `doctor` |
+| `services.py` | Registering and discovering sites, changing them, and the work of their jobs: `sync`, `export` (the write-back), `doctor` and `directives` (below) |
 | `views.py`, `serializers.py`, `urls.py` | `/api/v2/sites/` (its `voice/` paths are `../voice/`'s views) |
 
 None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Django: `python -m sites.doctor PATH [--format findings]` (from `content/`) is what `bin/zer0 doctor` and the reusable `zer0-doctor.yml` run, with PyYAML and jsonschema.
@@ -32,6 +32,14 @@ None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Djan
 
 What a write-back writes is recorded both ways, the digest on the site and the text on the page's `ImportedSource` (an ABC book's sidecar in its `sidecars`), so the next sync sees the platform's own file and the next write-back writes it verbatim.
 
+## Directives become briefs
+
+The hub's content atlas (bamr87/bamr87 `docs/CONTENT-ATLAS.md`) files editorial direction as issues in a site's own repository, labelled `editorial:directive`, each with a hidden `<!-- editorial-directive key=… site=… -->` marker, a line naming its kind, priority and pillar, the brief, an optional `Document:` path and the site's narrative quoted. `pull_directives(managed, user=…)` reads them back in: the repository and the token are the site's GitHub pull-request channel's (`Channel.setting("repo")` and its stored credential — no column or secret of its own; a site without one is a `SiteError` that says so, before any request), and it lists the open issues with the label through PyGithub. Each `write` or `refresh` directive not pulled before becomes one `Brief` of the site's — visible to everyone who edits the site, owned by the person who pulled it (who must edit the site), its title without the `[editorial] ` prefix, its prompt the brief, the document and the narrative, its page type `cms.ArticlePage` under the site's posts collection (else its root), its assistant the one asked for — and keeps `metadata["directive"]` (`url`, `number`, `title`, `key`, `kind`, `priority`, `pillar`, `path`), which is the dedupe key: an issue whose URL a brief of the site carries is skipped. The other kinds (fix, hold, pillar, cadence) and issues without the marker are counted and left for a person.
+
+Nothing publishes and no page is written: a brief waits for a person to generate it, review it and apply it (`ai/README.md`). Generating keeps its directive, and the brief API neither sets nor removes one. When the page it became is published through the site's GitHub pull-request channel, the pull request's body ends with `Closes #<n>` and the directive's title, and the ledger keeps the directive's URL (`../distribution/README.md`), so merging it closes the hub's issue and the hub's `content trace` reads the pull request back.
+
+It runs as the `directives` job (`manage.py site_job directives --site KEY --user NAME [--generate --assistant ID]`, which prints how many briefs it created, how many were pulled before and how many it left; exit 1 with the reason when the site has no channel) and as the automations' `directives` action, on a schedule (`../automations/README.md`). The site's Overview in the studio shows how many directives were pulled; each such brief carries a "directive" chip linking to its issue. Tests: `tests/sites/test_directives.py`.
+
 ## The API
 
 | Path | What |
@@ -44,7 +52,7 @@ What a write-back writes is recorded both ways, the digest on the site and the t
 | `GET /api/v2/sites/<id>/findings/` | The last doctor run's findings, `?severity=`, `?check=` |
 | `POST /api/v2/sites/<id>/sync/`, `export/`, `doctor/` | Start a job (202 with it; `Idempotency-Key`); follow it at `/api/v2/jobs/<id>/` (jobs/README.md) |
 
-Commands: `manage.py doctor PATH [--format findings]` (or `--site KEY`, recorded), `manage.py site_job sync|export|doctor --site KEY`. Setting: `SITES_DIR` (environment), where checkouts outside this repository may be registered from — unset, only the repository's own sites can be; compose mounts it at `/sites`, writable for the worker that runs the jobs. Tests: `tests/sites/`.
+Commands: `manage.py doctor PATH [--format findings]` (or `--site KEY`, recorded), `manage.py site_job sync|export|doctor|directives --site KEY`. Setting: `SITES_DIR` (environment), where checkouts outside this repository may be registered from — unset, only the repository's own sites can be; compose mounts it at `/sites`, writable for the worker that runs the jobs. Tests: `tests/sites/`.
 
 ## Not here yet
 

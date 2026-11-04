@@ -166,6 +166,23 @@ describe('<AutomationEditor>', () => {
     });
   });
 
+  it('pulls a site’s editorial directives on a schedule, written now when asked', async () => {
+    const { api, calls } = platform({ 'POST /api/v2/automations/': ({ body }) => ({ ...automation(), ...(body as object), id: 'au8' }) });
+    const { go } = renderUi(<AutomationEditor />, { api });
+    await userEvent.type(await screen.findByLabelText(/^Name/), 'Directives in');
+    await userEvent.click(screen.getByRole('combobox', { name: 'What fires it' }));
+    await userEvent.click(await screen.findByRole('option', { name: /schedule/i }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Add an action' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Pull a site’s editorial directives into briefs' }));
+    const action = screen.getByRole('listitem', { name: 'Action 1' });
+    await userEvent.type(within(action).getByRole('textbox', { name: /^Site key/ }), 'bash-365');
+    await userEvent.click(within(action).getByRole('switch', { name: /Write them now/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create (paused)' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'automation', id: 'au8' }));
+    const sent = calls.find((c) => c.method === 'POST' && c.path === '/api/v2/automations/')?.body as { actions: unknown[] };
+    expect(sent.actions).toEqual([{ kind: 'directives', site: 'bash-365', generate: true }]);
+  });
+
   it('tries the condition against the trigger’s sample payload', async () => {
     const { api, calls } = platform({ 'POST /api/v2/automations/condition/': () => ({ matched: true, value: true, error: '' }) });
     renderUi(<AutomationEditor id="au1" />, { api });

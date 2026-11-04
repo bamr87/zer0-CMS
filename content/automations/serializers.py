@@ -29,10 +29,15 @@ OUTCOME = {
         "result": {
             "type": "object",
             "description": "What it made: an agent run, a brief, an idea or a story by public id (and the story's new "
-            "status), an email's recipients, a webhook's HTTP status.",
+            "status), an email's recipients, a webhook's HTTP status, the briefs pulled from a site's directives (and "
+            "how many were pulled before or are not a write or refresh directive) with the runs writing them.",
             "properties": {
                 "run": {"type": "string", "format": "uuid"},
                 "brief": {"type": "string", "format": "uuid"},
+                "briefs": {"type": "array", "items": {"type": "string", "format": "uuid"}},
+                "runs": {"type": "array", "items": {"type": "string", "format": "uuid"}},
+                "skipped": {"type": "integer"},
+                "ignored": {"type": "integer"},
                 "idea": {"type": "string", "format": "uuid"},
                 "story": {"type": "string", "format": "uuid"},
                 "status": {"type": "string"},

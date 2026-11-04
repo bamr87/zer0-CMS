@@ -180,6 +180,18 @@ describe('<SiteView>', () => {
     expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   });
 
+  it('says how many of the site’s editorial directives were pulled into briefs', async () => {
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/sites/3/': () => detail(),
+      'GET /api/v2/ai/briefs/': () => ({ count: 4, next: null, previous: null, results: [] }),
+    });
+    renderUi(<SiteView siteId={3} />, { api });
+    const fact = (await screen.findByText('Directives pulled into briefs')).closest('div') as HTMLElement;
+    await waitFor(() => expect(within(fact).getByText('4')).toBeInTheDocument());
+    const asked = calls.find((c) => c.path === '/api/v2/ai/briefs/');
+    expect([asked?.query.get('site'), asked?.query.get('directive')]).toEqual(['3', 'true']);
+  });
+
   it('writes back with drafts when asked, and a busy site says so', async () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/sites/3/': () => detail(),
