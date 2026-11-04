@@ -39,9 +39,22 @@ draft's content, never a new file — and a page that goes live again loses it.
 
 **Doctor** (a job) runs sites/doctor.py over the checkout and keeps its
 findings on the site and as the job's artifacts.
+
+**Directives** (`pull_directives`, and the `directives` job) read the hub's
+editorial direction back in: the open issues labelled `editorial:directive` in
+the repository of the site's GitHub pull-request channel (its `repo` and its
+stored token — no column or secret of its own), as bamr87/bamr87's content
+atlas files them (`content_atlas.issue_body`: a hidden marker, a line naming
+the kind, priority and pillar, the brief, an optional document, the quoted
+narrative). Each `write` or `refresh` directive not pulled before becomes one
+`Brief` — deduped on the issue's URL in `Brief.metadata["directive"]` — for a
+person to generate and apply; nothing is written to a page and nothing is
+published. The page that comes of it returns through the same channel as a
+pull request that closes the issue (distribution/transports.py).
 """
 
 import os
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -60,7 +73,7 @@ from jobs import services as jobs
 from . import catalog, doctor, writer
 from .models import ManagedSite
 
-KINDS = ("sync", "export", "doctor")
+KINDS = ("sync", "export", "doctor", "directives")
 
 
 class SiteError(ValueError):
@@ -384,3 +397,197 @@ def run_doctor(job, ctx):
     managed.findings, managed.last_doctor_at = report.findings, timezone.now()
     managed.save(update_fields=["findings", "last_doctor_at"])
     return {"errors": report.errors, "warnings": report.warnings}
+
+
+# ── directives: the hub's editorial issues become briefs ───────────────────
+
+DIRECTIVE_LABEL = "editorial:directive"
+DIRECTIVE_KINDS = ("write", "refresh")  # the kinds a brief can answer; fix, hold, pillar and cadence are a person's
+TITLE_PREFIX = "[editorial] "
+_MARKER = re.compile(r"<!--\s*editorial-directive\s+key=(?P<key>.+?)\s+site=(?P<site>\S+)\s*-->")
+_HEAD = re.compile(r"^\*\*Editorial directive\*\*(?P<rest>.*)$")
+_FIELD = re.compile(r"\b(kind|priority|pillar) `([^`]*)`")
+_DOCUMENT = re.compile(r"^Document: `([^`]+)`$")
+
+
+def parse_directive(body: str) -> dict | None:
+    """What an `editorial:directive` issue's body says, as the hub writes it — key, kind, priority, pillar, path,
+    brief and narrative — or None when it carries no directive marker (an issue labelled by hand)."""
+    text = (body or "").replace("\r\n", "\n")
+    marker = _MARKER.search(text)
+    if marker is None:
+        return None
+    found = {"key": marker["key"].strip(), "kind": "", "priority": "", "pillar": "", "path": ""}
+    brief, narrative, part = [], [], "head"
+    for line in text[marker.end() :].split("\n"):
+        stripped = line.strip()
+        if part == "head":
+            if head := _HEAD.match(stripped):
+                found |= dict(_FIELD.findall(head["rest"]))
+                part = "brief"
+            continue
+        if stripped == "---":  # the footer the hub signs it with
+            break
+        if line.startswith("### "):
+            part = "narrative" if "narrative" in line.lower() else "other"
+        elif document := _DOCUMENT.match(stripped):
+            found["path"] = document[1]
+        elif part == "brief":
+            brief.append(line)
+        elif part == "narrative":
+            narrative.append(line[2:] if line.startswith("> ") else line.lstrip(">"))
+    return {**found, "brief": "\n".join(brief).strip(), "narrative": "\n".join(narrative).strip()}
+
+
+def directive_channel(managed: ManagedSite):
+    """The site's GitHub pull-request channel with a token: the repository its directives are filed in, and the
+    credential that reads them (and later opens the pull request that answers one)."""
+    from distribution.models import Channel, Kind
+
+    channel = (
+        Channel.objects.filter(site=managed.site, kind=Kind.GITHUB_PR)
+        .exclude(credential_encrypted="")
+        .order_by("pk")
+        .first()
+    )
+    if channel is None or not channel.setting("repo"):
+        raise SiteError(
+            f"{managed.key} has no GitHub pull-request channel with a repository and a token: add one under "
+            "Distribution — its repository is where the site's directives are filed"
+        )
+    return channel
+
+
+def _open_directives(channel) -> list:
+    import requests
+    from github import Auth, Github, GithubException
+
+    from distribution.transports import github_message
+
+    repo_name = str(channel.setting("repo"))
+    hub = Github(auth=Auth.Token(channel.credentials().get("token", "")), retry=None, timeout=20)
+    try:
+        repo = hub.get_repo(repo_name)
+        # A pull request is an issue to this endpoint; its html_url says which. (Asking `pull_request` would make
+        # PyGithub fetch every real issue again, since the list leaves the key out for them.)
+        listed = repo.get_issues(state="open", labels=[DIRECTIVE_LABEL])
+        return [i for i in listed if "/pull/" not in str(i.html_url)]
+    except GithubException as e:
+        raise SiteError(github_message(e, action=f"read the directives of {repo_name}", repo=repo_name, base="")) from e
+    except requests.RequestException as e:
+        raise SiteError(
+            f"Could not read the directives of {repo_name}: GitHub did not answer ({type(e).__name__})."
+        ) from e
+
+
+def _prompt(title: str, found: dict) -> str:
+    parts = [found["brief"] or title]
+    if found["path"]:
+        parts.append(f"The document to {found['kind'] or 'work on'}: {found['path']}")
+    if found["narrative"]:
+        parts.append(f"The narrative this serves:\n{found['narrative']}")
+    return "\n\n".join(parts)
+
+
+def directives(managed: ManagedSite, *, user=None, assistant=None) -> dict:
+    """Pull the site's open directives into briefs: {created: [Brief], skipped, ignored, repo}. `skipped` were pulled
+    before (a brief carries the issue's URL); `ignored` are not a `write` or `refresh` directive, or not the hub's."""
+    from django.core.exceptions import ValidationError
+
+    from ai.models import Brief, Visibility
+    from cms.models import CollectionPage
+
+    channel = directive_channel(managed)
+    issues = _open_directives(channel)  # the network, before any lock is taken
+    root = managed.site.root_page
+    parent = CollectionPage.objects.child_of(root).filter(collection="posts").first() or root
+    created, skipped, ignored = [], 0, 0
+    with transaction.atomic():
+        ManagedSite.objects.select_for_update().filter(pk=managed.pk).first()  # one pull of a site at a time
+        for issue in issues:
+            found = parse_directive(issue.body)
+            if found is None or found["kind"] not in DIRECTIVE_KINDS:
+                ignored += 1
+                continue
+            url = issue.html_url
+            if Brief.objects.filter(site=managed.site, metadata__directive__url=url).exists():
+                skipped += 1
+                continue
+            title = issue.title.removeprefix(TITLE_PREFIX).strip()
+            brief = Brief(
+                owner=user,
+                site=managed.site,
+                visibility=Visibility.SITE,  # a site's direction, for everyone who edits the site
+                title=title[:255],
+                prompt=_prompt(title, found),
+                assistant=assistant,
+                page_type="cms.ArticlePage",
+                parent=parent,
+                metadata={
+                    "directive": {
+                        "url": url,
+                        "number": issue.number,
+                        "title": title[:255],  # the brief's own title is the model's once it is written
+                        **{k: found[k] for k in ("key", "kind", "priority", "pillar", "path")},
+                    }
+                },
+            )
+            try:
+                brief.clean()
+            except ValidationError as e:
+                raise SiteError("; ".join(e.messages)) from e
+            brief.save()
+            created.append(brief)
+    return {"created": created, "skipped": skipped, "ignored": ignored, "repo": str(channel.setting("repo"))}
+
+
+def pull_directives(managed: ManagedSite, *, user=None, assistant=None) -> list:
+    """The briefs made from the site's new `write` and `refresh` directives (see `directives`)."""
+    return directives(managed, user=user, assistant=assistant)["created"]
+
+
+@jobs.handler("directives")
+def run_directives(job, ctx):
+    """Pull the site's directives into briefs; with `generate`, start writing each new one (its assistant, as the
+    person who started the job). Applying a brief stays a person's step."""
+    from ai import services as ai
+    from ai.models import Assistant
+    from ops.errors import ApiError
+
+    managed, user = job.site.managed, job.created_by
+    assistant = None
+    if job.params.get("assistant"):
+        assistant = Assistant.objects.visible_to(user).filter(public_id=job.params["assistant"]).first()
+        if assistant is None:
+            ctx.log(f"no assistant {job.params['assistant']} that {user} may use", "error")
+            raise jobs.Failed("the assistant is not one its starter may use")
+    ctx.log(f"Reading the open {DIRECTIVE_LABEL} issues of {managed.key}'s repository …")
+    try:
+        found = directives(managed, user=user, assistant=assistant)
+    except SiteError as e:
+        ctx.log(str(e), "error")
+        raise jobs.Failed(str(e)) from e
+    for brief in found["created"]:
+        ctx.log(f"new brief {brief.title!r} from {brief.metadata['directive']['url']}")
+    generated = 0
+    if job.params.get("generate"):
+        for brief in found["created"]:
+            ctx.check()
+            if user is None:
+                ctx.log("not generated: writing a brief needs a person to start the job", "warning")
+                break
+            try:
+                ai.generate_brief(brief, user=user, trigger="manual")
+                generated += 1
+            except ApiError as e:
+                ctx.log(f"{brief.title!r} not generated: {e.message}", "warning")
+    ctx.log(
+        f"From {found['repo']}: {len(found['created'])} created, {found['skipped']} already pulled, "
+        f"{found['ignored']} not a write or refresh directive" + (f", {generated} generating" if generated else "")
+    )
+    return {
+        "created": len(found["created"]),
+        "skipped": found["skipped"],
+        "ignored": found["ignored"],
+        "generated": generated,
+    }

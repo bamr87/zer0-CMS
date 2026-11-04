@@ -1,0 +1,44 @@
+# =============================================================================
+# verify/scenarios/studio-directive-brief.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# Editorial directives in the studio, on the seeded demo: the site's Overview
+# says how many of its directives were pulled into briefs, and an automation
+# can be set to pull them on a schedule.
+#
+# What this scenario cannot record, and why: the pull itself, a brief's
+# "directive" chip and the pull request that closes the issue. Each reads or
+# writes a real GitHub repository through a site's GitHub pull-request channel
+# and its token; the seeded demo has no such channel, and the recording
+# harness answers model calls (verify/recordings/), never GitHub. Those steps
+# are covered without a network by content/tests/sites/test_directives.py,
+# content/tests/automations/test_directives.py, content/tests/distribution/
+# test_transports.py (PyGithub recorded with `responses`) and the studio's
+# web/packages/ui/test/{ai/briefs,sites,automations}.test.tsx.
+# =============================================================================
+id: studio-directive-brief
+feature: ZER0-047
+title: "See a site's pulled directives and set an automation to pull them"
+description: "An editor opens the demo site's Overview, which counts the editorial directives pulled into briefs (none yet on the demo), then starts a new automation and adds the action that pulls a site's editorial directives into briefs: it asks for the site's key and whether to write them now, and publishes nothing."
+viewports: [desktop]
+# Before the sign-in form the studio asks allauth whether anyone is signed in;
+# signed out, that answer is a 401, which Chromium logs as a console error.
+ignore_console: ["status of 401 \\(Unauthorized\\)"]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - goto: /studio/sites
+  - click: "role=button[name='Demo site']"
+  - wait: { selector: "text=Directives pulled into briefs" }
+  - expect: { text: "Directives pulled into briefs" }
+  - screenshot: site-overview
+  - goto: /studio/ai/automations/new
+  - wait: { selector: "role=heading[name='New automation']" }
+  - click: "role=combobox[name='Add an action']"
+  - click: "role=option[name='Pull a site’s editorial directives into briefs']"
+  - expect: { visible: "role=textbox[name=/Site key/]" }
+  - expect: { text: "Write them now (a person still applies them)" }
+  - expect: { no_console_errors: true }
+  - screenshot: directives-action

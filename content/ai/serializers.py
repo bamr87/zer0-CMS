@@ -337,6 +337,12 @@ class BriefSerializer(OwnedSerializer):
     def validate(self, attrs):
         if self.instance is not None and self.instance.status in (Brief.GENERATING, Brief.APPLIED):
             raise serializers.ValidationError(f"the brief is {self.instance.status}; it cannot change now")
+        if isinstance(attrs.get("metadata"), dict):
+            # The editorial directive a brief was pulled from (sites/services.py) is the platform's record, not a
+            # field: its page's pull request closes that issue, so a request neither sets nor removes it.
+            kept = (self.instance.metadata or {}).get("directive") if self.instance is not None else None
+            given = {k: v for k, v in attrs["metadata"].items() if k != "directive"}
+            attrs["metadata"] = {**given, "directive": kept} if kept else given
         return super().validate(attrs)
 
 

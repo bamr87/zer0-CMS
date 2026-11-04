@@ -322,6 +322,25 @@ features:
     verified:
       date: 2026-10-31
       by: agent
+  - id: ZER0-047
+    title: "Editorial directives become briefs, and the page that answers one closes it"
+    description: "A managed site pulls the open editorial:directive issues the hub files in its repository (read with its GitHub pull-request channel's repository and token) into briefs — one per new write or refresh directive, deduped on the issue — from `manage.py site_job directives` or a scheduled `directives` automation, optionally written at once; a person reviews and applies each as a draft, the studio marks such briefs with a chip linking to the issue and the site's Overview counts them, and when the page is published through the channel its pull request closes the directive and its ledger entry keeps the issue's URL. Nothing publishes on its own."
+    implemented: true
+    surface: ui
+    link: /studio/sites
+    docs: content/sites/README.md
+    tags: [ studio, web, sites, briefs, automations, distribution, editorial ]
+    date: 2026-11-04
+    tests:
+      - content/tests/sites/test_directives.py
+      - content/tests/automations/test_directives.py
+      - content/tests/distribution/test_transports.py
+      - web/packages/ui/test/ai/briefs.test.tsx
+      - web/packages/ui/test/sites.test.tsx
+      - web/packages/ui/test/automations.test.tsx
+    scenarios:
+      - verify/scenarios/studio-directive-brief.yml
+    evidence: []
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030

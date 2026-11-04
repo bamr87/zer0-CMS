@@ -52,13 +52,19 @@ def urn_of(entry) -> str | None:
     return next((str(entry[k]) for k in ("linkedin_urn", "urn") if entry.get(k)), None)
 
 
-def entry_for(*, urn, kind, target, author=None, source_file=None, image_urn=None, now=None) -> dict:
+def entry_for(*, urn, kind, target, author=None, source_file=None, image_urn=None, directive=None, now=None) -> dict:
     """A published entry, as every lane writes one: a re-publish is a new fact about the key, so nothing from an
-    older entry is merged in, and an absent option is left out rather than written as null."""
+    older entry is merged in, and an absent option is left out rather than written as null. `directive` is the
+    editorial directive's issue URL a page written for one answers (a GitHub pull request's)."""
     entry = {"posted_at": stamp(now), "target": target, "type": kind, "urn": urn}
     if target == "linkedin":
         entry["linkedin_urn"] = urn
-    for key, value in (("author", author), ("source_file", source_file), ("image_urn", image_urn)):
+    for key, value in (
+        ("author", author),
+        ("source_file", source_file),
+        ("image_urn", image_urn),
+        ("directive", directive),
+    ):
         if value:
             entry[key] = value
     return entry

@@ -4509,6 +4509,14 @@ export interface components {
                 generate?: boolean;
             } | {
                 /** @constant */
+                kind: "directives";
+                /** @description Its key. */
+                site: string;
+                /** Format: uuid */
+                assistant?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
                 kind: "idea";
                 /** @description A Django template, rendered against the payload. */
                 title: string;
@@ -4695,6 +4703,14 @@ export interface components {
                 generate?: boolean;
             } | {
                 /** @constant */
+                kind: "directives";
+                /** @description Its key. */
+                site: string;
+                /** Format: uuid */
+                assistant?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
                 kind: "idea";
                 /** @description A Django template, rendered against the payload. */
                 title: string;
@@ -4754,12 +4770,16 @@ export interface components {
                 input?: {
                     [key: string]: unknown;
                 };
-                /** @description What it made: an agent run, a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status. */
+                /** @description What it made: an agent run, a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status, the briefs pulled from a site's directives (and how many were pulled before or are not a write or refresh directive) with the runs writing them. */
                 result?: {
                     /** Format: uuid */
                     run?: string;
                     /** Format: uuid */
                     brief?: string;
+                    briefs?: string[];
+                    runs?: string[];
+                    skipped?: number;
+                    ignored?: number;
                     /** Format: uuid */
                     idea?: string;
                     /** Format: uuid */
@@ -7496,6 +7516,14 @@ export interface components {
                 pipeline?: string;
                 /** Format: uuid */
                 output_schema?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
+                kind: "directives";
+                /** @description Its key. */
+                site: string;
+                /** Format: uuid */
+                assistant?: string;
                 generate?: boolean;
             } | {
                 /** @constant */
@@ -10388,6 +10416,8 @@ export interface operations {
             query?: {
                 assistant?: string;
                 conversation?: string;
+                /** @description Only briefs pulled from an editorial directive (true), or only the others (false). */
+                directive?: boolean;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description A page number within the paginated result set. */

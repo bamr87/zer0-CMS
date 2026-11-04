@@ -7,7 +7,9 @@
 // "Generate again". Generating is a run, followed live; then a person reviews
 // the structured result, its rendered Markdown and the metadata, and applies
 // it: a draft page opens in the editor with the brief's text waiting as
-// suggestions to accept. Nothing here publishes.
+// suggestions to accept. Nothing here publishes. A brief pulled from a site's
+// editorial directive (an `editorial:directive` issue) carries a chip that
+// links to the issue, in the list and on the brief.
 import { Alert, Badge, Button, Card, Group, Loader, SegmentedControl, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useMutationState, useQuery, useQueryClient, type Mutation } from '@tanstack/react-query';
@@ -42,6 +44,24 @@ export function BriefStatusBadge({ status }: { status: BriefStatus }) {
   return (
     <Badge color={STATUS_COLOR[status]} variant="light">
       {status}
+    </Badge>
+  );
+}
+
+/** The editorial directive a brief was pulled from (a site's `editorial:directive` issue), or null. */
+export function directiveOf(metadata: unknown): { url: string; number: number | null } | null {
+  const d = isRecord(metadata) && isRecord(metadata.directive) ? metadata.directive : null;
+  if (!d || typeof d.url !== 'string') return null;
+  return { url: d.url, number: typeof d.number === 'number' ? d.number : null };
+}
+
+/** A chip that links to the directive's issue; nothing for a brief no directive asked for. */
+export function DirectiveChip({ metadata }: { metadata: unknown }) {
+  const d = directiveOf(metadata);
+  if (!d) return null;
+  return (
+    <Badge component="a" href={d.url} target="_blank" rel="noopener noreferrer" variant="outline" color="violet" style={{ cursor: 'pointer' }} onClick={(e) => e.stopPropagation()} aria-label={`The editorial directive${d.number ? ` #${d.number}` : ''} this brief answers`}>
+      directive{d.number ? ` #${d.number}` : ''}
     </Badge>
   );
 }
@@ -102,6 +122,7 @@ export function BriefList({ siteId }: { siteId?: number }) {
         onOpen={(b) => go({ to: 'brief', id: b.id })}
         columns={[
           { title: 'Status', cell: (b) => <BriefStatusBadge status={b.status} /> },
+          { title: 'Directive', cell: (b) => <DirectiveChip metadata={b.metadata} /> },
           { title: 'Updated', cell: (b) => new Date(b.updated_at).toLocaleString() },
           { title: 'Owner', cell: (b) => b.owner ?? '—' },
         ]}
@@ -312,7 +333,8 @@ function BriefForm({ brief, siteId, onSaved }: { brief?: Brief; siteId?: number;
 
 function Metadata({ metadata }: { metadata: unknown }) {
   const meta = isRecord(metadata) ? metadata : {};
-  const rows = Object.entries(meta).filter(([, v]) => v !== '' && !(Array.isArray(v) && v.length === 0));
+  // the directive is the chip beside the title, not a metadata row
+  const rows = Object.entries(meta).filter(([k, v]) => k !== 'directive' && v !== '' && !(Array.isArray(v) && v.length === 0));
   if (rows.length === 0) return <Text c="dimmed">No metadata.</Text>;
   return (
     <Table aria-label="Metadata">
@@ -350,6 +372,7 @@ function BriefView({ brief }: { brief: Brief }) {
           <Group gap="xs">
             <Title order={3}>{nameOf(brief)}</Title>
             <BriefStatusBadge status={brief.status} />
+            <DirectiveChip metadata={brief.metadata} />
           </Group>
           <Text size="sm" c="dimmed">
             {brief.owner ? `by ${brief.owner} · ` : ''}updated {new Date(brief.updated_at).toLocaleString()}
