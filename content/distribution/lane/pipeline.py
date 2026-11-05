@@ -830,8 +830,8 @@ class Pipeline:
                 continue
             page = self.resolve_source(entry["source_file"]) if entry.get("source_file") else None
             url = (self.canonical_url(page) if page is not None else None) or (key if "://" in key else None)
-            if not url:
-                continue
+            if not url or not self.config.site_url or not url.startswith(self.config.site_url + "/"):
+                continue  # a share of another site's page (`link:`) has no page here to show it
             path = urlsplit(url).path or "/"
             item = out.setdefault(path, {"url": url, "posts": []})
             item["posts"].append(

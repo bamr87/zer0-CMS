@@ -52,6 +52,7 @@ def test_sync_reports_each_page_and_drafts_the_missing_ones(make_checkout):
     root = make_checkout({"siteMap": "_data/linkedin/posts.json"})
     muse = post(root, "muses", "a-quiet-thought")
     shared(root, MCP_URL, "urn:li:share:1", source=MCP_POST)
+    shared(root, "https://elsewhere.test/posts/2026/07/06/mcp-for-the-back-office/", "urn:li:share:5")
     pipe = lane(root)
     states = {row["path"]: row["state"] for row in pipe.sync()}
     assert states[MCP_POST] == "shared" and states[muse] == "missing"
