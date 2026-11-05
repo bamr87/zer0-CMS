@@ -20,6 +20,13 @@ for its `publish_at:` and for its page to have been live `afterPage`. Without a
 cadence a queue run publishes every accepted draft, as before, except one
 pinned to a later `publish_at:`. A person's publish of one named draft is never
 held. `calendar` shows which draft goes when.
+
+Before a live send of an article, the lane asks the page itself whether it is
+up — one GET of the link it shares (`checkLink`, on by default) — so a share
+never points at a page that is not live yet: a queue run leaves the draft
+waiting, a named publish is refused. The card image is the draft's own
+`image:`, else the page's preview, else the site's `fallbackImage`; with
+`requirePreview` a share with no image of its own is refused instead.
 """
 
 import itertools
@@ -27,10 +34,13 @@ import json
 import re
 import subprocess
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
 from zoneinfo import ZoneInfo
+
+import httpx
 
 from suggestions.guard import guard_text
 
@@ -215,12 +225,22 @@ class Pipeline:
     NAME, COMMAND, ID_KEY = "LinkedIn", "linkedin", "linkedin_urn"
     ERRORS = (Error, ConfigError, LedgerError, ValueError)
 
-    def __init__(self, config, *, transport=send, sleeper=time.sleep, clock=None, credentials=None):
+    def __init__(
+        self,
+        config,
+        *,
+        transport=send,
+        sleeper=time.sleep,
+        clock=None,
+        credentials=None,
+        page_check: Callable[[str], int | None] | None = None,
+    ):
         self.config = config
         self.transport = transport
         self.sleeper = sleeper
         self.clock = clock or (lambda: datetime.now(UTC))
         self.credentials = credentials or config.credentials
+        self.page_check = page_check or page_status
         self._catalog = None
 
     @property
@@ -363,7 +383,15 @@ class Pipeline:
                 commentary = default_commentary(entry, config.hashtag_limit)
                 notes.append("the draft has no body; the page's default commentary will publish")
             if not draft.no_thumbnail:
-                thumbnail = self._thumbnail(entry, notes)
+                thumbnail = self._thumbnail(entry, notes, draft)
+                if self.config.require_preview and (thumbnail is None or self._fell_back(thumbnail)):
+                    blockers.append(
+                        Blocker(
+                            "source_missing",
+                            "no card image of its own (requirePreview): generate the page's preview image, or name "
+                            "one with image: on the draft",
+                        )
+                    )
             key = url
             if author_ok and url and title.strip():
                 try:
@@ -444,8 +472,10 @@ class Pipeline:
             blockers.append(Blocker("no_credential", missing))
 
     # ── publish ──────────────────────────────────────────────────────────────
-    def publish(self, draft, *, live=False, force=False) -> Outcome:
-        """Without `live`, a rehearsal: the full preview and its blockers, nothing sent, nothing written."""
+    def publish(self, draft, *, live=False, force=False, queued=False) -> Outcome:
+        """Without `live`, a rehearsal: the full preview and its blockers, nothing sent, nothing written. A live
+        article asks its page first (`checkLink`): one that is not up yet is `waiting` in a queue run (`queued`) and
+        `blocked` for a person's publish of the named draft."""
         draft = queue.read(self.config, draft.path)
         preview = self.preview(draft)
         blockers = gates.lifted(preview.blockers, force=force)
@@ -467,6 +497,8 @@ class Pipeline:
             )
         if blockers:
             return Outcome("blocked", draft, preview.key, messages=[b.message for b in blockers], preview=preview)
+        if (down := self.page_down(draft, preview.key)) is not None:
+            return Outcome("waiting" if queued else "blocked", draft, preview.key, messages=[down], preview=preview)
         try:
             return self._send(draft, preview)
         except self.ERRORS as e:
@@ -492,7 +524,7 @@ class Pipeline:
         drafts = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
         cadence = self.config.cadence
         if cadence is None and not any(d.text("publish_at") for d in drafts):
-            return [self.publish(d, live=live) for d in drafts]
+            return [self.publish(d, live=live, queued=True) for d in drafts]
         now = self.clock()
         planned = {row.draft.id: row for row in self.calendar(drafts, now=now)}
         if cadence is not None:
@@ -506,7 +538,7 @@ class Pipeline:
         for draft in ready if open_now else []:
             if released >= limit:
                 break
-            outcome = self.publish(draft, live=live)
+            outcome = self.publish(draft, live=live, queued=True)
             outcomes[draft.id] = outcome
             if outcome.state in ("published", "rehearsed"):
                 released += 1
@@ -834,7 +866,51 @@ class Pipeline:
                 out["probe"] = "failed"
                 out["problems"].append(str(e))
 
-    def _thumbnail(self, entry, notes) -> Path | None:
+    def page_down(self, draft, url) -> str | None:
+        """Why the page an article links to is not up yet (`checkLink`), or None: a 2xx or 3xx answer is up; a 404 or
+        a 410 is not published yet; anything else — refused, failing, unreachable — is not confirmed, so the share
+        waits rather than send readers somewhere that may not work. A text update has no page."""
+        if draft.type != "article" or not url or not self.config.check_link:
+            return None
+        status = self.page_check(url)
+        if status is not None and status < 400:
+            return None
+        if status in (404, 410):
+            return f"{url} answers {status}: the page is not live yet, so the share waits until it is"
+        answer = f"answers {status}" if status is not None else "did not answer"
+        return (
+            f"{url} {answer}, so whether it is live is not confirmed: the share waits (set checkLink: false for a site "
+            "that refuses automated requests)"
+        )
+
+    def _fell_back(self, thumbnail: Path) -> bool:
+        fallback = self.config.fallback_image
+        return bool(fallback) and thumbnail == self.config.path(fallback)
+
+    def _image_of(self, draft, notes) -> Path | None:
+        """The draft's own card image (`image:`, a repository path), when it names one that can be uploaded."""
+        value = draft.text("image") if draft is not None else ""
+        if not value or "://" in value:
+            if value:
+                notes.append(f"image {value} is a URL: name a file in the repository")
+            return None
+        root = self.config.root
+        found = next(
+            (p for p in (root / value.lstrip("/"), self.catalog.source / value.lstrip("/")) if p.is_file()),
+            None,
+        )
+        if found is None or not _inside(root, found):
+            notes.append(f"image {value} is not on disk")
+            return None
+        ok, reason = posts.uploadable(found.name, found.stat().st_size)
+        if not ok:
+            notes.append(f"image {value} is not uploadable: {reason}")
+            return None
+        return found
+
+    def _thumbnail(self, entry, notes, draft=None) -> Path | None:
+        if (own := self._image_of(draft, notes)) is not None:
+            return own
         root = self.config.root
         value = entry.preview.strip() if entry else ""
         if value and "://" not in value:
@@ -869,6 +945,18 @@ class Pipeline:
         if entry is not None:
             notes.append("posting without a card image")
         return None
+
+
+def page_status(url: str) -> int | None:
+    """The HTTP status a page answers with, following redirects; None when it cannot be reached. The lane's one
+    request outside LinkedIn's and X's declared calls: a GET of the very page a share links to."""
+    try:
+        response = httpx.get(
+            url, follow_redirects=True, timeout=15.0, headers={"User-Agent": "zer0-CMS distribution lane (page check)"}
+        )
+    except httpx.HTTPError:
+        return None
+    return response.status_code
 
 
 def read_statistics(client, author: str, urns) -> dict:

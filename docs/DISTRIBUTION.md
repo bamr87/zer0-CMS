@@ -76,6 +76,8 @@ A site opts in to the lane with a `distribution.linkedin` block in its `zer0.jso
 | `bannedPatternsFile` | none | Extra brand-guard bans, in the extension's `[{name, pattern, flags}]` format |
 | `scopes` | by author type (below) | The OAuth scopes a connection asks for |
 | `cadence` | none | When a queue run may release a draft: slots, gaps, caps, blackout dates and the page's phase (§ The cadence). None: every accepted draft goes on the run that finds it |
+| `requirePreview` | `false` | An article share needs a card image of its own (the draft's `image:`, or the page's preview on disk): one that would carry `fallbackImage` is refused (`source_missing`), so a share never goes out with a generic card |
+| `checkLink` | `true` | Before a live send, ask the page the share links to (§ Preview and the gates). `false` for a site that refuses automated requests |
 
 Paths must stay inside the repository; `..` and absolute paths are refused. An unknown key is a warning, so a typo such as `publishAllow` is reported rather than silently believed. A platform LinkedIn channel can name the same ledger file (its `ledger_file` setting, inside the site's checkout), and then reads it before publishing and writes what it published into it, under the same lock and atomic rename the lane uses — so a site moving from its lane to the platform does not post a page twice, once the platform's write is committed: the platform writes the checkout's working tree, never a commit, and the site's own CI reads the committed file (the post's notes say so). The checkout is found only inside the platform's repository or `SITES_DIR`. A named file the platform cannot reach (the site's checkout is not on the machine doing the work), or that the worker cannot write, blocks the channel rather than being skipped.
 
@@ -104,6 +106,7 @@ The lane's queue is markdown files at the top level of the queue folder; `exampl
 | `status` | `pending` (default), `approved`, `published` | Where it is in the lifecycle |
 | `source` | a repository path, or `section/YYYY-MM-DD-slug` | The page an article shares |
 | `title`, `description`, `link` | text | An article's own card, for a link that is not a page of this site; ignored when `source` names a page |
+| `image` | a repository path | The card image, ahead of the page's preview and the fallback: how a share of a page on another site (`link:`) carries that page's own image |
 | `no_thumbnail` | `true` | Post the card without an image |
 | `publish_at` | `2026-11-10 09:00`, an ISO time with an offset, or a date | Not before this time: a queue run leaves the draft waiting until then, read in the cadence's zone (UTC without one) when it names none. A person's publish of the named draft is not held |
 | `linkedin_urn` | set on publish | The post it became |
@@ -130,6 +133,10 @@ A preview renders the exact request — the payload with its commentary escaped 
 | `no_credential` | no access token and no refresh token | the environment, or connecting the channel |
 
 Without `--live`, `manage.py linkedin publish` is a rehearsal: it reports the same blockers and exits non-zero when any blocker other than `status_not_accepted`, `publish_disabled` and `no_credential` applies — those three say a draft is not cleared to go yet, not that anything is wrong with it — so a dry run in CI fails on a guard error, a missing page or an unconfirmed attempt. `preview` exits the same way. `--force` needs a draft id; it never applies to a whole queue. On the platform, publishing a post with a blocker answers `409` with every blocker.
+
+**The page is up before the share goes.** A preview makes no network call, so it cannot see a page that is not published yet — a share merged before its article, or a `link:` to another site whose pull request is still open. A live send of an article therefore asks the page first (`checkLink`, on by default): one GET of the canonical URL or `link`, following redirects, the lane's only request outside LinkedIn's and X's declared calls. A 2xx or 3xx answer is up. A 404 or 410 is not live yet; a 403, a 5xx or no answer does not confirm it. Either way nothing is sent: a queue run leaves the draft `waiting`, so the next run takes it once the page answers, and a person's publish of the named draft is refused with the answer. The platform's channels check that the page is live in the platform instead (`source_missing`).
+
+**The card image** is the draft's own `image:`, else the page's preview on disk, else the site's `fallbackImage`, else none; the preview notes which. With `requirePreview` a share that would carry the fallback or no image is refused, so every post goes out with its own picture.
 
 A write that ends in a 5xx, a dropped connection or a success with no post id may have posted, so the doubt is written to the ledger before anything else happens — an `unconfirmed` entry with no URN — and every later attempt, on every surface, refuses that key until a person has looked. One case is finished rather than refused: a lane draft whose key is already in the ledger, with nothing else in the way, is the tail of a run that died between the ledger write and the draft write, so a live run marks the draft published and posts nothing.
 
@@ -350,6 +357,7 @@ The access token lasts two hours. The platform renews it two minutes before it l
 | `hashtagLimit` | `2` | Hashtags in a composed first draft |
 | `bannedPatternsFile` | none | Extra brand-guard bans |
 | `cadence` | none | X's own release slots, gaps and page phase, as LinkedIn's (§ The cadence), counted against X's ledger |
+| `checkLink` | `true` | Ask the page a post links to before a live send, as LinkedIn's lane does |
 
 | Variable | Kind | Used for |
 |---|---|---|

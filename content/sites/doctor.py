@@ -331,6 +331,8 @@ LINKEDIN_KEYS = (
     "bannedPatternsFile",
     "scopes",
     "cadence",
+    "requirePreview",
+    "checkLink",
 )
 LINKEDIN_API_VERSION = "202608"
 X_KEYS = (
@@ -343,6 +345,7 @@ X_KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "cadence",
+    "checkLink",
 )
 X_HANDLE = re.compile(r"\A@?[A-Za-z0-9_]{1,15}\Z")
 LINKEDIN_AUTHOR = re.compile(r"\Aurn:li:(person|organization|organizationBrand|share|ugcPost|image):([A-Za-z0-9_-]+)\Z")

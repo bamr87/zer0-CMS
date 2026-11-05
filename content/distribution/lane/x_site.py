@@ -28,6 +28,7 @@ KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "cadence",
+    "checkLink",
 )
 # X reads a post at a glance: two hashtags, not LinkedIn's three.
 HASHTAGS = 2

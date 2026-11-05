@@ -51,6 +51,8 @@ KEYS = (
     "bannedPatternsFile",
     "scopes",
     "cadence",
+    "requirePreview",
+    "checkLink",
 )
 ACRONYMS = {"ai", "mcp", "erp", "crm", "bi", "saas", "iaas", "smb", "it", "api", "ci", "cd", "kpi", "roi", "sql", "hr"}
 HOOK_KEYS = ("sub-title", "subtitle", "excerpt")
@@ -91,6 +93,7 @@ class Config:
         self._resolve(cms.get("root"))
         self._validate()
         self._resolve_cadence()
+        self._resolve_checks()
 
     # ── what a run asks ──────────────────────────────────────────────────────
     @property
@@ -184,6 +187,15 @@ class Config:
         self.banned_patterns_file = self._confined(bans, "bannedPatternsFile") if bans else None
         self.scopes = [str(s) for s in block.get("scopes") or []]
         self.cms_root = self._confined(cms_root or ".cms", "cms.root")
+
+    def _resolve_checks(self):
+        """`requirePreview` (an article share needs a card image of its own, never the fallback) and `checkLink` (a
+        live send asks the page first; on unless the block says false)."""
+        self.require_preview = self.block.get("requirePreview") is True
+        self.check_link = self.block.get("checkLink") is not False
+        for key in ("requirePreview", "checkLink"):
+            if key in self.block and not isinstance(self.block[key], bool):
+                self._error(f"distribution.{self.BLOCK}.{key} must be true or false")
 
     def _resolve_cadence(self):
         """`cadence` (`distribution/cadence.py`): when a queue run may release a draft. None publishes every accepted

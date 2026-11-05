@@ -270,7 +270,9 @@
               "items": { "type": "string" },
               "description": "OAuth scopes a connection asks for. Default: the least the author type needs."
             },
-            "cadence": { "$ref": "#/definitions/cadence" }
+            "cadence": { "$ref": "#/definitions/cadence" },
+            "requirePreview": { "type": "boolean", "default": false, "description": "An article share needs a card image of its own (the draft's image:, or the page's preview on disk): one that would carry fallbackImage is refused." },
+            "checkLink": { "type": "boolean", "default": true, "description": "Before a live send, ask the page the share links to: a queue run waits while it is not up (404, 410, or no answer), a named publish is refused." }
           }
         },
         "x": {
@@ -305,7 +307,8 @@
             },
             "hashtagLimit": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 },
             "bannedPatternsFile": { "type": "string", "description": "Extra brand-guard bans: [{ name, pattern, flags }]." },
-            "cadence": { "$ref": "#/definitions/cadence" }
+            "cadence": { "$ref": "#/definitions/cadence" },
+            "checkLink": { "type": "boolean", "default": true, "description": "Before a live send, ask the page the post links to: a queue run waits while it is not up, a named publish is refused." }
           }
         }
       }

@@ -373,7 +373,9 @@ def test_a_live_armed_publish_uploads_posts_records_and_marks_the_draft(checkout
     draft = approved_draft(pipeline(checkout))
     outcome = pipeline(checkout, ARMED).publish(draft, live=True)
     assert (outcome.state, outcome.urn) == ("published", "urn:li:share:7000"), outcome.messages
-    assert [c.request.method for c in web.calls] == ["POST", "PUT", "GET", "POST"]
+    # The page check (the page is up), then the image's upload, its bytes, its status, and the post.
+    assert [c.request.method for c in web.calls] == ["GET", "POST", "PUT", "GET", "POST"]
+    assert web.calls[0].request.url == MCP_URL
     payload = json.loads(post.calls.last.request.content)
     assert payload["content"]["article"]["thumbnail"] == "urn:li:image:IMG" and payload["author"] == AUTHOR
     assert payload["commentary"] == GOLDEN["default_commentary"]
@@ -387,7 +389,7 @@ def test_a_live_armed_publish_uploads_posts_records_and_marks_the_draft(checkout
     published = pipeline(checkout).draft(draft.id)
     assert (published.status, published.meta["linkedin_urn"]) == ("published", "urn:li:share:7000")
     again = pipeline(checkout, ARMED).publish(published, live=True)
-    assert again.state == "blocked" and len(web.calls) == 4, "a published draft never posts twice"
+    assert again.state == "blocked" and len(web.calls) == 5, "a published draft never posts twice"
     with pytest.raises(ValueError):
         pipeline(checkout).compose(MCP_POST)
 
