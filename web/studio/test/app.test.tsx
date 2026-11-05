@@ -3,12 +3,12 @@
 // studio — or goes back to the admin that sent them — and the person menu
 // opens their account and signs out; every area of TARGET.md is in the navigation, an unbuilt
 // one names its milestone, and a workspace's destinations become routes.
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
-import { App, bookmarkletFor, pathFor } from '../src/App';
+import { App, bookmarkletFor, LEAVE_UNSAVED, pathFor } from '../src/App';
 import { AREAS } from '../src/areas';
 import { arrivalFrom, createBrowserAuth, safeNext, SIGNED_IN_CALLBACK, type BrowserAuthOptions } from '../src/auth';
 import { authConfig, authenticated, fakePlatform, noStream, pageDetail, Providers, refused, Reply, unauthenticated, type Handler } from '../../test/harness';
@@ -192,6 +192,35 @@ describe('the shell and its routes', () => {
     expect(await screen.findByRole('heading', { name: 'Nightly backups' })).toBeInTheDocument();
     renderStudio('/review?run=7d1c5e3a-2b4f-4c6d-8e9f-0a1b2c3d4e5f');
     expect(await screen.findByRole('heading', { name: 'Review run 7d1c5e3a' })).toBeInTheDocument();
+  });
+
+  it('asks before a nav link leaves a page with unsaved edits, and stays on cancel (#64)', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    try {
+      renderStudio('/write/5', platformFor({ 'GET /api/v2/content/pages/5/': () => pageDetail() }));
+      const title = await screen.findByLabelText(/^Title/);
+      const nav = await screen.findByRole('navigation', { name: 'Areas' });
+      const home = within(nav).getByText('Home');
+
+      await userEvent.click(home); // clean: no question asked
+      expect(confirm).not.toHaveBeenCalled();
+      expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument();
+
+      cleanup();
+      renderStudio('/write/5', platformFor({ 'GET /api/v2/content/pages/5/': () => pageDetail() }));
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await userEvent.click(within(await screen.findByRole('navigation', { name: 'Areas' })).getByText('Home'));
+      expect(confirm).toHaveBeenCalledWith(LEAVE_UNSAVED);
+      expect(screen.queryByRole('heading', { name: 'Home' })).toBeNull();
+      expect(screen.getByLabelText(/^Title/)).toHaveValue('Nightly backups!');
+
+      confirm.mockReturnValue(true); // the explicit discard
+      await userEvent.click(within(screen.getByRole('navigation', { name: 'Areas' })).getByText('Home'));
+      expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument();
+      expect(title).not.toBeInTheDocument();
+    } finally {
+      confirm.mockRestore();
+    }
   });
 
   it('maps every destination a workspace asks for to a route', () => {

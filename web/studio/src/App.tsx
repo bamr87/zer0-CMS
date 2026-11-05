@@ -34,7 +34,7 @@ import {
   type OpenStream,
   type OutboxTab,
 } from '@zer0/ui';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useRef, type ReactNode } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import { AiArea } from './ai/AiArea';
@@ -113,16 +113,30 @@ export function pathFor(to: Destination): string {
   }
 }
 
+/** Asked before the studio navigates away from an editor holding unsaved edits. */
+export const LEAVE_UNSAVED = 'You have unsaved edits on this page. Leave and discard them?';
+
 export function App({ api, stream, auth = browserAuth, leave }: { api: ApiClient; stream: OpenStream; auth?: AuthHost; leave?: (url: string) => void }) {
   const navigate = useNavigate();
-  const go = useCallback((to: Destination) => void navigate(pathFor(to)), [navigate]);
+  // An editor reports unsaved edits here (Host.setDirty); every in-app move asks first while they exist.
+  const dirty = useRef(false);
+  const setDirty = useCallback((value: boolean) => {
+    dirty.current = value;
+  }, []);
+  const mayLeave = useCallback(() => !dirty.current || window.confirm(LEAVE_UNSAVED), []);
+  const go = useCallback(
+    (to: Destination) => {
+      if (mayLeave()) void navigate(pathFor(to));
+    },
+    [navigate, mayLeave],
+  );
   return (
-    <StudioProvider api={api} stream={stream} go={go} auth={auth}>
+    <StudioProvider api={api} stream={stream} go={go} auth={auth} setDirty={setDirty}>
       <SignedIn leave={leave}>
         {(person) => (
           <SiteProvider>
             <Routes>
-              <Route element={<Shell person={person} />}>
+              <Route element={<Shell person={person} mayLeave={mayLeave} />}>
                 <Route index element={<Home />} />
                 <Route path="write" element={<Write />} />
                 <Route path="write/:id" element={<EditPage />} />
