@@ -165,7 +165,11 @@ class Cadence:
         return f"{DAYS[local.weekday()].capitalize()} {local:%Y-%m-%d %H:%M} {local.tzname()}"
 
     def summary(self) -> str:
-        slots = ", ".join(f"{DAYS[d]} {t:%H:%M}" for d, t in self.slots)
+        """The cadence in words: `tue,thu 09:00 (America/Denver), at most 1 a day, 48h apart`."""
+        by_time: dict[time, list[int]] = {}
+        for day, at in self.slots:
+            by_time.setdefault(at, []).append(day)
+        slots = ", ".join(f"{_days_word(days)} {at:%H:%M}" for at, days in sorted(by_time.items()))
         parts = [f"{slots} ({self.timezone})", f"at most {self.per_day} a day"]
         if self.per_week is not None:
             parts.append(f"{self.per_week} a week")
@@ -174,6 +178,12 @@ class Cadence:
         if self.after_page:
             parts.append(f"{describe(self.after_page)} after the page")
         return ", ".join(parts)
+
+
+def _days_word(days) -> str:
+    found = tuple(sorted(days))
+    named = {group: name for name, group in GROUPS.items()}
+    return named.get(found) or ",".join(DAYS[d] for d in found)
 
 
 # ── reading a cadence ───────────────────────────────────────────────────────

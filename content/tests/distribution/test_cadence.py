@@ -329,14 +329,14 @@ def test_the_calendar_command_and_the_mcp_tool(make_checkout):
     code = cli.main(["calendar", "--site", str(root), "--json"], out=out, env={})
     assert code == 0
     data = json.loads(out.getvalue())
-    assert data["cadence"] == "mon 11:00, wed 11:00 (UTC), at most 1 a day"
+    assert data["cadence"] == "mon,wed 11:00 (UTC), at most 1 a day"
     assert [(d["id"], d["at"]) for d in data["drafts"]] == [
         (first.id, data["drafts"][0]["at"]),
         (second.id, data["drafts"][1]["at"]),
     ]
     text = io.StringIO()
     assert cli.main(["calendar", "--site", str(root)], out=text, env={}) == 0
-    assert "cadence  mon 11:00, wed 11:00 (UTC), at most 1 a day" in text.getvalue()
+    assert "cadence  mon,wed 11:00 (UTC), at most 1 a day" in text.getvalue()
     from distribution.lane.mcp import Server
 
     server = Server(str(root), env={})
