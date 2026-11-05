@@ -180,6 +180,19 @@ def test_a_revision_sets_a_published_posts_text_and_only_the_lanes_own(make_chec
     entry = Ledger(root / LEDGER).entry(f"draft:{draft.relative}")
     assert entry["revises"] == "urn:li:share:1" and lane(root).draft(draft.id).status == "published"
     assert lane(root).history() == [NOW - timedelta(hours=2)], "a revision is not a new post to the cadence"
+    # A revision takes no slot: a queue run under the cadence sends it at once, beside the draft that waits.
+    again = drafts.create(
+        lane(root).config, type="revision", slug="again", body="Corrected again.", meta={"revises": "urn:li:share:1"}
+    )
+    assert lane(root).approve(again).state == "approved"
+    waiting = lane(root).compose_update("A note for the next slot.", slug="note")
+    assert lane(root).approve(waiting).state == "approved"
+    later = lane(root, env=ARMED, when=NOW + timedelta(hours=1))  # 13:00: today's 11:00 slot went to the post at 10:00
+    assert {o.draft.id: o.state for o in later.publish_queue(live=True)} == {
+        again.id: "published",
+        waiting.id: "waiting",
+    }
+    assert [row.draft.id for row in later.calendar()] == [waiting.id], "the calendar is of posts, not revisions"
     stranger = drafts.create(
         lane(root).config, type="revision", slug="stranger", body="New text.", meta={"revises": "urn:li:share:999"}
     )

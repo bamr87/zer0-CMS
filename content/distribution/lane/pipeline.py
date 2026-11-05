@@ -551,10 +551,15 @@ class Pipeline:
         if force:
             raise ValueError("--force applies to one draft: name it")
         statuses = self.config.publishable_statuses if live else self.config.accept_statuses
-        drafts = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
+        accepted = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
+        # A revision changes the text of a post already out and puts nothing new in the feed: it goes on the run
+        # that finds it, through every gate, and takes no slot.
+        revised = {d.id: self.publish(d, live=live, queued=True) for d in accepted if d.type == "revision"}
+        drafts = [d for d in accepted if d.type != "revision"]
         cadence = self.config.cadence
         if cadence is None and not any(d.text("publish_at") for d in drafts):
-            return [self.publish(d, live=live, queued=True) for d in drafts]
+            done = {d.id: self.publish(d, live=live, queued=True) for d in drafts}
+            return [revised.get(d.id) or done[d.id] for d in accepted]
         now = self.clock()
         planned = {row.draft.id: row for row in self.calendar(drafts, now=now)}
         if cadence is not None:
@@ -579,7 +584,7 @@ class Pipeline:
                 row = planned[draft.id]
                 state = "blocked" if row.problem else "waiting"
                 outcomes[draft.id] = Outcome(state, draft, messages=[row.problem or row.describe(cadence, now)])
-        return [outcomes[d.id] for d in drafts]
+        return [revised.get(d.id) or outcomes[d.id] for d in accepted]
 
     # ── timing: the cadence, a draft's pin and its page's phase (cadence.py) ──
     def history(self) -> list[datetime]:
@@ -655,7 +660,9 @@ class Pipeline:
         now = now or self.clock()
         if drafts is None:
             statuses = self.config.accept_statuses
-            drafts = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
+            drafts = [
+                d for d in self.drafts() if d.status != "published" and d.status in statuses and d.type != "revision"
+            ]
         cadence = self.config.cadence
         rows = {}
         for order, draft in enumerate(drafts):
