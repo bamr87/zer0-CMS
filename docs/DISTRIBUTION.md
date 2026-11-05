@@ -78,6 +78,8 @@ A site opts in to the lane with a `distribution.linkedin` block in its `zer0.jso
 | `cadence` | none | When a queue run may release a draft: slots, gaps, caps, blackout dates and the page's phase (§ The cadence). None: every accepted draft goes on the run that finds it |
 | `requirePreview` | `false` | An article share needs a card image of its own (the draft's `image:`, or the page's preview on disk): one that would carry `fallbackImage` is refused (`source_missing`), so a share never goes out with a generic card |
 | `checkLink` | `true` | Before a live send, ask the page the share links to (§ Preview and the gates). `false` for a site that refuses automated requests |
+| `weekly` | none | The week's featured article: `ring` (the sections in turn), `anchor` (a date in the ring's first week), `at` (the day and time), `timezone` (§ Keeping the site and LinkedIn in step) |
+| `siteMap` | none | A JSON file the lane keeps of each page's LinkedIn posts, by URL path, for the site to link to them; refreshed on every publish and by `sync --write-map` |
 
 Paths must stay inside the repository; `..` and absolute paths are refused. An unknown key is a warning, so a typo such as `publishAllow` is reported rather than silently believed. A platform LinkedIn channel can name the same ledger file (its `ledger_file` setting, inside the site's checkout), and then reads it before publishing and writes what it published into it, under the same lock and atomic rename the lane uses — so a site moving from its lane to the platform does not post a page twice, once the platform's write is committed: the platform writes the checkout's working tree, never a commit, and the site's own CI reads the committed file (the post's notes say so). The checkout is found only inside the platform's repository or `SITES_DIR`. A named file the platform cannot reach (the site's checkout is not on the machine doing the work), or that the worker cannot write, blocks the channel rather than being skipped.
 
@@ -102,12 +104,14 @@ The lane's queue is markdown files at the top level of the queue folder; `exampl
 
 | Key | Values | Meaning |
 |---|---|---|
-| `type` | `article` (default), `update` (`text` is accepted) | A link card for a page, or text alone |
+| `type` | `article` (default), `update` (`text` is accepted), `revision` | A link card for a page, text alone, or new text for a post already out |
 | `status` | `pending` (default), `approved`, `published` | Where it is in the lifecycle |
 | `source` | a repository path, or `section/YYYY-MM-DD-slug` | The page an article shares |
 | `title`, `description`, `link` | text | An article's own card, for a link that is not a page of this site; ignored when `source` names a page |
 | `image` | a repository path | The card image, ahead of the page's preview and the fallback: how a share of a page on another site (`link:`) carries that page's own image |
 | `no_thumbnail` | `true` | Post the card without an image |
+| `feature` | `YYYY-Www` | The week's featured article: ledgered as `feature:<week>`, not by its URL, so the page keeps its own share and a week features once |
+| `revises` | a post URN | A `type: revision` draft's target, a post this lane published; the body is its new text |
 | `publish_at` | `2026-11-10 09:00`, an ISO time with an offset, or a date | Not before this time: a queue run leaves the draft waiting until then, read in the cadence's zone (UTC without one) when it names none. A person's publish of the named draft is not held |
 | `linkedin_urn` | set on publish | The post it became |
 
@@ -179,6 +183,16 @@ Changing the text of a scheduled post sends it back to draft and off the schedul
 
 **Running it on a timer.** A cadence only releases what a run finds, so a site that uses one runs its publish on a schedule as well as on the merge (§ CI). An hourly run off the hour, with the default six hours of `grace`, absorbs GitHub's late scheduled starts.
 
+## Keeping the site and LinkedIn in step
+
+A site's pages and its LinkedIn page are meant to mirror each other: every page has a post, every post links back from its page, the best piece of each section gets its own weekly feature, and a post that turns out wrong is corrected where people read it. The lane does the exact parts; the judgment — which page is the feature this week, what the commentary says, what a correction says — stays with a person and the agents they run, through drafts a person approves.
+
+- **`sync`** lists every shareable page against LinkedIn: `shared` (its own post), `featured` (only as a week's feature), `queued` (a draft waits) or `missing`, and exits 1 while a page is missing, so a scheduled check shows the gap. `--draft [--limit N]` writes a pending draft for each missing page, newest first; under a cadence, the backfill a person approves goes out one slot at a time. `--write-map` writes `siteMap`.
+- **`siteMap`** is the other direction: a JSON file in the site of each page's posts (`{"/posts/…/": {"url": …, "posts": [{"url": …, "posted_at": …, "feature": "2026-W46"}]}}`), refreshed after every publish and committed back by the workflow with the ledger, so a layout can link each page to its posts.
+- **`weekly [--week YYYY-Www]`** drafts the week's featured article. The `ring` turns once a week from the `anchor`'s week, so with `["muses", "corp", "erp", "tech"]` one week features a Muses piece, the next a Corporate one, and so on. In that section, a post's first category, it takes the post marked `featured: true` that has not been featured, else the newest not featured, else the one featured longest ago. The draft is pinned to the week's `at` (`publish_at:`) and ledgered as `feature:<week>`, so the page keeps its own share and a week never features twice; run it again and it names the draft it already wrote. The week is this one while its slot is ahead, else the next. LinkedIn's API cannot publish its long-form Articles, so the feature is an article post — the page's card — whose commentary carries the week's longer read.
+- **`revise URN`** writes a pending `type: revision` draft: new text for a post this lane published (a correction, a reference, an update), which a person approves and the lane sends as `posts_update`. Only the text changes: a post's card — its link, title and image — is fixed once posted. A revision of a post the ledger does not hold is refused; it is ledgered under its draft, with `revises`, and the cadence does not count it.
+- **`revisit [--mark KEY]`** lists the posts this lane published, least recently reviewed first (the ledger's `_meta.reviewed`), then oldest: the order a review loop takes them in, one a run. `--mark` records a review.
+
 ## What LinkedIn sees
 
 `manage.py linkedin plan` prints every call the client can make (`distribution/linkedin/plan.py`). `Client.request` takes a call id from that plan, never a URL, and refuses anything else before a socket opens; the one URL a caller supplies, the image upload slot LinkedIn returns, must be https on linkedin.com.
@@ -193,6 +207,7 @@ Changing the text of a scheduled post sends it back to draft and off the schedul
 | `posts_create` | `POST /rest/posts` | `w_organization_social`, `w_member_social` | the id of the author's own new post |
 | `posts_get` | `GET /rest/posts/{urn}` | `r_organization_social`, `rw_organization_admin`, `r_member_social` | the author's own post, as published |
 | `posts_by_author` | `GET /rest/posts?q=author` | same | the configured author's own recent posts |
+| `posts_update` | `POST /rest/posts/{urn}`, `X-RestLi-Method: PARTIAL_UPDATE` | `w_organization_social`, `w_member_social` | nothing (204): it changes only the text of the author's own post — a revision a person approved; the card cannot change |
 | `posts_delete` | `DELETE /rest/posts/{urn}` | `w_organization_social`, `w_member_social` | nothing; it removes the author's own post |
 | `images_initialize` | `POST /rest/images?action=initializeUpload` | same | an upload slot for the author's own image |
 | `images_upload` | `PUT` the slot | same | nothing; it stores the author's own image |
@@ -296,7 +311,7 @@ It checks out the caller — at the tip of the branch the run is on, not the com
 
 ## The lane's MCP server
 
-`python manage.py linkedin mcp --site PATH` speaks newline-delimited JSON-RPC on stdio. Tools: `linkedin_status`, `linkedin_plan`, `linkedin_sources`, `linkedin_queue`, `linkedin_calendar`, `linkedin_preview`, `linkedin_draft`, `linkedin_posts` and `linkedin_publish`. The last needs `ZER0_LINKEDIN_MCP_PUBLISH=1` and `ZER0_LINKEDIN_PUBLISH=1` in the server's environment plus `confirm: true` on the call, and then runs the same `Pipeline.publish`. The server never runs with `ZER0_LINKEDIN_MERGED`, so a draft that is not `approved` is refused, whatever the site's `acceptStatuses`. Every call re-reads the configuration and the queue from disk. A site wires it into Claude Code through its `.mcp.json`, with a Python that has the platform's requirements installed:
+`python manage.py linkedin mcp --site PATH` speaks newline-delimited JSON-RPC on stdio. Tools: `linkedin_status`, `linkedin_plan`, `linkedin_sources`, `linkedin_queue`, `linkedin_calendar`, `linkedin_sync`, `linkedin_revisit`, `linkedin_preview`, `linkedin_draft`, `linkedin_posts` and `linkedin_publish`. The last needs `ZER0_LINKEDIN_MCP_PUBLISH=1` and `ZER0_LINKEDIN_PUBLISH=1` in the server's environment plus `confirm: true` on the call, and then runs the same `Pipeline.publish`. The server never runs with `ZER0_LINKEDIN_MERGED`, so a draft that is not `approved` is refused, whatever the site's `acceptStatuses`. Every call re-reads the configuration and the queue from disk. A site wires it into Claude Code through its `.mcp.json`, with a Python that has the platform's requirements installed:
 
 ```json
 { "mcpServers": { "zer0-linkedin": { "type": "stdio", "command": "python",
@@ -322,6 +337,7 @@ It checks out the caller — at the tip of the branch the run is on, not the com
 - **Connecting sends PKCE as well as `state`** (PKCE unverified against a live LinkedIn), and the code is exchanged on the worker, not in the request.
 - **A credential is encrypted with the AI layer's rotatable keys** (`ai/crypto.py`) rather than Active Record encryption keyed on `secret_key_base`.
 - **The gates run twice on the platform**: when publishing is asked for (a `409` with every blocker) and again on the worker that sends it.
+- **One more LinkedIn call, `posts_update`**: a revision of the text of a post the author published, which a person approved (§ Keeping the site and LinkedIn in step). The rest of the plan is the Ruby lane's, which `test_linkedin.py` holds it to.
 
 ## X
 

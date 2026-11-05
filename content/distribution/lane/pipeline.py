@@ -36,8 +36,9 @@ import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path, PurePosixPath
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -393,6 +394,12 @@ class Pipeline:
                         )
                     )
             key = url
+            if feature := draft.text("feature"):
+                # The week's featured article is its own post: ledgered by the week, so the page may also have its
+                # share and a week never features twice.
+                if not queue.WEEK.match(feature):
+                    blockers.append(Blocker("source_missing", f'feature is a week, YYYY-Www, got "{feature}"'))
+                key = f"feature:{feature}"
             if author_ok and url and title.strip():
                 try:
                     payload = posts.article_payload(
@@ -400,8 +407,31 @@ class Pipeline:
                     )
                 except ValueError as e:
                     blockers.append(Blocker("source_missing", str(e)))
+        elif draft.type == "revision":
+            # A correction or a reference added to a post already out: its text changes, its card cannot.
+            target = draft.text("revises")
+            key = f"draft:{draft.relative}"
+            own = {e.get("urn") for _, e in self.ledger.shares()} if self.ledger.readable else set()
+            if not plan.POST_URN.match(target):
+                blockers.append(
+                    Blocker("source_missing", "a revision names the post it revises: revises: urn:li:share:…")
+                )
+            elif target not in own:
+                blockers.append(
+                    Blocker(
+                        "source_missing",
+                        f"{target} is not a post this lane published ({config.ledger}): a revision edits only the "
+                        "author's own posts",
+                    )
+                )
+            if not commentary:
+                blockers.append(Blocker("source_missing", "a revision needs the post's new text as its body"))
+            elif author_ok:
+                payload = posts.update_payload(commentary=commentary)
         else:
-            blockers.append(Blocker("source_missing", f'unknown draft type "{draft.type}" (article or update)'))
+            blockers.append(
+                Blocker("source_missing", f'unknown draft type "{draft.type}" (article, update or revision)')
+            )
 
         guard = check_commentary(commentary, banned_patterns(config))
         errors = [f["message"] for f in guard if f["level"] == "error"]
@@ -497,7 +527,7 @@ class Pipeline:
             )
         if blockers:
             return Outcome("blocked", draft, preview.key, messages=[b.message for b in blockers], preview=preview)
-        if (down := self.page_down(draft, preview.key)) is not None:
+        if (down := self.page_down(draft, self.link_of(preview))) is not None:
             return Outcome("waiting" if queued else "blocked", draft, preview.key, messages=[down], preview=preview)
         try:
             return self._send(draft, preview)
@@ -557,8 +587,8 @@ class Pipeline:
         the cadence counts what already went, whichever surface sent it."""
         out = []
         for key, entry in self.ledger.entries().items():
-            if key.startswith("_"):
-                continue
+            if key.startswith("_") or entry.get("revises"):
+                continue  # metadata, and a revision of a post, which puts nothing new in the feed
             raw = entry.get("posted_at") if urn_of(entry) else entry.get("attempted_at")
             if when := _instant(raw):
                 out.append(when)
@@ -665,6 +695,8 @@ class Pipeline:
             raise ValueError(f"not a post URN: {urn!r}")
 
     def _send(self, draft, preview) -> Outcome:
+        if draft.type == "revision":
+            return self._revise(draft, preview)
         image = (preview.thumbnail.name, preview.thumbnail.read_bytes()) if preview.thumbnail else None
         kind = "update" if draft.update else "article"
         source_file = preview.entry.relative if preview.entry else None
@@ -722,6 +754,197 @@ class Pipeline:
             now=self.clock(),
         )
         self.ledger.record(preview.key, entry)
+        if self.config.site_map:
+            self.write_site_map()
+
+    def _revise(self, draft, preview) -> Outcome:
+        """Set a published post's text to the revision's (PARTIAL_UPDATE). Sending the same text twice changes
+        nothing, so a failure is retried by the next run rather than doubted."""
+        target = draft.text("revises")
+        self.session().run(lambda client: posts.update(client, target, preview.payload))
+        entry = entry_for(urn=target, kind="update", target="linkedin", author=self.config.author, now=self.clock())
+        entry["revises"] = target  # a revision of a post, not a post: the cadence and the site map leave it out
+        try:
+            self.ledger.record(preview.key, entry)
+            queue.set_status(draft, "published", {"linkedin_urn": target})
+        except (OSError, LedgerError, ValueError) as e:
+            return Outcome(
+                "failed",
+                draft,
+                preview.key,
+                target,
+                [f"REVISED {target} but could not record it ({e}): set {draft.relative} to published by hand"],
+                preview,
+            )
+        return Outcome(
+            "published",
+            draft,
+            preview.key,
+            target,
+            [*preview.notes, f"revised {target}", posts.feed_url(target)],
+            preview,
+        )
+
+    # ── synchronization: every page on LinkedIn, and LinkedIn on every page ─
+    def sync(self) -> list[dict]:
+        """Every shareable page against LinkedIn: `shared` (its own post), `featured` (only as a week's feature),
+        `queued` (a draft waits for it) or `missing`."""
+        queued: dict[str, queue.Draft] = {}
+        for d in self.drafts():
+            if d.type == "article" and d.status != "published" and (src := d.text("source")):
+                if (entry := self.resolve_source(src)) is not None:
+                    queued.setdefault(entry.relative, d)
+        featured = {
+            e.get("source_file"): e.get("urn")
+            for key, e in self.ledger.shares()
+            if key.startswith("feature:") and e.get("source_file")
+        }
+        rows = []
+        for source in self.sources():
+            rel = source.entry.relative
+            state = (
+                "shared" if source.urn else "featured" if rel in featured else "queued" if rel in queued else "missing"
+            )
+            rows.append(
+                {
+                    "path": rel,
+                    "url": source.url,
+                    "state": state,
+                    "urn": source.urn or featured.get(rel),
+                    "draft": queued[rel].relative if rel in queued else None,
+                }
+            )
+        return rows
+
+    def draft_missing(self, limit: int | None = None) -> list[queue.Draft]:
+        """A pending draft for each page with no post and none waiting, newest first, up to `limit`: the backfill,
+        which a person approves and the cadence releases one slot at a time."""
+        missing = [row for row in self.sync() if row["state"] == "missing"]
+        return [self.compose(row["path"]) for row in missing[: limit if limit is not None else len(missing)]]
+
+    def site_map(self) -> dict:
+        """What the site shows beside each page: its LinkedIn posts, keyed by the page's URL path."""
+        out: dict[str, dict] = {}
+        for key, entry in self.ledger.shares():
+            if entry.get("revises"):
+                continue
+            page = self.resolve_source(entry["source_file"]) if entry.get("source_file") else None
+            url = (self.canonical_url(page) if page is not None else None) or (key if "://" in key else None)
+            if not url:
+                continue
+            path = urlsplit(url).path or "/"
+            item = out.setdefault(path, {"url": url, "posts": []})
+            item["posts"].append(
+                {
+                    "url": posts.feed_url(entry["urn"]),
+                    "posted_at": entry.get("posted_at"),
+                    **({"feature": key.split(":", 1)[1]} if key.startswith("feature:") else {}),
+                }
+            )
+        for item in out.values():
+            item["posts"].sort(key=lambda p: p.get("posted_at") or "")
+        return dict(sorted(out.items()))
+
+    def write_site_map(self) -> bool:
+        """Write the site map (`siteMap`) when it changed; True when it did."""
+        path = self.config.path(self.config.site_map)
+        text = json.dumps(self.site_map(), indent=2, sort_keys=True, ensure_ascii=True) + "\n"
+        if path.is_file() and path.read_text(encoding="utf-8") == text:
+            return False
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return True
+
+    # ── the week's featured article ─────────────────────────────────────────
+    def feature_week(self, week: str | None = None) -> tuple[str, datetime]:
+        """The week a feature is drafted for, and its slot: the given ISO week, else this week while its slot is
+        still ahead, else next week."""
+        weekly = self.config.weekly
+        if week:
+            if not queue.WEEK.match(week):
+                raise ValueError(f"a week is YYYY-Www, got {week!r}")
+            year, number = int(week[:4]), int(week[6:])
+            monday = date.fromisocalendar(year, number, 1)
+            return week, weekly.slot_in(monday)
+        today = self.clock().astimezone(weekly.zone).date()
+        monday = today - timedelta(days=today.weekday())
+        slot = weekly.slot_in(monday)
+        if slot <= self.clock():
+            monday += timedelta(days=7)
+            slot = weekly.slot_in(monday)
+        year, number, _ = monday.isocalendar()
+        return f"{year}-W{number:02d}", slot
+
+    def weekly_feature(self, week: str | None = None) -> tuple[queue.Draft | None, str]:
+        """Draft the week's featured LinkedIn article: the section the ring gives the week, that section's featured
+        post (front matter `featured: true` first, then the newest) not featured before, pinned to the week's slot.
+        One feature a week: an existing draft or ledger entry for it is the answer."""
+        weekly = self.config.weekly
+        if weekly is None:
+            raise ConfigError(f"no weekly feature configured (distribution.{self.config.BLOCK}.weekly)")
+        week, slot = self.feature_week(week)
+        if existing := next((d for d in self.drafts() if d.text("feature") == week), None):
+            return existing, f"{week} already has its feature: {existing.relative}"
+        if self.ledger.entry(f"feature:{week}"):
+            return None, f"{week}'s feature already went out"
+        section = weekly.section_for(date.fromisocalendar(int(week[:4]), int(week[6:]), 1))
+        candidates = [s.entry for s in self.sources() if section_of(s.entry) == section]
+        last_featured: dict[str, str] = {}
+        for key, entry in self.ledger.entries().items():
+            if key.startswith("feature:") and entry.get("source_file"):
+                last_featured[entry["source_file"]] = max(last_featured.get(entry["source_file"], ""), key)
+        waiting = {d.text("source") for d in self.drafts() if d.text("feature")}
+        fresh = [e for e in candidates if e.relative not in last_featured and e.relative not in waiting]
+        if fresh:
+            fresh.sort(key=lambda e: (e.data.get("featured") is not True, -(e.date.timestamp() if e.date else 0)))
+            pick = fresh[0]
+        elif candidates:
+            pick = min(candidates, key=lambda e: last_featured.get(e.relative, ""))
+        else:
+            return None, f"no live post in {section} to feature in {week}"
+        url = self.canonical_url(pick)
+        local = slot.astimezone(weekly.zone)
+        draft = queue.create(
+            self.config,
+            type="article",
+            slug=f"{week.lower()}-feature-{slug(pick.source_relative)}",
+            body=default_commentary(pick, self.config.hashtag_limit),
+            meta={
+                "source": pick.relative,
+                "title": pick.title,
+                "url": url,
+                "feature": week,
+                "section": section,
+                "publish_at": f"{local:%Y-%m-%d %H:%M}",
+            },
+        )
+        return draft, f"{week}: {section} — {pick.relative}, at {local:%a %Y-%m-%d %H:%M} {local.tzname()}"
+
+    # ── the review loop's order ─────────────────────────────────────────────
+    def revisit(self) -> list[dict]:
+        """The posts this lane published, least recently reviewed first (`_reviewed` in the ledger's metadata),
+        then oldest: the order a review loop takes them in, one a run."""
+        reviewed = (self.ledger.raw().get("_meta") or {}).get("reviewed") or {}
+        rows = [
+            {
+                "key": key,
+                "urn": entry["urn"],
+                "source": entry.get("source_file"),
+                "posted_at": entry.get("posted_at"),
+                "reviewed_at": reviewed.get(key),
+            }
+            for key, entry in self.ledger.shares()
+            if not entry.get("revises")
+        ]
+        return sorted(rows, key=lambda r: (r["reviewed_at"] or "", r["posted_at"] or ""))
+
+    def mark_reviewed(self, key: str) -> str:
+        if not self.ledger.urn_for(key):
+            raise ValueError(f"{key} is not a post in {self.config.ledger}")
+        reviewed = dict((self.ledger.raw().get("_meta") or {}).get("reviewed") or {})
+        reviewed[key] = stamp(self.clock())
+        self.ledger.write_meta({"reviewed": dict(sorted(reviewed.items()))})
+        return reviewed[key]
 
     # ── reads ────────────────────────────────────────────────────────────────
     def session(self) -> Session:
@@ -805,6 +1028,8 @@ class Pipeline:
             "queue": config.queue,
             "ledger": config.ledger,
             "performance": self.performance_path(),
+            # Only when the site keeps one, so a report is the Ruby lane's for every site that does not.
+            **({"site_map": config.site_map} if config.site_map else {}),
             "accept_statuses": config.accept_statuses,
             "publishable_statuses": config.publishable_statuses,
             "merged": config.merged,
@@ -865,6 +1090,15 @@ class Pipeline:
             else:
                 out["probe"] = "failed"
                 out["problems"].append(str(e))
+
+    @staticmethod
+    def link_of(preview) -> str | None:
+        """The page an article's post links to: its card's source, else a key that is a URL (X's)."""
+        article = ((preview.payload or {}).get("content") or {}).get("article") or {}
+        if article.get("source"):
+            return article["source"]
+        key = preview.key or ""
+        return key if "://" in key else None
 
     def page_down(self, draft, url) -> str | None:
         """Why the page an article links to is not up yet (`checkLink`), or None: a 2xx or 3xx answer is up; a 404 or
@@ -945,6 +1179,16 @@ class Pipeline:
         if entry is not None:
             notes.append("posting without a card image")
         return None
+
+
+def section_of(entry) -> str:
+    """A post's section: its first category (the taxonomy's primary, which names its folder), else its folder."""
+    categories = entry.data.get("categories")
+    first = categories[0] if isinstance(categories, list) and categories else categories
+    if first:
+        return str(first).strip().lower()
+    parts = PurePosixPath(entry.source_relative).parts
+    return parts[-2].lower() if len(parts) >= 2 else ""
 
 
 def page_status(url: str) -> int | None:

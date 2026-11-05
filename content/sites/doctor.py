@@ -333,6 +333,8 @@ LINKEDIN_KEYS = (
     "cadence",
     "requirePreview",
     "checkLink",
+    "weekly",
+    "siteMap",
 )
 LINKEDIN_API_VERSION = "202608"
 X_KEYS = (

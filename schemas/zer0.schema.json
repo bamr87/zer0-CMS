@@ -272,7 +272,20 @@
             },
             "cadence": { "$ref": "#/definitions/cadence" },
             "requirePreview": { "type": "boolean", "default": false, "description": "An article share needs a card image of its own (the draft's image:, or the page's preview on disk): one that would carry fallbackImage is refused." },
-            "checkLink": { "type": "boolean", "default": true, "description": "Before a live send, ask the page the share links to: a queue run waits while it is not up (404, 410, or no answer), a named publish is refused." }
+            "checkLink": { "type": "boolean", "default": true, "description": "Before a live send, ask the page the share links to: a queue run waits while it is not up (404, 410, or no answer), a named publish is refused." },
+            "weekly": {
+              "type": "object",
+              "description": "The week's featured LinkedIn article: manage.py linkedin weekly drafts the featured post of the section the ring gives the week, pinned to the week's slot and ledgered as feature:YYYY-Www.",
+              "additionalProperties": false,
+              "required": ["ring", "anchor", "at"],
+              "properties": {
+                "ring": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "The sections in turn, one a week, like [\"muses\", \"corp\", \"erp\", \"tech\"]: a post's first category." },
+                "anchor": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "A date in the week the ring starts at its first section." },
+                "at": { "type": "string", "pattern": "^\\s*[A-Za-z]+\\s+[0-9]{1,2}:[0-9]{2}\\s*$", "description": "The feature's day and local time each week, like tue 09:00." },
+                "timezone": { "type": "string", "description": "An IANA zone; default the cadence's, else UTC." }
+              }
+            },
+            "siteMap": { "type": "string", "description": "A JSON file in the site (like _data/linkedin/posts.json) the lane keeps of each page's LinkedIn posts, keyed by the page's URL path, so the site can link to them." }
           }
         },
         "x": {

@@ -61,6 +61,15 @@ TOOLS = [
         "each draft's publish_at and its page's phase. No network call, no write.",
     ),
     _tool(
+        "linkedin_sync",
+        "Every shareable page against LinkedIn: shared (its post), featured (as a week's feature), queued (a draft "
+        "waits) or missing. No network call, no write.",
+    ),
+    _tool(
+        "linkedin_revisit",
+        "The posts this lane published, least recently reviewed first: what the review loop takes next.",
+    ),
+    _tool(
         "linkedin_preview",
         "The exact LinkedIn payload a draft would send, the brand guard's findings, and every "
         "blocker. No network call, no write.",
@@ -187,6 +196,10 @@ class Server:
                 "timezone": cadence.timezone if cadence else "UTC",
                 "drafts": [row.as_dict() for row in pipeline.calendar()],
             }
+        if name == "linkedin_sync":
+            return pipeline.sync()
+        if name == "linkedin_revisit":
+            return pipeline.revisit()
         if name == "linkedin_preview":
             return pipeline.preview(pipeline.draft(args["draft"])).as_dict(config.root)
         if name == "linkedin_draft":

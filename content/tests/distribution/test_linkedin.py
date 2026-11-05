@@ -70,9 +70,20 @@ def test_every_declared_call_returns_own_content_and_none_reaches_a_forbidden_pa
 
 
 def test_the_plan_is_the_ruby_lanes_and_its_writes_are_named():
-    assert [c.id for c in plan.writes()] == ["posts_create", "posts_delete", "images_initialize", "images_upload"]
-    assert [c.as_dict() for c in plan.CALLS] == GOLDEN["plan"]["calls"]
-    assert plan.describe() == GOLDEN["plan"]["describe"]
+    assert [c.id for c in plan.writes()] == [
+        "posts_create",
+        "posts_update",
+        "posts_delete",
+        "images_initialize",
+        "images_upload",
+    ]
+    # The Ruby lane's plan, and the calls added since on purpose (docs/DISTRIBUTION.md): posts_update, a revision of
+    # the text of a post the author published (a correction or a reference a person approved).
+    since = {"posts_update"}
+    ruby = [c for c in plan.CALLS if c.id not in since]
+    assert [c.as_dict() for c in ruby] == GOLDEN["plan"]["calls"]
+    assert plan.describe(ruby) == GOLDEN["plan"]["describe"]
+    assert {c.id for c in plan.CALLS} - {c["id"] for c in GOLDEN["plan"]["calls"]} == since
 
 
 def test_an_undeclared_call_no_token_and_an_unheld_scope_are_refused_before_a_socket(web):
