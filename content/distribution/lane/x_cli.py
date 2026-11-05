@@ -31,6 +31,7 @@ Usage: manage.py x COMMAND [--site PATH] [--json] [options]
   plan                               every X call this lane can make, and nothing else
   sources [--all]                    pages that can be shared (--all includes shared ones)
   queue                              drafts and their status
+  calendar                           which draft a queue run releases when, under the cadence (issue #89)
   draft SOURCE [--commentary TEXT | --commentary-file FILE]
   draft --update --slug SLUG (--message TEXT | --message-file FILE)
                                      write a pending draft
@@ -56,6 +57,7 @@ COMMANDS = (
     "plan",
     "sources",
     "queue",
+    "calendar",
     "draft",
     "approve",
     "preview",

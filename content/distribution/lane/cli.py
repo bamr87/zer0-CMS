@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import UTC
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
@@ -33,6 +34,7 @@ Usage: manage.py linkedin COMMAND [--site PATH] [--json] [options]
   plan                               every LinkedIn call this lane can make, and nothing else
   sources [--all]                    pages that can be shared (--all includes shared ones)
   queue                              drafts and their status
+  calendar                           which draft a queue run releases when, under the cadence (issue #89)
   draft SOURCE [--commentary TEXT | --commentary-file FILE]
   draft --update --slug SLUG (--message TEXT | --message-file FILE)
                                      write a pending draft
@@ -59,6 +61,7 @@ COMMANDS = (
     "plan",
     "sources",
     "queue",
+    "calendar",
     "draft",
     "approve",
     "preview",
@@ -205,6 +208,34 @@ class Runner:
             source = f"  <- {row['source']}" if row["source"] else ""
             self.line(f"{row['status'].ljust(10)} {row['type'].ljust(8)} {row['path']}{source}")
         return 0
+
+    def calendar(self):
+        """Which accepted draft a queue run releases when — the cadence's slots, each draft's `publish_at:` and its
+        page's phase (`Pipeline.calendar`). Exit 1 when a draft's timing cannot be read."""
+        cadence = self.config.cadence
+        now = self.pipeline.clock()
+        rows = sorted(self.pipeline.calendar(now=now), key=lambda r: (r.at is None, r.at or now, r.order))
+        if self.opts.json:
+            self.emit(
+                {
+                    "now": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "cadence": cadence.summary() if cadence else None,
+                    "timezone": cadence.timezone if cadence else "UTC",
+                    "drafts": [r.as_dict() for r in rows],
+                }
+            )
+        else:
+            self.line(
+                f"cadence  {cadence.summary() if cadence else 'none: a queue run publishes every accepted draft'}"
+            )
+            if not rows:
+                self.line(f"Nothing waiting: no accepted, unpublished draft in {self.config.queue}.")
+            show = cadence.show if cadence else (lambda t: t.astimezone(UTC).strftime("%a %Y-%m-%d %H:%M UTC"))
+            for row in rows:
+                when = row.problem or (show(row.at) if row.at else row.reason or "no time found")
+                pin = "  (publish_at)" if row.pinned else ""
+                self.line(f"{when.ljust(26)} {row.draft.status.ljust(9)} {row.draft.relative}{pin}")
+        return 1 if any(r.problem for r in rows) else 0
 
     def draft(self):
         if self.opts.update:

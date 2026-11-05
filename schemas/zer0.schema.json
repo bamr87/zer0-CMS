@@ -269,7 +269,8 @@
               "type": "array",
               "items": { "type": "string" },
               "description": "OAuth scopes a connection asks for. Default: the least the author type needs."
-            }
+            },
+            "cadence": { "$ref": "#/definitions/cadence" }
           }
         },
         "x": {
@@ -303,7 +304,8 @@
               "description": "Collections whose pages can be shared. Empty or absent: every collection."
             },
             "hashtagLimit": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 },
-            "bannedPatternsFile": { "type": "string", "description": "Extra brand-guard bans: [{ name, pattern, flags }]." }
+            "bannedPatternsFile": { "type": "string", "description": "Extra brand-guard bans: [{ name, pattern, flags }]." },
+            "cadence": { "$ref": "#/definitions/cadence" }
           }
         }
       }
@@ -432,6 +434,35 @@
   },
 
   "definitions": {
+    "cadence": {
+      "type": "object",
+      "description": "When a queue run (CI's publish, with no draft named) may release a draft: at most one per open slot, never closer than minGap, within perDay and perWeek, never on a blackout date, and a share no sooner than afterPage after its page landed. A person's publish of one named draft is never held. Absent: every accepted draft publishes on the run that finds it (docs/DISTRIBUTION.md, the cadence).",
+      "additionalProperties": false,
+      "required": ["slots"],
+      "properties": {
+        "timezone": { "type": "string", "default": "UTC", "description": "An IANA zone, like America/Denver: what a slot's time and a day mean." },
+        "slots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^\\s*[A-Za-z][A-Za-z,-]*\\s+[0-9]{1,2}:[0-9]{2}\\s*$",
+            "description": "Days and a 24-hour local time: tue 09:00, mon-fri 08:30, mon,wed 12:00, daily 17:45, weekdays or weekends."
+          },
+          "description": "The weekly release times."
+        },
+        "minGap": { "type": "string", "pattern": "^(0|([0-9]+[dhm])+)$", "default": "0", "description": "Never closer than this to another post of the lane: 90m, 48h, 2d, 1d12h." },
+        "perDay": { "type": "integer", "minimum": 1, "default": 1, "description": "At most this many in a local day." },
+        "perWeek": { "type": "integer", "minimum": 1, "description": "At most this many in a local ISO week. Absent: no weekly limit." },
+        "blackout": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(\\.\\.[0-9]{4}-[0-9]{2}-[0-9]{2})?$" },
+          "description": "Local dates, or inclusive ranges (2026-12-24..2027-01-01), with no release."
+        },
+        "afterPage": { "type": "string", "pattern": "^(0|([0-9]+[dhm])+)$", "default": "0", "description": "The phase: a share waits this long after its page landed on the branch (its merge), so the page is live first." },
+        "grace": { "type": "string", "pattern": "^(0|([0-9]+[dhm])+)$", "default": "6h", "description": "How late a run may still take a slot it missed, for a scheduled workflow that runs late." }
+      }
+    },
     "fieldType": {
       "type": "string",
       "description": "One of the 18 supported field types.",

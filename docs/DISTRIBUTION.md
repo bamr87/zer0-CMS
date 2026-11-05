@@ -75,6 +75,7 @@ A site opts in to the lane with a `distribution.linkedin` block in its `zer0.jso
 | `hashtagLimit` | `3` | Hashtags in a composed first draft |
 | `bannedPatternsFile` | none | Extra brand-guard bans, in the extension's `[{name, pattern, flags}]` format |
 | `scopes` | by author type (below) | The OAuth scopes a connection asks for |
+| `cadence` | none | When a queue run may release a draft: slots, gaps, caps, blackout dates and the page's phase (§ The cadence). None: every accepted draft goes on the run that finds it |
 
 Paths must stay inside the repository; `..` and absolute paths are refused. An unknown key is a warning, so a typo such as `publishAllow` is reported rather than silently believed. A platform LinkedIn channel can name the same ledger file (its `ledger_file` setting, inside the site's checkout), and then reads it before publishing and writes what it published into it, under the same lock and atomic rename the lane uses — so a site moving from its lane to the platform does not post a page twice, once the platform's write is committed: the platform writes the checkout's working tree, never a commit, and the site's own CI reads the committed file (the post's notes say so). The checkout is found only inside the platform's repository or `SITES_DIR`. A named file the platform cannot reach (the site's checkout is not on the machine doing the work), or that the worker cannot write, blocks the channel rather than being skipped.
 
@@ -104,6 +105,7 @@ The lane's queue is markdown files at the top level of the queue folder; `exampl
 | `source` | a repository path, or `section/YYYY-MM-DD-slug` | The page an article shares |
 | `title`, `description`, `link` | text | An article's own card, for a link that is not a page of this site; ignored when `source` names a page |
 | `no_thumbnail` | `true` | Post the card without an image |
+| `publish_at` | `2026-11-10 09:00`, an ISO time with an offset, or a date | Not before this time: a queue run leaves the draft waiting until then, read in the cadence's zone (UTC without one) when it names none. A person's publish of the named draft is not held |
 | `linkedin_urn` | set on publish | The post it became |
 
 The body is the commentary that publishes. `manage.py linkedin draft SOURCE` (or `linkedin_draft` over MCP) writes a new draft with a deterministic first commentary — the page's sub-title, excerpt or description as the hook, never its title, then up to three hashtags from its tags — for a person or an agent working to a skill to rewrite. A new draft is always `pending`; a collision becomes `-2`, never an overwrite. Approval is `pending` → `approved`, by `manage.py linkedin approve` or a person editing the line and merging it, and is refused while the brand guard has an error. There is no approval tool over MCP: approval is a person's act. Status changes are line surgery, so approving is a one-line diff.
@@ -132,6 +134,35 @@ Without `--live`, `manage.py linkedin publish` is a rehearsal: it reports the sa
 A write that ends in a 5xx, a dropped connection or a success with no post id may have posted, so the doubt is written to the ledger before anything else happens — an `unconfirmed` entry with no URN — and every later attempt, on every surface, refuses that key until a person has looked. One case is finished rather than refused: a lane draft whose key is already in the ledger, with nothing else in the way, is the tail of a run that died between the ledger write and the draft write, so a live run marks the draft published and posts nothing.
 
 The brand guard is `content/suggestions/guard.py`, a rule-for-rule port of the extension's (`src/core/governance/guard.ts`): thirteen hard bans, nine filler warnings, the 140-character fold and the 3,000-character limit, with the same rule names, messages and order, so a finding reads the same in the editor, the studio and CI. The platform adds the site's active brand rules.
+
+## The cadence: timed, phased release
+
+Approval says *whether* a post goes; a cadence says *when* (issue #89). Without one, a lane's queue run publishes every accepted draft it finds, which is how a merge used to post at once. With one, the drafts that are approved line up and go out one slot at a time. The rules are `content/distribution/cadence.py`, pure and shared by every surface, as the gates are:
+
+```jsonc
+"distribution": { "linkedin": { "cadence": {
+  "timezone": "America/Denver",          // an IANA zone; default UTC
+  "slots": ["tue 09:00", "thu 09:00"],   // weekly release times: mon … sun, daily, weekdays, weekends, mon-fri, mon,wed
+  "minGap": "48h",                       // never closer than this to another post of the lane (default 0)
+  "perDay": 1,                           // at most this many a local day (default 1)
+  "perWeek": 2,                          // at most this many a local ISO week (default: no limit)
+  "blackout": ["2026-12-24..2027-01-01"],  // local dates, or inclusive ranges, with no release
+  "afterPage": "1h",                     // the phase: a share waits this long after its page landed (default 0)
+  "grace": "6h"                          // how late a run may still take a slot it missed (default 6h)
+} } }
+```
+
+Durations are whole minutes, hours and days, alone or together (`90m`, `48h`, `2d`, `1d12h`, `0`). Every key is checked: an unknown key or a value that cannot be read is a `config_error`, which blocks every publish rather than releasing on a rule nobody meant, and `zer0 doctor` reports it. The X lane takes the same block under `distribution.x.cadence`, so a site can phase its channels: the page goes live, LinkedIn shares it an hour later, X a day later, each in its own slots.
+
+**What a queue run does.** A queue run is `publish` with no draft named, which is what CI runs. It releases at most one draft, and only while a slot is open. A slot is open when its time has passed by no more than `grace`, nothing has gone out since it opened (the ledger's `posted_at`, and any attempt that may have posted), and `minGap`, `perDay`, `perWeek` and the blackout dates hold at the moment of release. That last check means a run that comes back after days away takes one slot, never the backlog at once. The draft it takes is the first that is ready: drafts pinned with `publish_at:` whose time has come, earliest first, then the rest in queue order (the queue folder's, which dated draft ids keep chronological). A draft is ready once its `publish_at:` has passed and, for an article, once its page has been on the branch for `afterPage`. A draft a gate refuses gives the slot to the next ready draft; a failed send ends the run, since it may have posted. Every other draft comes back `waiting`, with the time it will go, and a waiting draft does not fail the run.
+
+**When a page landed.** It is the oldest first-parent commit on the run's branch that touched the page: its merge commit, or its squash, not the commit on the branch it came from. So a page and its share merged in one pull request go in order, page first. A checkout with no git history falls back to the page's `date`. The workflow checks out with full history.
+
+**What a person does is never held.** `publish DRAFT` names a draft, whether from a terminal or a dispatched workflow with `draft:` set. That publishes now, through every gate as before, whatever the cadence and its pin say. Only a queue run waits.
+
+**Seeing the calendar.** `manage.py linkedin calendar` (`--json`, and `x calendar`, and the MCP tools `linkedin_calendar` and `x_calendar`) lists every accepted, unpublished draft with the time a queue run will give it: the slot open now if there is one, then the slots to come, in the order above. A draft whose `publish_at:` cannot be read is listed with the problem and makes the command exit 1. A draft no slot within a year can take (every one dark or full) says so.
+
+**Running it on a timer.** A cadence only releases what a run finds, so a site that uses one runs its publish on a schedule as well as on the merge (§ CI). An hourly run off the hour, with the default six hours of `grace`, absorbs GitHub's late scheduled starts.
 
 ## What LinkedIn sees
 
@@ -217,6 +248,8 @@ on:
   push:
     branches: [main]
     paths: ["drafts/linkedin/**"]
+  schedule:
+    - cron: "17 * * * *" # with a cadence: each hour, a run takes the slot that is open (§ The cadence)
   workflow_dispatch:
     inputs:
       draft: { description: "One draft id (empty: the queue)", type: string, default: "" }
@@ -229,9 +262,11 @@ jobs:
     with:
       command: publish
       draft: ${{ inputs.draft || '' }}
-      live: ${{ github.event_name == 'push' || inputs.live == true }}
+      live: ${{ github.event_name != 'workflow_dispatch' || inputs.live == true }}
     secrets: inherit
 ```
+
+A push and a scheduled run publish live; a dispatch rehearses unless `live` is ticked. Without a cadence, the schedule adds nothing, since the push already published every merged draft. With one, the push releases a draft only if a slot happens to be open, and the scheduled runs release the rest, one slot at a time.
 
 | Input | Default | Meaning |
 |---|---|---|
@@ -246,7 +281,7 @@ It checks out the caller — at the tip of the branch the run is on, not the com
 
 ## The lane's MCP server
 
-`python manage.py linkedin mcp --site PATH` speaks newline-delimited JSON-RPC on stdio. Tools: `linkedin_status`, `linkedin_plan`, `linkedin_sources`, `linkedin_queue`, `linkedin_preview`, `linkedin_draft`, `linkedin_posts` and `linkedin_publish`. The last needs `ZER0_LINKEDIN_MCP_PUBLISH=1` and `ZER0_LINKEDIN_PUBLISH=1` in the server's environment plus `confirm: true` on the call, and then runs the same `Pipeline.publish`. The server never runs with `ZER0_LINKEDIN_MERGED`, so a draft that is not `approved` is refused, whatever the site's `acceptStatuses`. Every call re-reads the configuration and the queue from disk. A site wires it into Claude Code through its `.mcp.json`, with a Python that has the platform's requirements installed:
+`python manage.py linkedin mcp --site PATH` speaks newline-delimited JSON-RPC on stdio. Tools: `linkedin_status`, `linkedin_plan`, `linkedin_sources`, `linkedin_queue`, `linkedin_calendar`, `linkedin_preview`, `linkedin_draft`, `linkedin_posts` and `linkedin_publish`. The last needs `ZER0_LINKEDIN_MCP_PUBLISH=1` and `ZER0_LINKEDIN_PUBLISH=1` in the server's environment plus `confirm: true` on the call, and then runs the same `Pipeline.publish`. The server never runs with `ZER0_LINKEDIN_MERGED`, so a draft that is not `approved` is refused, whatever the site's `acceptStatuses`. Every call re-reads the configuration and the queue from disk. A site wires it into Claude Code through its `.mcp.json`, with a Python that has the platform's requirements installed:
 
 ```json
 { "mcpServers": { "zer0-linkedin": { "type": "stdio", "command": "python",
@@ -314,6 +349,7 @@ The access token lasts two hours. The platform renews it two minutes before it l
 | `sources` | every collection | The collections whose pages can be shared |
 | `hashtagLimit` | `2` | Hashtags in a composed first draft |
 | `bannedPatternsFile` | none | Extra brand-guard bans |
+| `cadence` | none | X's own release slots, gaps and page phase, as LinkedIn's (§ The cadence), counted against X's ledger |
 
 | Variable | Kind | Used for |
 |---|---|---|
@@ -323,7 +359,7 @@ The access token lasts two hours. The platform renews it two minutes before it l
 | `ZER0_X_MCP_PUBLISH` | switch | `1` lets the lane MCP server's `x_publish` tool run at all |
 | `ZER0_X_MERGED` | switch | `1` says this run publishes the default branch, so a `pending` draft there was merged |
 
-`manage.py x` takes `status [--check]`, `plan`, `sources`, `queue`, `draft`, `approve`, `preview`, `publish [--live] [--force]`, `record DRAFT ID`, `posts`, `verify ID`, `connect` and `mcp`, with the LinkedIn lane's exit codes. `zer0 doctor`'s `distribution` check reads the `distribution.x` block beside `distribution.linkedin`.
+`manage.py x` takes `status [--check]`, `plan`, `sources`, `queue`, `calendar`, `draft`, `approve`, `preview`, `publish [--live] [--force]`, `record DRAFT ID`, `posts`, `verify ID`, `connect` and `mcp`, with the LinkedIn lane's exit codes. `zer0 doctor`'s `distribution` check reads the `distribution.x` block beside `distribution.linkedin`.
 
 ### What a post is, and its length
 

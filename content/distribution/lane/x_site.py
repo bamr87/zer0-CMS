@@ -18,7 +18,17 @@ DEFAULT_QUEUE = ".zer0/drafts/x"
 DEFAULT_LEDGER = ".zer0/x-ledger.json"
 ARM_VARIABLE = "ZER0_X_PUBLISH"
 MERGED_VARIABLE = "ZER0_X_MERGED"
-KEYS = ("account", "siteUrl", "queue", "ledger", "acceptStatuses", "sources", "hashtagLimit", "bannedPatternsFile")
+KEYS = (
+    "account",
+    "siteUrl",
+    "queue",
+    "ledger",
+    "acceptStatuses",
+    "sources",
+    "hashtagLimit",
+    "bannedPatternsFile",
+    "cadence",
+)
 # X reads a post at a glance: two hashtags, not LinkedIn's three.
 HASHTAGS = 2
 

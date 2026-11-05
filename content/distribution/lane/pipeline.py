@@ -12,20 +12,32 @@ the preview and refuses on any blocker in `gates.ORDER`. A live publish needs
 `ZER0_LINKEDIN_PUBLISH=1`, which no file and no flag can set; without `live` it
 is a rehearsal. The platform's queue (`distribution.services`) runs the same
 gates, the same client and the same publish step over its own rows.
+
+A queue run — `publish` with no draft named, which is what CI runs — follows
+the site's cadence when it has one (`distribution/cadence.py`, issue #89): it
+releases at most one draft, and only while a slot is open, and a draft waits
+for its `publish_at:` and for its page to have been live `afterPage`. Without a
+cadence a queue run publishes every accepted draft, as before, except one
+pinned to a later `publish_at:`. A person's publish of one named draft is never
+held. `calendar` shows which draft goes when.
 """
 
+import itertools
 import json
 import re
+import subprocess
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
+from zoneinfo import ZoneInfo
 
 from suggestions.guard import guard_text
 
+from .. import cadence as cadences
 from .. import gates
 from ..gates import Blocker
-from ..ledger import Ledger, LedgerError, entry_for, stamp, unconfirmed_entry
+from ..ledger import Ledger, LedgerError, entry_for, stamp, unconfirmed_entry, urn_of
 from ..linkedin import Error, HTTPError, oauth, plan, posts, statistics
 from ..linkedin.client import send
 from ..linkedin.session import Session, send_post
@@ -92,7 +104,7 @@ class Preview:
 
 @dataclass
 class Outcome:
-    state: str  # published, skipped, rehearsed, approved, recorded, blocked, failed
+    state: str  # published, skipped, rehearsed, approved, recorded, waiting (its slot is later), blocked, failed
     draft: queue.Draft | None
     key: str | None = None
     urn: str | None = None
@@ -102,7 +114,7 @@ class Outcome:
 
     @property
     def ok(self) -> bool:
-        return self.state in ("published", "skipped", "rehearsed", "approved", "recorded")
+        return self.state in ("published", "skipped", "rehearsed", "approved", "recorded", "waiting")
 
     def as_dict(self) -> dict:
         return {
@@ -112,6 +124,62 @@ class Outcome:
             self.id_key: self.urn,
             "messages": self.messages,
         }
+
+
+@dataclass
+class Planned:
+    """A draft's place in the release calendar: the earliest it may go, whether a person pinned that, the time the
+    cadence gives it (`at`, None when it finds none, with `reason`), and a problem that keeps it out."""
+
+    draft: queue.Draft
+    not_before: datetime | None = None
+    pinned: bool = False
+    problem: str = ""
+    order: int = 0
+    at: datetime | None = None
+    reason: str = ""
+
+    def ready(self, now) -> bool:
+        return not self.problem and (self.not_before is None or self.not_before <= now)
+
+    def describe(self, cadence, now) -> str:
+        show = cadence.show if cadence else (lambda t: t.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC"))
+        if self.at is None:
+            return f"waiting: {self.reason or 'no time found'}"
+        if self.at <= now:
+            return "waiting: the slot open now went to a draft ahead of it" if cadence else "ready"
+        why = "its publish_at" if self.pinned and self.not_before == self.at else "its slot"
+        return f"waiting for {why}: {show(self.at)}"
+
+    def as_dict(self) -> dict:
+        return {
+            "id": self.draft.id,
+            "path": self.draft.relative,
+            "status": self.draft.status,
+            "type": self.draft.type,
+            "source": self.draft.text("source"),
+            "not_before": _iso(self.not_before),
+            "pinned": self.pinned,
+            "at": _iso(self.at),
+            "reason": self.reason,
+            "problem": self.problem,
+        }
+
+
+def _iso(at: datetime | None) -> str | None:
+    return at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ") if at else None
+
+
+def _instant(raw) -> datetime | None:
+    """A ledger stamp or a git date as an aware UTC time; None for anything else."""
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    try:
+        when = datetime.fromisoformat(text.replace("Z", "+00:00") if text.endswith("Z") else text)
+    except ValueError:
+        return None
+    return (when if when.tzinfo else when.replace(tzinfo=UTC)).astimezone(UTC)
 
 
 def banned_patterns(config) -> list:
@@ -412,12 +480,137 @@ class Pipeline:
             return Outcome("failed", draft, preview.key, messages=messages, preview=preview)
 
     def publish_queue(self, *, live=False, force=False) -> list[Outcome]:
-        """A live run publishes every draft this process may; a rehearsal shows every draft the site accepts, so a
-        laptop sees what CI will send. `force` is for one named draft, never a queue."""
+        """A live run publishes what this process may now; a rehearsal shows every draft the site accepts, so a
+        laptop sees what CI will send. `force` is for one named draft, never a queue.
+
+        With a cadence, a run releases at most one draft, and only while a slot is open: pinned drafts that are due
+        first, then the rest in queue order. A draft refused by a gate gives the slot to the next; a failed send ends
+        the run, since it may have posted. Every other draft is `waiting`, with the time `calendar` gives it."""
         if force:
             raise ValueError("--force applies to one draft: name it")
         statuses = self.config.publishable_statuses if live else self.config.accept_statuses
-        return [self.publish(d, live=live) for d in self.drafts() if d.status != "published" and d.status in statuses]
+        drafts = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
+        cadence = self.config.cadence
+        if cadence is None and not any(d.text("publish_at") for d in drafts):
+            return [self.publish(d, live=live) for d in drafts]
+        now = self.clock()
+        planned = {row.draft.id: row for row in self.calendar(drafts, now=now)}
+        if cadence is not None:
+            open_now = cadence.open_slot(now, self.history()) is not None
+            limit = 1
+        else:
+            open_now, limit = True, len(drafts)
+        ready = [d for d in self.release_order(drafts, planned) if planned[d.id].ready(now)]
+        outcomes: dict[str, Outcome] = {}
+        released = 0
+        for draft in ready if open_now else []:
+            if released >= limit:
+                break
+            outcome = self.publish(draft, live=live)
+            outcomes[draft.id] = outcome
+            if outcome.state in ("published", "rehearsed"):
+                released += 1
+            elif outcome.state == "failed":
+                break
+        for draft in drafts:
+            if draft.id not in outcomes:
+                row = planned[draft.id]
+                state = "blocked" if row.problem else "waiting"
+                outcomes[draft.id] = Outcome(state, draft, messages=[row.problem or row.describe(cadence, now)])
+        return [outcomes[d.id] for d in drafts]
+
+    # ── timing: the cadence, a draft's pin and its page's phase (cadence.py) ──
+    def history(self) -> list[datetime]:
+        """When this lane's ledger says something went out — a published share, or an attempt that may have — so
+        the cadence counts what already went, whichever surface sent it."""
+        out = []
+        for key, entry in self.ledger.entries().items():
+            if key.startswith("_"):
+                continue
+            raw = entry.get("posted_at") if urn_of(entry) else entry.get("attempted_at")
+            if when := _instant(raw):
+                out.append(when)
+        return out
+
+    def landed(self, entry) -> datetime | None:
+        """When a page reached the branch being run: the oldest first-parent commit that touched it — its merge or
+        its squash, not the commit on the branch it came from — else its own `date`. A copy with no git history
+        has only the date."""
+        if entry.path is not None:
+            try:
+                run = subprocess.run(  # noqa: S603 — fixed argv, no shell; the path is the catalog's own
+                    [
+                        "git",
+                        "-C",
+                        str(self.config.root),
+                        "log",
+                        "--first-parent",
+                        "--format=%cI",
+                        "--",
+                        str(entry.path),
+                    ],  # noqa: S607
+                    capture_output=True,
+                    text=True,
+                    timeout=20,
+                    check=False,
+                )
+                stamps = run.stdout.split() if run.returncode == 0 else []
+            except (OSError, subprocess.SubprocessError):
+                stamps = []
+            if stamps and (when := _instant(stamps[-1])):
+                return when
+        return entry.date
+
+    def timing(self, draft) -> tuple[datetime | None, bool, str]:
+        """(not before, pinned, problem): a draft's `publish_at:`, read in the cadence's zone when it names none, and
+        — for an article under a cadence — its page's landing plus `afterPage`; whichever is later."""
+        cadence = self.config.cadence
+        zone = cadence.zone if cadence else ZoneInfo("UTC")
+        pin, problem = None, ""
+        if raw := draft.text("publish_at"):
+            try:
+                pin = cadences.moment(raw, zone)
+            except ValueError:
+                where = cadence.timezone if cadence else "UTC"
+                problem = f'publish_at "{raw}" is not a time (like 2026-11-10 09:00, read in {where})'
+        phase = None
+        if cadence is not None and draft.type == "article" and (source := draft.text("source")):
+            entry = self.resolve_source(source)
+            landed = self.landed(entry) if entry is not None else None
+            phase = landed + cadence.after_page if landed is not None else None
+        times = [t for t in (pin, phase) if t is not None]
+        return (max(times) if times else None), pin is not None, problem
+
+    def release_order(self, drafts, planned) -> list:
+        """Pinned drafts by their pin, then the rest in queue order (the queue folder's, which dated ids keep
+        chronological)."""
+        pinned = sorted((d for d in drafts if planned[d.id].pinned), key=lambda d: (planned[d.id].not_before, d.id))
+        return pinned + [d for d in drafts if not planned[d.id].pinned]
+
+    def calendar(self, drafts=None, *, now=None) -> list["Planned"]:
+        """Which draft goes when: under a cadence, each accepted draft in the slot a run will give it (the slot open
+        now, if one is, then the slots to come); without one, on the next run once its `publish_at:` has passed."""
+        now = now or self.clock()
+        if drafts is None:
+            statuses = self.config.accept_statuses
+            drafts = [d for d in self.drafts() if d.status != "published" and d.status in statuses]
+        cadence = self.config.cadence
+        rows = {}
+        for order, draft in enumerate(drafts):
+            not_before, pinned, problem = self.timing(draft)
+            rows[draft.id] = Planned(draft, not_before, pinned, problem, order)
+        if cadence is None:
+            for row in rows.values():
+                row.at = None if row.problem else max(row.not_before or now, now)
+            return list(rows.values())
+        history = self.history()
+        times = itertools.chain(
+            [now] if cadence.open_slot(now, history) else [], cadence.slots_from(now + timedelta(microseconds=1))
+        )
+        items = [cadences.Item(r.draft.id, r.not_before, r.pinned, r.order) for r in rows.values() if not r.problem]
+        for placement in cadence.plan(items, times=times, taken=history):
+            rows[placement.key].at, rows[placement.key].reason = placement.at, placement.reason
+        return list(rows.values())
 
     def record_post(self, draft, urn: str) -> Outcome:
         """A person found the post on LinkedIn — after an unconfirmed attempt, or one made by hand — and records it."""

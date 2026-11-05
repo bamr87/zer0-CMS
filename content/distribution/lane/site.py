@@ -26,7 +26,7 @@ import json5
 from importers import frontmatter
 from importers.jekyll import documents, read_config
 
-from .. import permalink
+from .. import cadence, permalink
 from ..linkedin import plan
 from ..linkedin.session import Credentials
 
@@ -50,6 +50,7 @@ KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "scopes",
+    "cadence",
 )
 ACRONYMS = {"ai", "mcp", "erp", "crm", "bi", "saas", "iaas", "smb", "it", "api", "ci", "cd", "kpi", "roi", "sql", "hr"}
 HOOK_KEYS = ("sub-title", "subtitle", "excerpt")
@@ -89,6 +90,7 @@ class Config:
         self.site_config = self._read_site_config()
         self._resolve(cms.get("root"))
         self._validate()
+        self._resolve_cadence()
 
     # ── what a run asks ──────────────────────────────────────────────────────
     @property
@@ -182,6 +184,17 @@ class Config:
         self.banned_patterns_file = self._confined(bans, "bannedPatternsFile") if bans else None
         self.scopes = [str(s) for s in block.get("scopes") or []]
         self.cms_root = self._confined(cms_root or ".cms", "cms.root")
+
+    def _resolve_cadence(self):
+        """`cadence` (`distribution/cadence.py`): when a queue run may release a draft. None publishes every accepted
+        draft on the run that finds it, as before. One that cannot be read is an error, which blocks every publish
+        rather than releasing on a rule nobody meant."""
+        try:
+            self.cadence = cadence.parse(self.block.get("cadence"))
+        except cadence.CadenceError as e:
+            self.cadence = None
+            for problem in e.problems:
+                self._error(f"distribution.{self.BLOCK}.{problem}")
 
     def _error(self, message):
         self.problems.append(("error", message))
