@@ -463,6 +463,9 @@ CELERY_BEAT_SCHEDULE = {
     # Distribution's attempts that are over without their worker saying so: a send whose worker died, a post no
     # worker took, an email post whose newsletter issue the newsroom sent or failed (distribution/tasks.py).
     "distribution-settle": {"task": "distribution.tasks.settle_posts", "schedule": 60.0},
+    # Distribution's release queue: the approved posts whose slot or chosen time has come, through every gate, as
+    # their scheduler's publish (distribution/services.py `release_due`, issue #89).
+    "distribution-release": {"task": "distribution.tasks.release_posts", "schedule": 60.0},
     # The automations whose schedule came due: one dispatcher reads every cron line (automations/tasks.py).
     "automations-schedule": {"task": "automations.tasks.tick", "schedule": 60.0},
     # AIEO's tracked citation questions that are due, asked of every engine again (aieo/tasks.py).

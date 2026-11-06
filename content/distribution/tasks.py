@@ -2,7 +2,8 @@
 post (`services.deliver`: the gates again, the channel's transport, the
 ledger), exchanging an OAuth code, checking a channel's credential, giving a
 disconnected X channel's grant back to X, and — on
-Celery beat — settling every attempt that is over without its worker saying so
+Celery beat — releasing the scheduled posts whose time has come (each minute,
+`services.release_due`), settling every attempt that is over without its worker saying so
 (each minute: a send whose worker died, a post no worker took, an email post
 whose newsletter issue the newsroom sent or failed) and the statistics of every
 LinkedIn and X channel's posts (daily).
@@ -29,6 +30,13 @@ def publish_post(post_id: int) -> str:
     from .services import deliver
 
     return deliver(post_id).status
+
+
+@shared_task
+def release_posts() -> int:
+    from .services import release_due
+
+    return release_due()
 
 
 @shared_task

@@ -34,6 +34,11 @@ TOOLS = [
     ),
     _tool("x_queue", "The draft queue: every draft with its status (pending, approved, published) and type."),
     _tool(
+        "x_calendar",
+        "Which accepted draft a queue run releases when: the site's cadence (zer0.json distribution.x.cadence), "
+        "each draft's publish_at and its page's phase. No network call, no write.",
+    ),
+    _tool(
         "x_preview",
         "The exact post a draft would send, its length as X counts it, the brand guard's findings and every blocker. "
         "No network call, no write.",
@@ -83,7 +88,14 @@ class XServer(Server):
     ERRORS = (*Server.ERRORS, Error)
 
     def dispatch(self, name, args, config, pipeline):
-        shared = {"x_status", "x_sources", "x_queue", "x_preview", "x_draft"}  # the LinkedIn lane's, over X's pipeline
+        shared = {
+            "x_status",
+            "x_sources",
+            "x_queue",
+            "x_calendar",
+            "x_preview",
+            "x_draft",
+        }  # the LinkedIn lane's, over X's pipeline
         if name in shared:
             return super().dispatch("linkedin_" + name.removeprefix("x_"), args, config, pipeline)
         if name == "x_plan":

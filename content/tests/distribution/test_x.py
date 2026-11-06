@@ -351,7 +351,17 @@ def test_the_mcp_server_lists_x_tools_previews_and_keeps_publish_off(x_checkout)
     replies = [json.loads(line) for line in out.splitlines()]
     assert code == 0 and replies[0]["result"]["serverInfo"]["name"] == "zer0-x"
     names = [t["name"] for t in replies[1]["result"]["tools"]]
-    assert names == ["x_status", "x_plan", "x_sources", "x_queue", "x_preview", "x_draft", "x_posts", "x_publish"]
+    assert names == [
+        "x_status",
+        "x_plan",
+        "x_sources",
+        "x_queue",
+        "x_calendar",
+        "x_preview",
+        "x_draft",
+        "x_posts",
+        "x_publish",
+    ]
     drafted = json.loads(replies[2]["result"]["content"][0]["text"])
     assert drafted["status"] == "pending" and drafted["preview"]["limit"] == 280
     assert replies[3]["result"]["isError"] and "ZER0_X_MCP_PUBLISH=1" in replies[3]["result"]["content"][0]["text"]

@@ -216,7 +216,7 @@ jobs:
               report = json.loads(Path(sys.argv[1]).read_text())
           except (OSError, ValueError):
               sys.exit(0)
-          for key in ("ledger", "queue", "performance"):
+          for key in ("ledger", "queue", "performance", "site_map"):
               relative = str(report.get(key) or "")
               source = Path(sys.argv[2]) / relative
               if not relative or not source.exists():
@@ -229,7 +229,7 @@ jobs:
                   shutil.copy2(source, target)
           PY
 
-      - name: Commit the ledger, the queue and the statistics back
+      - name: Commit the ledger, the queue, the statistics and the site map back
         if: always() && steps.gate.outputs.ready == 'true' && ((inputs.command == 'publish' && inputs.live) || inputs.command == 'stats')
         working-directory: site
         env:
@@ -240,7 +240,7 @@ jobs:
           if [ ! -s "$report" ]; then echo "No status report; nothing to commit."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python3 -c 'import json, os, sys; r = json.load(open(sys.argv[1])); print("\n".join(os.path.join(sys.argv[2], r[k]) for k in ("ledger", "queue", "performance")))' \
+          python3 -c 'import json, os, sys; r = json.load(open(sys.argv[1])); print("\n".join(os.path.join(sys.argv[2], r[k]) for k in ("ledger", "queue", "performance", "site_map") if r.get(k)))' \
             "$report" "$SITE_PATH" | while read -r path; do
             if [ -e "$path" ]; then git add -- "$path"; fi
           done

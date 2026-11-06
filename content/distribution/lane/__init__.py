@@ -7,13 +7,13 @@ and a terminal, through `manage.py linkedin`.
 |---|---|
 | `site.py` | a site's settings (`zer0.json` `distribution.linkedin`, `_config.yml`, the environment), its pages, and the default commentary |
 | `drafts.py` | the queue: the extension's dialect, always-pending creation, status by line surgery |
-| `pipeline.py` | compose, approve, preview (pure), publish (gated), record, posts, statistics, token status |
+| `pipeline.py` | compose, approve, preview (pure), publish (gated), record, posts, statistics, token status; a queue run under the site's cadence and its `calendar`; keeping the site and LinkedIn in step — `sync` and the `siteMap`, the week's featured article (`weekly_feature`), revisions of a published post's text, and the review loop's order (`revisit`) |
 | `cli.py` | `manage.py linkedin COMMAND --site PATH` and the loopback OAuth callback |
 | `mcp.py` | `manage.py linkedin mcp`: the lane's tools over MCP (stdio), publishing off unless the operator armed it |
 | `x_site.py`, `x_pipeline.py`, `x_cli.py`, `x_mcp.py` | the X lane (`manage.py x`): each subclasses its LinkedIn module and changes only what X changes — the `distribution.x` block, the post and its length, the account check, X's commands and tools |
 
 It shares the platform's LinkedIn and X clients (`distribution/linkedin/`, `distribution/x/`), its gates
-(`distribution/gates.py`), its ledger file (`distribution/ledger.py`), its
+(`distribution/gates.py`), its cadence (`distribution/cadence.py`), its ledger file (`distribution/ledger.py`), its
 permalinks (`distribution/permalink.py`) and its brand guard
 (`suggestions/guard.py`), so a draft, a finding and a ledger entry mean the same
 thing in the extension, the studio and CI.

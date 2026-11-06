@@ -8,6 +8,9 @@ writes the tables.
     an agent or  guard       who may     the right, an armed   GitHub, a newsletter       canonical URL
     a published  (findings   publish     channel and the
     page         stored)     the page    deployment's switch
+                                │             ▲
+                                └─▶ schedule ─┘  the channel's cadence gives an approved post its next slot (or a
+                                    person a time); beat releases it as that person's publish (`release_due`)
 
 The gates are `gates.ORDER`, the same as a site's own lane's: a post publishes
 only when a person approved its exact text (`approval_digest`), the channel is
@@ -45,6 +48,7 @@ from ai.providers import NotConfigured
 from ops.errors import Conflict, Forbidden, Invalid
 from suggestions.guard import extra_patterns, guard_text
 
+from . import cadence as cadences
 from . import gates, permalink
 from .gates import Blocker
 from .ledger import Ledger, LedgerError, serialize, urn_of
@@ -160,6 +164,16 @@ def clean_settings(kind: str, values: dict) -> dict:
     return out
 
 
+def clean_cadence(value) -> dict:
+    """A channel's cadence as `cadence.py` reads it, or Invalid naming every problem; `{}` (or nothing) clears it."""
+    value = value or {}
+    if problems := cadences.problems(value):
+        raise Invalid(
+            "; ".join(problems), details=[{"field": "cadence", "code": "invalid", "message": m} for m in problems]
+        )
+    return value
+
+
 @transaction.atomic
 def save_channel(user, *, channel=None, **fields) -> Channel:
     if not manages_channels(user):
@@ -176,6 +190,8 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
             setattr(channel, name, fields[name])
     if "settings" in fields:
         channel.settings = clean_settings(kind, fields["settings"])
+    if "cadence" in fields:
+        channel.cadence = clean_cadence(fields["cadence"])
     if kind == Kind.EMAIL:
         if channel.newsletter is None:
             raise Invalid(
@@ -794,6 +810,8 @@ def edit(post, user, **fields) -> DistributionPost:
         if post.status in APPROVED:
             post.status, post.approved_by, post.approved_at = DistributionPost.Status.DRAFT, None, None
             post.approved_digest = ""
+            if post.scheduled_for is not None:
+                _clear_schedule(post, "taken off the schedule: its text changed, so a person approves it again")
         post.save()
     return post
 
@@ -822,6 +840,13 @@ def approve(post, user) -> DistributionPost:
     post.status, post.approved_by, post.approved_at = DistributionPost.Status.APPROVED, user, timezone.now()
     post.approved_digest, post.reason = approval_digest(post), ""
     post.save()
+    if post.channel.cadence:
+        try:
+            return schedule(post, user)
+        except (Conflict, Invalid) as e:  # approved all the same: a person schedules or publishes it
+            post.refresh_from_db()
+            _note(post, f"approved, not scheduled: {e}")
+            post.save(update_fields=["notes", "updated_at"])
     return post
 
 
@@ -833,8 +858,235 @@ def reject(post, user, reason: str = "") -> DistributionPost:
     if post.status in (DistributionPost.Status.PUBLISHING, *FINAL):
         raise Conflict(f"a {post.status} post is not rejected")
     post.status, post.reason = DistributionPost.Status.REJECTED, reason
+    if post.scheduled_for is not None:
+        _clear_schedule(post, "taken off the schedule: rejected")
     post.save()
     return post
+
+
+# ── the release queue: a channel's cadence (cadence.py, issue #89) ──────────
+
+# How long a post scheduled at a time a person chose waits again when its page is not live yet.
+HOLD = timedelta(minutes=15)
+
+
+def channel_cadence(channel) -> "cadences.Cadence | None":
+    """The channel's cadence, None when it has none; CadenceError when what is stored cannot be read (it was
+    checked on save, so only an edit past the API makes one)."""
+    return cadences.parse(channel.cadence or None)
+
+
+def show(channel, at) -> str:
+    """A time as the channel's people read it: in the cadence's zone, else UTC."""
+    if at is None:
+        return "—"
+    try:
+        cadence = channel_cadence(channel)
+    except cadences.CadenceError:
+        cadence = None
+    return cadence.show(at) if cadence else at.astimezone(UTC).strftime("%a %Y-%m-%d %H:%M UTC")
+
+
+def went(channel, *, exclude=None) -> list:
+    """When the channel's posts went out — or may have: its ledger (rows, and the site's ledger file a lane writes),
+    and posts being sent now. What a cadence's rules count at the moment of release."""
+    by_key = {e.key: e.posted_at or e.attempted_at for e in LedgerEntry.objects.filter(channel=channel)}
+    ledger = site_ledger(channel)
+    if ledger is not None and ledger.readable:  # one share is a row and a file entry: counted once, by its key
+        for key, entry in ledger.entries().items():
+            if key.startswith("_") or key in by_key:
+                continue
+            try:
+                by_key[key] = _parse_stamp(entry.get("posted_at") or entry.get("attempted_at"))
+            except ValueError:
+                continue
+    sending = DistributionPost.objects.filter(channel=channel, status=DistributionPost.Status.PUBLISHING)
+    times = [*by_key.values(), *(p.attempted_at or p.updated_at for p in sending.exclude(pk=exclude))]
+    return [t for t in times if t is not None]
+
+
+def scheduled_times(channel, *, exclude=None) -> list:
+    rows = DistributionPost.objects.filter(
+        channel=channel, status=DistributionPost.Status.APPROVED, scheduled_for__isnull=False
+    )
+    return list(rows.exclude(pk=exclude).values_list("scheduled_for", flat=True))
+
+
+def page_live_at(post):
+    """When the post's page went live (its first publish), or will (the time its approved schedule puts it live);
+    None for a post with no page, or a page that is neither."""
+    if not post.page_id:
+        return None
+    page = post.page.specific
+    if page.live:
+        return page.first_published_at or page.last_published_at
+    revision = page.scheduled_revision
+    return revision.approved_go_live_at if revision is not None else None
+
+
+def _clear_schedule(post, why: str) -> None:
+    post.scheduled_for, post.scheduled_by, post.scheduled_pinned = None, None, False
+    _note(post, why)
+
+
+@transaction.atomic
+def schedule(post, user, at=None, *, now=None) -> DistributionPost:
+    """Put an approved post in its channel's release queue: at `at`, a time a person chose, which the cadence's
+    slots and rules do not move, or — with none — the channel's next free slot after its page's phase (`afterPage`
+    after the page goes live). Beat releases it through every gate as this person's publish (`release_due`)."""
+    now = now or timezone.now()
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
+    if not may_publish(post, user):
+        raise PermissionDenied("scheduling a post is the right of someone who may publish its page")
+    if post.status != DistributionPost.Status.APPROVED:
+        raise Conflict(f"only an approved post is scheduled; this one is {post.status}")
+    if post.approved_digest != approval_digest(post):
+        raise Conflict("the text is not the text a person approved: a person approves it again")
+    channel = post.channel
+    if at is not None:
+        if at < now - timedelta(minutes=1):
+            raise Invalid("that time has passed: choose a later one, or publish it now", details=_detail("at", "past"))
+        when, pinned = at, True
+    else:
+        try:
+            cadence = channel_cadence(channel)
+        except cadences.CadenceError as e:
+            raise Invalid(f"{channel.name}'s cadence cannot be read: {e}", details=_detail("cadence", "invalid")) from e
+        if cadence is None:
+            raise Invalid(
+                f"{channel.name} has no cadence: choose a time, or publish it now", details=_detail("at", "required")
+            )
+        live = page_live_at(post)
+        start = max(now, live + cadence.after_page) if live is not None else now
+        taken = went(channel, exclude=post.pk) + scheduled_times(channel, exclude=post.pk)
+        when, pinned = cadence.next_slot(start, taken), False
+        if when is None:
+            raise Conflict("no slot of the cadence is free within a year: every one is dark or full")
+    post.scheduled_for, post.scheduled_by, post.scheduled_pinned, post.error = when, user, pinned, ""
+    _note(post, f"scheduled for {show(channel, when)}{' (a time a person chose)' if pinned else ''}")
+    post.save()
+    return post
+
+
+@transaction.atomic
+def unschedule(post, user) -> DistributionPost:
+    """Take an approved post off the release queue; it stays approved, for a person to publish or schedule."""
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
+    if not may_publish(post, user):
+        raise PermissionDenied("unscheduling a post is the right of someone who may publish its page")
+    if post.scheduled_for is not None:
+        _clear_schedule(post, f"taken off the schedule by {user.get_username()}")
+        post.save()
+    return post
+
+
+def release_due(now=None) -> int:
+    """Beat's release (`distribution-release`, each minute): every approved post whose time has come, oldest first,
+    one at a time under its row lock (`_release`). Returns how many it sent to the worker."""
+    now = now or timezone.now()
+    due = DistributionPost.objects.filter(
+        status=DistributionPost.Status.APPROVED, scheduled_for__isnull=False, scheduled_for__lte=now
+    ).order_by("scheduled_for", "id")
+    released = 0
+    for pk in due.values_list("pk", flat=True):
+        with transaction.atomic():
+            post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=pk)
+            if post.status == DistributionPost.Status.APPROVED and post.scheduled_for and post.scheduled_for <= now:
+                released += _release(post, now)
+    return released
+
+
+def _release(post, now) -> bool:
+    """One due post. Its page not live yet: held to the next slot (or HOLD, at a chosen time). A slot the cadence's
+    rules no longer allow now — a backlog after the worker was away, a post sent by hand since — moves to the next
+    free one, so a channel never bursts. A gate's refusal, or a scheduler who may no longer publish, takes it off the
+    schedule with the reason, for a person. Otherwise it is published as its scheduler's publish."""
+    channel, user, when = post.channel, post.scheduled_by, post.scheduled_for
+    try:
+        cadence = channel_cadence(channel)
+    except cadences.CadenceError:
+        cadence = None
+    if user is None or not may_publish(post, user):
+        return _off_schedule(post, "whoever scheduled it may no longer publish it: a person publishes or schedules it")
+    page = post.page.specific if post.page_id else None
+    page_waiting = post.kind == "article" and page is not None and not page.live
+    blockers = [b for b in preview(post).blockers if not (page_waiting and b.kind == "source_missing")]
+    if blockers:
+        reasons = "; ".join(f"{b.kind}: {b.message}" for b in blockers)
+        return _off_schedule(post, f"the release at {show(channel, when)} was refused — {reasons}")
+    history = went(channel, exclude=post.pk)
+    if page_waiting:
+        later = (
+            cadence.next_slot(now + timedelta(minutes=1), history + scheduled_times(channel, exclude=post.pk))
+            if cadence and not post.scheduled_pinned
+            else now + HOLD
+        )
+        return _move(post, later, "held: the page is not live yet", quiet=True)
+    if cadence and not post.scheduled_pinned and (reasons := cadence.reasons(now, history)):
+        later = cadence.next_slot(now, history + scheduled_times(channel, exclude=post.pk))
+        return _move(post, later, f"moved: {reasons[0]}")
+    try:
+        request_publish(post, user)
+    except (Conflict, PermissionDenied) as e:
+        post.refresh_from_db()
+        return _off_schedule(post, f"the release at {show(channel, when)} was refused — {e}")
+    post.refresh_from_db()
+    _clear_schedule(post, f"released on schedule ({show(channel, when)})")
+    post.save(update_fields=["scheduled_for", "scheduled_by", "scheduled_pinned", "notes", "updated_at"])
+    return True
+
+
+def _move(post, later, why: str, *, quiet: bool = False) -> bool:
+    if later is None:
+        return _off_schedule(post, f"{why}, and no slot of the cadence is free within a year")
+    message = f"{why}: now {show(post.channel, later)}"
+    last = (post.notes or [""])[-1]
+    if not (quiet and last.startswith(why)):
+        _note(post, message)
+    post.scheduled_for = later
+    post.save(update_fields=["scheduled_for", "notes", "updated_at"])
+    return False
+
+
+def _off_schedule(post, why: str) -> bool:
+    post.error = why[:2000]
+    _clear_schedule(post, "taken off the schedule: " + why)
+    post.save(update_fields=["scheduled_for", "scheduled_by", "scheduled_pinned", "error", "notes", "updated_at"])
+    return False
+
+
+def calendar(channel, user, *, now=None, days: int = 28) -> dict:
+    """A channel's release calendar for the studio: its cadence in words, the posts scheduled (those the person
+    sees), the free slots of the next `days`, and when its posts went lately."""
+    now = now or timezone.now()
+    problems: list[str] = []
+    try:
+        cadence = channel_cadence(channel)
+    except cadences.CadenceError as e:
+        cadence, problems = None, e.problems
+    history = sorted(went(channel), reverse=True)
+    scheduled = (
+        DistributionPost.objects.visible_to(user)
+        .filter(channel=channel, status=DistributionPost.Status.APPROVED, scheduled_for__isnull=False)
+        .select_related("channel", "page", "story", "created_by", "approved_by", "scheduled_by")
+        .order_by("scheduled_for", "id")
+    )
+    free = []
+    if cadence is not None:
+        taken = history + scheduled_times(channel)
+        for slot in cadence.slots_from(now, days=days):
+            if not cadence.reasons(slot, taken):
+                free.append(slot)
+            if len(free) >= 12:
+                break
+    return {
+        "summary": cadence.summary() if cadence else "",
+        "timezone": cadence.timezone if cadence else "UTC",
+        "problems": problems,
+        "scheduled": list(scheduled),
+        "free": free,
+        "recent": history[:10],
+    }
 
 
 # ── the gates ───────────────────────────────────────────────────────────────
@@ -1049,6 +1301,7 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
         raise Conflict("; ".join(f"{b.kind}: {b.message}" for b in blockers), code="distribution.blocked")
     post.status, post.published_by, post.force, post.error = DistributionPost.Status.PUBLISHING, user, force, ""
     post.attempted_at = None  # a new attempt: `deliver` claims it before anything is sent
+    post.scheduled_for, post.scheduled_pinned = None, False  # going now: a person's publish, or its release
     post.save()
     transaction.on_commit(lambda: publish_post.delay(post.pk))
     return post

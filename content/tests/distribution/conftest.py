@@ -56,6 +56,8 @@ def checkout(make_checkout):
 @pytest.fixture
 def web():
     with respx.mock(assert_all_called=False) as router:
+        # The fixture site is up: a lane asks the page an article links to before a live send (`checkLink`).
+        router.get(url__regex=r"^https://example\.test/").respond(200)
         yield router
 
 
