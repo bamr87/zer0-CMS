@@ -1,8 +1,9 @@
 // The queue: every post of the channels a person may see, filtered by status
-// and channel, newest first — what waits for approval, what is going out, what
-// went and what failed — and composing a new one. Opening a post asks the host
-// to go to it, so a post's panel has an address.
-import { Alert, Anchor, Badge, Button, Group, Loader, Modal, MultiSelect, Select, Table, Text } from '@mantine/core';
+// and channel, newest first — what waits for approval, what is scheduled and
+// when, what is going out, what went and what failed — and composing a new
+// one. Opening a post asks the host to go to it, so a post's panel has an
+// address.
+import { Alert, Anchor, Badge, Button, Checkbox, Group, Loader, Modal, MultiSelect, Select, Table, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { DistributionPostStatus } from '@zer0/api';
 import { useState } from 'react';
@@ -19,7 +20,14 @@ export function Queue({ siteId }: { siteId?: number }) {
   const [status, setStatus] = useState<string[]>([]);
   const [channel, setChannel] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
-  const query = { site: siteId, channel: channel ?? undefined, status: status as DistributionPostStatus[], page_size: 200 };
+  const [scheduled, setScheduled] = useState(false);
+  const query = {
+    site: siteId,
+    channel: channel ?? undefined,
+    status: status as DistributionPostStatus[],
+    ...(scheduled ? { scheduled: true } : {}),
+    page_size: 200,
+  };
   const posts = useQuery({
     queryKey: ['distribution', 'posts', query],
     queryFn: () => call(api.GET('/api/v2/distribution/posts/', { params: { query } })),
@@ -48,6 +56,7 @@ export function Queue({ siteId }: { siteId?: number }) {
             clearable
             w={220}
           />
+          <Checkbox label="Scheduled only" checked={scheduled} onChange={(e) => setScheduled(e.currentTarget.checked)} mb={8} />
         </Group>
         <Button onClick={() => setComposing(true)}>Compose a post</Button>
       </Group>
@@ -67,6 +76,7 @@ export function Queue({ siteId }: { siteId?: number }) {
               <Table.Th>Channel</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Brand guard</Table.Th>
+              <Table.Th>When</Table.Th>
               <Table.Th>Drafted</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -87,6 +97,11 @@ export function Queue({ siteId }: { siteId?: number }) {
                     <Badge color={statusOf(post.status).color}>{statusOf(post.status).label}</Badge>
                   </Table.Td>
                   <Table.Td>{errors ? <Badge color="red" variant="light">{errors} error(s)</Badge> : <Text size="sm">clean</Text>}</Table.Td>
+                  <Table.Td>
+                    <Text size="sm">
+                      {post.scheduled_for ? `scheduled ${when(post.scheduled_for)}` : post.published_at ? `went ${when(post.published_at)}` : '—'}
+                    </Text>
+                  </Table.Td>
                   <Table.Td>
                     <Text size="sm">
                       {when(post.created_at)} · {post.origin === 'person' ? (post.created_by ?? 'a person') : post.origin}

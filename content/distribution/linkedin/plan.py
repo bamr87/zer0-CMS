@@ -178,6 +178,18 @@ CALLS = [
         method_header="FINDER",
     ),
     Call(
+        "posts_update",
+        "POST",
+        API_HOST,
+        "/rest/posts/{urn}",
+        "revise the text of a post the author published (a correction or a reference a person approved); "
+        "the card — its link, title and image — cannot change",
+        "nothing (204): it changes only the text of the author's own post",
+        scopes=WRITE_SOCIAL,
+        write=True,
+        method_header="PARTIAL_UPDATE",
+    ),
+    Call(
         "posts_delete",
         "DELETE",
         API_HOST,
@@ -267,10 +279,10 @@ def writes() -> list[Call]:
     return [call for call in CALLS if call.write]
 
 
-def describe() -> str:
+def describe(calls=None) -> str:
     """The surface as text, for a terminal, a job summary or an application form."""
     lines = ["LinkedIn calls this CMS can make, and nothing else:", ""]
-    for call in CALLS:
+    for call in CALLS if calls is None else calls:
         host = "<upload slot on linkedin.com>" if call.host == UPLOAD else call.host
         path = "" if call.host == UPLOAD else call.path
         lines.append(f"  {call.verb.ljust(6)} {host}{path}{'   [write]' if call.write else ''}")

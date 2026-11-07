@@ -9,6 +9,9 @@
 // extension's or a site's CI so what they published never goes twice.
 // Removing a channel asks first, saying how many posts go with it; the
 // platform refuses while its ledger holds anything (disconnect it instead).
+// A channel's cadence — its release slots, gaps, caps, blackout dates and a
+// share's phase after its page — is set here, and its release calendar shows
+// what is scheduled, the next free slots and what went lately.
 import {
   Alert,
   Anchor,
@@ -72,6 +75,7 @@ export function Channels({ siteId }: { siteId?: number }) {
               <Table.Th>Site</Table.Th>
               <Table.Th>Publishes as</Table.Th>
               <Table.Th>State</Table.Th>
+              <Table.Th>Cadence</Table.Th>
               <Table.Th>Auto draft</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -90,6 +94,9 @@ export function Channels({ siteId }: { siteId?: number }) {
                   <Badge color={stateOf(c).color} variant="light">
                     {stateOf(c).label}
                   </Badge>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="sm">{c.cadence_summary || 'when a person publishes'}</Text>
                 </Table.Td>
                 <Table.Td>{c.auto_draft ? 'on' : 'off'}</Table.Td>
               </Table.Tr>
@@ -301,6 +308,10 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
         onChange={(e) => patch.mutate({ auto_draft: e.currentTarget.checked })}
       />
 
+      <Title order={5}>Cadence</Title>
+      <CadenceForm channel={channel} saving={patch.isPending} onSave={(cadence) => patch.mutate({ cadence })} />
+      <ReleaseCalendar channelId={channel.id} />
+
       <Title order={5}>Settings</Title>
       <TextInput label="Name" value={name} disabled={!channel.can_manage} onChange={(e) => setName(e.currentTarget.value)} />
       <SettingsFields kind={channel.kind} values={settings} onChange={setSettings} />
@@ -420,6 +431,138 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
           </Group>
         </Stack>
       </Modal>
+    </Stack>
+  );
+}
+
+/** The channel's cadence as the form edits it: every field a string, as typed. */
+type CadenceFields = Record<'timezone' | 'slots' | 'minGap' | 'perDay' | 'perWeek' | 'afterPage' | 'blackout', string>;
+
+function fieldsOf(cadence: Record<string, unknown> | undefined): CadenceFields {
+  const c = cadence ?? {};
+  const list = (v: unknown) => (Array.isArray(v) ? v.join(', ') : '');
+  const text = (v: unknown) => (v === undefined || v === null ? '' : String(v));
+  return {
+    timezone: text(c.timezone) || (Object.keys(c).length ? '' : Intl.DateTimeFormat().resolvedOptions().timeZone),
+    slots: list(c.slots),
+    minGap: text(c.minGap),
+    perDay: text(c.perDay),
+    perWeek: text(c.perWeek),
+    afterPage: text(c.afterPage),
+    blackout: list(c.blackout),
+  };
+}
+
+function cadenceOf(f: CadenceFields): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  const items = (v: string) => v.split(',').map((x) => x.trim()).filter(Boolean);
+  if (f.timezone.trim()) out.timezone = f.timezone.trim();
+  out.slots = items(f.slots);
+  for (const key of ['minGap', 'afterPage'] as const) if (f[key].trim()) out[key] = f[key].trim();
+  for (const key of ['perDay', 'perWeek'] as const) if (f[key].trim()) out[key] = Number(f[key].trim());
+  if (items(f.blackout).length) out.blackout = items(f.blackout);
+  return out;
+}
+
+/** The release slots and rules (docs/DISTRIBUTION.md § The cadence); the platform checks every field and names what it cannot read. */
+function CadenceForm({ channel, saving, onSave }: { channel: DistributionChannel; saving: boolean; onSave: (cadence: Record<string, unknown>) => void }) {
+  const [fields, setFields] = useState<CadenceFields>(fieldsOf(channel.cadence));
+  const set = (key: keyof CadenceFields) => (e: { currentTarget: { value: string } }) => setFields({ ...fields, [key]: e.currentTarget.value });
+  const has = Object.keys(channel.cadence ?? {}).length > 0;
+  return (
+    <Stack gap="xs" aria-label="Cadence">
+      <Text size="sm">
+        {has
+          ? `Approved posts go out ${channel.cadence_summary}: approving one queues it in the next free slot.`
+          : 'No cadence: an approved post goes when a person publishes it. Give the channel release slots and approving queues each post in the next free one.'}
+      </Text>
+      <Group grow align="flex-start">
+        <TextInput label="Time zone" description="IANA, like America/Denver" value={fields.timezone} disabled={!channel.can_manage} onChange={set('timezone')} />
+        <TextInput label="Slots" description="tue 09:00, thu 09:00 · mon-fri 08:30 · daily 12:00" value={fields.slots} disabled={!channel.can_manage} onChange={set('slots')} />
+      </Group>
+      <Group grow align="flex-start">
+        <TextInput label="At most a day" description="1 when empty" value={fields.perDay} disabled={!channel.can_manage} onChange={set('perDay')} />
+        <TextInput label="At most a week" description="No limit when empty" value={fields.perWeek} disabled={!channel.can_manage} onChange={set('perWeek')} />
+        <TextInput label="Gap between posts" description="48h, 90m, 2d" value={fields.minGap} disabled={!channel.can_manage} onChange={set('minGap')} />
+        <TextInput label="After the page" description="A share waits this long after its page goes live" value={fields.afterPage} disabled={!channel.can_manage} onChange={set('afterPage')} />
+      </Group>
+      <TextInput
+        label="Blackout dates"
+        description="2026-12-24, or a range 2026-12-24..2027-01-01, comma-separated"
+        value={fields.blackout}
+        disabled={!channel.can_manage}
+        onChange={set('blackout')}
+      />
+      <Group>
+        <Button variant="default" disabled={!channel.can_manage || !fields.slots.trim()} loading={saving} onClick={() => onSave(cadenceOf(fields))}>
+          Save the cadence
+        </Button>
+        {has ? (
+          <Button variant="subtle" disabled={!channel.can_manage} onClick={() => onSave({})}>
+            Clear it
+          </Button>
+        ) : null}
+      </Group>
+    </Stack>
+  );
+}
+
+/** What waits for its time on this channel, the next free slots, and when its posts went lately. */
+function ReleaseCalendar({ channelId }: { channelId: string }) {
+  const api = useApi();
+  const go = useGo();
+  const calendar = useQuery({
+    queryKey: ['distribution', 'calendar', channelId],
+    queryFn: () => call(api.GET('/api/v2/distribution/channels/{public_id}/calendar/', { params: { path: { public_id: channelId } } })),
+  });
+  if (calendar.isPending) return <Loader size="sm" />;
+  if (calendar.isError) return <Alert color="red">{errorText(calendar.error)}</Alert>;
+  const { problems, scheduled, free, recent } = calendar.data;
+  return (
+    <Stack gap="xs" aria-label="Release calendar">
+      {problems.length ? (
+        <Alert color="red" title="The stored cadence cannot be read">
+          {problems.join('; ')}
+        </Alert>
+      ) : null}
+      {scheduled.length === 0 ? (
+        <Text size="sm" c="dimmed">
+          Nothing is scheduled.
+        </Text>
+      ) : (
+        <Table aria-label="Scheduled posts">
+          <Table.Tbody>
+            {scheduled.map((p) => (
+              <Table.Tr key={p.id}>
+                <Table.Td>
+                  <Text size="sm">{when(p.scheduled_for)}</Text>
+                </Table.Td>
+                <Table.Td>
+                  <Anchor component="button" type="button" size="sm" onClick={() => go({ to: 'distribution-post', id: p.id })}>
+                    {p.title || p.page_title || 'Untitled'}
+                  </Anchor>
+                  {p.scheduled_pinned ? (
+                    <Text span size="xs" c="dimmed">
+                      {' '}
+                      (a time a person chose)
+                    </Text>
+                  ) : null}
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      )}
+      {free.length ? (
+        <Text size="sm" c="dimmed">
+          Next free slots: {free.slice(0, 4).map((slot) => when(slot)).join(' · ')}
+        </Text>
+      ) : null}
+      {recent.length ? (
+        <Text size="sm" c="dimmed">
+          Went lately: {recent.slice(0, 3).map((t) => when(t)).join(' · ')}
+        </Text>
+      ) : null}
     </Stack>
   );
 }

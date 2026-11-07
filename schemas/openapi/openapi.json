@@ -13892,6 +13892,129 @@
                 }
             }
         },
+        "/api/v2/distribution/channels/{public_id}/calendar/": {
+            "get": {
+                "operationId": "distribution_channels_calendar_retrieve",
+                "summary": "The channel's release calendar: its cadence, the posts scheduled, the next free slots, what went lately",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "distribution"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DistributionCalendar"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/distribution/channels/{public_id}/check/": {
             "post": {
                 "operationId": "distribution_channels_check_create",
@@ -14971,6 +15094,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "scheduled",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Only posts waiting for a time."
+                    },
+                    {
+                        "in": "query",
                         "name": "site",
                         "schema": {
                             "type": "integer"
@@ -15825,6 +15956,271 @@
                         }
                     }
                 },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DistributionPostDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/distribution/posts/{public_id}/schedule/": {
+            "post": {
+                "operationId": "distribution_posts_schedule_create",
+                "summary": "Schedule an approved post: at a time a person chose, or the channel's next free slot of its cadence; beat releases it through every gate as this person's publish",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "distribution"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DistributionScheduleRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DistributionScheduleRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DistributionScheduleRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DistributionPostDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/distribution/posts/{public_id}/unschedule/": {
+            "post": {
+                "operationId": "distribution_posts_unschedule_create",
+                "summary": "Take an approved post off the release queue; it stays approved",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "distribution"
+                ],
                 "security": [
                     {
                         "userToken": []
@@ -34972,6 +35368,56 @@
                     "message"
                 ]
             },
+            "DistributionCalendar": {
+                "type": "object",
+                "properties": {
+                    "summary": {
+                        "type": "string",
+                        "description": "The cadence in words; empty without one."
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "problems": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Why the stored cadence cannot be read."
+                    },
+                    "scheduled": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DistributionPost"
+                        },
+                        "description": "The approved posts waiting for their time, soonest first."
+                    },
+                    "free": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "The next free slots."
+                    },
+                    "recent": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "When the channel's posts went lately."
+                    }
+                },
+                "required": [
+                    "free",
+                    "problems",
+                    "recent",
+                    "scheduled",
+                    "summary",
+                    "timezone"
+                ]
+            },
             "DistributionChannel": {
                 "type": "object",
                 "properties": {
@@ -35092,6 +35538,16 @@
                         "type": "boolean",
                         "description": "Publishing to this channel is armed (a person's setting)."
                     },
+                    "cadence": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot."
+                    },
+                    "cadence_summary": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The cadence in words; empty without one."
+                    },
                     "deployment_armed": {
                         "type": "boolean",
                         "readOnly": true,
@@ -35114,6 +35570,7 @@
                 },
                 "required": [
                     "account",
+                    "cadence_summary",
                     "can_manage",
                     "checked_at",
                     "connected_at",
@@ -35178,6 +35635,11 @@
                     "armed": {
                         "type": "boolean",
                         "description": "Publishing to this channel is armed (a person's setting)."
+                    },
+                    "cadence": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot."
                     }
                 },
                 "required": [
@@ -35481,6 +35943,11 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "channel_cadence": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The channel's cadence in words, empty without one: approving the post queues it in the next slot."
+                    },
                     "page": {
                         "type": [
                             "integer",
@@ -35586,6 +36053,24 @@
                         ],
                         "format": "date-time",
                         "readOnly": true
+                    },
+                    "scheduled_for": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "When beat releases this approved post: a slot of the channel's cadence, or a time a person chose."
+                    },
+                    "scheduled_by": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "scheduled_pinned": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "A person chose the time: the cadence's slots and rules do not move it, only the gates hold it."
                     },
                     "attempted_at": {
                         "type": [
@@ -35624,6 +36109,7 @@
                     "attempted_at",
                     "can_publish",
                     "channel",
+                    "channel_cadence",
                     "channel_kind",
                     "channel_name",
                     "commentary",
@@ -35643,6 +36129,9 @@
                     "page_title",
                     "published_at",
                     "reason",
+                    "scheduled_by",
+                    "scheduled_for",
+                    "scheduled_pinned",
                     "status",
                     "story",
                     "title",
@@ -35670,6 +36159,11 @@
                     "channel_kind": {
                         "type": "string",
                         "readOnly": true
+                    },
+                    "channel_cadence": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The channel's cadence in words, empty without one: approving the post queues it in the next slot."
                     },
                     "page": {
                         "type": [
@@ -35776,6 +36270,24 @@
                         ],
                         "format": "date-time",
                         "readOnly": true
+                    },
+                    "scheduled_for": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "When beat releases this approved post: a slot of the channel's cadence, or a time a person chose."
+                    },
+                    "scheduled_by": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "scheduled_pinned": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "A person chose the time: the cadence's slots and rules do not move it, only the gates hold it."
                     },
                     "attempted_at": {
                         "type": [
@@ -35830,6 +36342,7 @@
                     "blockers",
                     "can_publish",
                     "channel",
+                    "channel_cadence",
                     "channel_kind",
                     "channel_name",
                     "commentary",
@@ -35850,6 +36363,9 @@
                     "payload",
                     "published_at",
                     "reason",
+                    "scheduled_by",
+                    "scheduled_for",
+                    "scheduled_pinned",
                     "status",
                     "story",
                     "title",
@@ -35904,6 +36420,19 @@
                 "properties": {
                     "reason": {
                         "type": "string"
+                    }
+                }
+            },
+            "DistributionScheduleRequest": {
+                "type": "object",
+                "properties": {
+                    "at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "A time a person chose, which the cadence does not move. Absent: the channel's next free slot."
                     }
                 }
             },
@@ -40946,6 +41475,11 @@
                     "armed": {
                         "type": "boolean",
                         "description": "Publishing to this channel is armed (a person's setting)."
+                    },
+                    "cadence": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot."
                     }
                 }
             },

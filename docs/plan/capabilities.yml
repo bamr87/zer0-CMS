@@ -618,6 +618,15 @@ platform:
       api: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker
       studio: web/packages/ui/test/distribution.test.tsx
       mcp: content/tests/distribution/test_platform.py::test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish
+  - id: distribution.schedule
+    what: A channel's cadence and a release queue — approved posts go in timed, phased slots, never in a burst, through every gate again.
+    # Issue #89 (2026-11-05): content/distribution/cadence.py, pure and shared by both queues — weekly slots in an IANA zone, minGap, perDay, perWeek, blackout dates, afterPage (a share's phase after its page goes live) and grace (test_cadence.py). The platform: Channel.cadence (checked on save), approving on a cadence channel queues the post in its next free slot after its page's phase, Schedule (next slot, or a time a person chose) and Unschedule, beat's distribution-release publishing what is due as its scheduler's publish, a backlog re-slotted at release, a page not live held, a gate's refusal taking the post off the schedule (test_schedule.py), and a channel's calendar; the studio's post panel, queue and channel panel (web/packages/ui/test/distribution.test.tsx, "the release queue"); the extension asks before schedule and approve (src/test/webview.test.ts). A site's lane: cadence in zer0.json, publish_at on a draft, one draft per open slot on a queue run, the page's landing from git, `calendar` (CLI and MCP). Not built: an agent tool to schedule; re-slotting scheduled posts when a cadence changes (the release re-checks the rules instead).
+    surfaces: {api: done, studio: done, extension: done, mcp: partial}
+    proof:
+      api: content/tests/distribution/test_schedule.py::test_beat_releases_a_due_post_as_its_schedulers_publish_and_nothing_early
+      studio: web/packages/ui/test/distribution.test.tsx
+      extension: src/test/webview.test.ts
+      mcp: content/tests/distribution/test_cadence.py::test_the_calendar_command_and_the_mcp_tool
   - id: distribution.stats
     what: Statistics for published posts, ingested and reported.
     # G5: LinkedIn's aggregate counts for a channel's own posts, daily on beat (distribution-statistics) or on request, one row per post a day, in the studio's Distribution → Statistics and beside each ledger entry. LinkedIn is the only channel with statistics: WordPress, pull requests and newsletters report none.

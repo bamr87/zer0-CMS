@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import UTC
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
@@ -21,6 +22,7 @@ from urllib.parse import parse_qsl, urlsplit
 from ..ledger import LedgerError
 from ..linkedin import Client, Error, oauth, plan, posts
 from ..linkedin.client import send
+from . import drafts
 from .mcp import Server
 from .pipeline import Pipeline
 from .site import ARM_VARIABLE, Config, ConfigError
@@ -33,6 +35,14 @@ Usage: manage.py linkedin COMMAND [--site PATH] [--json] [options]
   plan                               every LinkedIn call this lane can make, and nothing else
   sources [--all]                    pages that can be shared (--all includes shared ones)
   queue                              drafts and their status
+  calendar                           which draft a queue run releases when, under the cadence (issue #89)
+  sync [--draft [--limit N]] [--write-map]
+                                     every shareable page against LinkedIn: shared, featured, queued or missing;
+                                     --draft writes a pending draft for each missing page, --write-map the siteMap
+  weekly [--week YYYY-Www]           draft the week's featured article: the ring's section, its featured post
+  revise URN (--commentary TEXT | --commentary-file FILE)
+                                     a pending revision: new text for a post this lane published
+  revisit [--mark KEY]               published posts, least recently reviewed first; --mark records a review
   draft SOURCE [--commentary TEXT | --commentary-file FILE]
   draft --update --slug SLUG (--message TEXT | --message-file FILE)
                                      write a pending draft
@@ -59,6 +69,11 @@ COMMANDS = (
     "plan",
     "sources",
     "queue",
+    "calendar",
+    "sync",
+    "weekly",
+    "revise",
+    "revisit",
     "draft",
     "approve",
     "preview",
@@ -100,6 +115,11 @@ def parser() -> Parser:
     p.add_argument("--live", action="store_true")
     p.add_argument("--force", action="store_true")
     p.add_argument("--count", type=int, default=10)
+    p.add_argument("--draft", action="store_true")
+    p.add_argument("--limit", type=int)
+    p.add_argument("--write-map", action="store_true")
+    p.add_argument("--week")
+    p.add_argument("--mark")
     p.add_argument("--write", action="store_true")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--redirect-uri")
@@ -204,6 +224,100 @@ class Runner:
         for row in [] if self.opts.json else rows:
             source = f"  <- {row['source']}" if row["source"] else ""
             self.line(f"{row['status'].ljust(10)} {row['type'].ljust(8)} {row['path']}{source}")
+        return 0
+
+    def calendar(self):
+        """Which accepted draft a queue run releases when — the cadence's slots, each draft's `publish_at:` and its
+        page's phase (`Pipeline.calendar`). Exit 1 when a draft's timing cannot be read."""
+        cadence = self.config.cadence
+        now = self.pipeline.clock()
+        rows = sorted(self.pipeline.calendar(now=now), key=lambda r: (r.at is None, r.at or now, r.order))
+        if self.opts.json:
+            self.emit(
+                {
+                    "now": now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "cadence": cadence.summary() if cadence else None,
+                    "timezone": cadence.timezone if cadence else "UTC",
+                    "drafts": [r.as_dict() for r in rows],
+                }
+            )
+        else:
+            self.line(
+                f"cadence  {cadence.summary() if cadence else 'none: a queue run publishes every accepted draft'}"
+            )
+            if not rows:
+                self.line(f"Nothing waiting: no accepted, unpublished draft in {self.config.queue}.")
+            show = cadence.show if cadence else (lambda t: t.astimezone(UTC).strftime("%a %Y-%m-%d %H:%M UTC"))
+            for row in rows:
+                when = row.problem or (show(row.at) if row.at else row.reason or "no time found")
+                pin = "  (publish_at)" if row.pinned else ""
+                self.line(f"{when.ljust(26)} {row.draft.status.ljust(9)} {row.draft.relative}{pin}")
+        return 1 if any(r.problem for r in rows) else 0
+
+    def sync(self):
+        """Exit 1 while a page has no post and no draft waiting for it, so a scheduled check shows the gap."""
+        created = self.pipeline.draft_missing(self.opts.limit) if self.opts.draft else []
+        rows = self.pipeline.sync()
+        wrote = self.pipeline.write_site_map() if self.opts.write_map and self.config.site_map else False
+        if self.opts.json:
+            self.emit({"pages": rows, "drafted": [d.relative for d in created], "site_map_written": wrote})
+        else:
+            counts = {
+                state: sum(r["state"] == state for r in rows) for state in ("shared", "featured", "queued", "missing")
+            }
+            self.line(", ".join(f"{n} {state}" for state, n in counts.items()) + f" of {len(rows)} shareable pages")
+            for row in rows:
+                if row["state"] in ("missing", "queued"):
+                    self.line(f"{row['state'].ljust(8)} {row['path']}{'  <- ' + row['draft'] if row['draft'] else ''}")
+            for draft in created:
+                self.line(f"drafted  {draft.relative} (pending: a person approves it)")
+            if wrote:
+                self.line(f"wrote    {self.config.site_map}")
+        return 1 if any(r["state"] == "missing" for r in rows) else 0
+
+    def weekly(self):
+        draft, message = self.pipeline.weekly_feature(self.opts.week)
+        if self.opts.json:
+            self.emit({"draft": draft.relative if draft else None, "message": message})
+        else:
+            self.line(message)
+            if draft is not None and draft.status == "pending":
+                self.print_preview(self.pipeline.preview(draft))
+        return 0
+
+    def revise(self):
+        urn = self.arg("URN")
+        text = str(self.opts.commentary or "").strip()
+        if not text:
+            raise ValueError("a revision needs the post's new text: --commentary or --commentary-file")
+        slug_text = urn.rsplit(":", 1)[-1]
+        draft = drafts.create(
+            self.config,
+            type="revision",
+            slug=f"{self.pipeline.clock():%Y-%m-%d}-revise-{slug_text}",
+            body=text,
+            meta={"revises": urn},
+        )
+        preview = self.pipeline.preview(draft)
+        if self.opts.json:
+            self.emit({"created": draft.relative, "preview": preview.as_dict(self.config.root)})
+        else:
+            self.line(f"wrote {draft.relative} (status: pending — a person approves it)")
+            self.print_preview(preview)
+        return 1 if preview.problems else 0
+
+    def revisit(self):
+        if self.opts.mark:
+            when = self.pipeline.mark_reviewed(self.opts.mark)
+            self.emit({"reviewed": self.opts.mark, "at": when}) if self.opts.json else self.line(
+                f"reviewed {self.opts.mark} at {when}"
+            )
+            return 0
+        rows = self.pipeline.revisit()
+        if self.opts.json:
+            self.emit(rows)
+        for row in [] if self.opts.json else rows:
+            self.line(f"{(row['reviewed_at'] or 'never').ljust(20)} {row['urn']}  {row['source'] or row['key']}")
         return 0
 
     def draft(self):

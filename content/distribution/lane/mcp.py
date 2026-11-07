@@ -56,6 +56,20 @@ TOOLS = [
     ),
     _tool("linkedin_queue", "The draft queue: every draft with its status (pending, approved, published) and type."),
     _tool(
+        "linkedin_calendar",
+        "Which accepted draft a queue run releases when: the site's cadence (zer0.json distribution.linkedin.cadence), "
+        "each draft's publish_at and its page's phase. No network call, no write.",
+    ),
+    _tool(
+        "linkedin_sync",
+        "Every shareable page against LinkedIn: shared (its post), featured (as a week's feature), queued (a draft "
+        "waits) or missing. No network call, no write.",
+    ),
+    _tool(
+        "linkedin_revisit",
+        "The posts this lane published, least recently reviewed first: what the review loop takes next.",
+    ),
+    _tool(
         "linkedin_preview",
         "The exact LinkedIn payload a draft would send, the brand guard's findings, and every "
         "blocker. No network call, no write.",
@@ -175,6 +189,17 @@ class Server:
                 {"id": d.id, "path": d.relative, "status": d.status, "type": d.type, "source": d.text("source")}
                 for d in pipeline.drafts()
             ]
+        if name == "linkedin_calendar":
+            cadence = config.cadence
+            return {
+                "cadence": cadence.summary() if cadence else None,
+                "timezone": cadence.timezone if cadence else "UTC",
+                "drafts": [row.as_dict() for row in pipeline.calendar()],
+            }
+        if name == "linkedin_sync":
+            return pipeline.sync()
+        if name == "linkedin_revisit":
+            return pipeline.revisit()
         if name == "linkedin_preview":
             return pipeline.preview(pipeline.draft(args["draft"])).as_dict(config.root)
         if name == "linkedin_draft":

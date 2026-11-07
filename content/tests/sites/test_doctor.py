@@ -56,6 +56,11 @@ def comparable(f: dict) -> str:
         ]
     if f["evidence"].startswith(SYNTAX) or f["rule"] == "vendored-linkedin-publisher":
         f.pop("evidence"), f.pop("fingerprint")
+    elif " is not a setting (known: " in f["evidence"]:
+        # The list of known settings is the platform's, which has grown past the Ruby lane's (`cadence`, issue #89);
+        # the finding — this key is not a setting — is what is compared.
+        f["evidence"] = f["evidence"].split(" (known: ", 1)[0]
+        f.pop("fingerprint")
     return json.dumps(f, sort_keys=True)
 
 

@@ -55,6 +55,8 @@ from pathlib import Path
 
 import yaml
 
+from distribution import cadence
+
 from . import catalog, frontmatter
 
 CHECKS = ("config", "image-engine", "cms", "fleet", "distribution", "content")
@@ -328,9 +330,25 @@ LINKEDIN_KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "scopes",
+    "cadence",
+    "requirePreview",
+    "checkLink",
+    "weekly",
+    "siteMap",
 )
 LINKEDIN_API_VERSION = "202608"
-X_KEYS = ("account", "siteUrl", "queue", "ledger", "acceptStatuses", "sources", "hashtagLimit", "bannedPatternsFile")
+X_KEYS = (
+    "account",
+    "siteUrl",
+    "queue",
+    "ledger",
+    "acceptStatuses",
+    "sources",
+    "hashtagLimit",
+    "bannedPatternsFile",
+    "cadence",
+    "checkLink",
+)
 X_HANDLE = re.compile(r"\A@?[A-Za-z0-9_]{1,15}\Z")
 LINKEDIN_AUTHOR = re.compile(r"\Aurn:li:(person|organization|organizationBrand|share|ugcPost|image):([A-Za-z0-9_-]+)\Z")
 
@@ -484,6 +502,7 @@ def _linkedin_problems(root: Path, today: date):
     elif status == "future":
         problems.append(("error", f"LinkedIn-Version {api_version} is in the future"))
     problems += _url_and_status_problems("linkedin", site_url, accept)
+    problems += [("error", f"distribution.linkedin.{m}") for m in cadence.problems(block.get("cadence"))]
     return bool(block), problems, ledger
 
 
@@ -510,6 +529,7 @@ def _x_problems(root: Path, today: date):
             ("error", f"account must be an X handle (letters, digits, _, at most 15), got {_inspect(account)}")
         )
     problems += _url_and_status_problems("x", _site_url(block, site), _accepted(block))
+    problems += [("error", f"distribution.x.{m}") for m in cadence.problems(block.get("cadence"))]
     return bool(block), problems, ledger
 
 

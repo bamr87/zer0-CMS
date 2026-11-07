@@ -64,6 +64,13 @@ const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
   [/^\/api\/v2\/content\/pages\/([^/]+)\/unpublish\/$/, 'Take page $1 off the live site on $origin?'],
   [/^\/api\/v2\/content\/pages\/([^/]+)\/schedule\/$/, 'Schedule page $1 to go live (or come down) on $origin?'],
   [/^\/api\/v2\/distribution\/posts\/([^/]+)\/publish\/$/, 'Publish distribution post $1 to its channel from $origin?'],
+  // A scheduled post is published by beat when its time comes, and approving one on a channel with a cadence schedules
+  // it (docs/DISTRIBUTION.md § The cadence): both reach people past the platform later, with no further request.
+  [/^\/api\/v2\/distribution\/posts\/([^/]+)\/schedule\/$/, 'Schedule distribution post $1 to publish to its channel from $origin?'],
+  [
+    /^\/api\/v2\/distribution\/posts\/([^/]+)\/approve\/$/,
+    "Approve distribution post $1 on $origin? On a channel with a cadence, it then publishes in the channel's next free slot.",
+  ],
   [/^\/api\/v2\/newsroom\/issues\/([^/]+)\/send\/$/, 'Send newsletter issue $1 to its subscribers from $origin?'],
 ];
 /** A story's move that puts its page live, by the `status` the body asks for. */
