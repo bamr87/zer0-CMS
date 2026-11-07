@@ -1,5 +1,5 @@
 """`/api/v2/distribution/`: distribution's router (distribution/views.py) and
-LinkedIn's OAuth callback; included from config/urls.py and, for the OpenAPI
+LinkedIn's and X's OAuth callbacks; included from config/urls.py and, for the OpenAPI
 document, from ops/openapi.py."""
 
 from django.urls import path
@@ -15,5 +15,6 @@ router.register("ledger", views.DistributionLedgerViewSet, basename="distributio
 
 urlpatterns = [
     path("oauth/linkedin/", views.linkedin_callback, name="distribution-linkedin-callback"),
+    path("oauth/x/", views.x_callback, name="distribution-x-callback"),
     *router.urls,
 ]

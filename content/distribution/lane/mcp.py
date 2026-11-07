@@ -56,6 +56,20 @@ TOOLS = [
     ),
     _tool("linkedin_queue", "The draft queue: every draft with its status (pending, approved, published) and type."),
     _tool(
+        "linkedin_calendar",
+        "Which accepted draft a queue run releases when: the site's cadence (zer0.json distribution.linkedin.cadence), "
+        "each draft's publish_at and its page's phase. No network call, no write.",
+    ),
+    _tool(
+        "linkedin_sync",
+        "Every shareable page against LinkedIn: shared (its post), featured (as a week's feature), queued (a draft "
+        "waits) or missing. No network call, no write.",
+    ),
+    _tool(
+        "linkedin_revisit",
+        "The posts this lane published, least recently reviewed first: what the review loop takes next.",
+    ),
+    _tool(
         "linkedin_preview",
         "The exact LinkedIn payload a draft would send, the brand guard's findings, and every "
         "blocker. No network call, no write.",
@@ -94,6 +108,17 @@ TOOLS = [
 
 
 class Server:
+    # What the server is, its tools and what it builds per call; the X lane's server (`x_mcp.XServer`) names its own.
+    TOOLS = TOOLS
+    INFO = {"name": "zer0-linkedin", "title": "zer0-CMS LinkedIn lane"}
+    INSTRUCTIONS = (
+        "Draft LinkedIn posts for this site with linkedin_draft; a person approves them. "
+        "Preview before anything else. Publishing is off unless the operator armed it."
+    )
+    ARM, MERGED = ARM_VARIABLE, "ZER0_LINKEDIN_MERGED"
+    CONFIG, PIPELINE = Config, Pipeline
+    ERRORS = (ValueError, KeyError, ConfigError, LedgerError, Error)
+
     def __init__(self, site, *, env, pipeline_options=None):
         self.site, self.env = site, env
         self.options = pipeline_options or {}
@@ -125,15 +150,14 @@ class Server:
                 {
                     "protocolVersion": asked if asked in SUPPORTED_VERSIONS else SUPPORTED_VERSIONS[0],
                     "capabilities": {"tools": {"listChanged": False}},
-                    "serverInfo": {"name": "zer0-linkedin", "title": "zer0-CMS LinkedIn lane"},
-                    "instructions": "Draft LinkedIn posts for this site with linkedin_draft; a person approves them. "
-                    "Preview before anything else. Publishing is off unless the operator armed it.",
+                    "serverInfo": self.INFO,
+                    "instructions": self.INSTRUCTIONS,
                 },
             )
         if method == "ping":
             return result(id_, {})
         if method == "tools/list":
-            return result(id_, {"tools": TOOLS})
+            return result(id_, {"tools": self.TOOLS})
         if method == "tools/call":
             params = message.get("params") if isinstance(message.get("params"), dict) else {}
             arguments = params.get("arguments") if isinstance(params.get("arguments"), dict) else {}
@@ -143,14 +167,14 @@ class Server:
     def call(self, name: str, args: dict) -> dict:
         try:
             # The server never runs as a merged run: a draft must be approved, whatever acceptStatuses says.
-            env = {k: v for k, v in self.env.items() if k != "ZER0_LINKEDIN_MERGED"}
-            config = Config(self.site, env=env)
-            data = self.dispatch(name, args, config, Pipeline(config, **self.options))
+            env = {k: v for k, v in self.env.items() if k != self.MERGED}
+            config = self.CONFIG(self.site, env=env)
+            data = self.dispatch(name, args, config, self.PIPELINE(config, **self.options))
             return {
                 "content": [{"type": "text", "text": data if isinstance(data, str) else json.dumps(data, indent=2)}],
                 "isError": False,
             }
-        except (ValueError, KeyError, ConfigError, LedgerError, Error) as e:
+        except self.ERRORS as e:
             return {"content": [{"type": "text", "text": f"error: {e}"}], "isError": True}
 
     def dispatch(self, name, args, config, pipeline):
@@ -165,6 +189,17 @@ class Server:
                 {"id": d.id, "path": d.relative, "status": d.status, "type": d.type, "source": d.text("source")}
                 for d in pipeline.drafts()
             ]
+        if name == "linkedin_calendar":
+            cadence = config.cadence
+            return {
+                "cadence": cadence.summary() if cadence else None,
+                "timezone": cadence.timezone if cadence else "UTC",
+                "drafts": [row.as_dict() for row in pipeline.calendar()],
+            }
+        if name == "linkedin_sync":
+            return pipeline.sync()
+        if name == "linkedin_revisit":
+            return pipeline.revisit()
         if name == "linkedin_preview":
             return pipeline.preview(pipeline.draft(args["draft"])).as_dict(config.root)
         if name == "linkedin_draft":
@@ -180,8 +215,8 @@ class Server:
         if name == "linkedin_posts":
             return pipeline.posts(count=int(args.get("count") or 10))
         if name == "linkedin_publish":
-            if not truthy(self.env.get(ARM_VARIABLE)):
-                raise ValueError(f"linkedin_publish is off: the operator must start this server with {ARM_VARIABLE}=1")
+            if not truthy(self.env.get(self.ARM)):
+                raise ValueError(f"linkedin_publish is off: the operator must start this server with {self.ARM}=1")
             if args.get("confirm") is not True:
                 raise ValueError("linkedin_publish needs confirm: true")
             return pipeline.publish(pipeline.draft(args["draft"]), live=True).as_dict()

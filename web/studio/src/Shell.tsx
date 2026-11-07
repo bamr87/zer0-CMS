@@ -1,6 +1,7 @@
 // The studio's frame: the navigation over every area, the site switcher, the
 // light/dark switch and the person's menu (their account, API tokens,
-// sign-out), around whichever area is open.
+// sign-out), around whichever area is open. Its links ask `mayLeave` first,
+// so an editor's unsaved edits are only dropped on the person's word.
 import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconMoon, IconSun } from '@tabler/icons-react';
@@ -11,7 +12,7 @@ import { AREAS } from './areas';
 import { useSignOut, type Person } from './auth';
 import { useSite } from './site';
 
-export function Shell({ person }: { person: Person }) {
+export function Shell({ person, mayLeave = () => true }: { person: Person; mayLeave?: () => boolean }) {
   const [opened, { toggle, close }] = useDisclosure();
   const { pathname } = useLocation();
   return (
@@ -25,7 +26,7 @@ export function Shell({ person }: { person: Person }) {
           <Group gap="xs" wrap="nowrap">
             <SiteSwitcher />
             <SchemeToggle />
-            <PersonMenu person={person} />
+            <PersonMenu person={person} mayLeave={mayLeave} />
           </Group>
         </Group>
       </AppShell.Header>
@@ -35,7 +36,10 @@ export function Shell({ person }: { person: Person }) {
             key={area.path}
             component={Link}
             to={area.path}
-            onClick={close}
+            onClick={(event) => {
+              if (!mayLeave()) event.preventDefault();
+              else close();
+            }}
             label={area.label}
             leftSection={<area.icon size={18} stroke={1.6} />}
             rightSection={area.milestone ? <Badge size="xs" variant="light" color="gray">{area.milestone}</Badge> : null}
@@ -65,9 +69,10 @@ function SchemeToggle() {
   );
 }
 
-function PersonMenu({ person }: { person: Person }) {
+function PersonMenu({ person, mayLeave }: { person: Person; mayLeave: () => boolean }) {
   const signOut = useSignOut();
-  const navigate = useNavigate();
+  const go = useNavigate();
+  const navigate = (to: string) => (mayLeave() ? go(to) : undefined);
   return (
     <Menu position="bottom-end">
       <Menu.Target>
@@ -79,7 +84,7 @@ function PersonMenu({ person }: { person: Person }) {
         <Menu.Label>{person.email || person.username}</Menu.Label>
         <Menu.Item onClick={() => void navigate('/account')}>Account and security</Menu.Item>
         <Menu.Item onClick={() => void navigate('/account/tokens')}>API tokens</Menu.Item>
-        <Menu.Item onClick={() => signOut.mutate()}>Sign out</Menu.Item>
+        <Menu.Item onClick={() => mayLeave() && signOut.mutate()}>Sign out</Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );

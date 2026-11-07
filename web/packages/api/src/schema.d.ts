@@ -1730,6 +1730,23 @@ export interface paths {
         patch: operations["distribution_channels_partial_update"];
         trace?: never;
     };
+    "/api/v2/distribution/channels/{public_id}/calendar/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The channel's release calendar: its cadence, the posts scheduled, the next free slots, what went lately */
+        get: operations["distribution_channels_calendar_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/distribution/channels/{public_id}/check/": {
         parameters: {
             query?: never;
@@ -1756,7 +1773,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start connecting a LinkedIn account: the consent URL for its owner (state + PKCE) */
+        /** Start connecting a LinkedIn or X account: the consent URL for its owner (state + PKCE) */
         post: operations["distribution_channels_connect_create"];
         delete?: never;
         options?: never;
@@ -1842,6 +1859,23 @@ export interface paths {
         };
         /** Where LinkedIn returns the account's owner; the code is exchanged on the worker */
         get: operations["distribution_oauth_linkedin_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/oauth/x/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where X returns the account's owner; the code is exchanged on the worker within X's thirty seconds */
+        get: operations["distribution_oauth_x_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1948,6 +1982,40 @@ export interface paths {
         put?: never;
         /** Reject a post, with a reason */
         post: operations["distribution_posts_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/schedule/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Schedule an approved post: at a time a person chose, or the channel's next free slot of its cadence; beat releases it through every gate as this person's publish */
+        post: operations["distribution_posts_schedule_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/unschedule/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take an approved post off the release queue; it stays approved */
+        post: operations["distribution_posts_unschedule_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5570,6 +5638,19 @@ export interface components {
             kind: string;
             message: string;
         };
+        DistributionCalendar: {
+            /** @description The cadence in words; empty without one. */
+            summary: string;
+            timezone: string;
+            /** @description Why the stored cadence cannot be read. */
+            problems: string[];
+            /** @description The approved posts waiting for their time, soonest first. */
+            scheduled: components["schemas"]["DistributionPost"][];
+            /** @description The next free slots. */
+            free: string[];
+            /** @description When the channel's posts went lately. */
+            recent: string[];
+        };
         DistributionChannel: {
             /** Format: uuid */
             readonly id: string;
@@ -5588,7 +5669,7 @@ export interface components {
             readonly newsletter_name: string;
             readonly has_credential: boolean;
             readonly secret_fields: string[];
-            /** @description LinkedIn came back; the worker is exchanging the code. */
+            /** @description LinkedIn or X came back; the worker is exchanging the code. */
             readonly connecting: boolean;
             /** @description Who it publishes as, as the target reports it. */
             readonly account: string;
@@ -5609,6 +5690,12 @@ export interface components {
             auto_draft?: boolean;
             /** @description Publishing to this channel is armed (a person's setting). */
             armed?: boolean;
+            /** @description When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot. */
+            cadence?: {
+                [key: string]: unknown;
+            };
+            /** @description The cadence in words; empty without one. */
+            readonly cadence_summary: string;
             /** @description The deployment publishes to this kind. */
             readonly deployment_armed: boolean;
             readonly can_manage: boolean;
@@ -5627,7 +5714,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -5635,6 +5722,10 @@ export interface components {
             auto_draft?: boolean;
             /** @description Publishing to this channel is armed (a person's setting). */
             armed?: boolean;
+            /** @description When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot. */
+            cadence?: {
+                [key: string]: unknown;
+            };
         };
         DistributionComposeRequest: {
             /** Format: uuid */
@@ -5668,12 +5759,13 @@ export interface components {
         DistributionGuardLevelEnum: "error" | "warning" | "info";
         /**
          * @description * `linkedin` - LinkedIn
+         *     * `x` - X
          *     * `wordpress` - WordPress
          *     * `github_pr` - GitHub pull request
          *     * `email` - Email newsletter
          * @enum {string}
          */
-        DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
+        DistributionKindEnum: "linkedin" | "x" | "wordpress" | "github_pr" | "email";
         DistributionLedgerEntry: {
             /** Format: uuid */
             readonly id: string;
@@ -5735,6 +5827,8 @@ export interface components {
             readonly channel: string;
             readonly channel_name: string;
             readonly channel_kind: string;
+            /** @description The channel's cadence in words, empty without one: approving the post queues it in the next slot. */
+            readonly channel_cadence: string;
             readonly page: number | null;
             /** @default  */
             readonly page_title: string;
@@ -5760,6 +5854,14 @@ export interface components {
             readonly approved_by: string;
             /** Format: date-time */
             readonly approved_at: string | null;
+            /**
+             * Format: date-time
+             * @description When beat releases this approved post: a slot of the channel's cadence, or a time a person chose.
+             */
+            readonly scheduled_for: string | null;
+            readonly scheduled_by: string;
+            /** @description A person chose the time: the cadence's slots and rules do not move it, only the gates hold it. */
+            readonly scheduled_pinned: boolean;
             /** Format: date-time */
             readonly attempted_at: string | null;
             /** Format: date-time */
@@ -5778,6 +5880,8 @@ export interface components {
             readonly channel: string;
             readonly channel_name: string;
             readonly channel_kind: string;
+            /** @description The channel's cadence in words, empty without one: approving the post queues it in the next slot. */
+            readonly channel_cadence: string;
             readonly page: number | null;
             /** @default  */
             readonly page_title: string;
@@ -5803,6 +5907,14 @@ export interface components {
             readonly approved_by: string;
             /** Format: date-time */
             readonly approved_at: string | null;
+            /**
+             * Format: date-time
+             * @description When beat releases this approved post: a slot of the channel's cadence, or a time a person chose.
+             */
+            readonly scheduled_for: string | null;
+            readonly scheduled_by: string;
+            /** @description A person chose the time: the cadence's slots and rules do not move it, only the gates hold it. */
+            readonly scheduled_pinned: boolean;
             /** Format: date-time */
             readonly attempted_at: string | null;
             /** Format: date-time */
@@ -5846,6 +5958,13 @@ export interface components {
         };
         DistributionRejectRequest: {
             reason?: string;
+        };
+        DistributionScheduleRequest: {
+            /**
+             * Format: date-time
+             * @description A time a person chose, which the cadence does not move. Absent: the channel's next free slot.
+             */
+            at?: string | null;
         };
         DistributionStatistic: {
             /** Format: date */
@@ -7603,7 +7722,7 @@ export interface components {
             };
             /** Format: uuid */
             newsletter?: string | null;
-            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            /** @description The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
             credentials?: {
                 [key: string]: string;
             };
@@ -7611,6 +7730,10 @@ export interface components {
             auto_draft?: boolean;
             /** @description Publishing to this channel is armed (a person's setting). */
             armed?: boolean;
+            /** @description When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post schedules it into the next free slot. */
+            cadence?: {
+                [key: string]: unknown;
+            };
         };
         PatchedDistributionPostEditRequest: {
             kind?: components["schemas"]["DistributionPostKindEnum"];
@@ -17389,11 +17512,12 @@ export interface operations {
             query?: {
                 /**
                  * @description * `linkedin` - LinkedIn
+                 *     * `x` - X
                  *     * `wordpress` - WordPress
                  *     * `github_pr` - GitHub pull request
                  *     * `email` - Email newsletter
                  */
-                kind?: "email" | "github_pr" | "linkedin" | "wordpress";
+                kind?: "email" | "github_pr" | "linkedin" | "wordpress" | "x";
                 /** @description A page number within the paginated result set. */
                 page?: number;
                 /** @description Number of results to return per page. */
@@ -17569,6 +17693,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+        };
+    };
+    distribution_channels_calendar_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionCalendar"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -18203,6 +18412,88 @@ export interface operations {
             };
         };
     };
+    distribution_oauth_x_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     distribution_posts_list: {
         parameters: {
             query?: {
@@ -18211,6 +18502,8 @@ export interface operations {
                 page?: number;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Only posts waiting for a time. */
+                scheduled?: boolean;
                 site?: number;
                 /**
                  * @description One or more statuses.
@@ -18745,6 +19038,182 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["DistributionRejectRequest"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_schedule_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DistributionScheduleRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionScheduleRequest"];
+                "multipart/form-data": components["schemas"]["DistributionScheduleRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_unschedule_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

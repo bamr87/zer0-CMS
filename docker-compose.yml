@@ -159,14 +159,18 @@ services:
       # Sites (content/sites/README.md): checkouts may be registered from /sites;
       # the worker, which runs their sync and write-back jobs, mounts it writable.
       SITES_DIR: /sites
-      # Distribution (content/distribution/README.md): the LinkedIn app lets a
-      # person connect a channel (each publishes with its own token), and
+      # Distribution (content/distribution/README.md): the LinkedIn and X apps
+      # let a person connect a channel (each publishes with its own token), and
       # nothing goes out to a kind unless its switch is 1 here and a person
       # armed the channel.
       LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
       LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
       ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
+      X_CLIENT_ID: ${X_CLIENT_ID:-}
+      X_CLIENT_SECRET: ${X_CLIENT_SECRET:-}
+      ZER0_CMS_X_REDIRECT_URI: ${ZER0_CMS_X_REDIRECT_URI:-}
       ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
+      ZER0_X_PUBLISH: ${ZER0_X_PUBLISH:-}
       ZER0_WORDPRESS_PUBLISH: ${ZER0_WORDPRESS_PUBLISH:-}
       ZER0_GITHUB_PR_PUBLISH: ${ZER0_GITHUB_PR_PUBLISH:-}
       ZER0_EMAIL_PUBLISH: ${ZER0_EMAIL_PUBLISH:-}

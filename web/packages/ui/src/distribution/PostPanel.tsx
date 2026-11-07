@@ -2,13 +2,17 @@
 // what changed — changing the text of an approved post, or of one whose
 // attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
-// for LinkedIn the exact payload — and, while an email post waits, that the
+// for LinkedIn and X the exact payload — and, while an email post waits, that the
 // newsroom is sending its issue — and its notes (where its site ledger entry
 // went, say). Approve, reject, publish (asked first, never
 // with unsaved changes, and past a lifted gate only when the person ticks
 // "force"), and record a post
-// found at the target after an attempt that may have landed. The platform
-// checks every one of these again; a disabled button is a courtesy.
+// found at the target after an attempt that may have landed. On a channel with
+// a cadence, approving queues the post in its next slot; any approved post may
+// be scheduled for the next slot or a time a person picks, and unscheduled —
+// beat releases it through every gate (docs/DISTRIBUTION.md § The cadence),
+// and Publish now never waits. The platform checks every one of these again;
+// a disabled button is a courtesy.
 import { Alert, Anchor, Badge, Button, Checkbox, Code, Group, Loader, Modal, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { DistributionPostDetail } from '@zer0/api';
@@ -38,6 +42,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
   const [urn, setUrn] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [force, setForce] = useState(false);
+  const [at, setAt] = useState('');
   const refresh = () => qc.invalidateQueries({ queryKey: ['distribution'] });
   const changed = Object.fromEntries(Object.entries(text).filter(([name, value]) => value !== post[name as keyof typeof text]));
   const save = useMutation({
@@ -56,6 +61,13 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       void refresh();
     },
   });
+  const schedule = useMutation({
+    // A time typed in the person's own zone (datetime-local) goes as the instant it names; none asks for the next slot.
+    mutationFn: (time: string | null) =>
+      call(api.POST('/api/v2/distribution/posts/{public_id}/schedule/', { ...path, body: time ? { at: new Date(time).toISOString() } : {} })),
+    onSuccess: refresh,
+  });
+  const unschedule = useMutation({ mutationFn: () => call(api.POST('/api/v2/distribution/posts/{public_id}/unschedule/', path)), onSuccess: refresh });
   const record = useMutation({
     mutationFn: () => call(api.POST('/api/v2/distribution/posts/{public_id}/record/', { ...path, body: { urn } })),
     onSuccess: refresh,
@@ -73,12 +85,17 @@ function Panel({ post }: { post: DistributionPostDetail }) {
   const unsaved = Object.keys(changed).length > 0;
   const status = statusOf(post.status);
   const forceable = post.blockers.some((b) => FORCEABLE.includes(b.kind));
-  const failure = save.error ?? approve.error ?? reject.error ?? publish.error ?? record.error ?? remove.error;
+  const failure = save.error ?? approve.error ?? reject.error ?? publish.error ?? schedule.error ?? unschedule.error ?? record.error ?? remove.error;
 
   return (
     <Stack>
       <Group gap="xs">
         <Badge color={status.color}>{status.label}</Badge>
+        {post.scheduled_for ? (
+          <Badge color="violet" variant="light">
+            Scheduled
+          </Badge>
+        ) : null}
         <Text size="sm" c="dimmed">
           {post.channel_name} · {kindLabel(post.channel_kind)} · {post.kind === 'update' ? 'a text update' : 'an article'} · drafted by{' '}
           {post.origin === 'person' ? (post.created_by ?? 'a person') : post.origin === 'agent' ? 'an agent' : 'the page going live'}
@@ -126,6 +143,22 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         </Alert>
       ) : null}
       {post.status === 'rejected' && post.reason ? <Alert color="orange">Rejected: {post.reason}</Alert> : null}
+      {post.scheduled_for ? (
+        <Alert color="violet" title={`Scheduled for ${when(post.scheduled_for)}`}>
+          <Stack gap="xs">
+            <Text size="sm">
+              {post.scheduled_pinned ? 'A time a person chose' : `The next slot of ${post.channel_name}’s cadence`}
+              {post.scheduled_by ? `, as ${post.scheduled_by}’s publish` : ''}. It goes then through every gate again; if its page is
+              not live yet it waits for the next slot.
+            </Text>
+            <Group>
+              <Button size="xs" variant="default" disabled={!post.can_publish} loading={unschedule.isPending} onClick={() => unschedule.mutate()}>
+                Unschedule
+              </Button>
+            </Group>
+          </Stack>
+        </Alert>
+      ) : null}
       {post.notes.length ? (
         <Stack gap={2} aria-label="Notes">
           {post.notes.map((note, i) => (
@@ -195,7 +228,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       )}
       {post.payload ? (
         <details>
-          <summary>The exact LinkedIn request</summary>
+          <summary>The exact {kindLabel(post.channel_kind)} request</summary>
           <Code block>{JSON.stringify(post.payload, null, 2)}</Code>
         </details>
       ) : null}
@@ -203,7 +236,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       <Group gap="xs">
         {post.status === 'draft' ? (
           <Button disabled={!post.can_publish} loading={approve.isPending} onClick={() => approve.mutate()}>
-            Approve
+            {post.channel_cadence ? 'Approve and queue' : 'Approve'}
           </Button>
         ) : null}
         {approved ? (
@@ -217,6 +250,30 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           </Button>
         ) : null}
       </Group>
+      {post.status === 'draft' && post.channel_cadence ? (
+        <Text size="sm" c="dimmed">
+          {post.channel_name} publishes on a cadence ({post.channel_cadence}): approving queues the post in its next free slot.
+        </Text>
+      ) : null}
+      {post.status === 'approved' && !post.scheduled_for ? (
+        <Group align="flex-end" aria-label="Schedule">
+          {post.channel_cadence ? (
+            <Button variant="default" disabled={!post.can_publish || unsaved} loading={schedule.isPending && !at} onClick={() => schedule.mutate(null)}>
+              Schedule in the next slot
+            </Button>
+          ) : null}
+          <TextInput
+            type="datetime-local"
+            label="Or at a time"
+            description="Your time zone; the cadence does not move a time you choose"
+            value={at}
+            onChange={(e) => setAt(e.currentTarget.value)}
+          />
+          <Button variant="default" disabled={!post.can_publish || unsaved || !at} loading={schedule.isPending && !!at} onClick={() => schedule.mutate(at)}>
+            Schedule at this time
+          </Button>
+        </Group>
+      ) : null}
       {editable ? (
         <Group align="flex-end">
           <TextInput label="Why reject it" value={reason} onChange={(e) => setReason(e.currentTarget.value)} style={{ flex: 1 }} />
@@ -229,7 +286,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         <Group align="flex-end">
           <TextInput
             label="It went out after all? Record it"
-            description="The post's id at the target — a LinkedIn post URN (urn:li:share:…), a post id, a URL"
+            description="The post's id at the target — a LinkedIn post URN (urn:li:share:…), an X post's number, a post id, a URL"
             value={urn}
             onChange={(e) => setUrn(e.currentTarget.value)}
             style={{ flex: 1 }}
@@ -244,6 +301,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         <Stack>
           <Text size="sm">
             It goes to {post.channel_name} ({kindLabel(post.channel_kind)}) now, and the ledger keeps it from going there twice.
+            {post.scheduled_for ? ` Now, instead of at its scheduled ${when(post.scheduled_for)}.` : ''}
           </Text>
           {forceable ? (
             <Checkbox

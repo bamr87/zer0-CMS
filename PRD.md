@@ -7,10 +7,12 @@
 ### Functional
 
 - FR1: An author can keep a long-form fiction project — including one book of a series — in the books library as a re-importable file tree (manifest, outline and chapter plan, chapters, act guides, character bible, continuity ledger with a timeline, style guide), open it in the studio's Books area, and continue it with the book assistant, whose every result is a suggestion a person reviews (`books.manage`, `books.write` in the capability ledger).
+- FR2: An author can carry a book's chapters — one book of a serial such as the books library's `cost-line` pilot — to a Substack publication, as drafts while they are in progress and as posts once marked published, keyed by each chapter's canonical URL so that a re-sync never makes a second post; by Substack's sanctioned routes (its post importer reading an RSS feed, or a paste-ready copy) by default, with any unofficial route behind the same adapter interface, off unless the deployment arms it.
 
 ### Non-functional
 
 - NFR1: A book in the library round-trips through `import_books` and `export_books` byte for byte, and passes `books validate` with no errors.
+- NFR2: A Substack sync is designed for failure: it detects each failure as retryable or in doubt, contains it to its chapter, retries only failures that cannot have published (with backoff), ledgers a write in doubt as unconfirmed and refuses it until a person forces past it, and logs every outcome without a credential; credentials come from the environment only.
 
 ## Feature catalog
 

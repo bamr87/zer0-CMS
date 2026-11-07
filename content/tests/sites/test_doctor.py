@@ -56,6 +56,11 @@ def comparable(f: dict) -> str:
         ]
     if f["evidence"].startswith(SYNTAX) or f["rule"] == "vendored-linkedin-publisher":
         f.pop("evidence"), f.pop("fingerprint")
+    elif " is not a setting (known: " in f["evidence"]:
+        # The list of known settings is the platform's, which has grown past the Ruby lane's (`cadence`, issue #89);
+        # the finding — this key is not a setting — is what is compared.
+        f["evidence"] = f["evidence"].split(" (known: ", 1)[0]
+        f.pop("fingerprint")
     return json.dumps(f, sort_keys=True)
 
 
@@ -311,3 +316,26 @@ def test_the_distribution_check_as_the_lane_ported_it(tmp_path):
     assert [(f["severity"], f["file"], f["check_id"], len(f["fingerprint"])) for f in vendored] == [
         ("warning", "scripts/features/linkedin/posts.py", "distribution", 12)
     ]
+
+
+def test_the_distribution_check_reads_the_x_block_as_the_x_lane_does(tmp_path):
+    """`distribution.x` beside `distribution.linkedin`: its own settings, account and ledger, and the schema takes
+    it."""
+
+    def findings(block, **files):
+        root = tmp_path / f"s{len(list(tmp_path.iterdir()))}"
+        root.mkdir()
+        (root / "zer0.json").write_text(json.dumps({"distribution": {"x": block}}))
+        for rel, text in files.items():
+            (root / rel).write_text(text)
+        return [f for f in doctor.run(root, today=RECORDED_ON).findings if f["check_id"] in ("distribution", "cms")]
+
+    valid = {"account": "@bamr87", "siteUrl": "https://example.test", "ledger": "x-log.json"}
+    assert [f["rule"] for f in findings(valid)] == ["zer0-json-no-schema"], "nothing about distribution"
+    bad = findings({"account": "not a handle", "author": "urn:li:organization:1"})
+    messages = [f["evidence"] for f in bad if f["check_id"] == "distribution"]
+    assert 'account must be an X handle (letters, digits, _, at most 15), got "not a handle"' in messages
+    assert any("distribution.x.author is not a setting" in m for m in messages)
+    assert "distribution-ledger-unreadable" in [f["rule"] for f in findings(valid, **{"x-log.json": "{ not json"})]
+    outside = findings({"account": "bamr87", "queue": "../outside"})
+    assert any("distribution.x.queue must be a path inside the repository" in f["evidence"] for f in outside)

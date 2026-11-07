@@ -463,6 +463,9 @@ CELERY_BEAT_SCHEDULE = {
     # Distribution's attempts that are over without their worker saying so: a send whose worker died, a post no
     # worker took, an email post whose newsletter issue the newsroom sent or failed (distribution/tasks.py).
     "distribution-settle": {"task": "distribution.tasks.settle_posts", "schedule": 60.0},
+    # Distribution's release queue: the approved posts whose slot or chosen time has come, through every gate, as
+    # their scheduler's publish (distribution/services.py `release_due`, issue #89).
+    "distribution-release": {"task": "distribution.tasks.release_posts", "schedule": 60.0},
     # The automations whose schedule came due: one dispatcher reads every cron line (automations/tasks.py).
     "automations-schedule": {"task": "automations.tasks.tick", "schedule": 60.0},
     # AIEO's tracked citation questions that are due, asked of every engine again (aieo/tasks.py).
@@ -516,22 +519,38 @@ SITES_DIR = env("SITES_DIR", default="")
 # ── Distribution (distribution/README.md) ───────────────────────────────────
 # A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
 # channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
-# LinkedIn lane always had), ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
+# LinkedIn lane always had), ZER0_X_PUBLISH, ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
 DISTRIBUTION_ARMED = {
     kind
     for kind, variable in (
         ("linkedin", "ZER0_LINKEDIN_PUBLISH"),
+        ("x", "ZER0_X_PUBLISH"),
         ("wordpress", "ZER0_WORDPRESS_PUBLISH"),
         ("github_pr", "ZER0_GITHUB_PR_PUBLISH"),
         ("email", "ZER0_EMAIL_PUBLISH"),
     )
     if env.bool(variable, default=False)
 }
+# Substack (distribution/substack/, docs/SUBSTACK.md). Substack has no public write API: the sanctioned routes
+# (`manage.py substack feed|copy`) need only the publication's address and the base of chapters' canonical URLs. The
+# unofficial adapter (`substack sync`) is off unless ZER0_SUBSTACK_UNOFFICIAL is on, authenticates with a session
+# cookie from the environment only (never a file or a row), and publishes only when ZER0_SUBSTACK_PUBLISH is on too.
+SUBSTACK_PUBLICATION_URL = env("SUBSTACK_PUBLICATION_URL", default="")
+SUBSTACK_CANONICAL_BASE = env("SUBSTACK_CANONICAL_BASE", default="")
+SUBSTACK_SESSION_COOKIE = env("SUBSTACK_SESSION_COOKIE", default="")
+ZER0_SUBSTACK_UNOFFICIAL = env.bool("ZER0_SUBSTACK_UNOFFICIAL", default=False)
+ZER0_SUBSTACK_PUBLISH = env.bool("ZER0_SUBSTACK_PUBLISH", default=False)
 # The platform's LinkedIn app (connecting an account, refreshing and introspecting its token), and the address
 # LinkedIn returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/linkedin/.
 LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
 LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
 LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
+# The platform's X app (OAuth 2.0: connecting an account through X's consent screen and renewing its two-hour token),
+# and the address X returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/x/.
+# The site lane's X_API_KEY and X_API_SECRET are another app's, OAuth 1.0a's, and the platform never reads them.
+X_CLIENT_ID = env("X_CLIENT_ID", default="")
+X_CLIENT_SECRET = env("X_CLIENT_SECRET", default="")
+X_REDIRECT_URI = env("ZER0_CMS_X_REDIRECT_URI", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

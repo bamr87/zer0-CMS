@@ -15,6 +15,7 @@ from wagtail.models import Site
 from newsroom.models import Newsletter, Story
 from newsroom.serializers import Visible
 
+from . import cadence as cadences
 from . import services
 from .models import POST_KINDS, SECRETS, Channel, DistributionPost, LedgerEntry, Statistic
 
@@ -37,12 +38,22 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
         child=serializers.CharField(allow_blank=True),
         write_only=True,
         required=False,
-        help_text="The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; "
-        "github_pr: token). Encrypted at rest and never returned.",
+        help_text="The kind's secret (linkedin and x: access_token, refresh_token — Connect sets them; wordpress: "
+        "application_password; github_pr: token). Encrypted at rest and never returned.",
     )
     has_credential = serializers.SerializerMethodField()
-    connecting = serializers.SerializerMethodField(help_text="LinkedIn came back; the worker is exchanging the code.")
+    connecting = serializers.SerializerMethodField(
+        help_text="LinkedIn or X came back; the worker is exchanging the code."
+    )
     deployment_armed = serializers.SerializerMethodField(help_text="The deployment publishes to this kind.")
+    cadence = serializers.DictField(
+        child=serializers.JSONField(),
+        required=False,
+        help_text="When approved posts go (docs/DISTRIBUTION.md § The cadence): timezone, slots, minGap, perDay, "
+        "perWeek, blackout, afterPage. Empty: a post goes when a person publishes it; with one, approving a post "
+        "schedules it into the next free slot.",
+    )
+    cadence_summary = serializers.SerializerMethodField(help_text="The cadence in words; empty without one.")
     secret_fields = serializers.SerializerMethodField()
     can_manage = serializers.SerializerMethodField()
 
@@ -72,6 +83,8 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
             "last_error",
             "auto_draft",
             "armed",
+            "cadence",
+            "cadence_summary",
             "deployment_armed",
             "can_manage",
             "created_at",
@@ -95,6 +108,13 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
 
     def get_connecting(self, row) -> bool:
         return bool(row.pending_encrypted)
+
+    def get_cadence_summary(self, row) -> str:
+        try:
+            cadence = services.channel_cadence(row)
+        except cadences.CadenceError:
+            return ""
+        return cadence.summary() if cadence else ""
 
     def get_deployment_armed(self, row) -> bool:
         return row.kind in settings.DISTRIBUTION_ARMED
@@ -141,6 +161,10 @@ class DistributionPostSerializer(serializers.ModelSerializer):
     notes = serializers.ListField(child=serializers.CharField(), read_only=True)
     created_by = serializers.CharField(source="created_by.username", read_only=True, default=None)
     approved_by = serializers.CharField(source="approved_by.username", read_only=True, default=None)
+    scheduled_by = serializers.CharField(source="scheduled_by.username", read_only=True, default=None)
+    channel_cadence = serializers.SerializerMethodField(
+        help_text="The channel's cadence in words, empty without one: approving the post queues it in the next slot."
+    )
     can_publish = serializers.SerializerMethodField()
 
     class Meta:
@@ -150,6 +174,7 @@ class DistributionPostSerializer(serializers.ModelSerializer):
             "channel",
             "channel_name",
             "channel_kind",
+            "channel_cadence",
             "page",
             "page_title",
             "story",
@@ -169,6 +194,9 @@ class DistributionPostSerializer(serializers.ModelSerializer):
             "created_by",
             "approved_by",
             "approved_at",
+            "scheduled_for",
+            "scheduled_by",
+            "scheduled_pinned",
             "attempted_at",
             "published_at",
             "can_publish",
@@ -176,6 +204,13 @@ class DistributionPostSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+    def get_channel_cadence(self, row) -> str:
+        try:
+            cadence = services.channel_cadence(row.channel)
+        except cadences.CadenceError:
+            return ""
+        return cadence.summary() if cadence else ""
 
     def get_can_publish(self, row) -> bool:
         return services.may_publish(row, self.context["request"].user)
@@ -231,6 +266,25 @@ class DistributionPublishSerializer(serializers.Serializer):
         default=False,
         help_text="Past a guard error, a ledger entry or an unconfirmed attempt — never approval or arming.",
     )
+
+
+class DistributionScheduleSerializer(serializers.Serializer):
+    at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text="A time a person chose, which the cadence does not move. Absent: the channel's next free slot.",
+    )
+
+
+class DistributionCalendarSerializer(serializers.Serializer):
+    summary = serializers.CharField(help_text="The cadence in words; empty without one.")
+    timezone = serializers.CharField()
+    problems = serializers.ListField(child=serializers.CharField(), help_text="Why the stored cadence cannot be read.")
+    scheduled = DistributionPostSerializer(
+        many=True, help_text="The approved posts waiting for their time, soonest first."
+    )
+    free = serializers.ListField(child=serializers.DateTimeField(), help_text="The next free slots.")
+    recent = serializers.ListField(child=serializers.DateTimeField(), help_text="When the channel's posts went lately.")
 
 
 class DistributionRecordSerializer(serializers.Serializer):

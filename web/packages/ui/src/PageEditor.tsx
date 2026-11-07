@@ -14,17 +14,24 @@
 // rewrite there as suggestions too (aieo/PageScore.tsx).
 // Distribute drafts a post of the live page for one of its site's channels
 // (distribution/Compose.tsx); a person approves it in the queue.
+// Unsaved edits are never thrown away behind a person's back (#64): the draft
+// keeps the revision it was edited from as its baseline. A newer revision
+// (someone else's save, an accepted suggestion, a pipeline) replaces a clean
+// draft at once; over a dirty one it raises a notice to keep the edits (a
+// save is then refused, 409) or discard them and load the latest. While the
+// draft is dirty the browser asks before leaving, and the host is told
+// (useSetDirty) so it can ask before navigating away.
 import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Block, PageDetail } from '@zer0/api';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { AiPanel } from './ai/AiPanel';
 import { PageScore } from './aieo/PageScore';
 import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
-import { useApi } from './context';
+import { useApi, useSetDirty } from './context';
 import { Distribute } from './distribution/Compose';
 import { FieldsPanel, fromLocalInput, type FieldValues } from './FieldsPanel';
 import { PageResearch } from './research/PageResearch';
@@ -62,6 +69,8 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
     queryKey: ['page', pageId],
     queryFn: () => call(api.GET('/api/v2/content/pages/{id}/', { params: path })),
   });
+  // The revision this editor's own last action made: the draft takes it as its new baseline.
+  const [own, setOwn] = useState<number | null>(null);
   const act = useMutation({
     mutationFn: async ({ action, changes, at }: { action: PageAction; changes: Changes | null; at?: Schedule }) => {
       let saved: PageDetail | undefined;
@@ -80,6 +89,7 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
       }
     },
     onSuccess: (data, { action }) => {
+      setOwn(data.latest_revision?.id ?? null);
       qc.setQueryData(['page', pageId], data);
       void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== 'page' });
       notifications.show({ message: DONE[action] });
@@ -90,8 +100,8 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
   if (page.isError) return <Alert color="red">{errorText(page.error)}</Alert>;
   return (
     <Draft
-      key={page.data.latest_revision?.id ?? 'none'}
       page={page.data}
+      own={own}
       tab={tab}
       busy={act.isPending}
       failure={act.isError ? errorText(act.error) : null}
@@ -102,25 +112,56 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
 
 interface DraftProps {
   page: PageDetail;
+  /** The revision this editor's own last action made, or null. */
+  own: number | null;
   tab?: string;
   busy: boolean;
   failure: string | null;
   run: (action: PageAction, changes: Changes | null, at?: Schedule) => void;
 }
 
-function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
+function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
+  // The page as it was when these edits began: what they are compared with and saved against.
+  const [base, setBase] = useState<PageDetail>(page);
   const [fields, setFields] = useState<FieldValues>(page.fields);
   const [body, setBody] = useState<Block[]>(page.body);
+  // Bumped on every re-baseline, so the editors drop any state of their own.
+  const [generation, setGeneration] = useState(0);
+  // The newer revision the person chose to keep their edits over.
+  const [kept, setKept] = useState<number | null>(null);
   const [goLive, setGoLive] = useState('');
   const [comeDown, setComeDown] = useState('');
   const [tab, setTab] = useState<string | null>(firstTab ?? 'content');
   const [askingAi, setAskingAi] = useState(false);
-  const changed = Object.fromEntries(Object.entries(fields).filter(([name, value]) => !same(value, page.fields[name])));
-  const bodyChanged = !same(body, page.body);
+  const changed = Object.fromEntries(Object.entries(fields).filter(([name, value]) => !same(value, base.fields[name])));
+  const bodyChanged = !same(body, base.body);
   const dirty = Object.keys(changed).length > 0 || bodyChanged;
   const changes: Changes | null = dirty
-    ? { base_revision_id: page.latest_revision?.id ?? null, fields: changed, ...(bodyChanged ? { body } : {}) }
+    ? { base_revision_id: base.latest_revision?.id ?? null, fields: changed, ...(bodyChanged ? { body } : {}) }
     : null;
+
+  const latest = page.latest_revision?.id ?? null;
+  const moved = latest !== (base.latest_revision?.id ?? null);
+  const loadLatest = () => {
+    setBase(page);
+    setFields(page.fields);
+    setBody(page.body);
+    setKept(null);
+    setGeneration((n) => n + 1);
+  };
+  // A newer revision replaces a clean draft, or one this editor just saved; never other edits.
+  if (moved && (!dirty || latest === own)) loadLatest();
+  const conflict = moved && dirty && latest !== own && kept !== latest;
+
+  const setDirty = useSetDirty();
+  useEffect(() => setDirty?.(dirty), [setDirty, dirty]);
+  useEffect(() => () => setDirty?.(false), [setDirty]);
+  useEffect(() => {
+    if (!dirty) return;
+    const ask = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', ask);
+    return () => window.removeEventListener('beforeunload', ask);
+  }, [dirty]);
   const can = page.permissions;
   const editable = can.edit && !page.lock;
   const hasFile = page.field_specs.some((spec) => spec.group === 'file');
@@ -215,6 +256,23 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
       {page.expire_at && (page.live || page.status === 'scheduled') ? (
         <Alert color="blue">Comes down {new Date(page.expire_at).toLocaleString()}.</Alert>
       ) : null}
+      {conflict ? (
+        <Alert color="orange" title="This page changed while you were editing">
+          <Stack gap="xs">
+            <Text size="sm">
+              Someone saved a newer revision. Your edits are still here, but saving them over it will be refused until you load the latest.
+            </Text>
+            <Group gap="xs">
+              <Button size="xs" variant="default" onClick={() => setKept(latest)}>
+                Keep my edits
+              </Button>
+              <Button size="xs" color="red" variant="light" onClick={loadLatest}>
+                Discard and load latest
+              </Button>
+            </Group>
+          </Stack>
+        </Alert>
+      ) : null}
       {failure ? <Alert color="red">{failure}</Alert> : null}
       <Grid>
         <Grid.Col span={{ base: 12, md: askingAi ? 8 : 12 }}>
@@ -230,21 +288,21 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
               <Tabs.Tab value="citability">Citability</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="content" pt="md">
-              <Stack>
+              <Stack key={generation}>
                 <FieldsPanel specs={page.field_specs} values={fields} group="content" disabled={!editable} onChange={setField} />
                 <BodyEditor blocks={body} onChange={setBody} disabled={!editable} />
               </Stack>
             </Tabs.Panel>
             <Tabs.Panel value="seo" pt="md">
-              <FieldsPanel specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
+              <FieldsPanel key={generation} specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
             </Tabs.Panel>
             {hasFile ? (
               <Tabs.Panel value="file" pt="md">
-                <FieldsPanel specs={page.field_specs} values={fields} group="file" disabled={!editable} onChange={setField} />
+                <FieldsPanel key={generation} specs={page.field_specs} values={fields} group="file" disabled={!editable} onChange={setField} />
               </Tabs.Panel>
             ) : null}
             <Tabs.Panel value="settings" pt="md">
-              <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
+              <FieldsPanel key={generation} specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
             </Tabs.Panel>
             <Tabs.Panel value="suggestions" pt="md">
               <SuggestionInbox pageId={page.id} holdAccept={hold} />

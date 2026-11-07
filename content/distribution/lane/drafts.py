@@ -4,11 +4,15 @@ wait in, and the only place the lane publishes from.
 The dialect is the one the VS Code extension (`src/core/governance/drafts.ts`)
 and the Ruby lane share, so a queue written by any of them reads the same:
 
-    type:   article | update   (`text` is accepted for update; default article)
+    type:   article | update | revision   (`text` is accepted for update; default article)
     status: pending | approved | published   (default pending)
     source: the page an article shares (a path, or `section/YYYY-MM-DD-slug`)
     title / description / link: an article's own card, for a link that is not a page here
     no_thumbnail: true to post without a card image
+    image: an article's own card image, a repository path
+    publish_at: not before this time (a queue run under the cadence)
+    feature: YYYY-Www — the week's featured article, ledgered under `feature:<week>`, not its URL
+    revises: a revision's target, the URN of a post this lane published; its body is the post's new text
 
 The body is the text that publishes. Top-level `*.md` files only, so an
 `examples/` folder never publishes, and a file with no front matter (a README)
@@ -29,7 +33,8 @@ from books.files import set_keys
 from importers import frontmatter
 
 STATUSES = ("pending", "approved", "published")
-TYPES = ("article", "update")
+TYPES = ("article", "update", "revision")
+WEEK = re.compile(r"\A\d{4}-W(0[1-9]|[1-4]\d|5[0-3])\Z")
 ID = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]{0,150}\Z")
 SLUG = re.compile(r"\A[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
@@ -127,7 +132,7 @@ def create(config, *, type: str, slug: str, body: str, meta: dict | None = None)
         raise ValueError("type must be article or update")
     if not SLUG.match(slug or ""):
         raise ValueError(f"draft slug must be lowercase words joined by hyphens: {slug!r}")
-    if type == "update" and not str(body or "").strip():
+    if type in ("update", "revision") and not str(body or "").strip():
         raise ValueError("a draft needs a body")
     fields = {"type": type, "status": "pending"}
     for key, value in (meta or {}).items():

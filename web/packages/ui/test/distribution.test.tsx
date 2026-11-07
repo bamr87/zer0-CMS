@@ -3,8 +3,8 @@
 // when the person ticks it, and showing the platform's blockers when it
 // refuses) and records a post found at the target; Distribute — from the
 // editor or a story — drafts a post and leads to the queue; a channel takes a
-// credential once and never shows it, connects LinkedIn through its consent
-// screen, arms, and downloads and imports its ledger file; the ledger marks an
+// credential once and never shows it, connects LinkedIn and X through their
+// consent screens, arms, and downloads and imports its ledger file; the ledger marks an
 // attempt that may have landed; statistics list the most seen first with
 // totals.
 import { screen, waitFor, within } from '@testing-library/react';
@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { Distribute, Distribution } from '../src';
 import { ChannelPanel } from '../src/distribution/Channels';
+import { ComposeForm } from '../src/distribution/Compose';
 import { Ledger, Statistics } from '../src/distribution/Ledger';
 import { PostPanel } from '../src/distribution/PostPanel';
 import { fakePlatform, renderUi, Reply } from '../../../test/harness';
@@ -196,6 +197,17 @@ describe('a post', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Record' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/record/'))?.body).toEqual({ urn: 'urn:li:share:42' }));
   });
+
+  it('deletes a draft and goes back to the queue — the platform’s empty 204 is the success, not an error', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post(),
+      [`DELETE ${API}/posts/p1/`]: () => new Reply(204, null),
+    });
+    const { go } = renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'distribution' }));
+    expect(screen.queryByText('No Content')).toBeNull();
+  });
 });
 
 describe('a rejected post', () => {
@@ -309,6 +321,42 @@ describe('a channel', () => {
   });
 });
 
+describe('an X channel', () => {
+  it('connects through X’s consent screen, says its token renews itself, and reads its statistics', async () => {
+    const consent = 'https://x.com/i/oauth2/authorize?response_type=code&state=s&code_challenge=x';
+    const x = { id: 'c3', kind: 'x', kind_label: 'X', name: 'The account', settings: { account: 'bamr87' }, account: '@bamr87' };
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c3/`]: () => channel({ ...x, has_credential: true, expires_at: '2026-10-31T12:00:00Z' }),
+      [`POST ${API}/channels/c3/connect/`]: () => ({ url: consent }),
+      [`POST ${API}/channels/c3/statistics/`]: () => new Reply(202, {}),
+      [`GET ${API}/channels/c3/ledger-file/`]: () => ({ filename: 'x-c3.json', content: '{}\n' }),
+    });
+    renderUi(<ChannelPanel channelId="c3" />, { api: platform.api });
+    expect(await screen.findByLabelText('Account')).toHaveValue('bamr87');
+    expect(screen.getByText(/publishes as @bamr87 · its token renews itself/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Connect with X' }));
+    expect(await screen.findByRole('link', { name: 'Continue to X' })).toHaveAttribute('href', consent);
+    expect(screen.queryByLabelText('API key')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Read statistics now' }));
+    expect(await screen.findByText('The worker is reading X’s statistics; they appear under Statistics.')).toBeInTheDocument();
+  });
+
+  it('offers a text update, and the ledger links its post', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/`]: () => listOf([channel({ id: 'c3', kind: 'x', kind_label: 'X', name: 'The account' })]),
+      [`GET ${API}/ledger/`]: () => listOf([entry({ channel: 'c3', channel_kind: 'x', urn: '1850000000000000001' })]),
+    });
+    const { unmount } = renderUi(<ComposeForm siteId={1} onDone={() => undefined} />, { api: platform.api });
+    await userEvent.click(await screen.findByLabelText('Channel', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: /The account — X/ }));
+    expect(screen.getByRole('radio', { name: 'A text update' })).toBeInTheDocument();
+    unmount();
+    renderUi(<Ledger siteId={1} />, { api: platform.api });
+    const table = await screen.findByRole('table', { name: 'The ledger' });
+    expect(within(table).getByRole('link', { name: '1850000000000000001' })).toHaveAttribute('href', 'https://x.com/i/status/1850000000000000001');
+  });
+});
+
 describe('a channel to someone who does not manage channels', () => {
   it('offers neither a check nor a statistics read', async () => {
     const platform = fakePlatform({
@@ -369,5 +417,102 @@ describe('the ledger and its statistics', () => {
       expect.stringContaining('All of them'),
     ]);
     expect(rows.at(-1)).toHaveTextContent('100');
+  });
+});
+
+describe('the release queue (a channel’s cadence)', () => {
+  it('approves into the next slot on a cadence channel, shows when it goes, and unschedules', async () => {
+    let state: Record<string, unknown> = { status: 'draft', channel_cadence: 'tue,thu 09:00 (America/Denver), at most 1 a day' };
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post(state),
+      [`POST ${API}/posts/p1/approve/`]: () => {
+        state = { ...state, status: 'approved', scheduled_for: '2026-11-10T16:00:00Z', scheduled_by: 'editor', scheduled_pinned: false, blockers: [], updated_at: '2026-11-05T00:00:01Z' };
+        return post(state);
+      },
+      [`POST ${API}/posts/p1/unschedule/`]: () => {
+        state = { ...state, scheduled_for: null, scheduled_by: null, updated_at: '2026-11-05T00:00:02Z' };
+        return post(state);
+      },
+      [`POST ${API}/posts/p1/schedule/`]: ({ body }) => {
+        state = { ...state, scheduled_for: (body as { at?: string }).at ?? '2026-11-12T16:00:00Z', scheduled_pinned: Boolean((body as { at?: string }).at), updated_at: '2026-11-05T00:00:03Z' };
+        return post(state);
+      },
+    });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByText(/publishes on a cadence \(tue,thu 09:00/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Approve and queue' }));
+    expect(await screen.findByText(/The next slot of The page’s cadence, as editor’s publish/)).toBeInTheDocument();
+    expect(screen.getByText('Scheduled')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Unschedule' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Schedule in the next slot' }));
+    await waitFor(() => expect(platform.calls.filter((c) => c.path === `${API}/posts/p1/schedule/`).map((c) => c.body)).toEqual([{}]));
+    expect(await screen.findByRole('button', { name: 'Unschedule' })).toBeInTheDocument();
+  });
+
+  it('schedules a post on a channel with no cadence at a time a person picks', async () => {
+    let state: Record<string, unknown> = { status: 'approved', channel_cadence: '', blockers: [] };
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post(state),
+      [`POST ${API}/posts/p1/schedule/`]: () => {
+        state = { ...state, scheduled_for: '2026-11-20T17:30:00Z', scheduled_pinned: true, updated_at: '2026-11-05T00:00:00Z' };
+        return post(state);
+      },
+    });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByRole('button', { name: 'Publish…' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Schedule in the next slot' })).toBeNull();
+    const at = screen.getByLabelText('Or at a time');
+    await userEvent.type(at, '2026-11-20T10:30');
+    await userEvent.click(screen.getByRole('button', { name: 'Schedule at this time' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.path === `${API}/posts/p1/schedule/`)?.body).toEqual({ at: new Date('2026-11-20T10:30').toISOString() }));
+    expect(await screen.findByText(/A time a person chose/)).toBeInTheDocument();
+  });
+
+  it('sets a channel’s cadence from the form and shows its release calendar', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c1/`]: () => channel({ cadence: {}, cadence_summary: '' }),
+      [`PATCH ${API}/channels/c1/`]: () => channel({ cadence: { slots: ['tue 09:00'] }, cadence_summary: 'tue 09:00 (UTC), at most 1 a day' }),
+      [`GET ${API}/channels/c1/ledger-file/`]: () => ({ filename: 'linkedin-c1.json', content: '{}\n' }),
+      [`GET ${API}/channels/c1/calendar/`]: () => ({
+        summary: 'tue 09:00 (UTC), at most 1 a day',
+        timezone: 'UTC',
+        problems: [],
+        scheduled: [post({ id: 'p9', title: 'Weekly restores', status: 'approved', scheduled_for: '2026-11-10T09:00:00Z', scheduled_pinned: true })],
+        free: ['2026-11-17T09:00:00Z', '2026-11-24T09:00:00Z'],
+        recent: ['2026-11-03T09:00:00Z'],
+      }),
+    });
+    const { go } = renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
+    expect(await screen.findByText(/No cadence: an approved post goes when a person publishes it/)).toBeInTheDocument();
+    const calendar = await screen.findByRole('table', { name: 'Scheduled posts' });
+    expect(within(calendar).getByText('(a time a person chose)')).toBeInTheDocument();
+    await userEvent.click(within(calendar).getByRole('button', { name: 'Weekly restores' }));
+    expect(go).toHaveBeenCalledWith({ to: 'distribution-post', id: 'p9' });
+    expect(screen.getByText(/Next free slots:/)).toBeInTheDocument();
+    const timezone = screen.getByLabelText('Time zone');
+    await userEvent.clear(timezone);
+    await userEvent.type(timezone, 'America/Denver');
+    await userEvent.type(screen.getByLabelText('Slots'), 'tue 09:00, thu 09:00');
+    await userEvent.type(screen.getByLabelText('Gap between posts'), '48h');
+    await userEvent.type(screen.getByLabelText('At most a week'), '2');
+    await userEvent.type(screen.getByLabelText('Blackout dates'), '2026-12-24..2027-01-01');
+    await userEvent.click(screen.getByRole('button', { name: 'Save the cadence' }));
+    await waitFor(() =>
+      expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        cadence: { timezone: 'America/Denver', slots: ['tue 09:00', 'thu 09:00'], minGap: '48h', perWeek: 2, blackout: ['2026-12-24..2027-01-01'] },
+      }),
+    );
+  });
+
+  it('lists when each post goes and filters to the scheduled ones', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/`]: () => listOf([post({ status: 'approved', scheduled_for: '2026-11-10T16:00:00Z' })]),
+      [`GET ${API}/channels/`]: () => listOf([channel()]),
+    });
+    renderUi(<Distribution siteId={1} />, { api: platform.api });
+    const table = await screen.findByRole('table', { name: 'The queue' });
+    expect(within(table).getByText(/^scheduled /)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Scheduled only' }));
+    await waitFor(() => expect(platform.calls.filter((c) => c.path === `${API}/posts/`).at(-1)?.query.get('scheduled')).toBe('true'));
   });
 });

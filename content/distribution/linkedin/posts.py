@@ -85,6 +85,19 @@ def by_author(client, *, author: str, count: int = 10) -> list[dict]:
     return [trim(post) for post in client.json("posts_by_author", query=query).get("elements") or []]
 
 
+def update_payload(*, commentary: str) -> dict:
+    """A revision: the post's text, and nothing else (the Posts API's PARTIAL_UPDATE takes `commentary`; the article
+    card is fixed once posted)."""
+    return {"patch": {"$set": {"commentary": restli.escape(commentary)}}}
+
+
+def update(client, urn: str, payload: dict) -> bool:
+    """POST /rest/posts/{urn} with X-RestLi-Method: PARTIAL_UPDATE → 204."""
+    check_post(urn)
+    client.request("posts_update", path={"urn": urn}, json=payload)
+    return True
+
+
 def delete(client, urn: str) -> bool:
     check_post(urn)
     client.request("posts_delete", path={"urn": urn})

@@ -11,6 +11,7 @@ import { useApi } from '../context';
 
 export const KINDS: { value: DistributionKind; label: string }[] = [
   { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'x', label: 'X' },
   { value: 'wordpress', label: 'WordPress' },
   { value: 'github_pr', label: 'GitHub pull request' },
   { value: 'email', label: 'Email newsletter' },
@@ -29,13 +30,24 @@ export const STATUSES: { value: DistributionPostStatus; label: string; color: st
 
 export const statusOf = (value: string) => STATUSES.find((s) => s.value === value) ?? DRAFT;
 export const kindLabel = (value: string) => KINDS.find((k) => k.value === value)?.label ?? value;
+/** The kinds whose posts the platform reads aggregate counts for, and that take a text update with no page. */
+export const MEASURED: string[] = ['linkedin', 'x'];
+export const TEXT_UPDATES: string[] = ['linkedin', 'x'];
+/** The kinds a person connects through the target's consent screen, as the platform's own app. */
+export const CONNECTS: string[] = ['linkedin', 'x'];
+/** The kinds whose short-lived token the platform renews by itself (X's lasts two hours). */
+export const RENEWS: string[] = ['x'];
 export const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : '—');
 
 /** What each kind keeps in its settings, as the platform's channel takes them (distribution/models.py). */
 export const SETTINGS: Record<DistributionKind, { name: string; label: string; description?: string }[]> = {
   linkedin: [
-    { name: 'author', label: 'Author', description: 'urn:li:organization:… for a page, urn:li:person:… for a profile' },
+    { name: 'author', label: 'Author', description: 'urn:li:organization:… for a page; empty, Connect fills in the profile of whoever connects it (urn:li:person:…)' },
     { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own ledger (e.g. .github/linkedin-log.json), read before and written after a publish' },
+  ],
+  x: [
+    { name: 'account', label: 'Account', description: 'The X handle it posts as, e.g. @bamr87 — empty, Connect fills it in; set, a connection for any other account is refused' },
+    { name: 'ledger_file', label: 'Site ledger file', description: 'Optional: the site’s own X ledger (e.g. .github/x-log.json), read before and written after a publish' },
   ],
   wordpress: [
     { name: 'url', label: 'Site address', description: 'https://blog.example.com' },
@@ -71,7 +83,7 @@ export function useChannel(id: string) {
   return useQuery({
     queryKey: ['distribution', 'channel', id],
     queryFn: () => call(api.GET('/api/v2/distribution/channels/{public_id}/', { params: { path: { public_id: id } } })),
-    // The worker is exchanging LinkedIn's code: follow the channel until it is connected or says why not.
+    // The worker is exchanging LinkedIn's or X's code: follow the channel until it is connected or says why not.
     refetchInterval: (query) => (query.state.data?.connecting ? 1500 : false),
   });
 }

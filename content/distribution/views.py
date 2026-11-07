@@ -30,7 +30,7 @@ from ops.openapi import ERROR_RESPONSES
 from . import serializers as s
 from . import services
 from .linkedin import oauth
-from .models import LEDGER_STATES, Channel, DistributionPost, LedgerEntry, Statistic
+from .models import LEDGER_STATES, Channel, DistributionPost, Kind, LedgerEntry, Statistic
 
 SESSION_KEY = "distribution_oauth"
 
@@ -41,8 +41,18 @@ class Paged(PageNumberPagination):
     max_page_size = 200
 
 
-def redirect_uri(request) -> str:
-    return settings.LINKEDIN_REDIRECT_URI or request.build_absolute_uri(reverse("distribution-linkedin-callback"))
+# Where each kind's consent screen sends the account's owner back: the route, and the setting that overrides it.
+CALLBACKS = {
+    Kind.LINKEDIN: ("distribution-linkedin-callback", "LINKEDIN_REDIRECT_URI"),
+    Kind.X: ("distribution-x-callback", "X_REDIRECT_URI"),
+}
+
+
+def redirect_uri(request, kind=Kind.LINKEDIN) -> str:
+    if kind not in CALLBACKS:
+        return ""  # the kind does not connect: `services.start_connect` says so
+    name, setting = CALLBACKS[kind]
+    return getattr(settings, setting) or request.build_absolute_uri(reverse(name))
 
 
 # ── channels ────────────────────────────────────────────────────────────────
@@ -82,16 +92,21 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
     @extend_schema(
         request=None,
         responses={200: s.DistributionConnectSerializer, **ERROR_RESPONSES},
-        summary="Start connecting a LinkedIn account: the consent URL for its owner (state + PKCE)",
+        summary="Start connecting a LinkedIn or X account: the consent URL for its owner (state + PKCE)",
     )
     @action(detail=True, methods=["post"])
     def connect(self, request, public_id=None):
         channel = self.get_object()
         with service_errors():
-            started = services.start_connect(channel, request.user, redirect_uri(request))
+            started = services.start_connect(channel, request.user, redirect_uri(request, channel.kind))
         waiting = request.session.get(SESSION_KEY, {})
         waiting = {k: v for k, v in waiting.items() if time.time() - v["at"] < oauth.STATE_TTL}
-        waiting[started["state"]] = {"channel": channel.pk, "verifier": started["verifier"], "at": time.time()}
+        waiting[started["state"]] = {
+            "channel": channel.pk,
+            "kind": channel.kind,
+            "verifier": started["verifier"],
+            "at": time.time(),
+        }
         request.session[SESSION_KEY] = waiting
         return Response({"url": started["url"]})
 
@@ -152,6 +167,16 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
             counts = services.import_ledger(channel, request.user, body.validated_data["content"])
         return Response(counts)
 
+    @extend_schema(
+        request=None,
+        responses={200: s.DistributionCalendarSerializer, **ERROR_RESPONSES},
+        summary="The channel's release calendar: its cadence, the posts scheduled, the next free slots, what went lately",
+    )
+    @action(detail=True, methods=["get"])
+    def calendar(self, request, public_id=None):
+        data = services.calendar(self.get_object(), request.user)
+        return Response(s.DistributionCalendarSerializer(data, context=self.get_serializer_context()).data)
+
 
 @extend_schema(
     request=None,
@@ -161,11 +186,28 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
 @api_view(["GET"])
 @permission_classes([IsPerson])
 def linkedin_callback(request):
+    return _callback(request, Kind.LINKEDIN)
+
+
+@extend_schema(
+    request=None,
+    responses={302: None, **ERROR_RESPONSES},
+    summary="Where X returns the account's owner; the code is exchanged on the worker within X's thirty seconds",
+)
+@api_view(["GET"])
+@permission_classes([IsPerson])
+def x_callback(request):
+    return _callback(request, Kind.X)
+
+
+def _callback(request, kind):
+    """A state this session started for this kind less than ten minutes ago, once; then the code goes to the
+    worker."""
     state = request.query_params.get("state", "")
     waiting = request.session.get(SESSION_KEY, {})
     saved = waiting.pop(state, None) if state else None
     request.session[SESSION_KEY] = waiting  # a state is single-use
-    if saved is None or time.time() - saved["at"] > oauth.STATE_TTL:
+    if saved is None or time.time() - saved["at"] > oauth.STATE_TTL or saved.get("kind", Kind.LINKEDIN) != kind:
         raise Forbidden("this connection was not started here, or it expired: start it again from the channel")
     channel = Channel.objects.visible_to(request.user).filter(pk=saved["channel"]).first()
     if channel is None:
@@ -181,7 +223,7 @@ def linkedin_callback(request):
             channel,
             code=request.query_params.get("code", ""),
             verifier=saved["verifier"],
-            redirect_uri=redirect_uri(request),
+            redirect_uri=redirect_uri(request, kind),
         )
     return HttpResponseRedirect(f"{target}?connecting=1")
 
@@ -193,12 +235,15 @@ class PostFilter(filters.FilterSet):
     channel = filters.UUIDFilter(field_name="channel__public_id")
     site = filters.NumberFilter(field_name="channel__site")
     status = filters.MultipleChoiceFilter(choices=DistributionPost.Status.choices, help_text="One or more statuses.")
+    scheduled = filters.BooleanFilter(
+        field_name="scheduled_for", lookup_expr="isnull", exclude=True, help_text="Only posts waiting for a time."
+    )
     page = filters.NumberFilter(field_name="page_id")
     story = filters.UUIDFilter(field_name="story__public_id")
 
     class Meta:
         model = DistributionPost
-        fields = ["channel", "site", "status", "page", "story"]
+        fields = ["channel", "site", "status", "scheduled", "page", "story"]
 
 
 @extend_schema_view(
@@ -311,6 +356,31 @@ class DistributionPostViewSet(
         with service_errors():
             post = services.request_publish(self.get_object(), request.user, force=body.validated_data["force"])
         return self.respond(post, status.HTTP_202_ACCEPTED)
+
+    @extend_schema(
+        request=s.DistributionScheduleSerializer,
+        responses={200: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
+        summary=(
+            "Schedule an approved post: at a time a person chose, or the channel's next free slot of its cadence; "
+            "beat releases it through every gate as this person's publish"
+        ),
+    )
+    @action(detail=True, methods=["post"])
+    def schedule(self, request, public_id=None):
+        body = s.DistributionScheduleSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        with service_errors():
+            return self.respond(services.schedule(self.get_object(), request.user, body.validated_data.get("at")))
+
+    @extend_schema(
+        request=None,
+        responses={200: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
+        summary="Take an approved post off the release queue; it stays approved",
+    )
+    @action(detail=True, methods=["post"])
+    def unschedule(self, request, public_id=None):
+        with service_errors():
+            return self.respond(services.unschedule(self.get_object(), request.user))
 
     @extend_schema(
         request=s.DistributionRecordSerializer,

@@ -13,7 +13,7 @@ them:
 | image-engine | a vendored preview-generator fork exists                | no `preview_images:`; a Gemfile without the image generator |
 | cms          | `zer0.json` invalid JSON(C), or a content folder missing | no `zer0.json`; no `$schema`; it breaks schemas/zer0.schema.json |
 | fleet        | `fleet.manifest.yml` present but not strict YAML        | — |
-| distribution | the `distribution.linkedin` block invalid, its ledger unreadable | a setting it does not know, a missing author or URL; a vendored per-site publisher |
+| distribution | the `distribution.linkedin` or `distribution.x` block invalid, its ledger unreadable | a setting it does not know, a missing author, account or URL; a vendored per-site publisher |
 | content      | a catalogued file whose front matter does not parse     | a field its content type (zer0.json) requires is empty |
 
 What changed from the Ruby doctor, and why (ADR 0006 decision 4: the theme
@@ -54,6 +54,8 @@ from datetime import date
 from pathlib import Path
 
 import yaml
+
+from distribution import cadence
 
 from . import catalog, frontmatter
 
@@ -328,8 +330,26 @@ LINKEDIN_KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "scopes",
+    "cadence",
+    "requirePreview",
+    "checkLink",
+    "weekly",
+    "siteMap",
 )
 LINKEDIN_API_VERSION = "202608"
+X_KEYS = (
+    "account",
+    "siteUrl",
+    "queue",
+    "ledger",
+    "acceptStatuses",
+    "sources",
+    "hashtagLimit",
+    "bannedPatternsFile",
+    "cadence",
+    "checkLink",
+)
+X_HANDLE = re.compile(r"\A@?[A-Za-z0-9_]{1,15}\Z")
 LINKEDIN_AUTHOR = re.compile(r"\Aurn:li:(person|organization|organizationBrand|share|ugcPost|image):([A-Za-z0-9_-]+)\Z")
 
 
@@ -349,11 +369,11 @@ def _first(*values) -> str | None:
     return None
 
 
-def _confined(value, key) -> str:
+def _confined(value, key, block="linkedin") -> str:
     """A repository-relative path that stays inside the repository."""
     text = str(value).strip().replace("\\", "/")
     if not text or text.startswith("/") or ".." in text.split("/") or re.match(r"[A-Za-z]:", text):
-        raise _ConfigError(f"distribution.linkedin.{key} must be a path inside the repository, got {_inspect(value)}")
+        raise _ConfigError(f"distribution.{block}.{key} must be a path inside the repository, got {_inspect(value)}")
     return os.path.normpath(text)
 
 
@@ -367,10 +387,8 @@ def _version_status(version: str, today: date) -> str:
     return "sunset" if age >= 12 else "aging" if age >= 10 else "ok"
 
 
-def _linkedin_problems(root: Path, today: date):
-    """(configured, [(severity, message)], ledger path) for `zer0.json`'s
-    `distribution.linkedin` block, as the distribution lane reads it with no
-    environment: the doctor reports what the repository says."""
+def _read(root: Path):
+    """(zer0.json, _config.yml, [(severity, message)]) as the distribution lanes read them."""
     problems = []
     try:
         zer0 = jsonc_loads((root / "zer0.json").read_text(encoding="utf-8"))
@@ -378,10 +396,6 @@ def _linkedin_problems(root: Path, today: date):
         problems.append(("error", f"zer0.json does not parse: {str(e).splitlines()[0].strip()}"))
         zer0 = {}
     zer0 = zer0 if isinstance(zer0, dict) else {}
-    distribution = zer0.get("distribution")
-    block = distribution.get("linkedin") if isinstance(distribution, dict) else None
-    block = block if isinstance(block, dict) else {}
-    cms = zer0.get("cms")
     site = {}
     if (root / "_config.yml").is_file():
         try:
@@ -389,11 +403,63 @@ def _linkedin_problems(root: Path, today: date):
             site = loaded if isinstance(loaded, dict) else {}
         except (yaml.YAMLError, UnicodeDecodeError) as e:
             problems.append(("error", f"_config.yml does not parse: {frontmatter.first_line(e)}"))
-    jekyll_linkedin = site.get("linkedin") if isinstance(site.get("linkedin"), dict) else {}
+    return zer0, site, problems
+
+
+def _site_url(block: dict, site: dict) -> str:
     url = str(site.get("url") or "").strip()
     jekyll_url = f"{url.rstrip('/')}{str(site.get('baseurl') or '').strip().rstrip('/')}" if url else None
+    return (_first(block.get("siteUrl"), jekyll_url) or "").rstrip("/")
+
+
+def _accepted(block: dict) -> list:
+    accept = block.get("acceptStatuses")
+    accept = ["approved"] if accept is None or accept is False else accept if isinstance(accept, list) else [accept]
+    return [str(s).strip().lower() for s in accept]
+
+
+def _url_and_status_problems(name: str, site_url: str, accept: list) -> list:
+    problems = []
+    if not site_url:
+        problems.append(
+            (
+                "warning",
+                f"no site URL: set url in _config.yml or distribution.{name}.siteUrl — article shares need one",
+            )
+        )
+    elif not re.match(r"https?://[^\s/]+", site_url):
+        problems.append(("error", f"siteUrl must be an absolute http(s) URL, got {_inspect(site_url)}"))
+    for status_name in accept:
+        if status_name not in ("pending", "approved"):
+            problems.append(("error", f"acceptStatuses may hold pending and approved, not {_inspect(status_name)}"))
+    if not accept:
+        problems.append(("error", "acceptStatuses is empty — nothing could ever publish"))
+    elif "approved" not in accept:
+        problems.append(
+            (
+                "warning",
+                "acceptStatuses has no approved: nothing can publish outside a merged run on the default branch",
+            )
+        )
+    return problems
+
+
+def _block(zer0: dict, name: str) -> dict:
+    distribution = zer0.get("distribution")
+    block = distribution.get(name) if isinstance(distribution, dict) else None
+    return block if isinstance(block, dict) else {}
+
+
+def _linkedin_problems(root: Path, today: date):
+    """(configured, [(severity, message)], ledger path) for `zer0.json`'s
+    `distribution.linkedin` block, as the distribution lane reads it with no
+    environment: the doctor reports what the repository says."""
+    zer0, site, problems = _read(root)
+    block = _block(zer0, "linkedin")
+    cms = zer0.get("cms")
+    jekyll_linkedin = site.get("linkedin") if isinstance(site.get("linkedin"), dict) else {}
     author = _first(block.get("author"), jekyll_linkedin.get("org_urn"))
-    site_url = (_first(block.get("siteUrl"), jekyll_url) or "").rstrip("/")
+    site_url = _site_url(block, site)
     api_version = _first(block.get("apiVersion"), LINKEDIN_API_VERSION) or ""
     # In the lane's order, so the first path it would refuse is the one reported.
     _confined(block.get("queue") or ".zer0/drafts/linkedin", "queue")
@@ -402,9 +468,7 @@ def _linkedin_problems(root: Path, today: date):
         if block.get(key):
             _confined(block[key], key)
     _confined((cms.get("root") if isinstance(cms, dict) else None) or ".cms", "cms.root")
-    accept = block.get("acceptStatuses")
-    accept = ["approved"] if accept is None or accept is False else accept if isinstance(accept, list) else [accept]
-    accept = [str(s).strip().lower() for s in accept]
+    accept = _accepted(block)
 
     for key in block:
         if key not in LINKEDIN_KEYS:
@@ -437,27 +501,35 @@ def _linkedin_problems(root: Path, today: date):
         )
     elif status == "future":
         problems.append(("error", f"LinkedIn-Version {api_version} is in the future"))
-    if not site_url:
+    problems += _url_and_status_problems("linkedin", site_url, accept)
+    problems += [("error", f"distribution.linkedin.{m}") for m in cadence.problems(block.get("cadence"))]
+    return bool(block), problems, ledger
+
+
+def _x_problems(root: Path, today: date):
+    """The same for `distribution.x`, as the X lane (`lane/x_site.py`) reads it."""
+    zer0, site, problems = _read(root)
+    block = _block(zer0, "x")
+    cms = zer0.get("cms")
+    _confined(block.get("queue") or ".zer0/drafts/x", "queue", "x")
+    ledger = _confined(block.get("ledger") or ".zer0/x-ledger.json", "ledger", "x")
+    if block.get("bannedPatternsFile"):
+        _confined(block["bannedPatternsFile"], "bannedPatternsFile", "x")
+    _confined((cms.get("root") if isinstance(cms, dict) else None) or ".cms", "cms.root", "x")
+    for key in block:
+        if key not in X_KEYS:
+            problems.append(("warning", f"distribution.x.{key} is not a setting (known: {', '.join(X_KEYS)})"))
+    account = _first(block.get("account"))
+    if not account:
         problems.append(
-            (
-                "warning",
-                "no site URL: set url in _config.yml or distribution.linkedin.siteUrl — article shares need one",
-            )
+            ("warning", "no X account: set distribution.x.account (the handle the token posts as) in zer0.json")
         )
-    elif not re.match(r"https?://[^\s/]+", site_url):
-        problems.append(("error", f"siteUrl must be an absolute http(s) URL, got {_inspect(site_url)}"))
-    for status_name in accept:
-        if status_name not in ("pending", "approved"):
-            problems.append(("error", f"acceptStatuses may hold pending and approved, not {_inspect(status_name)}"))
-    if not accept:
-        problems.append(("error", "acceptStatuses is empty — nothing could ever publish"))
-    elif "approved" not in accept:
+    elif not X_HANDLE.match(account):
         problems.append(
-            (
-                "warning",
-                "acceptStatuses has no approved: nothing can publish outside a merged run on the default branch",
-            )
+            ("error", f"account must be an X handle (letters, digits, _, at most 15), got {_inspect(account)}")
         )
+    problems += _url_and_status_problems("x", _site_url(block, site), _accepted(block))
+    problems += [("error", f"distribution.x.{m}") for m in cadence.problems(block.get("cadence"))]
     return bool(block), problems, ledger
 
 
@@ -468,25 +540,28 @@ def check_distribution(root: Path, findings: list, today: date | None = None) ->
         findings.append(finding("distribution", "warning", "vendored-linkedin-publisher", evidence, file=vendored))
     if not (root / "zer0.json").is_file():
         return
-    try:
-        configured, problems, ledger = _linkedin_problems(root, today or date.today())
-    except _ConfigError as e:
-        findings.append(finding("distribution", "error", "distribution-config-invalid", str(e), file="zer0.json"))
-        return
-    if not configured:
-        return
-    for severity, message in problems:
-        rule = "distribution-config-invalid" if severity == "error" else "distribution-config"
-        findings.append(finding("distribution", severity, rule, message, file="zer0.json"))
-    path = root / ledger
-    if path.is_file():
+    for lane in (_linkedin_problems, _x_problems):
         try:
-            readable = isinstance(json.loads(path.read_text(encoding="utf-8")), dict)
-        except (ValueError, OSError):
-            readable = False
-        if not readable:
-            evidence = f"{ledger} is not valid JSON"
-            findings.append(finding("distribution", "error", "distribution-ledger-unreadable", evidence, file=ledger))
+            configured, problems, ledger = lane(root, today or date.today())
+        except _ConfigError as e:
+            findings.append(finding("distribution", "error", "distribution-config-invalid", str(e), file="zer0.json"))
+            continue
+        if not configured:
+            continue
+        for severity, message in problems:
+            rule = "distribution-config-invalid" if severity == "error" else "distribution-config"
+            findings.append(finding("distribution", severity, rule, message, file="zer0.json"))
+        path = root / ledger
+        if path.is_file():
+            try:
+                readable = isinstance(json.loads(path.read_text(encoding="utf-8")), dict)
+            except (ValueError, OSError):
+                readable = False
+            if not readable:
+                evidence = f"{ledger} is not valid JSON"
+                findings.append(
+                    finding("distribution", "error", "distribution-ledger-unreadable", evidence, file=ledger)
+                )
 
 
 # ── content ─────────────────────────────────────────────────────────────────

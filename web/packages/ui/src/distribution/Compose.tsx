@@ -13,7 +13,7 @@ import { oneClick } from '../ai/shared';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
-import { kindLabel, useChannels } from './shared';
+import { kindLabel, TEXT_UPDATES, useChannels } from './shared';
 
 interface Target {
   pageId?: number;
@@ -63,7 +63,7 @@ export function ComposeForm({ pageId, storyId, siteId, onDone }: Target & { onDo
         value={channel}
         onChange={setChannel}
       />
-      {chosen?.kind === 'linkedin' && !storyId && !pageId ? (
+      {chosen && TEXT_UPDATES.includes(chosen.kind) && !storyId && !pageId ? (
         <SegmentedControl
           value={kind}
           onChange={(v) => setKind(v as 'article' | 'update')}

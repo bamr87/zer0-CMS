@@ -18,15 +18,16 @@ becomes it.
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path, PurePosixPath
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import json5
 
 from importers import frontmatter
 from importers.jekyll import documents, read_config
 
-from .. import permalink
+from .. import cadence, permalink
 from ..linkedin import plan
 from ..linkedin.session import Credentials
 
@@ -50,6 +51,11 @@ KEYS = (
     "hashtagLimit",
     "bannedPatternsFile",
     "scopes",
+    "cadence",
+    "requirePreview",
+    "checkLink",
+    "weekly",
+    "siteMap",
 )
 ACRONYMS = {"ai", "mcp", "erp", "crm", "bi", "saas", "iaas", "smb", "it", "api", "ci", "cd", "kpi", "roi", "sql", "hr"}
 HOOK_KEYS = ("sub-title", "subtitle", "excerpt")
@@ -70,6 +76,9 @@ def read_jsonc(path: Path):
 
 
 class Config:
+    # The lane's block of zer0.json, its settings and its switches; the X lane's config (`x_site.XConfig`) names its own.
+    BLOCK, KEYS, ARM, MERGED = "linkedin", KEYS, ARM_VARIABLE, MERGED_VARIABLE
+
     def __init__(self, root, env=None):
         try:
             self.root = Path(os.path.realpath(root))
@@ -80,12 +89,15 @@ class Config:
         self.env = os.environ if env is None else env
         self.problems: list[tuple[str, str]] = []
         zer0 = self._read_zer0()
-        block = (zer0.get("distribution") or {}).get("linkedin") if isinstance(zer0.get("distribution"), dict) else None
+        block = (zer0.get("distribution") or {}).get(self.BLOCK) if isinstance(zer0.get("distribution"), dict) else None
         self.block = block if isinstance(block, dict) else {}
         cms = zer0.get("cms") if isinstance(zer0.get("cms"), dict) else {}
         self.site_config = self._read_site_config()
         self._resolve(cms.get("root"))
         self._validate()
+        self._resolve_cadence()
+        self._resolve_checks()
+        self._resolve_sync()
 
     # ── what a run asks ──────────────────────────────────────────────────────
     @property
@@ -102,11 +114,11 @@ class Config:
 
     @property
     def publish_armed(self) -> bool:
-        return truthy(self.env.get(ARM_VARIABLE))
+        return truthy(self.env.get(self.ARM))
 
     @property
     def merged(self) -> bool:
-        return truthy(self.env.get(MERGED_VARIABLE))
+        return truthy(self.env.get(self.MERGED))
 
     @property
     def publishable_statuses(self) -> list[str]:
@@ -180,16 +192,55 @@ class Config:
         self.scopes = [str(s) for s in block.get("scopes") or []]
         self.cms_root = self._confined(cms_root or ".cms", "cms.root")
 
+    def _resolve_checks(self):
+        """`requirePreview` (an article share needs a card image of its own, never the fallback) and `checkLink` (a
+        live send asks the page first; on unless the block says false)."""
+        self.require_preview = self.block.get("requirePreview") is True
+        self.check_link = self.block.get("checkLink") is not False
+        for key in ("requirePreview", "checkLink"):
+            if key in self.block and not isinstance(self.block[key], bool):
+                self._error(f"distribution.{self.BLOCK}.{key} must be true or false")
+
+    def _resolve_sync(self):
+        """`weekly` (the week's featured article: a ring of sections, the week the ring starts, the slot) and
+        `siteMap` (where the site reads each page's LinkedIn posts)."""
+        site_map = self.block.get("siteMap")
+        try:
+            self.site_map = self._confined(site_map, "siteMap") if site_map else None
+        except ConfigError as e:
+            self.site_map = None
+            self._error(str(e))
+        spec = self.block.get("weekly")
+        self.weekly = None
+        if spec is None:
+            return
+        zone = self.cadence.zone if self.cadence else None
+        try:
+            self.weekly = Weekly.parse(spec, zone=zone)
+        except ValueError as e:
+            for problem in str(e).split("; "):
+                self._error(f"distribution.{self.BLOCK}.weekly.{problem}")
+
+    def _resolve_cadence(self):
+        """`cadence` (`distribution/cadence.py`): when a queue run may release a draft. None publishes every accepted
+        draft on the run that finds it, as before. One that cannot be read is an error, which blocks every publish
+        rather than releasing on a rule nobody meant."""
+        try:
+            self.cadence = cadence.parse(self.block.get("cadence"))
+        except cadence.CadenceError as e:
+            self.cadence = None
+            for problem in e.problems:
+                self._error(f"distribution.{self.BLOCK}.{problem}")
+
+    def _error(self, message):
+        self.problems.append(("error", message))
+
+    def _warn(self, message):
+        self.problems.append(("warning", message))
+
     def _validate(self):
-        def error(message):
-            self.problems.append(("error", message))
-
-        def warn(message):
-            self.problems.append(("warning", message))
-
-        for key in self.block:
-            if key not in KEYS:
-                warn(f"distribution.linkedin.{key} is not a setting (known: {', '.join(KEYS)})")
+        error, warn = self._error, self._warn
+        self._validate_keys()
         if not self.author:
             warn("no LinkedIn author: set distribution.linkedin.author in zer0.json")
         elif self.author_type is None:
@@ -206,8 +257,18 @@ class Config:
             warn(
                 f"LinkedIn-Version {self.api_version} leaves LinkedIn's support window within two months; bump apiVersion"
             )
+        self._validate_url_and_statuses()
+
+    def _validate_keys(self):
+        for key in self.block:
+            if key not in self.KEYS:
+                self._warn(f"distribution.{self.BLOCK}.{key} is not a setting (known: {', '.join(self.KEYS)})")
+
+    def _validate_url_and_statuses(self):
+        """What every lane checks the same way: the site URL article shares link to, and the approval statuses."""
+        error, warn = self._error, self._warn
         if not self.site_url:
-            warn("no site URL: set url in _config.yml or distribution.linkedin.siteUrl — article shares need one")
+            warn(f"no site URL: set url in _config.yml or distribution.{self.BLOCK}.siteUrl — article shares need one")
         elif not re.match(r"https?://[^\s/]+", self.site_url):
             error(f'siteUrl must be an absolute http(s) URL, got "{self.site_url}"')
         for status in self.accept_statuses:
@@ -223,8 +284,72 @@ class Config:
         text = str(value or "").strip().replace("\\", "/")
         parts = text.split("/")
         if not text or text.startswith("/") or ".." in parts or re.match(r"[A-Za-z]:", text):
-            raise ConfigError(f"distribution.linkedin.{key} must be a path inside the repository, got {value!r}")
+            raise ConfigError(f"distribution.{self.BLOCK}.{key} must be a path inside the repository, got {value!r}")
         return os.path.normpath(text).replace(os.sep, "/")
+
+
+# ── the week's featured article ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class Weekly:
+    """`weekly`: which section's featured article goes out each week, and when. The ring turns once a week from
+    `anchor` (that date's ISO week is the ring's first section), and the feature is pinned to `at` that week, in
+    `timezone` (else the cadence's zone, else UTC)."""
+
+    ring: tuple
+    anchor: date
+    weekday: int
+    at: time
+    zone: ZoneInfo
+
+    @classmethod
+    def parse(cls, spec, *, zone=None) -> "Weekly":
+        if not isinstance(spec, dict):
+            raise ValueError(
+                'an object, like {"ring": ["muses", "corp", "erp", "tech"], "anchor": "2026-11-09", "at": "tue 09:00"}'
+            )
+        problems = [
+            f"{key} is not a setting (known: ring, anchor, at, timezone)"
+            for key in spec
+            if key not in ("ring", "anchor", "at", "timezone")
+        ]
+        ring = spec.get("ring")
+        if not (isinstance(ring, list) and ring and all(isinstance(r, str) and r.strip() for r in ring)):
+            problems.append('ring: the sections in turn, like ["muses", "corp", "erp", "tech"]')
+            ring = []
+        try:
+            anchor = date.fromisoformat(str(spec.get("anchor") or ""))
+        except ValueError:
+            problems.append(f'anchor: the date the ring starts, YYYY-MM-DD, got "{spec.get("anchor")}"')
+            anchor = date(1970, 1, 5)
+        weekday, at = 1, time(9, 0)
+        try:
+            days, clock = str(spec.get("at") or "").strip().lower().split()
+            found = cadence.weekdays(days)
+            hour, minute = clock.split(":")
+            if len(found) != 1:
+                raise ValueError(days)
+            weekday, at = found[0], time(int(hour), int(minute))
+        except ValueError:
+            problems.append(f'at: one day and a 24-hour time, like "tue 09:00", got "{spec.get("at")}"')
+        name = spec.get("timezone")
+        try:
+            zone = ZoneInfo(str(name)) if name else (zone or ZoneInfo("UTC"))
+        except (ZoneInfoNotFoundError, ValueError):
+            problems.append(f'timezone: "{name}" is not a time zone')
+            zone = ZoneInfo("UTC")
+        if problems:
+            raise ValueError("; ".join(problems))
+        monday = anchor - timedelta(days=anchor.weekday())
+        return cls(tuple(r.strip().lower() for r in ring), monday, weekday, at, zone)
+
+    def slot_in(self, monday: date) -> datetime:
+        day = monday + timedelta(days=self.weekday)
+        return datetime.combine(day, self.at, tzinfo=self.zone).astimezone(UTC)
+
+    def section_for(self, monday: date) -> str:
+        return self.ring[((monday - self.anchor).days // 7) % len(self.ring)]
 
 
 # ── the pages ───────────────────────────────────────────────────────────────
