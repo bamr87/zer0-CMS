@@ -13,6 +13,18 @@
 # purpose (see `PRIMARY_PYTHON` below): the version-independent checks run once,
 # and on a pull request the secondary interpreter skips the `slow` tier. A push
 # to main always runs everything on both.
+#
+# The plane's own prose is filtered out: its README.md, AGENTS.md and CLAUDE.md,
+# each app's README.md (content/<app>/README.md) and schemas/events/README.md.
+# Nothing this workflow runs reads them: pytest, ruff, makemigrations, the schema
+# commands and the evals read code, data and fixtures; the event contracts load
+# `<name>.json` and their test globs `*.json`; and every directory the code walks
+# (prompts, patterns, agent definitions, the books library, the site trees) holds
+# none of these files.
+#
+# The patterns are exact on purpose, never `content/**/*.md`: prompts, patterns,
+# test fixtures and goldens are Markdown that the suite does read, and a README in
+# a deeper directory (a fixture site's, say) is input, so it still runs the suite.
 name: content
 
 on:
@@ -20,7 +32,12 @@ on:
     branches: [main]
     paths:
       - "content/**"
+      - "!content/README.md"
+      - "!content/AGENTS.md"
+      - "!content/CLAUDE.md"
+      - "!content/*/README.md"
       - "schemas/events/**"
+      - "!schemas/events/README.md"
       - "schemas/graphql/**"
       - "schemas/content/**"
       - "schemas/openapi/**"
@@ -28,7 +45,12 @@ on:
   pull_request:
     paths:
       - "content/**"
+      - "!content/README.md"
+      - "!content/AGENTS.md"
+      - "!content/CLAUDE.md"
+      - "!content/*/README.md"
       - "schemas/events/**"
+      - "!schemas/events/README.md"
       - "schemas/graphql/**"
       - "schemas/content/**"
       - "schemas/openapi/**"
