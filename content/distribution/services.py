@@ -1469,6 +1469,18 @@ def settle_due() -> int:
     return settled
 
 
+def directive_of(page) -> dict | None:
+    """The editorial directive a page was written for: the `directive` of the brief it was applied from (a brief
+    pulled from an `editorial:directive` issue, sites/services.py `pull_directives`), or None."""
+    from ai.models import Brief
+
+    if page is None:
+        return None
+    brief = Brief.objects.filter(page_id=page.pk, metadata__has_key="directive").order_by("-applied_at", "-id").first()
+    directive = (brief.metadata or {}).get("directive") if brief is not None else None
+    return directive if isinstance(directive, dict) and directive.get("url") else None
+
+
 def _send(post) -> tuple[str, str, dict]:
     from .transports import email_publish, github_publish, wordpress_publish
 
@@ -1478,8 +1490,9 @@ def _send(post) -> tuple[str, str, dict]:
         external_id, url = wordpress_publish(channel, channel.credentials(), post, page)
         return f"wp:{external_id}", url, {}
     if channel.kind == Kind.GITHUB_PR:
-        number, url = github_publish(channel, channel.credentials(), post, page)
-        return f"pr:{channel.setting('repo')}#{number}", url, {}
+        directive = directive_of(page)
+        number, url = github_publish(channel, channel.credentials(), post, page, directive=directive)
+        return f"pr:{channel.setting('repo')}#{number}", url, {"directive": directive["url"]} if directive else {}
     if channel.kind == Kind.EMAIL:
         issue = email_publish(channel, post, post.published_by)
         return str(issue.public_id), "", {}
@@ -1584,10 +1597,11 @@ def _source_file(post) -> str:
     return getattr(post.page.specific, "legacy_path", "") if post.page_id else ""
 
 
-def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
+def record(post, urn: str, *, image_urn: str = "", directive: str = "", now=None) -> LedgerEntry:
     """What was published, under its key: the channel's row (a re-publish replaces it) and the site's ledger file — a
-    change in the site's checkout, which the site's own CI reads once it is committed. The post's notes say where the
-    entry went; the caller saves the post."""
+    change in the site's checkout, which the site's own CI reads once it is committed. A page written for an
+    editorial directive keeps the directive's issue URL on both (`directive`). The post's notes say where the entry
+    went; the caller saves the post."""
     from .ledger import entry_for
 
     channel, now = post.channel, now or timezone.now()
@@ -1604,7 +1618,9 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             "author": author_of(channel),
             "source_file": _source_file(post),
             "image_urn": image_urn,
-            "extra": {},  # a re-publish is a new fact about the key: nothing from an older entry (ledger.entry_for)
+            # a re-publish is a new fact about the key: nothing from an older entry (ledger.entry_for) — but the
+            # directive this page answers, which the file entry carries too
+            "extra": {"directive": directive} if directive else {},
             "post": post,
         },
     )
@@ -1620,6 +1636,7 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
                     author=author_of(channel) or None,
                     source_file=_source_file(post) or None,
                     image_urn=image_urn or None,
+                    directive=directive or None,
                     now=now,
                 ),
             )

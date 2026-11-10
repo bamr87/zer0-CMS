@@ -23,8 +23,9 @@ another, and a webhook action never calls an automation's endpoint.
 server) evaluates the condition and then runs the actions in order, each as the automation's owner — through the
 same services and permission checks a person's request goes through, in a savepoint of its own — and writes each
 action's inputs and outcome to the run, with links to the agent runs and rows it made. Nothing here publishes: an
-assistant or a pipeline answers in its run, an agent that lists a publishing tool is refused, a brief waits for its
-owner to apply it, and a newsroom story moves only to a stage that publishes nothing. A failing action is recorded,
+assistant or a pipeline answers in its run, an agent that lists a publishing tool is refused, a brief — one it
+writes, or one per editorial directive it pulls from a managed site's repository — waits for a person to apply it,
+and a newsroom story moves only to a stage that publishes nothing. A failing action is recorded,
 and the run stops there or goes on as the automation says (`on_error`); an action that has not started within
 `RUN_SECONDS` does not run. Network calls — a webhook notified — happen only here, through the research fetcher
 (`fetch.post`: its SSRF guard and its one deadline); email goes to the platform's people, at most
@@ -510,6 +511,32 @@ def _brief(given, run, owner):
     return result
 
 
+def _directives(given, run, owner):
+    """The site's new editorial directives as briefs of the site's, owned by the automation's owner (who must still
+    edit the site — asked again now), written now by the assistant when `generate` is set. The owner applies them;
+    nothing here writes a page or publishes."""
+    from sites import services as sites
+    from sites.models import ManagedSite
+
+    if problem := spec.site_problem(given["site"], owner):
+        raise Forbidden(problem)
+    managed = ManagedSite.objects.select_related("site").get(key=given["site"])
+    assistant = _row(Assistant, given.get("assistant"), owner, "assistant")
+    try:
+        found = sites.directives(managed, user=owner, assistant=assistant)
+    except sites.SiteError as e:
+        raise ActionFailed(str(e)) from e
+    result = {
+        "briefs": [str(b.public_id) for b in found["created"]],
+        "skipped": found["skipped"],
+        "ignored": found["ignored"],
+    }
+    if given.get("generate"):
+        trigger = _agent_trigger(run)
+        result["runs"] = [_mark(ai.generate_brief(b, user=owner, trigger=trigger), run) for b in found["created"]]
+    return result
+
+
 def _idea(given, run, owner):
     url = given.get("url", "").strip()
     if url and not url.startswith(("http://", "https://")):
@@ -592,6 +619,7 @@ ACTS = {
     "pipeline": _pipeline,
     "agent": _agent,
     "brief": _brief,
+    "directives": _directives,
     "idea": _idea,
     "email": _email,
     "webhook": _webhook,

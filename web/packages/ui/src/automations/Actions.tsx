@@ -1,5 +1,6 @@
 // An automation's actions, in order: each one a kind — run an assistant or a
-// pipeline, start an agent run, create a brief or an idea, notify by email or
+// pipeline, start an agent run, create a brief or an idea, pull a site's
+// editorial directives into briefs, notify by email or
 // a webhook, move a newsroom story — and the fields that kind takes, many of
 // them templates over the payload ({{ data.url }}). Reordered by dragging
 // (@dnd-kit, the one drag-and-drop library: the pointer, or the keyboard —
@@ -59,6 +60,20 @@ export const KINDS: Record<ActionKind, { label: string; fields: Field[] }> = {
       { name: 'pipeline', label: 'Pipeline', input: 'pipeline' },
       { name: 'output_schema', label: 'Output schema', input: 'schema' },
       { name: 'generate', label: 'Write it now (a person still applies it)', input: 'switch' },
+    ],
+  },
+  directives: {
+    label: 'Pull a site’s editorial directives into briefs',
+    fields: [
+      {
+        name: 'site',
+        label: 'Site key',
+        input: 'text',
+        required: true,
+        description: 'A managed site you edit; its GitHub pull-request channel names the repository the directives are filed in',
+      },
+      { name: 'assistant', label: 'Assistant', input: 'assistant', description: 'Writes each new brief when “write them now” is on' },
+      { name: 'generate', label: 'Write them now (a person still applies them)', input: 'switch' },
     ],
   },
   idea: {

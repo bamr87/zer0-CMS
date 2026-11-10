@@ -17,6 +17,9 @@ GitHub repository as a pull request, and a newsroom newsletter by email.
   is already open and a request GitHub never answered (PyGithub lets
   `requests`' own errors through). Only a 404 means "not there yet": anything
   else is reported as itself, never answered with a second, unrelated write.
+  A page written from an editorial directive's brief ends its pull request's
+  body with `Closes #<n>` and the directive's title (`closes`), so merging it
+  closes the hub's issue.
 * **Email**: the newsroom's newsletters (`newsroom.services`, django-anymail)
   — an issue of the channel's newsletter carrying the story, sent as the
   newsroom sends every issue; the post follows the issue until the newsroom
@@ -31,6 +34,7 @@ the ledger marks the attempt unconfirmed.
 import base64
 import functools
 import json
+import re
 from contextlib import contextmanager
 from http import HTTPStatus
 
@@ -140,7 +144,7 @@ def _github_detail(exc) -> str:
     return str(data["message"]) if isinstance(data, dict) and data.get("message") else str(exc)
 
 
-def _github_message(exc, *, action: str, repo: str, base: str) -> str:
+def github_message(exc, *, action: str, repo: str, base: str) -> str:
     status = getattr(exc, "status", None)
     if status == 401:
         return (
@@ -171,13 +175,26 @@ def _answered(action: str, *, doubt: bool = False):
         raise TransportError(f"Could not {action}: GitHub did not answer ({type(e).__name__}).", doubt=doubt) from e
 
 
-def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
+def closes(directive: dict | None, repo_name: str) -> str:
+    """The line that makes the pull request close the editorial directive its page was written for (a brief pulled
+    from an `editorial:directive` issue, sites/services.py): `Closes #<n>` in the channel's own repository, the full
+    reference in another; '' for a page no directive asked for."""
+    url = str((directive or {}).get("url") or "")
+    found = re.match(r"^https://github\.com/([\w.-]+/[\w.-]+)/issues/(\d+)$", url)
+    if not found:
+        return ""
+    where = "" if found[1].lower() == repo_name.lower() else found[1]
+    title = str(directive.get("title") or "").strip()
+    return f"Closes {where}#{found[2]}" + (f" — the editorial directive “{title}”." if title else ".")
+
+
+def github_publish(channel, credentials: dict, post, page, directive: dict | None = None) -> tuple[str, str]:
     from github import Auth, Github, GithubException
 
     repo_name = str(channel.setting("repo"))
     base = str(channel.setting("branch", "main"))
     directory = str(channel.setting("directory")).strip("/")
-    describe = functools.partial(_github_message, repo=repo_name, base=base)
+    describe = functools.partial(github_message, repo=repo_name, base=base)
     try:
         file = file_of(page.specific)  # what a write-back writes for it
     except ValueError as e:
@@ -224,6 +241,7 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
             post.commentary,
             f"Canonical URL: {post.link}" if post.link else "",
             "Opened by zer0-CMS distribution; merging it publishes the page.",
+            closes(directive, repo_name),
         )
         if p
     )
@@ -267,7 +285,7 @@ def github_check(channel, credentials: dict) -> dict:
             repo = hub.get_repo(repo_name)
             can_push = bool(getattr(repo.permissions, "push", False))
     except GithubException as e:
-        raise TransportError(_github_message(e, action=f"read {repo_name}", repo=repo_name, base="")) from e
+        raise TransportError(github_message(e, action=f"read {repo_name}", repo=repo_name, base="")) from e
     problems = [] if can_push else [f"{login} may not push to {repo_name}: pull requests cannot be opened"]
     return {"ok": not problems, "account": login, "problems": problems}
 

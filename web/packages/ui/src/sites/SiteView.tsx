@@ -4,7 +4,9 @@
 // settings (its brand rules among them: the voice agents read through
 // brand.rules, the phrases the brand guard refuses on its pages, and whether
 // its built-in bans hold on its books' chapters), its voice as every writer
-// and gate meets it (Voice), and what its last doctor run found. Only someone who may manage the site sees the actions and may save;
+// and gate meets it (Voice), what its last doctor run found, and how many of
+// its editorial directives were pulled into briefs (a `directives` automation
+// or `manage.py site_job directives`). Only someone who may manage the site sees the actions and may save;
 // the platform re-checks every one.
 import {
   Alert,
@@ -141,14 +143,23 @@ function Actions({ site, onStarted }: { site: SiteDetail; onStarted: (id: string
   );
 }
 
+/** How many briefs were pulled from the site's editorial directives (its `editorial:directive` issues) that this person sees. */
+function useDirectivesPulled(siteId: number) {
+  const api = useApi();
+  const query = { site: siteId, directive: true, page_size: 1 };
+  return useQuery({ queryKey: ['ai', 'briefs', query], queryFn: () => call(api.GET('/api/v2/ai/briefs/', { params: { query } })) });
+}
+
 function Overview({ site }: { site: SiteDetail }) {
+  const pulled = useDirectivesPulled(site.id);
   return (
     <Stack>
-      <SimpleGrid cols={{ base: 2, md: 4 }}>
+      <SimpleGrid cols={{ base: 2, md: 5 }}>
         <Fact label="Pages" value={`${site.pages.total} (${site.pages.live} live, ${site.pages.drafts} draft)`} />
         <Fact label="Files the platform tracks" value={String(site.files)} />
         <Fact label="Last sync" value={when(site.managed?.last_synced_at)} />
         <Fact label="Last write-back" value={when(site.managed?.last_exported_at)} />
+        <Fact label="Directives pulled into briefs" value={pulled.data ? String(pulled.data.count) : '—'} />
       </SimpleGrid>
       {site.managed ? <RegistryForm site={site} /> : <Alert color="gray">The platform does not manage this site: register its checkout in Sites.</Alert>}
     </Stack>

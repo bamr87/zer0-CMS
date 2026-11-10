@@ -361,6 +361,10 @@ def _brief(run: AgentRun, ctx: ToolContext) -> dict:
         prompt = rendering.prompt(persona.prompt_template, request)
         out = generate(run, ctx, persona, [{"role": "user", "content": prompt}])
     metadata = extract_metadata(run, ctx, out["markdown"], persona)
+    if isinstance((brief.metadata or {}).get("directive"), dict):
+        # what the brief was asked for (an editorial directive it was pulled from, sites/services.py) is not the
+        # model's to replace: its page's pull request closes that issue
+        metadata = {**metadata, "directive": brief.metadata["directive"]}
     Brief.objects.filter(pk=brief.pk).update(
         result=out.get("json"),
         markdown=out["markdown"],

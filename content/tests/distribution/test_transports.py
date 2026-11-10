@@ -268,6 +268,44 @@ def test_a_github_channel_opens_a_pull_request_with_the_pages_jekyll_file(alice,
 
 
 @override_settings(DISTRIBUTION_ARMED={"github_pr"})
+def test_a_page_written_for_an_editorial_directive_closes_it(alice, page, worker):
+    """The return path of the topic loop: a page applied from a brief pulled from an `editorial:directive` issue
+    (sites/services.py) goes out as a pull request whose body closes that issue, and the ledger keeps its URL."""
+    from ai.models import Brief
+
+    issue = "https://github.com/bamr87/it-journey/issues/38"
+    Brief.objects.create(
+        owner=alice,
+        title="Nightly backups",
+        page=page,
+        status=Brief.APPLIED,
+        metadata={"directive": {"url": issue, "number": 38, "title": "Backups for a five-person office"}},
+    )
+    channel = channel_for(
+        page, "github_pr", {"repo": "bamr87/it-journey", "directory": "sites/news"}, {"token": "ghp_test_token"}
+    )
+    post = ready(channel, page, alice, commentary="Ready to merge.")
+    with responses.RequestsMock() as rsps:
+        github(rsps, f"distribute/{post.public_id.hex[:12]}")
+        worker(services.request_publish, post, alice)
+        pull = next(c for c in rsps.calls if c.request.method == "POST" and c.request.url.endswith("/pulls"))
+    post.refresh_from_db()
+    assert post.status == "published", post.error
+    sent = json.loads(pull.request.body)["body"]
+    assert sent.endswith("Closes #38 — the editorial directive “Backups for a five-person office”."), sent
+    assert LedgerEntry.objects.get(channel=channel).extra == {"directive": issue}
+
+
+def test_a_directive_in_another_repository_is_closed_by_its_full_reference():
+    from distribution.transports import closes
+
+    directive = {"url": "https://github.com/bash-365/bash-365.com/issues/7"}
+    assert closes(directive, "bamr87/it-journey") == "Closes bash-365/bash-365.com#7."
+    assert closes(directive, "Bash-365/Bash-365.com") == "Closes #7."
+    assert closes(None, "x/y") == "" and closes({"url": "https://evil.example/issues/1"}, "x/y") == ""
+
+
+@override_settings(DISTRIBUTION_ARMED={"github_pr"})
 def test_an_already_open_pull_request_is_named_with_its_link(alice, page, worker):
     channel = channel_for(
         page, "github_pr", {"repo": "bamr87/it-journey", "directory": "sites/news"}, {"token": "ghp_test_token"}

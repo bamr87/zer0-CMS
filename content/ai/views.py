@@ -400,10 +400,17 @@ class PipelineViewSet(OwnedViewSet):
 class BriefFilter(filters.FilterSet):
     assistant = filters.UUIDFilter(field_name="assistant__public_id")
     conversation = filters.UUIDFilter(field_name="conversation__public_id")
+    directive = filters.BooleanFilter(
+        method="pulled", label="Only briefs pulled from an editorial directive (true), or only the others (false)."
+    )
 
     class Meta:
         model = Brief
-        fields = ["status", "visibility", "assistant", "conversation"]
+        fields = ["status", "visibility", "assistant", "conversation", "directive"]
+
+    def pulled(self, queryset, name, value):
+        found = queryset.filter(metadata__has_key="directive")
+        return found if value else queryset.exclude(pk__in=found.values("pk"))
 
 
 class BriefViewSet(OwnedViewSet):

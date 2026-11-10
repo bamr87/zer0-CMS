@@ -206,4 +206,33 @@ describe('<BriefList>', () => {
     await userEvent.click(within(table).getByRole('button', { name: 'Backups, nightly' }));
     expect(go).toHaveBeenCalledWith({ to: 'brief', id: 'b1' });
   });
+
+  it('marks a brief pulled from an editorial directive with a chip that links to its issue', async () => {
+    const issue = 'https://github.com/bash-365/bash-365.com/issues/38';
+    const pulled = brief({ title: 'Backups for a five-person office', metadata: { directive: { url: issue, number: 38, kind: 'write' } } });
+    const { api } = fakePlatform({ 'GET /api/v2/ai/briefs/': () => page([pulled, brief({ id: 'b2', title: 'My own' })]) });
+    const { go } = renderUi(<BriefList siteId={1} />, { api });
+    const table = await screen.findByRole('table', { name: 'Briefs' });
+    // getByRole throws unless exactly one link matches: only the pulled brief carries a chip
+    const chip = within(table).getByRole('link', { name: /editorial directive/ });
+    expect(chip).toHaveAttribute('href', issue);
+    expect(chip).toHaveTextContent('directive #38');
+    await userEvent.click(chip);
+    expect(go).not.toHaveBeenCalled(); // the chip opens the issue, not the brief
+  });
+});
+
+describe('<BriefWorkspace> and a directive', () => {
+  it('shows the directive chip beside the title and keeps it out of the metadata table', async () => {
+    const issue = 'https://github.com/bash-365/bash-365.com/issues/39';
+    const { api } = fakePlatform({
+      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'ready', title: 'Refresh the VPN guide', markdown: 'Text.', metadata: { slug: 'vpn', directive: { url: issue, number: 39 } } }),
+    });
+    renderUi(<BriefWorkspace id="b1" />, { api });
+    const chip = await screen.findByRole('link', { name: /editorial directive #39/ });
+    expect(chip).toHaveAttribute('href', issue);
+    const meta = await screen.findByRole('table', { name: 'Metadata' });
+    expect(within(meta).getByText('slug')).toBeInTheDocument();
+    expect(within(meta).queryByText('directive')).not.toBeInTheDocument();
+  });
 });
