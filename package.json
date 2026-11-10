@@ -2,7 +2,7 @@
   "name": "zer0-cms",
   "displayName": "zer0-CMS",
   "description": "A governed CMS for your markdown repo — metadata panel, content dashboard, brand guard, human approval, and an idempotency ledger — and, pointed at a zer0-CMS platform, the studio's workspaces in the editor. Zero runtime dependencies.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "preview": true,
   "publisher": "bamr87",
