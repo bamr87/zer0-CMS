@@ -2,6 +2,45 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/bamr87/zer0-CMS/compare/v1.0.0...v1.1.0) (2026-11-10)
+
+
+### Features
+
+* **books:** Badwill Impairment, a fresh draft from The Impairment's premise ([0a578f5](https://github.com/bamr87/zer0-CMS/commit/0a578f54c44352c911f131198e424d28ebfa7a11))
+* **content:** directives become briefs, and the page that answers one closes it ([99c752a](https://github.com/bamr87/zer0-CMS/commit/99c752adeed5b99396083e46a9c7997a90087db0)), closes [#86](https://github.com/bamr87/zer0-CMS/issues/86)
+* **distribution:** a cadence for the lanes: one draft per open slot, publish_at, the page's phase ([#89](https://github.com/bamr87/zer0-CMS/issues/89)) ([342e3cc](https://github.com/bamr87/zer0-CMS/commit/342e3cc0f81d60c5f319e43fe5aaf4be21a6d370))
+* **distribution:** a LinkedIn channel with no author connects the member's own profile ([0585a4f](https://github.com/bamr87/zer0-CMS/commit/0585a4ff40a1b8a966b9bc5b5ab5ba7d4715cf2b))
+* **distribution:** connect X in the studio over OAuth 2.0, the platform as the X app ([622a215](https://github.com/bamr87/zer0-CMS/commit/622a215bd7938d1394cc3244fe59aae7199545bd))
+* **distribution:** Disconnect gives an X channel's grant back to X ([5044caf](https://github.com/bamr87/zer0-CMS/commit/5044cafc3754d91b993f652e24c674f715c9bb78))
+* **distribution:** keep a site and LinkedIn in step: sync, a weekly featured article, revisions, a review order ([47f5a00](https://github.com/bamr87/zer0-CMS/commit/47f5a00a64e700a047701837723785d9a533a098))
+* **distribution:** publish to X — a lane over a site's files and a platform channel ([eab9646](https://github.com/bamr87/zer0-CMS/commit/eab964651214be7c4510ccbb1599bbf6a4efa795))
+* **distribution:** sync book chapters to Substack (sanctioned feed/copy, gated unofficial adapter) ([208c986](https://github.com/bamr87/zer0-CMS/commit/208c9865b4939c0202cbde496dc25cefcb9cbe26))
+* **distribution:** the platform's release queue: a channel's cadence, approve into the next slot, beat releases ([#89](https://github.com/bamr87/zer0-CMS/issues/89)) ([c4d48de](https://github.com/bamr87/zer0-CMS/commit/c4d48def75408c51bee3ddaf0f7b8ba53a16ada4))
+* **sites:** zer0-pages moves to the Jekyll-theme option, the last site's Ruby gone ([bcdd672](https://github.com/bamr87/zer0-CMS/commit/bcdd67253adf9c35624ef5377d3a541a6cf10eca))
+* **voice:** the Voice tab maps who reads which layer, and every badge can be read ([778ab22](https://github.com/bamr87/zer0-CMS/commit/778ab22cc066f8c543dd37d677268b610408d177))
+* **voice:** V0 — compose a site's voice in one place and show it in the studio ([15ce35d](https://github.com/bamr87/zer0-CMS/commit/15ce35dfdc51040d759e3d1becba14af55b7b783))
+
+
+### Bug Fixes
+
+* **distribution:** a lane share never links to a page that is not up, and carries its own card ([31c5751](https://github.com/bamr87/zer0-CMS/commit/31c57514660947f004a36a57398b4ef309f4e984))
+* **distribution:** a revision takes no slot: a queue run sends it at once, and the cadence does not count it ([bc72f75](https://github.com/bamr87/zer0-CMS/commit/bc72f75d6b26a05669758efa596e0b7221a2f085))
+* **distribution:** an X post leaves out LinkedIn's fold note ([9801f91](https://github.com/bamr87/zer0-CMS/commit/9801f91eb8119a2ffec3ad9018fb3b9d3296fefd))
+* **distribution:** the site map shows only this site's pages, never a share of another site's ([6ebf26c](https://github.com/bamr87/zer0-CMS/commit/6ebf26cf86897898152144e1478c908e1ef660ee))
+* **studio:** a delete's empty 204 is its success, not "No Content" ([9f01235](https://github.com/bamr87/zer0-CMS/commit/9f01235276a53964c430a75f08b94baf72ee24f6))
+* **studio:** the Sites list asks for checkouts only for someone who may register a site ([780b0fa](https://github.com/bamr87/zer0-CMS/commit/780b0fa8bb75d909652378bd1d55fdb4f5622fdf))
+* **voice:** show what the guard actually applies, and keep findings to their scope ([756348e](https://github.com/bamr87/zer0-CMS/commit/756348e53161a7d23edf9e2718e6fb9f3208cc91))
+* **web:** keep unsaved page edits across newer revisions and navigation ([e715b5a](https://github.com/bamr87/zer0-CMS/commit/e715b5a1d835683054169aa84cf3c5b5f072f34d))
+* **web:** keep unsaved page edits across newer revisions and navigation ([f87381e](https://github.com/bamr87/zer0-CMS/commit/f87381e766f588515825c9a684700122f29003c0)), closes [#64](https://github.com/bamr87/zer0-CMS/issues/64)
+* **web:** the page picker searches the platform, so every page is within reach ([861d09b](https://github.com/bamr87/zer0-CMS/commit/861d09b76f0c8bf320618e5e94b1b113c5f93dcc))
+
+
+### Performance Improvements
+
+* **ci:** cut Actions minutes in content, CodeQL and the uncapped jobs ([508971f](https://github.com/bamr87/zer0-CMS/commit/508971ff462a337ab43edafb54737b8b8582e450))
+* **ci:** cut Actions minutes in content, CodeQL and the uncapped jobs ([7cb8993](https://github.com/bamr87/zer0-CMS/commit/7cb8993a9437472b256554f5e7b3cffb29e27a51))
+
 ## [1.0.0](https://github.com/bamr87/zer0-CMS/compare/v0.3.0...v1.0.0) (2026-10-28)
 
 
