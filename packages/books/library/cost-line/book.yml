@@ -1,0 +1,43 @@
+# Manifest for one book. Schema: docs/SCHEMA.md
+# The pilot of a serial: each book of the series is one directory in this library.
+slug: cost-line
+title: The Cost Line
+subtitle: A pilot in the series Business as Usual
+alt_titles: [Cash Flow Imperative, Forward Guidance, Daily Deposits]
+status: outlining
+genre: Dark corporate satire / speculative fiction
+logline: "When the world outside is burning and the office inside never noticed, a finance-systems builder whose AI agents make the gaps above him visible is cut the day the market decides he is a cost line, and has to learn what he is worth by a number he never set."
+comparables: [Office Space, Catch-22, Glengarry Glen Ross]
+
+pov: Third person limited
+tense: Past
+era: The Burn years
+protagonist: Elias Rourke
+
+acts: 3
+planned_chapters: 8
+target_word_count: 60000
+
+tags: [series, satire, corporate dystopia, fatherhood, finance systems, ai agents, fiction]
+
+themes:
+  - Business as usual at the end of the world
+  - Pricing yourself by someone else's number
+  - Visibility as a threat
+  - A philosophy, not a person
+  - Fatherhood as the schedule that must survive
+  - Small daily deposits
+
+# Every name a chapter may list under `characters`. All names are fictional.
+cast:
+  - Elias Rourke
+  - Nadia Rourke
+  - June Rourke
+  - Corwin Lusk
+  - Graham Pell
+  - Brent Haldane
+  - Marisol Teague
+  - Priya Venn
+  - Desmond Okoro
+  - Ledger
+  - The People Partner

@@ -7,6 +7,7 @@ One directory per book. A directory is a book when it contains `book.yml`; names
 | Directory | Status | About |
 | --- | --- | --- |
 | [`impairment/`](impairment/) | drafting | The Impairment — a financial thriller about the wars fought on a balance sheet. |
+| [`cost-line/`](cost-line/) | outlining | The Cost Line — the pilot of Business as Usual, a dark corporate satire about a finance-systems builder cut the day the market prices him as a cost line. |
 | `_template/` | — | The skeleton `books new` copies. Edit it to change what every future book starts as. |
 
 ## Anatomy of a book
