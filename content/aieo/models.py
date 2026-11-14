@@ -8,7 +8,7 @@
 | `Citation` (never filled)              | `CitationQuery` + `CitationCheck` (asked on a schedule, per engine) |
 | GA4 / GSC / DataForSEO settings, `.cache/` | `Connector` (per site, credential encrypted) + `ConnectorData` |
 | `context/*.md`, `config/competitors.json` | `BrandContext` (a Wagtail site setting)    |
-| `landing-pages/`                       | `LandingPage` (a page type)                  |
+| `landing-pages/`                       | `cms.LandingPage` (a page type of the platform's) |
 | topics, research, drafts, rewrites     | Ideas, Research, briefs and suggestions (no table here) |
 
 Audits and citation queries take the AI layer's `Owned` base — a UUID public
@@ -28,7 +28,7 @@ from wagtail.contrib.settings.models import BaseSiteSetting
 
 from ai import crypto
 from ai.models import Owned, is_staff, sites_for
-from cms.models import BasePage
+from cms.fields import OrderedJSONField
 
 from . import scoring
 
@@ -65,8 +65,12 @@ class Pattern(models.Model):
     description = models.TextField(blank=True, help_text="One line on what the pattern is.")
     weight = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
     max_score = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
-    boost_min = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Citation boost, % (low).")
-    boost_max = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Citation boost, % (high).")
+    boost_min = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)], help_text="Citation boost, % (low)."
+    )
+    boost_max = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)], help_text="Citation boost, % (high)."
+    )
     body = models.TextField(help_text="The criteria the evaluator reads, in Markdown.")
     enabled = models.BooleanField(default=True, help_text="Scored, and offered to apply.")
     bundled = models.BooleanField(default=False, editable=False)
@@ -125,7 +129,8 @@ class Audit(Owned):
     grade = models.CharField(max_length=2, blank=True)
     scoring_method = models.CharField(max_length=10, blank=True, help_text="What scored it: heuristic or ai.")
     content_hash = models.CharField(max_length=64, blank=True)
-    result = models.JSONField(default=dict, blank=True, help_text="Patterns, gaps, penalties, dimensions, analyses.")
+    # Text, not jsonb: a report lists the patterns in the order the result has them, and Postgres would sort them.
+    result = OrderedJSONField(blank=True, help_text="Patterns, gaps, penalties, dimensions, analyses.")
     pages = models.JSONField(default=list, blank=True, help_text="A site audit's pages: url, title, score, grade …")
     benchmark = models.JSONField(default=dict, blank=True)
     screenshot = models.CharField(max_length=255, blank=True, help_text="The screenshot's path in media storage.")
@@ -333,21 +338,3 @@ class BrandContext(BaseSiteSetting):
             if text and text != CONTEXT_TEMPLATES[name].strip()
         ]
         return "\n\n".join(kept)
-
-
-# ── landing pages ──────────────────────────────────────────────────────────
-
-
-class LandingPage(BasePage):
-    """A conversion page: the copy AIEO's landing-page workflow drafts, researches and CRO-audits, with the one
-    action it asks a reader to take."""
-
-    cta_text = models.CharField(max_length=120, blank=True, help_text="The call to action, as the button says it.")
-    cta_url = models.CharField(max_length=500, blank=True, help_text="Where the call to action goes.")
-
-    parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
-    subpage_types: list[str] = []
-    editor_fields = ("cta_text", "cta_url")
-
-    class Meta:
-        verbose_name = "landing page"

@@ -9,6 +9,7 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | a collection document with a `date`         | `ArticlePage`                                |
 | `_books/<book>/index.md`                    | `BookPage` (`book-abc` layout → profile abc, its `alphabet:` → `letter` blocks) |
 | `_books/<book>/<chapter>.md`                | `ChapterPage` under its book                 |
+| a page with `layout: landing`               | `LandingPage` (`cta_text`, `cta_url`)        |
 | any other document or page with front matter | `StandardPage`                              |
 | `title`, `description`, `seo_title`        | `title`, `search_description`, `seo_title`   |
 | `preview` / `image`                         | a Wagtail image in the site's collection     |
@@ -45,7 +46,16 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from agents.principals import ensure_legacy_import_user
-from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
+from cms.models import (
+    ArticlePage,
+    BookPage,
+    Category,
+    ChapterPage,
+    CollectionPage,
+    LandingPage,
+    SiteRootPage,
+    StandardPage,
+)
 from cms.services import publish, save_draft
 
 from . import frontmatter
@@ -182,6 +192,8 @@ def page_class(doc: Document):
     fm = doc.front_matter
     if doc.collection == "books" or fm.get("layout") in ("book", "book-abc"):
         return BookPage if Path(doc.rel).name == "index.md" else ChapterPage
+    if fm.get("layout") == "landing":
+        return LandingPage
     if doc.collection == "posts" or fm.get("date"):
         return ArticlePage
     return StandardPage
@@ -247,6 +259,9 @@ def apply_document(page, doc: Document, images: dict):
     if isinstance(page, ChapterPage):
         chapter = fm.get("chapter")
         page.number = int(chapter) if str(chapter).isdigit() else None
+    if isinstance(page, LandingPage):
+        page.cta_text = str(fm.get("cta_text", "") or "")[:120]
+        page.cta_url = str(fm.get("cta_url", "") or "")[:500]
     if isinstance(page, ArticlePage):
         page.date = frontmatter.parse_date(fm.get("date")) or _filename_date(doc)
         page.author = str(fm.get("author", "") or "")[:200]

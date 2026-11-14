@@ -1,21 +1,29 @@
 """The GA4, Search Console and DataForSEO connectors: configured per site, their credential encrypted and
-write-only, synced in a worker against each vendor's REST API (recorded HTTP: respx) — a Google service account's
-key signs a JWT that Google's token endpoint trades for an access token — and their rows kept for priorities: AIEO's
+write-only — and moved to a new key with the AI layer's own by `rotate_ai_credentials` — synced in a worker against
+each vendor's REST API (recorded HTTP: respx) — a Google service account's key signs a JWT that Google's token
+endpoint, and never a host the key names, trades for an access token — and their rows kept for priorities (AIEO's
 opportunity rule over Search Console's queries, with the trend since the last sync and the site's keywords as the
-business priority."""
+business priority) and for the performance analyst, who reads the last rows of all three."""
 
+import io
 import json
 from urllib.parse import parse_qs
 
 import jwt
 import pytest
 import respx
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.contrib.auth.models import Permission
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.test import override_settings
 
 from aieo import connectors, services, tasks
 from aieo.models import BrandContext, Connector, ConnectorData
+
+from .conftest import answer
 
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PEM = KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
@@ -75,7 +83,48 @@ def test_ga4_signs_a_jwt_for_its_token_and_reads_the_top_pages(site, google, wor
     }
 
 
-def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(site, google):
+def test_a_keys_own_token_uri_is_never_where_the_grant_goes(site):
+    key = json.dumps({**json.loads(SERVICE_ACCOUNT), "token_uri": "http://10.0.0.5:9200/_steal"})
+    row = connect(site, Connector.GA4, {"property_id": "1"}, credential=key)
+    with respx.mock(assert_all_called=False) as router:  # a request no route answers fails the sync
+        inside = router.post("http://10.0.0.5:9200/_steal").respond(500, json={"error": "internal answer leaked"})
+        google = router.post(connectors.TOKEN_URI).respond(200, json={"access_token": "ya29.token"})
+        router.post(connectors.GA4.format(property="1")).respond(200, json={"rows": []})
+        assert tasks.sync_connector(row.pk) == Connector.OK
+    assert google.called and not inside.called
+    row.refresh_from_db()
+    assert row.error == ""
+
+
+def test_a_connectors_credential_moves_to_a_new_key_with_the_ai_layers(site):
+    row = connect(site, Connector.DATAFORSEO, {"keywords": ["backup"]}, credential="me@example.com:secret")
+    old, new = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+    out = io.StringIO()
+    with override_settings(AI_CREDENTIAL_KEYS=[old]):
+        call_command("rotate_ai_credentials", stdout=out)
+    with override_settings(AI_CREDENTIAL_KEYS=[new, old]):
+        call_command("rotate_ai_credentials", stdout=out)
+    with override_settings(AI_CREDENTIAL_KEYS=[new], SECRET_KEY="a-new-secret"):  # the old keys dropped
+        assert Connector.objects.get(pk=row.pk).get_credential() == "me@example.com:secret"
+    with override_settings(AI_CREDENTIAL_KEYS=[old], SECRET_KEY="a-new-secret"):
+        with pytest.raises(CommandError, match="connector"):  # one no key reads is named, and nothing changes
+            call_command("rotate_ai_credentials", stdout=out)
+
+
+def test_the_performance_analyst_reads_the_sites_last_synced_rows(alice, fake, worker, site):
+    gsc = Connector.objects.create(site=site, kind=Connector.GSC, options={"site_url": "sc-domain:x"})
+    ga4 = Connector.objects.create(site=site, kind=Connector.GA4, options={"property_id": "1"})
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "old query", "impressions": 1}])
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "nightly backup", "impressions": 9}])
+    ConnectorData.objects.create(connector=ga4, report="top_pages", rows=[{"page": "/backups/", "sessions": 420}])
+    fake.script = [answer({"quick_wins": ["Refresh the guide"], "declining_content": [], "roadmap": []})]
+    worker(services.run_agent, alice, "aieo-performance", site=site, inputs={"dataforseo_data": "given by hand"})
+    sent = fake.calls[0]["messages"][0]["content"]
+    assert "## Gsc data" in sent and "nightly backup" in sent and "old query" not in sent  # the last sync's rows
+    assert "## Ga data" in sent and "/backups/" in sent and "## Dataforseo data\n\ngiven by hand" in sent
+
+
+def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(alice, site, google):
     BrandContext.objects.update_or_create(
         site=site, defaults={"competitors": {"keywords": ["backup"], "competitors": [], "topics": []}}
     )
@@ -102,7 +151,7 @@ def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(sit
     rows[0]["impressions"] = 6000
     query.respond(200, json={"rows": rows})
     assert tasks.sync_connector(row.pk) == Connector.OK
-    ranked = services.priorities(site)
+    ranked = services.priorities(alice, site)
     first = ranked["queue"][0]
     assert first["query"] == "nightly backup" and first["components"]["business_priority"] == 100
     assert first["components"]["trend"] == 100  # impressions up 50% since the sync before

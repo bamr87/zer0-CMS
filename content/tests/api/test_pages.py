@@ -169,7 +169,7 @@ def test_creatable_types_follow_the_tree_rules_and_permissions(site_root, articl
         "cms.ArticlePage",
         "cms.StandardPage",
         "cms.BookPage",
-        "aieo.LandingPage",
+        "cms.LandingPage",
     }
     assert client.get(f"{PAGES}{article.pk}/types/").json() == []
     reader = person("reader", "change_page")

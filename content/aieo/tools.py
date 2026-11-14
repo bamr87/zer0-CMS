@@ -32,7 +32,8 @@ from .models import Audit, Pattern, library
 from .prompts import AGENTS
 
 UUID = {"type": "string", "format": "uuid"}
-CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}
+CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}  # read in a run, in a worker
+NOW = {"type": "string", "minLength": 1, "maxLength": services.NOW_MAX}  # scored at once, inside the call
 FORMAT = {"type": "string", "enum": ["markdown", "html"], "default": "markdown"}
 METHOD = {"type": "string", "enum": ["heuristic", "ai"], "default": "ai"}
 URL = {"type": "string", "minLength": 1, "maxLength": 2000}
@@ -76,7 +77,7 @@ def _calling(fn, *args, **kwargs):
         "pattern's score with evidence and a recommendation, the gaps, anti-pattern penalties and the five "
         "dimensions (aieo, seo, readability, humanity, cro). Nothing is recorded."
     ),
-    input_schema=obj({"content": CONTENT, "format": FORMAT}, required=["content"]),
+    input_schema=obj({"content": NOW, "format": FORMAT}, required=["content"]),
     rate="120/m",
 )
 def score_text(ctx, content, format="markdown"):
@@ -91,7 +92,7 @@ def _analysis(key: str, about: str):
         f"aieo.{key}",
         effect="read",
         description=f"{about} of the content (Markdown), as AIEO's analyzers compute it.",
-        input_schema=obj({"content": CONTENT}, required=["content"]),
+        input_schema=obj({"content": NOW}, required=["content"]),
         rate="120/m",
     )(analyze)
 
@@ -109,7 +110,7 @@ _analysis("search_intent", "The search intent (informational, navigational, tran
     "aieo.landing_audit",
     effect="read",
     description="The landing-page CRO score of copy: above the fold, calls to action and trust signals, as AIEO.",
-    input_schema=obj({"content": CONTENT}, required=["content"]),
+    input_schema=obj({"content": NOW}, required=["content"]),
     rate="120/m",
 )
 def landing_audit(ctx, content):
@@ -321,7 +322,7 @@ def apply_pattern(ctx, pattern_name, content):
     "aieo.run_agent",
     effect="propose",
     description=(
-        "Run one of the AIEO agents on a text or a page, with the site's brand context: "
+        "Run one of the AIEO agents on a text or a page, with the brand context of a site you edit: "
         + ", ".join(key.removeprefix("aieo-") for key in AGENTS)
         + ". Returns the run; its structured answer is a proposal."
     ),
@@ -340,6 +341,8 @@ def apply_pattern(ctx, pattern_name, content):
 )
 def run_agent(ctx, agent, content="", page_id=None, site=None, inputs=None):
     where = Site.objects.filter(pk=site).first() if site else None
+    if site and where is None:
+        raise ToolError("not_found", f"no site {site}")
     run = _calling(
         services.run_agent,
         ctx.user,
@@ -359,6 +362,7 @@ def run_agent(ctx, agent, content="", page_id=None, site=None, inputs=None):
     description="AIEO's editor agent on a text: clarity, flow and human voice (aieo.run_agent with agent editor).",
     input_schema=obj({"content": CONTENT}, required=["content"]),
     rate="30/m",
+    bucket="aieo.run_agent",
 )
 def editor_review(ctx, content):
     return run_agent(ctx, "editor", content=content)
@@ -370,6 +374,7 @@ def editor_review(ctx, content):
     description="AIEO's headline generator for a topic (aieo.run_agent with agent headline-generator).",
     input_schema=obj({"topic": {"type": "string", "minLength": 1, "maxLength": 2000}}, required=["topic"]),
     rate="30/m",
+    bucket="aieo.run_agent",
 )
 def headline_generate(ctx, topic):
     return run_agent(ctx, "headline-generator", inputs={"topic": topic})
@@ -389,14 +394,14 @@ def research(ctx, topic):
 @tool(
     "aieo.priorities",
     effect="read",
-    description="A site's ranked content-update queue and quick wins, from its last Search Console sync.",
+    description="The ranked content-update queue and quick wins of a site you edit, from its last Search Console sync.",
     input_schema=obj({"site": {"type": "integer"}}, required=["site"]),
 )
 def priorities(ctx, site):
     found = Site.objects.filter(pk=site).first()
     if found is None:
         raise ToolError("not_found", f"no site {site}")
-    data = services.priorities(found)
+    data = _calling(services.priorities, ctx.user, found)  # a site the agent edits, as REST asks of a person
     return {**data, "fetched_at": data["fetched_at"].isoformat() if data["fetched_at"] else None}
 
 
@@ -427,8 +432,13 @@ ALIASES = {
     "aieo_workspace_write": "content.propose_edit",
 }
 
-for _alias, _target in ALIASES.items():
+for _alias, _target in ALIASES.items():  # an alias counts against its tool's rate, not a bucket of its own
     _tool = registry.get(_target)
     registry.register(
-        dataclasses.replace(_tool, name=_alias, description=f"{_tool.description} (AIEO's name for {_target}.)")
+        dataclasses.replace(
+            _tool,
+            name=_alias,
+            bucket=_tool.bucket or _target,
+            description=f"{_tool.description} (AIEO's name for {_target}.)",
+        )
     )

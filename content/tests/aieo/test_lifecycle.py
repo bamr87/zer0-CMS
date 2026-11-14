@@ -8,7 +8,8 @@ from agents.models import AgentRun
 from ai import services as ai_services
 from ai.models import Assistant, Brief
 from aieo import prompts, services
-from aieo.models import LandingPage, Pattern
+from aieo.models import Pattern
+from cms.models import LandingPage
 from suggestions.models import Suggestion
 from tests.ai.test_services import DETAIL
 
@@ -56,7 +57,7 @@ def test_a_draft_is_written_from_a_topic_and_the_four_agents_read_it(alice, fake
 def test_a_landing_page_is_drafted_as_its_own_type_and_its_copy_cro_audited(alice, fake, worker, site):
     copy = "# Bookkeeping for founders\n\nStart your free trial today. Trusted by 2,000 customers.\n\n## Why\n\nIt helps teams close the books."
     fake.script = [{"text": copy}, answer(DETAIL)]
-    brief = _brief(alice, site, "aieo-landing-writer", "Ledgerly, bookkeeping for founders", "aieo.LandingPage")
+    brief = _brief(alice, site, "aieo-landing-writer", "Ledgerly, bookkeeping for founders", "cms.LandingPage")
     worker(ai_services.generate_brief, brief, user=alice)
     brief.refresh_from_db()
     page, _ = ai_services.apply_brief(brief, user=alice)

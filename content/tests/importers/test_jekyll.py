@@ -12,7 +12,15 @@ from django.conf import settings
 from django.core.management import call_command
 from wagtail.models import Page, Revision
 
-from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage, StandardPage
+from cms.models import (
+    ArticlePage,
+    BookPage,
+    ChapterPage,
+    CollectionPage,
+    LandingPage,
+    SiteRootPage,
+    StandardPage,
+)
 from exporters.jekyll import export_site
 from graph.models import Edge
 from importers.jekyll import import_site
@@ -182,6 +190,37 @@ def test_a_page_made_in_wagtail_gets_a_jekyll_path(imported, tmp_path):
         text.startswith("---\ntitle: Made in Wagtail\ndate: 2026-09-01 00:00:00 +0000\n")
         and "Written in the CMS." in text
     )
+
+
+@pytest.mark.django_db
+def test_a_landing_page_carries_its_call_to_action_into_its_file_and_back(imported, tmp_path):
+    root = SiteRootPage.objects.get(site_key="fixture")
+    page = LandingPage(
+        title="Bookkeeping for founders",
+        slug="founders",
+        cta_text="Start your free trial",
+        cta_url="/trial/",
+        body=[{"type": "markdown", "value": "Close the books in a day."}],
+    )
+    root.add_child(instance=page)
+    page.save_revision().publish()
+    export_site("fixture", tmp_path)
+    text = (tmp_path / "founders.md").read_text()
+    assert text.startswith(
+        "---\ntitle: Bookkeeping for founders\nlayout: landing\ncta_text: Start your free trial\ncta_url: /trial/\n---"
+    )
+    copy = tmp_path / "copy"  # the generated file, read back as a site of its own
+    copy.mkdir()
+    (copy / "_config.yml").write_text("title: Landing copy\n")
+    (copy / "founders.md").write_text(text)
+    report = import_site(copy, "landing-copy")
+    assert not report.errors and report.created == ["founders.md"]
+    back = ImportedSource.objects.get(site_key="landing-copy", legacy_path="founders.md").page.specific
+    assert isinstance(back, LandingPage) and (back.cta_text, back.cta_url) == ("Start your free trial", "/trial/")
+    back.cta_text = "Book a demo"
+    back.save_revision().publish()
+    export_site("landing-copy", tmp_path / "again")
+    assert "\ncta_text: Book a demo\ncta_url: /trial/\n" in (tmp_path / "again" / "founders.md").read_text()
 
 
 # The theme's docs site (376 files) is the largest fixture, and it lives in its

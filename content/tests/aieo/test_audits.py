@@ -2,10 +2,12 @@
 heuristics and — when a model's evaluation is asked for — has the bundled evaluator score it through the AI layer
 (AIEO's system prompt, rubric and patterns, its answer held to the rubric's schema), the heuristics standing in when
 the provider fails. URLs and crawls go through the research library's guarded fetcher (respx answers; robots.txt
-honoured, private addresses refused); the visual audit's browser is faked. The reports AIEO wrote for its ten site
-audits come out byte for byte from the audits imported here."""
+honoured, private addresses refused). The visual audit's browser is a stand-in that records what it was asked to do,
+and a real Chromium where Playwright and its browser are installed (not in CI). The reports AIEO wrote for its ten site
+audits come out byte for byte from the audits imported here — on SQLite and on Postgres alike."""
 
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -18,11 +20,12 @@ from agents.models import AgentRun
 from ai import providers
 from ai.providers.base import ProviderError
 from ai.providers.fake import FakeProvider
-from aieo import parser, reports, scoring, services, visual
+from aieo import crawl, parser, reports, scoring, services, visual
 from aieo.models import Audit
 from ops.errors import Forbidden, Invalid
+from research import fetch
 
-from .conftest import answer, at, evaluation
+from .conftest import PUBLIC, answer, at, evaluation
 
 HERE = Path(__file__).resolve().parent
 ARTICLE = (HERE / "fixtures" / "article.md").read_text(encoding="utf-8")
@@ -144,6 +147,44 @@ def test_a_site_is_crawled_cheap_first_and_scored_page_by_page_with_its_link_map
     assert not [c for c in web.calls if "/secret/" in str(c.request.url) or "/tag/" in str(c.request.url)]
 
 
+def test_a_crawl_reads_no_more_than_its_pages_need_and_stops_at_its_deadline(db, web):
+    index = "".join(f"<sitemap><loc>https://example.com/s{i}.xml</loc></sitemap>" for i in range(150))
+    web.get(at("/robots.txt")).respond(200, text="User-agent: *\nAllow: /\nSitemap: https://example.com/index.xml\n")
+    web.get(at("/index.xml")).respond(200, text=f"<sitemapindex>{index}</sitemapindex>")
+    for i in range(150):
+        web.get(at(f"/s{i}.xml")).respond(200, text=f"<urlset><url><loc>https://example.com/p{i}/</loc></url></urlset>")
+    web.get(url__regex=rf"https://{PUBLIC}/(p\d+/)?$").respond(200, text=_page("Page"), headers={"Content-Type": "text/html"})
+    found = crawl.crawl("https://example.com/", max_pages=3)
+    # robots.txt, the index, the two sitemaps that fill the queue, and its three pages — not 150 sitemaps
+    assert [p.url for p in found.pages] == ["https://example.com/", "https://example.com/p0/", "https://example.com/p1/"]
+    assert len(web.calls) == 7 and found.discovery["queued"] == 3
+    for i in range(150):
+        web.get(at(f"/s{i}.xml")).respond(404)
+    web.get(url__regex=rf"https://{PUBLIC}/(feed|atom|rss).*").respond(404)
+    found = crawl.crawl("https://example.com/", max_pages=3)
+    sitemaps = [c for c in list(web.calls)[7:] if str(c.request.url).endswith(".xml") and "/s" in str(c.request.url)]
+    assert len(sitemaps) == crawl.MAX_SITEMAPS - 1  # the index and nine of its children, however many it lists
+    late = crawl.crawl("https://example.com/", max_pages=3, deadline=time.monotonic() - 1)
+    assert late.pages == [] and late.discovery["stopped"] == "time"
+
+
+def test_an_audits_run_is_time_limited_and_one_that_reaches_the_web_runs_on_the_research_queue(
+    alice, monkeypatch, django_capture_on_commit_callbacks
+):
+    from agents.tasks import run_agent
+
+    queued = []
+    monkeypatch.setattr(run_agent, "apply_async", lambda args, **options: queued.append((args, options)))
+    with django_capture_on_commit_callbacks(execute=True):
+        text = services.audit(alice, kind="text", content="# Backups", method="heuristic")
+        site = services.audit(alice, kind="site", url="https://example.com/", method="heuristic")
+    limit = settings.AIEO_AUDIT_TIME_LIMIT
+    assert queued == [
+        ((text.run.pk,), {"soft_time_limit": limit, "time_limit": limit + 30}),
+        ((site.run.pk,), {"soft_time_limit": limit, "time_limit": limit + 30, "queue": "research"}),
+    ]
+
+
 class Seeing(FakeProvider):
     capabilities = FakeProvider.capabilities | {"vision"}
 
@@ -217,15 +258,166 @@ def test_every_request_the_browser_makes_goes_through_the_guarded_fetcher(web):
     assert inside.aborted and post.aborted and len(web.calls) == 1
 
 
-def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, fake, worker, web):
+class Recorder:
+    """A stand-in for Playwright's sync API that keeps what `capture` asks of it."""
+
+    class Error(Exception):
+        pass
+
+    def __init__(self):
+        self.launched, self.context, self.routes, self.events, self.closed = {}, {}, {}, {}, []
+        outer = self
+
+        class Socket:
+            def connect_to_server(self):
+                outer.closed.append("connected to its server")
+
+        class Popup:
+            def close(self):
+                outer.closed.append("popup")
+
+        class Page:
+            def on(self, event, handler):
+                outer.events[event] = handler
+
+            def goto(self, url, **options):
+                outer.routes["goto"] = url
+                outer.routes["**/*"](Route("https://example.com/"))  # the page's own request, through the route
+                outer.routes["ws"](Socket())  # a WebSocket the page opens
+                outer.events["popup"](Popup())  # and a popup
+
+            def screenshot(self, **options):
+                return b"\x89PNG-real"
+
+        class Context:
+            def route(self, pattern, handler):
+                outer.routes[pattern] = handler
+
+            def route_web_socket(self, pattern, handler):
+                outer.routes["ws"] = handler
+
+            def new_page(self):
+                return Page()
+
+        class Browser:
+            def new_context(self, **options):
+                outer.context = options
+                return Context()
+
+            def close(self):
+                outer.closed.append("browser")
+
+        class Chromium:
+            def launch(self, **options):
+                outer.launched = options
+                return Browser()
+
+        class Session:
+            chromium = Chromium()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        self.BrowserContext, self.sync_playwright = Context, Session
+
+
+def test_the_browser_reaches_the_web_only_through_the_guard_and_has_no_way_of_its_own(web, monkeypatch):
+    import sys
+    import types
+
+    fake = Recorder()
+    module = types.ModuleType("playwright.sync_api")
+    module.BrowserContext, module.Error, module.sync_playwright = fake.BrowserContext, fake.Error, fake.sync_playwright
+    monkeypatch.setitem(sys.modules, "playwright", types.ModuleType("playwright"))
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", module)
+    monkeypatch.setattr(settings, "AIEO_VISUAL_AUDIT", True)
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "never-handed-to-the-browser")
+    web.get(at("/")).respond(200, text=_page("Home"), headers={"Content-Type": "text/html"})
+    assert visual.capture("https://example.com/") == b"\x89PNG-real"
+    launched = fake.launched
+    assert launched["chromium_sandbox"] is True and launched["proxy"]["server"] == "http://127.0.0.1:9"
+    assert "--host-resolver-rules=MAP * ~NOTFOUND" in launched["args"]
+    assert "AWS_SECRET_ACCESS_KEY" not in launched["env"] and set(launched["env"]) <= set(visual.KEPT_ENV)
+    assert fake.context["service_workers"] == "block" and fake.context["accept_downloads"] is False
+    assert fake.routes["**/*"] is visual.through_guard  # on the context, so a popup's requests are routed too
+    assert fake.closed == ["popup", "browser"] and len(web.calls) == 1  # the WebSocket never met its server
+
+
+def test_a_real_browser_reaches_nothing_but_the_guard(monkeypatch):
+    """Runs where Playwright 1.48+ and its Chromium are installed (not in CI): a page that opens a popup, a WebSocket,
+    a service worker and requests to a server on this machine, captured for real — every HTTP request reaches the
+    (faked) guard, and the server is never contacted."""
+    import socket
+    import threading
+
+    sync_api = pytest.importorskip("playwright.sync_api")
+    try:
+        with sync_api.sync_playwright() as p:
+            p.chromium.launch(headless=True).close()
+    except sync_api.Error as e:
+        pytest.skip(f"no browser for Playwright here: {str(e).splitlines()[0]}")
+    listener = socket.socket()
+    listener.bind(("127.0.0.1", 0))
+    listener.listen()
+    listener.settimeout(0.2)
+    port, contacted, done = listener.getsockname()[1], [], threading.Event()
+
+    def watch():
+        while not done.is_set():
+            try:
+                contacted.append(listener.accept())
+            except TimeoutError:
+                continue
+
+    watcher = threading.Thread(target=watch, daemon=True)
+    watcher.start()
+    inside = f"127.0.0.1:{port}"
+    html = f"""<html><head><title>Home</title><link rel="stylesheet" href="/style.css"></head><body><h1>Home</h1>
+    <img src="http://{inside}/pixel.png"><script>
+    window.open("http://{inside}/popup");
+    try {{ new WebSocket("ws://{inside}/socket"); }} catch (e) {{}}
+    fetch("http://{inside}/beacon", {{method: "POST", body: "x"}}).catch(() => 0);
+    if (navigator.serviceWorker) navigator.serviceWorker.register("/sw.js").catch(() => 0);
+    </script></body></html>"""
+    asked = []
+
+    def guard(url):
+        asked.append(url)
+        if not url.startswith("https://example.com/"):
+            raise fetch.Blocked(f"{url} is not public")
+        body, kind = (html, "text/html") if url == "https://example.com/" else ("body{}", "text/css")
+        return fetch.Fetched(url, 200, kind, body.encode(), {"Content-Type": kind})
+
+    monkeypatch.setattr(visual, "_get", guard)
+    monkeypatch.setattr(settings, "AIEO_VISUAL_AUDIT", True)
+    try:
+        png = visual.capture("https://example.com/")
+        time.sleep(0.5)  # what the page started after load has had time to try
+    finally:
+        done.set()
+        watcher.join()
+        listener.close()
+    assert png.startswith(b"\x89PNG")
+    assert {"https://example.com/", "https://example.com/style.css"} <= set(asked)
+    assert f"http://{inside}/pixel.png" in asked and f"http://{inside}/popup" in asked  # the popup was routed too
+    assert not any("/sw.js" in url for url in asked) and not any("beacon" in url for url in asked)  # a POST aborted
+    assert contacted == []  # nothing reached this machine's server: not the socket, not the popup, not the beacon
+
+
+def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(
+    alice, api, fake, worker, web
+):
     from aieo.models import CitationCheck, CitationQuery
 
     for text in ("We make websites.", "# Short\n\nA page.", ARTICLE):
         worker(services.audit, alice, kind="text", content=text, method="heuristic")
     best = Audit.objects.get(content=ARTICLE)
-    assert best.benchmark["compared_with"] == 2 and best.benchmark["percentile"] == 100.0
+    assert best.benchmark == {"compared_with": 2, "percentile": 100.0}  # counts only: no other audit is kept with it
     # Its neighbours in meaning (graph.Embedding, kind audit — the platform's vectors in place of AIEO's Qdrant).
-    near = best.benchmark["similar"]
+    near = api(alice).get(f"/api/v2/aieo/audits/{best.public_id}/").json()["benchmark"]["similar"]
     assert (
         len(near) == 2
         and {n["target"] for n in near} == {"the text"}
@@ -237,15 +429,37 @@ def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_it
     best.delete()
     assert Embedding.objects.filter(kind="audit").count() == 2  # a deleted audit's vector goes with it
     query = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="example.com")
+    elsewhere = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="notexample.com")
     for engine, hit in (("fake", True), ("fake", False), ("openai", True)):
         CitationCheck.objects.create(query=query, engine=engine, status=CitationCheck.READY, cited=hit)
+    CitationCheck.objects.create(query=elsewhere, engine="fake", status=CitationCheck.READY, cited=True)
     web.get(at("/robots.txt")).respond(404)
     web.get(at("/")).respond(200, text=_page("Home"), headers={"Content-Type": "text/html"})
     row = audited(worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic"))
-    assert row.benchmark["engines"] == {
+    assert services.seen_by(row, alice)["engines"] == {
         "fake": {"checks": 2, "cited": 1, "rate": 0.5},
         "openai": {"checks": 1, "cited": 1, "rate": 1.0},
     }
+
+
+def test_a_shared_audits_benchmark_names_only_what_its_reader_sees(alice, bob, api, fake, worker, web):
+    from aieo.models import CitationCheck, CitationQuery
+
+    text = "# Backups\n\nA backup is a copy of a site kept elsewhere. According to Ada, test restores."
+    private = worker(services.audit, alice, kind="text", content=text, method="heuristic", title="ALICE-PRIVATE-PLAN")
+    query = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="example.com")
+    CitationCheck.objects.create(query=query, engine="fake", status=CitationCheck.READY, cited=True)
+    web.get(at("/robots.txt")).respond(404)
+    web.get(at("/")).respond(200, text=_page("Backups", body=text), headers={"Content-Type": "text/html"})
+    shared = worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic")
+    Audit.objects.filter(pk=shared.pk).update(visibility="shared")
+    assert api(bob).get(f"/api/v2/aieo/audits/{private.public_id}/").status_code == 404
+    theirs = api(bob).get(f"/api/v2/aieo/audits/{shared.public_id}/").json()["benchmark"]
+    assert theirs["compared_with"] == 1 and theirs["engines"] == {} and theirs["similar"] == []
+    hers = api(alice).get(f"/api/v2/aieo/audits/{shared.public_id}/").json()["benchmark"]
+    assert [s["target"] for s in hers["similar"]] == ["ALICE-PRIVATE-PLAN"] and hers["engines"]["fake"]["cited"] == 1
+    listed = api(bob).get("/api/v2/aieo/audits/").json()["results"]
+    assert [set(a["benchmark"]) for a in listed] == [{"percentile", "compared_with"}]
 
 
 def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker):

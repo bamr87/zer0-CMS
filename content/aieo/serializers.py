@@ -16,6 +16,7 @@ from ai.models import Visibility
 from ai.serializers import OWNED, OwnedSerializer, RunRefSerializer
 
 from .models import Audit, BrandContext, CitationCheck, CitationQuery, Connector, Pattern
+from .services import seen_by
 
 # Choice sets the OpenAPI document names (SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"]).
 MODES = ["optimize", "expand", "scrub", "rewrite", "pattern"]
@@ -51,11 +52,40 @@ class AieoScoreSerializer(serializers.Serializer):
 # ── audits ─────────────────────────────────────────────────────────────────
 
 
+class AieoCitationCountsSerializer(serializers.Serializer):
+    checks = serializers.IntegerField()
+    cited = serializers.IntegerField()
+    rate = serializers.FloatField()
+
+
+class AieoSimilarAuditSerializer(serializers.Serializer):
+    audit = serializers.UUIDField()
+    target = serializers.CharField()
+    score = serializers.FloatField(allow_null=True)
+    similarity = serializers.FloatField(help_text="Cosine similarity of what the two audits read.")
+
+
+class AieoBenchmarkSerializer(serializers.Serializer):
+    """Where an audit stands. `percentile` and `compared_with` count the platform's finished audits of its kind and
+    name none. `engines` and `similar` come with one finished audit (not in a list) and are worked out for whoever
+    reads it, from the citation checks and the audits that person sees — never stored, so sharing an audit shares
+    nothing else of its owner's."""
+
+    percentile = serializers.FloatField(allow_null=True, required=False)
+    compared_with = serializers.IntegerField(required=False)
+    engines = serializers.DictField(
+        child=AieoCitationCountsSerializer(), required=False, help_text="Per engine, the checks of the audit's domain."
+    )
+    similar = AieoSimilarAuditSerializer(many=True, required=False, help_text="The audits nearest it in meaning.")
+
+
 class AieoAuditSerializer(OwnedSerializer):
     page = serializers.IntegerField(source="page_id", read_only=True, allow_null=True)
     target = serializers.CharField(read_only=True)
     run = RunRefSerializer(read_only=True, allow_null=True)
     screenshot = serializers.SerializerMethodField()
+    result = serializers.JSONField(read_only=True, help_text="Patterns, gaps, penalties, dimensions, analyses.")
+    benchmark = serializers.SerializerMethodField()
 
     class Meta:
         model = Audit
@@ -91,13 +121,24 @@ class AieoAuditSerializer(OwnedSerializer):
     def get_screenshot(self, row) -> str | None:
         return f"/api/v2/aieo/audits/{row.public_id}/screenshot/" if row.screenshot else None
 
+    @extend_schema_field(AieoBenchmarkSerializer)
+    def get_benchmark(self, row) -> dict:
+        user = getattr(self.context.get("request"), "user", None)
+        if row.status != Audit.READY or user is None:
+            return dict(row.benchmark or {})
+        return {**(row.benchmark or {}), **seen_by(row, user)}
+
 
 class AieoAuditListSerializer(AieoAuditSerializer):
-    """An audit in a list: everything but the whole result and the pages."""
+    """An audit in a list: everything but the whole result and the pages, and of its benchmark only the counts."""
 
     class Meta(AieoAuditSerializer.Meta):
         fields = [f for f in AieoAuditSerializer.Meta.fields if f not in ("result", "pages")]
         read_only_fields = fields
+
+    @extend_schema_field(AieoBenchmarkSerializer)
+    def get_benchmark(self, row) -> dict:
+        return dict(row.benchmark or {})
 
 
 class AieoAuditCreateSerializer(serializers.Serializer):

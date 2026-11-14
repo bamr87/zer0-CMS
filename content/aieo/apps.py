@@ -1,5 +1,6 @@
 """App config for `aieo`: its run kinds registered with the AI layer (aieo/handlers.py), the hook that fails an
-audit or a citation check whose run ended without succeeding, and the one that drops a deleted audit's vector; after
+audit or a citation check whose run ended without succeeding, the one that drops a deleted audit's vector, and its
+connectors named among the models whose credentials `rotate_ai_credentials` re-encrypts; after
 every migrate, the pattern library and the bundled assistants and output schemas made from AIEO's prompt files where
 they do not exist yet (aieo/prompts.py, with the migrated models, and not while the tables they need are
 unapplied). Its tools (aieo/tools.py) are found by the agents app's tool discovery."""
@@ -16,6 +17,7 @@ class AieoConfig(AppConfig):
 
     def ready(self):
         from agents.runner import run_finished
+        from ai.crypto import holds_credentials
         from research.services import forget
 
         from .handlers import settle
@@ -24,6 +26,7 @@ class AieoConfig(AppConfig):
         post_migrate.connect(_seed, sender=self)
         run_finished.connect(settle, dispatch_uid="aieo.settle")
         post_delete.connect(forget, sender=Audit, dispatch_uid="aieo.forget")  # an audit's vector goes with it
+        holds_credentials("aieo.Connector")  # rotate_ai_credentials re-encrypts a connector's credential too
 
 
 def _seed(sender, apps=installed, **kwargs):

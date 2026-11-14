@@ -1,16 +1,19 @@
 """Citation tracking: a tracked question is asked of every engine — each a provider of the AI layer, asked through
 the bundled citation probe in a run of its own — and each answer is recorded with whether it cites the domain, at
 what position, and over time (share of voice per engine and by week). Celery beat asks the due questions again,
-once each. Every engine here is a scripted provider: the answers are recordings, nothing reaches a model."""
+once each. Only the run a check was asked for records its answer: a run made by hand overwrites nothing. Every
+engine here is a scripted provider: the answers are recordings, nothing reaches a model."""
 
 from datetime import timedelta
 
 from django.utils import timezone
 
+from agents.models import AgentRun
 from ai import providers
 from ai.providers.fake import FakeProvider
+from ai.services import stable_id
 from aieo import services, tasks
-from aieo.models import CitationCheck, CitationQuery
+from aieo.models import Audit, CitationCheck, CitationQuery
 
 from .conftest import answer
 
@@ -99,3 +102,32 @@ def test_the_api_tracks_a_question_checks_it_and_reports_share_of_voice(
     assert share["engines"] == [{"engine": "fake", "checks": 1, "cited": 1, "rate": 1.0}]
     latest = api(alice).get(f"/api/v2/aieo/citations/queries/{query}/").json()["latest"]
     assert latest["fake"]["cited"] is True
+
+
+def test_a_run_made_by_hand_never_overwrites_a_check_or_redoes_an_audit(
+    alice, bob, api, fake, worker, page, django_capture_on_commit_callbacks
+):
+    query = CitationQuery.objects.create(
+        owner=bob, prompt="Who explains backups?", domain="backups.example.com", visibility="shared"
+    )
+    fake.script = [probe(["https://other.example.org/"])]
+    [check] = worker(services.check_citations, query, user=bob)
+    audit = worker(services.audit, alice, kind="text", content="# Backups\n\nCopies.", method="heuristic")
+    before = Audit.objects.values().get(pk=audit.pk)
+    probe_id = str(stable_id("bundled-assistant", services.PROBE))
+    fake.script = [probe(["https://backups.example.com/"], text="alice's answer")]
+    crafted = (
+        {"kind": "aieo.citation", "check": str(check.public_id), "assistant": probe_id},
+        {"kind": "aieo.audit", "audit": str(audit.public_id)},  # her own audit, by a run it was not started for
+    )
+    for data in crafted:  # the generic endpoint takes any input from someone who edits the page
+        with django_capture_on_commit_callbacks(execute=True):
+            made = api(alice).post(
+                "/api/v2/agent-runs/", {"agent": "assistant", "page_id": page.pk, "input": data}, format="json"
+            )
+        assert made.status_code == 201, made.content
+        run = AgentRun.objects.get(pk=made.json()["id"])
+        assert run.status == AgentRun.FAILED and "PermissionError" in run.error
+    check.refresh_from_db()
+    assert check.status == CitationCheck.READY and check.cited is False and check.answer != "alice's answer"
+    assert Audit.objects.values().get(pk=audit.pk) == before and len(fake.calls) == 1  # no model was asked

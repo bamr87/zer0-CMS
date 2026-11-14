@@ -20032,6 +20032,11 @@
                         "description": "A site audit's pages: url, title, score, grade …"
                     },
                     "benchmark": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AieoBenchmark"
+                            }
+                        ],
                         "readOnly": true
                     },
                     "screenshot": {
@@ -20195,7 +20200,7 @@
             },
             "AieoAuditList": {
                 "type": "object",
-                "description": "An audit in a list: everything but the whole result and the pages.",
+                "description": "An audit in a list: everything but the whole result and the pages, and of its benchmark only the counts.",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -20328,6 +20333,11 @@
                         "readOnly": true
                     },
                     "benchmark": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/AieoBenchmark"
+                            }
+                        ],
                         "readOnly": true
                     },
                     "screenshot": {
@@ -20454,6 +20464,36 @@
                 "required": [
                     "urls"
                 ]
+            },
+            "AieoBenchmark": {
+                "type": "object",
+                "description": "Where an audit stands. `percentile` and `compared_with` count the platform's finished audits of its kind and\nname none. `engines` and `similar` come with one finished audit (not in a list) and are worked out for whoever\nreads it, from the citation checks and the audits that person sees — never stored, so sharing an audit shares\nnothing else of its owner's.",
+                "properties": {
+                    "percentile": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double"
+                    },
+                    "compared_with": {
+                        "type": "integer"
+                    },
+                    "engines": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/AieoCitationCounts"
+                        },
+                        "description": "Per engine, the checks of the audit's domain."
+                    },
+                    "similar": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AieoSimilarAudit"
+                        },
+                        "description": "The audits nearest it in meaning."
+                    }
+                }
             },
             "AieoBrandContext": {
                 "type": "object",
@@ -20652,6 +20692,26 @@
                 },
                 "required": [
                     "checks"
+                ]
+            },
+            "AieoCitationCounts": {
+                "type": "object",
+                "properties": {
+                    "checks": {
+                        "type": "integer"
+                    },
+                    "cited": {
+                        "type": "integer"
+                    },
+                    "rate": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "checks",
+                    "cited",
+                    "rate"
                 ]
             },
             "AieoCitationQuery": {
@@ -21038,9 +21098,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -21048,9 +21107,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {
@@ -21127,9 +21185,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -21137,9 +21194,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {
@@ -21422,6 +21478,36 @@
                     "days",
                     "engines",
                     "weeks"
+                ]
+            },
+            "AieoSimilarAudit": {
+                "type": "object",
+                "properties": {
+                    "audit": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "target": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double"
+                    },
+                    "similarity": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Cosine similarity of what the two audits read."
+                    }
+                },
+                "required": [
+                    "audit",
+                    "score",
+                    "similarity",
+                    "target"
                 ]
             },
             "AieoWeekShare": {
@@ -27049,9 +27135,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (low)."
                     },
                     "boost_max": {
@@ -27059,9 +27144,8 @@
                             "integer",
                             "null"
                         ],
-                        "maximum": 9223372036854775807,
+                        "maximum": 100,
                         "minimum": 0,
-                        "format": "int64",
                         "description": "Citation boost, % (high)."
                     },
                     "body": {

@@ -21,7 +21,8 @@ every check below is written once and holds on every surface:
    a person (`ToolContext.on_behalf_of`: a run a person asked for, whose
    prompt and tools they chose), that person must be able to edit the page
    too, so a run never reads a draft its starter could not.
-6. **The rate holds** — per agent user and tool, in the cache.
+6. **The rate holds** — per agent user and tool, in the cache; a tool registered
+   under a second name (an alias) counts against the tool it names (`bucket`).
 
 The call then runs in its own transaction and is recorded as an `AgentStep`
 of the caller's run, with its arguments, result, latency and any error.
@@ -74,6 +75,7 @@ class Tool:
     perms: tuple = ()
     rate: str | None = None
     page_arg: str | None = None
+    bucket: str | None = None  # whose rate this call counts against: its own name, or the tool it is another name of
 
     @property
     def annotations(self) -> dict:
@@ -239,10 +241,10 @@ class Registry:
             return
         count, unit = t.rate.split("/")
         window = {"s": 1, "m": 60, "h": 3600}[unit]
-        key = f"zer0:rate:{user.pk}:{t.name}:{int(time.time() // window)}"
+        key = f"zer0:rate:{user.pk}:{t.bucket or t.name}:{int(time.time() // window)}"
         cache.add(key, 0, timeout=window * 2)
         if cache.incr(key) > int(count):
-            raise ToolError("rate_limited", f"{t.name} allows {t.rate} per agent")
+            raise ToolError("rate_limited", f"{t.bucket or t.name} allows {t.rate} per agent")
 
     # ── steps ──────────────────────────────────────────────────────────────
     @staticmethod
@@ -268,8 +270,10 @@ class Registry:
 registry = Registry()
 
 
-def tool(name: str, *, effect: str, description: str, input_schema: dict, perms=(), rate=None, page_arg=None):
-    """Register `fn(ctx, **args) -> dict` as a tool."""
+def tool(
+    name: str, *, effect: str, description: str, input_schema: dict, perms=(), rate=None, page_arg=None, bucket=None
+):
+    """Register `fn(ctx, **args) -> dict` as a tool (`bucket`: another tool whose rate its calls count against)."""
 
     def decorate(fn):
         registry.register(
@@ -282,6 +286,7 @@ def tool(name: str, *, effect: str, description: str, input_schema: dict, perms=
                 perms=tuple(perms),
                 rate=rate,
                 page_arg=page_arg,
+                bucket=bucket,
             )
         )
         return fn

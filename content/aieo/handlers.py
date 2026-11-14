@@ -14,11 +14,15 @@ followed on `/api/v2/agent-runs/<id>/stream/` like any other:
   whether its answer cites the domain.
 
 What a run names is asked again here, as for every AI run: the row must still be its starter's to use (`owned`),
-the assistant visible to them (`used`), a page one they may edit. A run that ends without succeeding — even one
-refused before reaching its handler — leaves its audit or check failed with the run's error (`settle`).
+the assistant visible to them (`used`), a page one they may edit — and an audit or a citation check must be the one
+its service started this very run for (`_started_for`), since the generic run endpoint takes any input: a run made
+by hand never re-does or overwrites one. The citation probe is always the bundled one. A run that ends without
+succeeding — even one refused before reaching its handler — leaves its audit or check failed with the run's error
+(`settle`).
 """
 
 import copy
+import time
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -81,7 +85,10 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
         if kind.startswith("text/"):
             return [{"url": got.url, "title": "", "content": fetch.decode(got.body, got.charset)}], {}
         raise fetch.FetchError(f"{kind or 'this'} is not a web page or text")
-    found = crawl.crawl(audit.url, max_pages=audit.max_pages)
+    # Half the run's time for reading pages; the rest scores them and asks a model (aieo/services.py `_fetching`).
+    found = crawl.crawl(
+        audit.url, max_pages=audit.max_pages, deadline=time.monotonic() + settings.AIEO_AUDIT_TIME_LIMIT / 2
+    )
     documents = [
         {"url": p.url, "title": p.title, "content": p.html, "format": Audit.HTML, "error": p.error, "how": p.source}
         for p in found.pages
@@ -126,9 +133,17 @@ def _page_summary(doc: dict, result: dict | None) -> dict:
     }
 
 
+def _started_for(row, run: AgentRun):
+    """`row`, if `run` is the run its service started for it: a run made by hand (POST /api/v2/agent-runs/ takes any
+    input) never re-does, overwrites or finishes someone's audit or citation check."""
+    if row.run_id != run.pk:
+        raise PermissionError(f"run {run.pk} was not started for {type(row).__name__} {row.public_id}")
+    return row
+
+
 @register("aieo.audit")
 def audit(run: AgentRun, ctx: ToolContext) -> dict:
-    row = owned(Audit, run.input.get("audit"), run, edit=True)
+    row = _started_for(owned(Audit, run.input.get("audit"), run, edit=True), run)
     Audit.objects.filter(pk=row.pk).update(status=Audit.RUNNING, error="")
     patterns = library()
     extra = services.signals(row.site)
@@ -177,7 +192,8 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         fresh.screenshot = shot or fresh.screenshot
         fresh.audited_at = timezone.now()
         fresh.save()
-        fresh.benchmark = services.benchmark(fresh, services.remember(fresh, parsed))
+        services.remember(fresh, parsed)
+        fresh.benchmark = services.benchmark(fresh)
         fresh.save(update_fields=["benchmark"])
     return {"audit": str(row.public_id), "score": score, "grade": fresh.grade, "scoring_method": fresh.scoring_method}
 
@@ -261,9 +277,11 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
 
 @register("aieo.citation")
 def citation(run: AgentRun, ctx: ToolContext) -> dict:
-    check = CitationCheck.objects.select_related("query").get(public_id=run.input.get("check"))
+    check = CitationCheck.objects.select_related("query").filter(public_id=run.input.get("check")).first()
+    if check is None or _started_for(check, run).status != CitationCheck.QUEUED:
+        raise PermissionError("this run has no citation check waiting for its answer")
     query = owned(CitationQuery, check.query.public_id, run)
-    persona = Persona.of(used(Assistant.objects.get(public_id=run.input.get("assistant")), run))
+    persona = Persona.of(_assistant(services.PROBE, run))
     persona.provider = check.engine
     out = generate(run, ctx, persona, [{"role": "user", "content": f"Question: {query.prompt}"}])
     data = out["json"]

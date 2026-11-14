@@ -397,11 +397,14 @@ RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 10
 RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 
 # ── AIEO (aieo/README.md) ───────────────────────────────────────────────────
-# The visual audit: a screenshot in a headless browser (Playwright, an optional install) whose every request goes
-# through the research fetcher's guard; off unless set.
+# The visual audit: a screenshot in a headless browser (Playwright 1.48 or later, an optional install) whose every
+# request goes through the research fetcher's guard, with no network of its own; off unless set.
 AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
 # Seconds a GA4, Search Console or DataForSEO request may take (aieo/connectors.py).
 AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
+# How long the audit of a URL or a site may run on the research queue before Celery stops it (soft; the hard limit is
+# 30 seconds later); a site's crawl stops reading pages at half of it and scores what it read.
+AIEO_AUDIT_TIME_LIMIT = env.int("AIEO_AUDIT_TIME_LIMIT", default=900)
 # The citability review (the `aieo` agent as a workflow task) passes a page that scores at least this.
 AIEO_REVIEW_MIN_SCORE = env.float("AIEO_REVIEW_MIN_SCORE", default=40.0)
 

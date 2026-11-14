@@ -31,11 +31,11 @@ def test_the_check_command_agrees(capsys):
 def test_the_schema_covers_every_page_type_and_block():
     document = export()
     assert set(document["pages"]) == {
-        "aieo.LandingPage",
         "cms.ArticlePage",
         "cms.BookPage",
         "cms.ChapterPage",
         "cms.CollectionPage",
+        "cms.LandingPage",
         "cms.SiteRootPage",
         "cms.StandardPage",
     }

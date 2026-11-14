@@ -229,7 +229,7 @@ class SiteRootPage(BasePage):
     jekyll_config = models.JSONField(default=dict, blank=True, help_text="The parts of _config.yml the bridge reads.")
 
     parent_page_types = ["wagtailcore.Page"]
-    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "aieo.LandingPage"]
+    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.LandingPage"]
     hashed_fields = ("site_key", "jekyll_config")
     editor_fields = ("source_root",)
     content_panels = BasePage.content_panels + [FieldPanel("site_key"), FieldPanel("source_root")]
@@ -242,7 +242,7 @@ class CollectionPage(BasePage):
     collection = models.CharField(max_length=80, help_text="The collection's name, e.g. posts.")
     output_dir = models.CharField(max_length=255, blank=True, help_text="Its directory in the site, e.g. pages/_posts.")
 
-    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage", "aieo.LandingPage"]
+    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage", "cms.LandingPage"]
     hashed_fields = ("collection", "output_dir")
     editor_fields = ("collection", "output_dir")
     content_panels = BasePage.content_panels + [FieldPanel("collection"), FieldPanel("output_dir")]
@@ -310,6 +310,26 @@ class StandardPage(BasePage):
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage", "cms.StandardPage"]
     subpage_types = ["cms.StandardPage"]
+
+
+class LandingPage(BasePage):
+    """A conversion page — AIEO's landing pages (aieo/README.md): copy written to make one offer, CRO-audited by the
+    score's cro dimension, and the one action it asks a reader to take. In a site's files it is a page with `layout:
+    landing` and its `cta_text` and `cta_url` in the front matter, which the importer reads back as this type."""
+
+    cta_text = models.CharField(max_length=120, blank=True, help_text="The call to action, as the button says it.")
+    cta_url = models.CharField(max_length=500, blank=True, help_text="Where the call to action goes.")
+
+    parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
+    subpage_types: list[str] = []
+    hashed_fields = ("cta_text", "cta_url")
+    editor_fields = ("cta_text", "cta_url")
+    content_panels = BasePage.content_panels + [FieldPanel("cta_text"), FieldPanel("cta_url")]
+    api_fields = BasePage.api_fields + [APIField("cta_text"), APIField("cta_url")]
+    graphql_fields = BasePage.graphql_fields + [GraphQLString("cta_text"), GraphQLString("cta_url")]
+
+    class Meta:
+        verbose_name = "landing page"
 
 
 BOOK_PROFILES = [("book", "Book"), ("abc", "ABC board book"), ("story", "Picture-book story")]

@@ -9,7 +9,8 @@ For each page under a site root, in tree order:
   page. The front matter is the source's, in its original key order, with the
   typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
-  categories, book fields), and for an ABC book the `alphabet:` list rebuilt
+  categories, book fields, a landing page's `layout: landing`, `cta_text` and
+  `cta_url`), and for an ABC book the `alphabet:` list rebuilt
   from its `letter` blocks, each merged into the original entry so a plate's
   `image`, `prompt` and `status` survive an edit to its word; a story's
   `authors` (its bylines) and `corrections` (its corrections and updates log:
@@ -29,7 +30,7 @@ from pathlib import Path
 
 from wagtail.models import Page
 
-from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage
+from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, LandingPage, SiteRootPage
 from importers import frontmatter
 from importers.markdown import from_blocks
 from importers.models import ImportedSource
@@ -128,6 +129,10 @@ def front_matter_for(page) -> dict:
                 fm["alphabet"] = alphabet
     if isinstance(page, ChapterPage) and page.number is not None:
         fm["chapter"] = page.number
+    if isinstance(page, LandingPage):
+        fm.setdefault("layout", "landing")  # what the importer reads back as a landing page
+        put("cta_text", page.cta_text)
+        put("cta_url", page.cta_url)
     fm.update(newsroom_front_matter(page))
     return fm
 

@@ -51,6 +51,20 @@ def test_every_alias_is_its_platform_tool_under_aieos_name():
     assert registry.get("aieo_editor_review").effect == registry.get("aieo_headline_generate").effect == "propose"
 
 
+def test_an_alias_counts_against_the_rate_of_the_tool_it_names(agent, db):
+    assert registry.get("aieo_crawl_site").bucket == registry.get("aieo_site_context").bucket == "aieo.audit_site"
+    assert registry.get("aieo_editor_review").bucket == registry.get("aieo_headline_generate").bucket == "aieo.run_agent"
+    user = agent("aieo").user
+    for _ in range(10):  # aieo.audit_site allows 10 a minute, whichever of its names is called
+        registry._check_rate(registry.get("aieo.audit_site"), user)
+    for name in ("aieo_crawl_site", "aieo_site_context"):
+        try:
+            registry._check_rate(registry.get(name), user)
+            raise AssertionError(f"{name} has a budget of its own")
+        except ToolError as e:
+            assert e.code == "rate_limited" and "aieo.audit_site" in e.message
+
+
 def test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_text(agent, db):
     assert agent("aieo").live  # its evals passed in the session's sync_agents --publish
     raw = token()

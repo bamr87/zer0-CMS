@@ -428,11 +428,22 @@ def set_default(row: ProviderConfig) -> ProviderConfig:
 
 @transaction.atomic
 def rotate_credentials() -> int:
-    """Re-encrypt every stored credential with the first key; returns how many. One no key can read stops it
-    (`NotConfigured`, naming the provider) and nothing is changed."""
-    rows = list(ProviderConfig.objects.exclude(credential_encrypted=""))
+    """Re-encrypt every stored credential — of every model that keeps one with these keys (`crypto.HOLDERS`: the
+    providers, AIEO's connectors, …) — with the first key; returns how many. One no key can read stops it
+    (`NotConfigured`, naming it) and nothing is changed."""
+    from . import crypto
+
+    rows = [row for label in crypto.HOLDERS for row in apps.get_model(label).objects.exclude(credential_encrypted="")]
     for row in rows:
-        row.set_credential(row.get_credential())
+        try:
+            plain = row.get_credential()
+        except crypto.InvalidToken as e:
+            raise providers.NotConfigured(
+                f"the credential of {row._meta.verbose_name} {row} was encrypted with a key that is gone: add that key "
+                "to AI_CREDENTIAL_KEYS (or its SECRET_KEY to SECRET_KEY_FALLBACKS) and run manage.py "
+                "rotate_ai_credentials, or set it again"
+            ) from e
+        row.set_credential(plain)
         row.save(update_fields=["credential_encrypted", "updated_at"])
     return len(rows)
 

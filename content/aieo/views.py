@@ -41,7 +41,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from wagtail.models import Site
 
-from ai.models import Assistant, sites_for
+from ai.models import Assistant
 from ai.serializers import RunRefSerializer
 from ai.services import stable_id
 from ai.views import IDEMPOTENCY, CanEdit, OwnedViewSet, accepted, idempotent, page_or_404
@@ -75,10 +75,25 @@ def site_param(request, *, required=False):
     return site
 
 
-def editor_of(user, site):
-    if not (user.is_staff or user.is_superuser or site.pk in sites_for(user)):
-        raise NotFound(f"no site {site.pk}")
-    return site
+class SitesThrottle(FetchThrottle):
+    """A batch reaches the web once for every site it lists, so each counts against the person's fetch rate
+    (`THROTTLE_RESEARCH_FETCH_RATE`) as one fetch would: a batch that would not fit is refused whole, and charges
+    nothing."""
+
+    def allow_request(self, request, view):
+        urls = request.data.get("urls") if isinstance(request.data, dict) else None
+        cost = len(urls) if isinstance(urls, list) and urls else 1
+        if not super().allow_request(request, view):  # drops the expired entries and charges one, if one fits
+            return False
+        if cost == 1 or self.rate is None or getattr(self, "key", None) is None:
+            return True
+        if len(self.history) - 1 + cost > self.num_requests:
+            self.history.pop(0)  # the one just charged
+            self.cache.set(self.key, self.history, self.duration)
+            return self.throttle_failure()
+        self.history[:0] = [self.now] * (cost - 1)
+        self.cache.set(self.key, self.history, self.duration)
+        return True
 
 
 class Newest(CursorPagination):
@@ -98,7 +113,7 @@ class ScoreView(APIView):
 
     def post(self, request):
         body = valid(s.AieoScoreInputSerializer, request)
-        result = services.quick_score(body["content"], body["format"], site=body.get("site"))
+        result = services.quick_score(body["content"], body["format"], site=body.get("site"), user=request.user)
         return Response(s.AieoScoreSerializer(result).data)
 
 
@@ -131,7 +146,9 @@ class AuditViewSet(OwnedViewSet):
 
     def get_throttles(self):
         data = self.request.data if self.request.method == "POST" else {}
-        fetches = self.action == "batch" or (isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE))
+        if self.action == "batch":
+            return [*super().get_throttles(), SitesThrottle()]
+        fetches = isinstance(data, dict) and data.get("kind") in (Audit.URL, Audit.SITE)
         return [*super().get_throttles(), FetchThrottle()] if fetches else super().get_throttles()
 
     @extend_schema(
@@ -506,8 +523,8 @@ class PrioritiesView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
-        return Response(s.AieoPrioritiesSerializer(services.priorities(site)).data)
+        found = services.priorities(request.user, site_param(request, required=True))
+        return Response(s.AieoPrioritiesSerializer(found).data)
 
 
 @extend_schema_view(
@@ -527,7 +544,7 @@ class ContextView(APIView):
         site = Site.objects.filter(pk=site_id).first()
         if site is None:
             raise NotFound(f"no site {site_id}")
-        return BrandContext.for_site(editor_of(request.user, site))
+        return BrandContext.for_site(services.editor_of(request.user, site))
 
     def get(self, request, site_id):
         return Response(s.AieoBrandContextSerializer(self._context(request, site_id)).data)
@@ -549,5 +566,5 @@ class LifecycleView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
+        site = services.editor_of(request.user, site_param(request, required=True))
         return Response(services.lifecycle(request.user, site))
