@@ -2,21 +2,24 @@
 
 | Model | What it is |
 |---|---|
-| `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
-| `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person → published or failed, with a readable error |
+| `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters — one channel of a site per `target`, so one ledger holds what went there. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
+| `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person (`approved_digest` is what they approved: a changed text needs approving again) → published or failed, with a readable error; an email post follows its newsletter `issue` until the newsroom has sent it |
 | `LedgerEntry` | what a channel has published, keyed by canonical URL (or `draft:<post>` for a text update) — the platform's half of the ledger file every lane writes (`ledger.py`); an attempt the target did not confirm is an entry with no URN |
-| `Statistic` | a published post's aggregate counts on a day |
+| `Statistic` | a published post's aggregate counts on a day, read through its entry |
 
-Every row has a UUID `public_id`; `visible_to(user, site)` is the one scope:
-the channels of the sites a person edits (people who manage channels — the
-`distribution.change_channel` permission — see every site's).
+Channels, posts and ledger entries have a UUID `public_id`, the only id the API
+gives; `visible_to(user, site)` is the one scope: the channels of the sites a
+person edits (people who manage channels — the `distribution.change_channel`
+permission — see every site's), and their posts and ledger entries.
 """
 
 import json
 import uuid
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from ai import crypto
@@ -52,6 +55,20 @@ SECRETS = {
 IDENTITY = {Kind.LINKEDIN: ("author",), Kind.WORDPRESS: ("url", "username"), Kind.GITHUB_PR: ("repo",), Kind.EMAIL: ()}
 
 
+def target_of(channel) -> str:
+    """Where a channel publishes, as one string: the LinkedIn author, the WordPress site's address, the repository,
+    the newsletter. Two channels of a site with one target would each keep a ledger the other never reads, and post
+    the same page there twice; empty while the channel does not say yet."""
+    if channel.kind == Kind.EMAIL:
+        return str(channel.newsletter.public_id) if channel.newsletter_id else ""
+    if channel.kind == Kind.WORDPRESS:
+        parts = urlsplit(str(channel.setting("url")))
+        return f"{parts.scheme.lower()}://{parts.netloc.lower()}{parts.path.rstrip('/')}" if parts.netloc else ""
+    if channel.kind == Kind.GITHUB_PR:
+        return str(channel.setting("repo")).lower()
+    return str(channel.setting("author"))
+
+
 def manages_channels(user) -> bool:
     """Setting up, connecting and arming channels is a Django permission (`distribution.change_channel`), as
     configuring an AI provider is — not `is_staff`. A superuser holds it."""
@@ -82,6 +99,12 @@ class Channel(models.Model):
     )
     credential_encrypted = models.TextField(blank=True, editable=False)
     pending_encrypted = models.TextField(blank=True, editable=False, help_text="An OAuth code waiting to be exchanged.")
+    target = models.CharField(
+        max_length=512,
+        blank=True,
+        editable=False,
+        help_text="Where it publishes (`target_of`); one channel per target.",
+    )
     account = models.CharField(max_length=255, blank=True, help_text="Who it publishes as, as the target reports it.")
     scopes = models.JSONField(default=list, blank=True)
     connected_at = models.DateTimeField(null=True, blank=True)
@@ -102,9 +125,20 @@ class Channel(models.Model):
 
     class Meta:
         ordering = ["site_id", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["site", "kind", "target"], condition=~Q(target=""), name="distribution_one_channel_per_target"
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.get_kind_display()})"
+
+    def save(self, *args, **kwargs):
+        self.target = target_of(self)
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = {*kwargs["update_fields"], "target"}
+        return super().save(*args, **kwargs)
 
     # ── the credential: encrypted at rest, never returned ───────────────────
     def credentials(self) -> dict:
@@ -182,6 +216,17 @@ class DistributionPost(models.Model):
     created_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     approved_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     approved_at = models.DateTimeField(null=True, blank=True)
+    approved_digest = models.CharField(
+        max_length=64, blank=True, editable=False, help_text="What the person approved (`services.approval_digest`)."
+    )
+    issue = models.ForeignKey(
+        "newsroom.Issue",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="An email post's newsletter issue: the post follows it until the newsroom has sent it.",
+    )
     published_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     attempted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -202,7 +247,13 @@ class DistributionPost(models.Model):
         return self.link if self.kind == "article" else f"draft:{self.public_id}"
 
 
+class LedgerQuerySet(models.QuerySet):
+    def visible_to(self, user, site=None):
+        return self.filter(channel__in=Channel.objects.visible_to(user, site))
+
+
 class LedgerEntry(models.Model):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name="ledger")
     key = models.CharField(max_length=2048)
     urn = models.CharField(max_length=512, blank=True, help_text="Empty for an attempt the target did not confirm.")
@@ -220,6 +271,8 @@ class LedgerEntry(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = LedgerQuerySet.as_manager()
 
     class Meta:
         ordering = ["-posted_at", "-id"]

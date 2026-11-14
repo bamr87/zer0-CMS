@@ -336,6 +336,9 @@ CELERY_BEAT_SCHEDULE = {
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
     # Aggregate statistics for every LinkedIn channel's published posts, once a day (distribution/tasks.py).
     "distribution-statistics": {"task": "distribution.tasks.ingest_statistics", "schedule": crontab(hour=4, minute=23)},
+    # Distribution's attempts that are over without their worker saying so: an email post whose newsletter issue
+    # the newsroom sent or failed, a send whose worker died (distribution/tasks.py).
+    "distribution-settle": {"task": "distribution.tasks.settle_posts", "schedule": 60.0},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
@@ -390,6 +393,10 @@ DISTRIBUTION_ARMED = {
 LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
 LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
 LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
+# Where the deployment keeps its sites' checkouts (compose: /sites), besides this repository: the only places a
+# site's `_config.yml` (the URL Jekyll gives a page, the ledger's key) and its ledger file are read or written
+# (distribution.services.site_checkout). PLAN G4's site registry takes this directory over.
+SITES_DIR = env("SITES_DIR", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

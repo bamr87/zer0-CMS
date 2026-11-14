@@ -32,6 +32,7 @@ OUTBOX_RELAY = "memory"
 LLM_BACKEND = "recorded"
 AI_DEFAULT_PROVIDER = "fake"
 AI_CREDENTIAL_KEYS: list[str] = []
+SITES_DIR = ""  # a developer's SITES_DIR never decides what a test may read; a test that needs one sets it
 LLM_RECORDINGS_DIR = str(BASE_DIR / "agents" / "recordings")
 EMBEDDING_BACKEND = "hashing"
 EMBEDDING_MODEL = "hashing-256"

@@ -1,10 +1,12 @@
 """The platform's distribution (`distribution/` models, services, API, tools
 and the published-page consumer): channels with encrypted, write-only
-credentials and LinkedIn's OAuth with state and PKCE; the queue's compose →
-brand guard → approve → publish, every gate checked by the server and again by
-the worker; the ledger keyed by canonical URL — the same key a site's own lane
-computes — and written byte-compatible with the extension's; statistics; the
-registry's tools and the consumer that drafts (never publishes).
+credentials and LinkedIn's OAuth with state and PKCE, one channel of a site per
+target; the queue's compose → brand guard → approve (of the exact text) →
+publish, every gate checked by the server and again by the worker, every
+attempt ending published or failed; the ledger keyed by canonical URL — the
+same key a site's own lane computes, or none at all — and written
+byte-compatible with the extension's; statistics; the registry's tools, armed
+and not, and the consumer that drafts (never publishes).
 
 Every LinkedIn request is recorded HTTP (respx); the worker runs what a
 request queued after it commits (`worker`).
@@ -12,18 +14,20 @@ request queued after it commits (`worker`).
 
 import io
 import json
+import os
 import shutil
 from datetime import timedelta
 
+import httpx
 import pytest
 from cryptography.fernet import Fernet
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import override_settings
 from django.utils import timezone
-from wagtail.models import Page
+from wagtail.models import GroupPagePermission, Page
 
 from agents.models import AgentDefinition, AgentRun
 from agents.registry import ToolContext, ToolError, registry
@@ -37,11 +41,24 @@ from outbox.consumers import handle_envelope
 from outbox.models import OutboxEvent
 
 from ..conftest import make_article
-from .conftest import AUTHOR, FIXTURE, TOKEN
+from .conftest import AUTHOR, FIXTURE, MCP_POST, MCP_URL, TOKEN
 
 REST = "https://api.linkedin.com/rest"
 API = "/api/v2/distribution"
 LINKEDIN_APP = {"LINKEDIN_CLIENT_ID": "cid", "LINKEDIN_CLIENT_SECRET": "csecret-abcdef"}
+
+
+def grant(user, group_name: str, *codenames):
+    """Page rights on every page, through a group of their own."""
+    group, _ = Group.objects.get_or_create(name=group_name)
+    for codename in codenames:
+        GroupPagePermission.objects.get_or_create(
+            group=group,
+            page=Page.get_first_root_node(),
+            permission=Permission.objects.get(content_type__app_label="wagtailcore", codename=codename),
+        )
+    user.groups.add(group)
+    return get_user_model().objects.get(pk=user.pk)
 
 
 @pytest.fixture
@@ -51,6 +68,28 @@ def manager(alice):
         *Permission.objects.filter(content_type__app_label="distribution", codename__endswith="_channel")
     )
     return get_user_model().objects.get(pk=alice.pk)
+
+
+@pytest.fixture
+def carol(db):
+    """Edits every page and may publish none: she may change a post's text, never approve it."""
+    return grant(
+        get_user_model().objects.create_user("carol", password="pw"),
+        "editors who do not publish",
+        "add_page",
+        "change_page",
+    )
+
+
+def imported(tmp_path, settings, *, at=None):
+    """The fixture site copied to `at` (default: inside the repository, REPO_ROOT = tmp_path) and imported."""
+    from importers.jekyll import import_site
+
+    settings.REPO_ROOT = tmp_path
+    at = at or tmp_path / "site"
+    shutil.copytree(FIXTURE, at)
+    import_site(at, "fixture", repo_root=tmp_path)
+    return at, {p.legacy_path: p for p in Page.objects.specific() if getattr(p, "legacy_path", "")}
 
 
 @pytest.fixture
@@ -152,6 +191,39 @@ def test_only_people_who_manage_channels_set_them_up_and_everyone_on_the_site_se
     assert api(alice).patch(f"{API}/channels/{channel.public_id}/", {"armed": False}, format="json").status_code == 403
 
 
+def test_one_channel_of_a_site_per_target_so_nothing_goes_twice_to_one_place(api, manager, channel):
+    """Each channel keeps its own ledger, so a second channel for the same LinkedIn author (WordPress site,
+    repository, newsletter) would post a page the first already posted: refused, naming the first."""
+
+    def made(kind, name, settings):
+        body = {"site": channel.site_id, "kind": kind, "name": name, "settings": settings}
+        return api(manager).post(f"{API}/channels/", body, format="json")
+
+    twin = made("linkedin", "Same page again", {"author": AUTHOR})
+    assert twin.status_code == 409 and "The page already publishes this site to" in twin.json()["error"]["message"]
+    other = made("linkedin", "A member", {"author": "urn:li:person:abc"})
+    assert other.status_code == 201
+    moved = api(manager).patch(f"{API}/channels/{other.json()['id']}/", {"settings": {"author": AUTHOR}}, format="json")
+    assert moved.status_code == 409, "pointing a channel at another one's target is refused too"
+    assert made("wordpress", "Blog", {"url": "https://Blog.example.com/", "username": "ed"}).status_code == 201
+    assert made("wordpress", "Blog again", {"url": "https://blog.example.com", "username": "al"}).status_code == 409
+
+
+def test_a_channel_whose_ledger_holds_anything_stays(api, manager, alice, channel, article):
+    """A ledger row — a post that went out, or an attempt that may have — is what keeps a page from going there
+    twice; a new channel for the same target would not know it. A channel with none goes, with its posts."""
+    LedgerEntry.objects.create(channel=channel, key="https://example.test/x/", state="unconfirmed", error="HTTP 503")
+    kept = api(manager).delete(f"{API}/channels/{channel.public_id}/")
+    assert kept.status_code == 409 and "holds 1 entry" in kept.json()["error"]["message"]
+    assert "disconnect the channel instead" in kept.json()["error"]["message"]
+    assert LedgerEntry.objects.filter(channel=channel).exists()
+    LedgerEntry.objects.filter(channel=channel).delete()
+    services.compose(channel, user=alice, page=article)
+    assert api(alice).delete(f"{API}/channels/{channel.public_id}/").status_code == 403
+    assert api(manager).delete(f"{API}/channels/{channel.public_id}/").status_code == 204
+    assert not DistributionPost.objects.exists()
+
+
 @override_settings(**LINKEDIN_APP)
 def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker(
     api, manager, channel, web, worker
@@ -200,17 +272,41 @@ def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged
 
 
 def test_a_jekyll_sites_page_is_keyed_by_the_url_its_own_lane_computes(db, tmp_path, settings):
-    from importers.jekyll import import_site
+    site, pages = imported(tmp_path, settings)
+    expected = {s.entry.relative: s.url for s in Pipeline(Config(site, env={})).sources()}
+    assert {path: services.canonical_url(pages[path]) for path in expected} == expected
+    assert services.canonical_url(pages["about.md"]) == "https://example.test/about/"
 
-    settings.REPO_ROOT = tmp_path
-    shutil.copytree(FIXTURE, tmp_path / "site")
-    import_site(tmp_path / "site", "fixture", repo_root=tmp_path)
-    lane = Pipeline(Config(tmp_path / "site", env={}))
-    expected = {s.entry.relative: s.url for s in lane.sources()}
-    pages = {p.legacy_path: p for p in Page.objects.specific() if getattr(p, "legacy_path", "") in expected}
-    assert {path: services.canonical_url(page) for path, page in pages.items()} == expected
-    about = next(p for p in Page.objects.specific() if getattr(p, "legacy_path", "") == "about.md")
-    assert services.canonical_url(about) == "https://example.test/about/"
+
+def test_a_site_outside_the_repository_is_keyed_only_where_its_checkout_may_be_read(db, tmp_path, settings, alice):
+    """The importer records an absolute source_root for a site outside the repository (compose's /sites). Its pages
+    are keyed from that checkout's own `_config.yml` — exactly as its lane keys them — where the platform may read
+    it (SITES_DIR), and refused with a sentence, never keyed by a URL Jekyll does not build, anywhere else or when
+    the checkout is not here (a worker without the mount). A source_root a person changed to leave those places is
+    not followed, for the `_config.yml` or the ledger file."""
+    (tmp_path / "app").mkdir()
+    site, pages = imported(tmp_path / "app", settings, at=tmp_path / "sites" / "site")
+    expected = {s.entry.relative: s.url for s in Pipeline(Config(site, env={})).sources()}
+    mcp = pages[MCP_POST]
+    channel = Channel.objects.create(
+        site=mcp.get_site(), kind="linkedin", name="Page", settings={"author": AUTHOR, "ledger_file": "log.json"}
+    )
+    with pytest.raises(Conflict, match=r"the site's checkout \(.*\) is not here"):
+        services.compose(channel, user=alice, page=mcp)
+    settings.SITES_DIR = str(tmp_path / "sites")
+    assert {path: services.canonical_url(pages[path]) for path in expected} == expected
+    post = services.compose(channel, user=alice, page=mcp, commentary="The plug.")
+    assert post.link == MCP_URL and isinstance(services.site_ledger(channel), Ledger)
+    shutil.move(site, tmp_path / "elsewhere")
+    with pytest.raises(Conflict, match="is not here"):
+        services.canonical_url(mcp)
+    assert "ledger_unreadable" in [b.kind for b in services.preview(post).blockers]
+    shutil.move(tmp_path / "elsewhere", site)
+    root = mcp.get_site().root_page.specific
+    root.source_root = "../.."  # a person who edits the root may change it; it is not followed out of the repository
+    root.save()
+    channel = Channel.objects.get(pk=channel.pk)
+    assert services.site_checkout(root) is None and services.site_ledger(channel).readable is False
 
 
 # ── the queue ───────────────────────────────────────────────────────────────
@@ -242,9 +338,48 @@ def test_compose_runs_the_brand_guard_and_approval_needs_a_clean_text_and_the_pu
         f"{API}/posts/{post['id']}/", {"commentary": "We copy the site every night, twice."}, format="json"
     )
     assert again.json()["status"] == "draft", "approval is of the exact text"
-    nobody = get_user_model().objects.create_user("carol")
+    nobody = get_user_model().objects.create_user("dave")
     with pytest.raises(Exception, match="edit"):
         services.compose(channel, user=nobody, page=article)
+
+
+def test_the_gates_compare_the_text_with_the_text_a_person_approved(alice, channel, article):
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Approved words."), alice)
+    assert "status_not_accepted" not in [b.kind for b in services.preview(post).blockers]
+    DistributionPost.objects.filter(pk=post.pk).update(commentary="Words changed behind the services' back.")
+    post.refresh_from_db()
+    [blocker] = [b for b in services.preview(post).blockers if b.kind == "status_not_accepted"]
+    assert blocker.message == "the text changed after it was approved: a person approves it again"
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_failed_posts_changed_text_needs_a_new_approval_before_anything_goes(
+    api, alice, carol, channel, article, web, worker
+):
+    """A post that failed was approved; its approval is of the text that failed. Someone who may only edit the page
+    changes it: it is a draft again, refused even with force until a person who may publish approves it — and what
+    then goes is the text they approved."""
+    route = web.post(f"{REST}/posts").mock(
+        side_effect=[
+            httpx.Response(422, json={"message": "Unprocessable"}),
+            httpx.Response(201, headers={"x-restli-id": "urn:li:share:8"}),
+        ]
+    )
+    post = approved(services.compose(channel, user=alice, page=article, commentary="The text alice approved."), alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed"
+    changed = api(carol).patch(f"{API}/posts/{post.public_id}/", {"commentary": "Words carol wrote."}, format="json")
+    assert changed.status_code == 200 and (changed.json()["status"], changed.json()["approved_by"]) == ("draft", None)
+    refused = api(alice).post(f"{API}/posts/{post.public_id}/publish/", {"force": True}, format="json")
+    assert refused.status_code == 409 and "status_not_accepted" in refused.json()["error"]["message"]
+    assert api(carol).post(f"{API}/posts/{post.public_id}/approve/").status_code == 403
+    assert route.call_count == 1
+    approved(post, alice)
+    assert worker(api(alice).post, f"{API}/posts/{post.public_id}/publish/", {}, format="json").status_code == 202
+    post.refresh_from_db()
+    assert (post.status, post.approved_by) == ("published", alice)
+    assert json.loads(route.calls.last.request.content)["commentary"] == "Words carol wrote."
 
 
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
@@ -318,6 +453,55 @@ def test_a_delivery_never_sends_a_post_another_delivery_claimed(alice, channel, 
 
 
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_an_attempt_whose_worker_died_is_settled_by_the_next_request_and_by_the_sweep(
+    api, alice, channel, article, site_root, web
+):
+    """A task that raised, or whose worker was killed, is acknowledged and never delivered again: the claim is all
+    that is left. The next request settles it — the post comes back failed and doubted, and force is not applied to
+    an attempt nobody has checked yet — and so does the beat's sweep, so the studio never waits on it forever."""
+    from distribution.tasks import settle_posts
+
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:5"})
+    hours_ago = timezone.now() - timedelta(hours=6)
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly, always."), alice)
+    services.request_publish(post, alice)  # queued; its worker claims it and dies
+    DistributionPost.objects.filter(pk=post.pk).update(attempted_at=hours_ago)
+    settled = api(alice).post(f"{API}/posts/{post.public_id}/publish/", {"force": True}, format="json")
+    assert settled.status_code == 202 and settled.json()["status"] == "failed"
+    assert "never finished, so it may have published" in settled.json()["error"]
+    assert "publish_unconfirmed" in [b["kind"] for b in settled.json()["blockers"]] and route.call_count == 0
+    other = make_article(site_root, "Restores tested", search_description="Test your restores.")
+    second = approved(services.compose(channel, user=alice, page=other, commentary="Restores."), alice)
+    services.request_publish(second, alice)
+    DistributionPost.objects.filter(pk=second.pk).update(attempted_at=hours_ago)
+    assert settle_posts() == 1
+    second.refresh_from_db()
+    assert second.status == "failed" and LedgerEntry.objects.get(key=second.link).state == "unconfirmed"
+    edited = api(alice).patch(f"{API}/posts/{second.public_id}/", {"commentary": "Restores, tested."}, format="json")
+    assert edited.status_code == 200 and edited.json()["status"] == "draft"
+    assert services.reject(second, alice, "not this week").status == "rejected"
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_an_error_nobody_expected_fails_the_post_as_one_that_may_have_published(
+    alice, channel, article, monkeypatch, worker
+):
+    """An exception the transports do not turn into a sentence — an unreadable image, a library's own network
+    error, the database — leaves the outcome unknown: the post is failed and doubted, never left publishing."""
+
+    def broken(post, page):
+        raise RuntimeError("the preview image could not be read")
+
+    monkeypatch.setattr(services, "_send_linkedin", broken)
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly."), alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "stopped on an unexpected error (RuntimeError)" in post.error
+    assert LedgerEntry.objects.get(channel=channel).state == "unconfirmed"
+    assert "publish_unconfirmed" in [b.kind for b in services.preview(post).blockers]
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_force_lifts_the_ledger_but_never_approval(api, alice, channel, article, web, worker):
     web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:9"})
     post = services.compose(channel, user=alice, page=article, commentary="Nightly.")
@@ -380,18 +564,10 @@ def test_the_ledger_round_trips_a_lanes_file_byte_for_byte_and_imported_keys_are
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path, settings, alice, web, worker):
     """The extension and the site's CI write the site's own ledger file: what they published blocks the platform,
-    and what the platform publishes lands there for them."""
-    from importers.jekyll import import_site
-
-    settings.REPO_ROOT = tmp_path
-    shutil.copytree(FIXTURE, tmp_path / "site")
-    import_site(tmp_path / "site", "fixture", repo_root=tmp_path)
-    page = next(
-        p for p in Page.objects.specific() if getattr(p, "legacy_path", "") == "pages/_posts/tech/2026-07-10-moved.md"
-    )
-    mcp = next(
-        p for p in Page.objects.specific() if getattr(p, "legacy_path", "").endswith("mcp-for-the-back-office.md")
-    )
+    and what the platform publishes lands there for them — a working-tree change the post says to commit, and a
+    write the file did not take is on the post too."""
+    _, pages = imported(tmp_path, settings)
+    page, mcp = pages["pages/_posts/tech/2026-07-10-moved.md"], pages[MCP_POST]
     channel = Channel.objects.create(
         site=page.get_site(),
         kind="linkedin",
@@ -412,26 +588,61 @@ def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path,
     worker(services.request_publish, post, alice)
     post.refresh_from_db()
     assert post.status == "published", post.error
-    written = file.entry("https://example.test/posts/2026/07/06/mcp-for-the-back-office/")
+    written = file.entry(MCP_URL)
     assert written["urn"] == written["linkedin_urn"] == "urn:li:share:2"
-    assert written["source_file"] == "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md"
+    assert written["source_file"] == MCP_POST
     assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == serialize(file.raw())
+    assert post.notes == [
+        "written to the site's ledger file (.github/linkedin-log.json): commit it, so the site's own CI sees it too"
+    ]
     (tmp_path / "site" / ".github" / "linkedin-log.json").write_text("{ broken")
     assert "ledger_unreadable" in [b.kind for b in services.preview(post).blockers]
     # A file that cannot take an entry never undoes the platform's own: the post exists at the target.
     services.record(post, "urn:li:share:3")
     assert LedgerEntry.objects.get(channel=channel, key=post.ledger_key).urn == "urn:li:share:3"
     assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == "{ broken"
+    assert post.notes[-1].startswith("not written to the site's ledger file (.github/linkedin-log.json):")
     # A ledger file the channel names but cannot reach is refused too, never read as "nothing published".
     shutil.rmtree(tmp_path / "site")
     [blocker] = [b for b in services.preview(post).blockers if b.kind == "ledger_unreadable"]
     assert "checkout is not here" in blocker.message
 
 
+@pytest.mark.skipif(os.geteuid() == 0, reason="root writes through a folder's read-only mode")
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_site_ledger_file_the_platform_cannot_write_blocks_the_channel(tmp_path, settings, alice, web):
+    """A ledger file that can be read but not written — compose mounts the sites read-only unless told otherwise —
+    would let a post go and its entry never reach the site's file: refused before anything is sent."""
+    site, pages = imported(tmp_path, settings)
+    channel = Channel.objects.create(
+        site=pages[MCP_POST].get_site(),
+        kind="linkedin",
+        name="Page",
+        armed=True,
+        settings={"author": AUTHOR, "ledger_file": ".github/linkedin-log.json"},
+    )
+    channel.set_credentials({"access_token": TOKEN})
+    channel.save()
+    folder = site / ".github"
+    folder.mkdir()
+    (folder / "linkedin-log.json").write_text("{}\n")
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:88"})
+    post = approved(services.compose(channel, user=alice, page=pages[MCP_POST], commentary="The plug."), alice)
+    folder.chmod(0o555)
+    try:
+        [blocker] = [b for b in services.preview(post).blockers if b.kind == "ledger_unreadable"]
+        assert "cannot be written here" in blocker.message and "SITES_MOUNT=rw" in blocker.message
+        with pytest.raises(Conflict, match="cannot be written here"):
+            services.request_publish(post, alice)
+    finally:
+        folder.chmod(0o755)
+    assert route.call_count == 0 and (folder / "linkedin-log.json").read_text() == "{}\n"
+
+
 # ── statistics ──────────────────────────────────────────────────────────────
 
 
-def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api, alice, channel, web, worker):
+def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api, alice, bob, channel, web, worker):
     from distribution.tasks import ingest_statistics
 
     LedgerEntry.objects.create(channel=channel, key="https://example.test/a/", urn="urn:li:share:1", author=AUTHOR)
@@ -461,6 +672,8 @@ def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api,
     entries = api(alice).get(f"{API}/ledger/").json()["results"]
     latest = {e["key"]: e["latest"] for e in entries}
     assert latest["https://example.test/a/"]["impressions"] == 90 and latest["https://example.test/b/"] is None
+    assert {e["id"] for e in entries} == {str(row.public_id) for row in LedgerEntry.objects.all()}, "UUIDs only"
+    assert api(bob).get(f"{API}/ledger/").json()["results"] == [], "the ledger's scope is its channels'"
     assert worker(api(alice).post, f"{API}/channels/{channel.public_id}/statistics/").status_code == 202
 
 
@@ -480,6 +693,64 @@ def test_an_agent_composes_through_the_registry_and_publishing_stays_armed_off(a
     article.save()
     with pytest.raises(ToolError):
         registry.call("distribution.compose", {"channel": str(channel.public_id), "page_id": article.pk}, ctx)
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_the_armed_agent_publishes_only_what_a_person_approved_and_never_forces(
+    agent, alice, carol, channel, site_root, web, worker
+):
+    """`distribution.publish` once every switch is set on purpose — the agent and the page at auto, the agent's group
+    given the page's publish right, the channel and the deployment armed: a post a person approved goes; a draft, a
+    rejected post and a failed one whose text was changed since do not; nor does one an earlier attempt may have
+    published, because an agent never forces."""
+    route = web.post(f"{REST}/posts").mock(
+        side_effect=[
+            httpx.Response(201, headers={"x-restli-id": "urn:li:share:31"}),
+            httpx.Response(422, json={"message": "Unprocessable"}),
+        ]
+    )
+    distributor = agent("distribution")
+    distributor.policy = "auto"  # this call's definition only: the row stays at suggest
+    robot = grant(
+        get_user_model().objects.get(username=distributor.username),
+        "agents that publish",
+        "change_page",
+        "publish_page",
+    )
+    ctx = ToolContext(user=robot, agent=distributor)
+    pages = [
+        make_article(site_root, f"Page {n}", search_description="Why it matters.", agent_policy="auto")
+        for n in range(4)
+    ]
+
+    def publish(post):
+        return worker(
+            registry.call, "distribution.publish", {"post": str(post.public_id), "page_id": post.page_id}, ctx
+        )
+
+    def refused(post):
+        with pytest.raises(ToolError) as e:
+            publish(post)
+        assert e.value.code == "not_allowed"
+        return e.value.message
+
+    went = approved(services.compose(channel, user=alice, page=pages[0], commentary="Approved by alice."), alice)
+    assert publish(went)["status"] == "publishing"
+    went.refresh_from_db()
+    assert (went.status, went.external_id, went.published_by) == ("published", "urn:li:share:31", robot)
+    draft = services.compose(channel, user=alice, page=pages[1], commentary="Only a draft.")
+    assert "status_not_accepted" in refused(draft)
+    assert "status_not_accepted" in refused(services.reject(draft, alice, "not this one"))
+    failed = approved(services.compose(channel, user=alice, page=pages[2], commentary="Approved, then failed."), alice)
+    publish(failed)
+    failed.refresh_from_db()
+    assert failed.status == "failed"
+    services.edit(failed, carol, commentary="Words nobody approved.")
+    assert "status_not_accepted" in refused(failed)
+    doubted = approved(services.compose(channel, user=alice, page=pages[3], commentary="Approved, doubted."), alice)
+    LedgerEntry.objects.create(channel=channel, key=doubted.link, state="unconfirmed", error="HTTP 503")
+    assert "publish_unconfirmed" in refused(doubted)
+    assert route.call_count == 2, "only the approved post and the attempt that failed reached LinkedIn"
 
 
 def test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish(channel, article):
@@ -504,7 +775,7 @@ def test_a_published_page_drafts_a_post_for_each_auto_channel_never_a_publish(
 ):
     Channel.objects.filter(pk=channel.pk).update(auto_draft=True)
     quiet = Channel.objects.create(
-        site=channel.site, kind="linkedin", name="Not automatic", settings={"author": AUTHOR}
+        site=channel.site, kind="linkedin", name="Not automatic", settings={"author": "urn:li:person:quiet"}
     )
     page = make_article(site_root, "Restores tested", publish=False, search_description="Test your restores.")
     worker(lambda: page.save_revision().publish())

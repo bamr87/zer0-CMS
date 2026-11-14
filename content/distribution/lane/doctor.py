@@ -6,8 +6,10 @@ unreadable ledger as findings. The environment is ignored on purpose — the
 doctor reports what the repository says, the same on every machine.
 
 `findings(root)` returns the doctor's finding shape (lifehacker.dev's
-`LH.finding`, fingerprinted `sha1("check_id|rule|file|evidence")[:12]`), for
-PLAN G4's Python doctor to include as its `distribution` check.
+`LH.finding`, fingerprinted `sha1("check_id|rule|file|evidence")[:12]`).
+`manage.py linkedin doctor [--format findings]` runs it (`cli.py`), and the
+reusable `zer0-doctor.yml` adds its findings to the Ruby doctor's report, until
+PLAN G4's Python doctor includes it as its `distribution` check.
 """
 
 import hashlib

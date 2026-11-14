@@ -94,6 +94,15 @@ class Ledger:
         except (OSError, ValueError):
             return False
 
+    @property
+    def writable(self) -> bool:
+        """Whether a write would land: `mutate` makes the missing folders and renames a new file over the ledger, so
+        the nearest folder that exists must take one — a read-only checkout or mount does not."""
+        folder = self.path.parent
+        while not folder.exists() and folder != folder.parent:
+            folder = folder.parent
+        return os.access(folder, os.W_OK | os.X_OK)
+
     def raw(self) -> dict:
         """The whole file as parsed, so a rewrite keeps keys of any shape it does not own."""
         if not self.exists():

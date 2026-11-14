@@ -13,11 +13,14 @@ GitHub repository as a pull request, and a newsroom newsletter by email.
   `push_to_github_and_create_pr`): the page exported as its Jekyll file
   (`exporters.jekyll`) onto a branch, and a pull request — with PyGithub, and a
   sentence a person can act on for a 401, 403, 404, 422 and a pull request that
-  is already open. Only a 404 means "not there yet": anything else is reported
-  as itself, never answered with a second, unrelated write.
+  is already open, and for a request GitHub never answered (PyGithub lets
+  `requests`' own errors through). Only a 404 means "not there yet": anything
+  else is reported as itself, never answered with a second, unrelated write.
 * **Email**: the newsroom's newsletters (`newsroom.services`, django-anymail)
   — an issue of the channel's newsletter carrying the story, sent as the
-  newsroom sends every issue. Nothing about sending mail is duplicated here.
+  newsroom sends every issue; the post follows the issue until the newsroom has
+  sent it, and publishing again resumes the same issue. Nothing about sending
+  mail is duplicated here.
 
 Each raises `TransportError`, whose message is safe to show; `doubt` says the
 target may have acted anyway (a 5xx or a dropped connection after a write), so
@@ -26,9 +29,11 @@ the ledger marks the attempt unconfirmed.
 
 import base64
 import functools
+from contextlib import contextmanager
 
 import httpx
 import markdown
+import requests
 from django.conf import settings
 
 from exporters.jekyll import path_for, render
@@ -142,6 +147,18 @@ def _github_message(exc, *, action: str, repo: str, base: str) -> str:
     return f"Could not {action}: GitHub returned an error ({status}). {_github_detail(exc)}"
 
 
+@contextmanager
+def _unanswered(action: str, *, doubt: bool = False):
+    """A request GitHub never answered — PyGithub lets `requests`' own errors (a dropped connection, a timeout)
+    through — as a sentence. Only the pull request is the publish, so only it is doubted when unanswered: the branch
+    is the post's own (`distribute/<post>`), so writing it again is harmless, and GitHub refuses a second pull request
+    for it (the "already open" case)."""
+    try:
+        yield
+    except requests.RequestException as e:
+        raise TransportError(f"Could not {action}: GitHub did not answer ({type(e).__name__}).", doubt=doubt) from e
+
+
 def exported_file(page) -> tuple[str, str]:
     """(path in the site, text): the stored source of an unchanged imported page, byte for byte, else the page
     rendered — what `export_jekyll` writes for it."""
@@ -172,36 +189,38 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
     branch = f"distribute/{post.public_id.hex[:12]}"
 
     hub = Github(auth=Auth.Token(credentials.get("token", "")), retry=None, timeout=20)
-    try:
-        repo = hub.get_repo(repo_name)
-        head = repo.get_branch(base)
-    except GithubException as e:
-        raise TransportError(describe(e, action=f"open the repository {repo_name}")) from e
-    try:
-        repo.get_branch(branch)
-    except GithubException as e:
-        # Only a 404 means "the branch is not there yet": a 401 or a rate-limit 403 must not be answered by
-        # creating one.
-        if e.status != 404:
-            raise TransportError(describe(e, action=f"look up the branch {branch}")) from e
+    with _unanswered(f"open the repository {repo_name}"):
         try:
-            repo.create_git_ref(ref=f"refs/heads/{branch}", sha=head.commit.sha)
-        except GithubException as create_error:
-            raise TransportError(describe(create_error, action=f"create the branch {branch}")) from create_error
-    try:
-        existing = repo.get_contents(repo_path, ref=branch)
-    except GithubException as e:
-        if e.status != 404:
-            raise TransportError(describe(e, action=f"read {repo_path} in {repo_name}")) from e
-        existing = None
-    message = f"{'Update' if existing else 'Add'} {post.title or path}"
-    try:
-        if existing is None:
-            repo.create_file(path=repo_path, message=message, content=text, branch=branch)
-        else:
-            repo.update_file(path=repo_path, message=message, content=text, sha=existing.sha, branch=branch)
-    except GithubException as e:
-        raise TransportError(describe(e, action=f"write {repo_path} in {repo_name}")) from e
+            repo = hub.get_repo(repo_name)
+            head = repo.get_branch(base)
+        except GithubException as e:
+            raise TransportError(describe(e, action=f"open the repository {repo_name}")) from e
+    with _unanswered(f"write the branch {branch}"):
+        try:
+            repo.get_branch(branch)
+        except GithubException as e:
+            # Only a 404 means "the branch is not there yet": a 401 or a rate-limit 403 must not be answered by
+            # creating one.
+            if e.status != 404:
+                raise TransportError(describe(e, action=f"look up the branch {branch}")) from e
+            try:
+                repo.create_git_ref(ref=f"refs/heads/{branch}", sha=head.commit.sha)
+            except GithubException as create_error:
+                raise TransportError(describe(create_error, action=f"create the branch {branch}")) from create_error
+        try:
+            existing = repo.get_contents(repo_path, ref=branch)
+        except GithubException as e:
+            if e.status != 404:
+                raise TransportError(describe(e, action=f"read {repo_path} in {repo_name}")) from e
+            existing = None
+        message = f"{'Update' if existing else 'Add'} {post.title or path}"
+        try:
+            if existing is None:
+                repo.create_file(path=repo_path, message=message, content=text, branch=branch)
+            else:
+                repo.update_file(path=repo_path, message=message, content=text, sha=existing.sha, branch=branch)
+        except GithubException as e:
+            raise TransportError(describe(e, action=f"write {repo_path} in {repo_name}")) from e
     body = "\n\n".join(
         p
         for p in (
@@ -211,21 +230,22 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
         )
         if p
     )
-    try:
-        pull = repo.create_pull(title=post.title or f"Publish {path}", body=body, head=branch, base=base)
-    except GithubException as e:
-        if e.status == 422:
-            url = _open_pull(repo, branch, base)
-            if url:
+    with _unanswered(f"open the pull request for {branch}", doubt=True):
+        try:
+            pull = repo.create_pull(title=post.title or f"Publish {path}", body=body, head=branch, base=base)
+        except GithubException as e:
+            if e.status == 422:
+                url = _open_pull(repo, branch, base)
+                if url:
+                    raise TransportError(
+                        f"A pull request for this post is already open: {url}. Review or close it, then publish again.",
+                        url=url,
+                    ) from e
                 raise TransportError(
-                    f"A pull request for this post is already open: {url}. Review or close it, then publish again.",
-                    url=url,
+                    f"GitHub would not open a pull request ({branch} into {base}). One may already exist, or the "
+                    f"branch has nothing to merge. GitHub said: {_github_detail(e)}"
                 ) from e
-            raise TransportError(
-                f"GitHub would not open a pull request ({branch} into {base}). One may already exist, or the branch "
-                f"has nothing to merge. GitHub said: {_github_detail(e)}"
-            ) from e
-        raise TransportError(describe(e, action=f"open the pull request for {branch}")) from e
+            raise TransportError(describe(e, action=f"open the pull request for {branch}")) from e
     return str(pull.number), pull.html_url
 
 
@@ -235,7 +255,7 @@ def _open_pull(repo, branch: str, base: str) -> str | None:
 
     try:
         return next((p.html_url for p in repo.get_pulls(state="open", base=base) if p.head.ref == branch), None)
-    except GithubException:
+    except (GithubException, requests.RequestException):
         return None
 
 
@@ -244,12 +264,13 @@ def github_check(channel, credentials: dict) -> dict:
 
     repo_name = str(channel.setting("repo"))
     hub = Github(auth=Auth.Token(credentials.get("token", "")), retry=None, timeout=20)
-    try:
-        login = hub.get_user().login
-        repo = hub.get_repo(repo_name)
-        can_push = bool(getattr(repo.permissions, "push", False))
-    except GithubException as e:
-        raise TransportError(_github_message(e, action=f"read {repo_name}", repo=repo_name, base="")) from e
+    with _unanswered(f"read {repo_name}"):
+        try:
+            login = hub.get_user().login
+            repo = hub.get_repo(repo_name)
+            can_push = bool(getattr(repo.permissions, "push", False))
+        except GithubException as e:
+            raise TransportError(_github_message(e, action=f"read {repo_name}", repo=repo_name, base="")) from e
     problems = [] if can_push else [f"{login} may not push to {repo_name}: pull requests cannot be opened"]
     return {"ok": not problems, "account": login, "problems": problems}
 
@@ -257,7 +278,11 @@ def github_check(channel, credentials: dict) -> dict:
 # ── email: a newsroom newsletter ────────────────────────────────────────────
 
 
-def email_publish(channel, post, user) -> tuple[str, str]:
+def email_publish(channel, post, user):
+    """The post as an issue of the channel's newsletter, handed to the newsroom to send (on its worker, which marks
+    the issue sent or failed): the issue is linked to the post before it can go, so the post follows it whatever
+    happens next. Publishing again resumes the same issue — the newsroom sends it to those who have not had it — with
+    the post's text while nobody has had it yet."""
     from newsroom import services as newsroom
     from newsroom.models import Issue
     from ops.errors import ApiError
@@ -268,13 +293,24 @@ def email_publish(channel, post, user) -> tuple[str, str]:
         raise TransportError(
             "email goes out as a newsletter issue, which carries newsroom stories: this is not a story"
         )
-    issue = Issue.objects.create(
-        newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
-    )
-    try:
+    issue, made = post.issue, post.issue is None
+    if not made and issue.status in (Issue.Status.SENT, Issue.Status.SENDING):
+        return issue  # sent already, or being sent: the post follows it
+    if made:
+        issue = Issue.objects.create(
+            newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
+        )
         newsroom.set_issue_stories(issue, [post.story])
+        post.issue = issue
+        post.save(update_fields=["issue", "updated_at"])
+    elif not issue.deliveries.exists():  # nobody has had it: it carries the text a person approved last
+        issue.subject, issue.intro = post.title[:200], post.commentary
+        issue.save(update_fields=["subject", "intro", "updated_at"])
+    try:
         newsroom.send_issue(issue, user=user)
     except ApiError as e:
-        issue.delete()
+        if made:
+            issue.delete()
+            post.issue = None
         raise TransportError(f"The newsletter refused the issue: {e.message}") from e
-    return str(issue.public_id), ""
+    return issue

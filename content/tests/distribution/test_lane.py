@@ -702,6 +702,14 @@ def test_the_doctors_distribution_check(tmp_path):
     assert [(f["severity"], f["file"], f["check_id"], len(f["fingerprint"])) for f in vendored] == [
         ("warning", "scripts/features/linkedin/posts.py", "distribution", 12)
     ]
+    # What the reusable zer0-doctor.yml runs: the findings a line each, exit 1 on an error, as the doctor does.
+    out = io.StringIO()
+    broken = site('{ "author": "urn:li:company:1", "publishAllow": true }')
+    assert cli.main(["doctor", "--site", str(broken), "--format", "findings"], out=out, err=io.StringIO(), env={}) == 1
+    assert [json.loads(line) for line in out.getvalue().splitlines()] == findings(broken)
+    out = io.StringIO()
+    assert cli.main(["doctor", "--site", str(site(valid))], out=out, err=io.StringIO(), env={}) == 0
+    assert out.getvalue() == "result: 0 error(s), 0 warning(s)\n"
 
 
 def test_the_oauth_callback_request_line():

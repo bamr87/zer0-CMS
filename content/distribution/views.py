@@ -79,13 +79,7 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
             serializer.save()
 
     def perform_destroy(self, channel):
-        if not services.may_manage(self.request.user):
-            raise Forbidden("removing a channel needs the right to manage channels")
-        if channel.ledger.exclude(urn="").exists():
-            raise Conflict(
-                "this channel has published posts, and its ledger is what keeps them from going twice: disconnect it instead"
-            )
-        channel.delete()
+        services.delete_channel(channel, self.request.user)
 
     @extend_schema(
         request=None,
@@ -311,7 +305,10 @@ class DistributionPostViewSet(
     @extend_schema(
         request=s.DistributionPublishSerializer,
         responses={202: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
-        summary="Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go",
+        summary=(
+            "Publish an approved post: 202, the worker sends it (or, for an attempt whose worker died, the post as it "
+            "ended — failed, for a person to check); 409 with every blocker when it may not go"
+        ),
     )
     @action(detail=True, methods=["post"])
     def publish(self, request, public_id=None):
@@ -361,7 +358,7 @@ class DistributionLedgerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     filterset_class = LedgerFilter
 
     def get_queryset(self):
-        rows = LedgerEntry.objects.filter(channel__in=Channel.objects.visible_to(self.request.user))
+        rows = LedgerEntry.objects.visible_to(self.request.user)
         order = "posted_at" if self.request.query_params.get("ordering") == "posted_at" else "-posted_at"
         return (
             rows.select_related("channel", "post")

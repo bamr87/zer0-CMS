@@ -48,6 +48,7 @@ Usage: manage.py linkedin COMMAND [--site PATH] [--json] [options]
   connect [--port N] [--redirect-uri URL] [--write-env FILE | --print-token]
                                      three-legged OAuth (state + PKCE) through a loopback callback
   mcp                                the same tools over MCP (stdio); publishing off unless armed
+  doctor [--format findings]         zer0 doctor's distribution check (findings: one JSON object a line)
 
 Credentials come from the environment only: LINKEDIN_ACCESS_TOKEN, and optionally
 LINKEDIN_REFRESH_TOKEN with LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET.
@@ -70,6 +71,7 @@ COMMANDS = (
     "stats",
     "connect",
     "mcp",
+    "doctor",
 )
 
 
@@ -105,8 +107,29 @@ def parser() -> Parser:
     p.add_argument("--redirect-uri")
     p.add_argument("--write-env")
     p.add_argument("--print-token", action="store_true")
+    p.add_argument("--format", choices=("text", "findings"), default="text")
     p.add_argument("-h", "--help", action="store_true")
     return p
+
+
+def doctor(site, *, findings_format: bool, out) -> int:
+    """`zer0 doctor`'s distribution check (`doctor.py`) over a site, before its settings are loaded — a broken
+    block is a finding, not a failure to run: one JSON object a line (`--format findings`, the doctor's own shape,
+    which the reusable `zer0-doctor.yml` adds to the Ruby doctor's report) or a line each and the doctor's
+    `result:` line. Exit 1 on any error, as the doctor does."""
+    from .doctor import findings
+
+    found = findings(site)
+    for f in found:
+        if findings_format:
+            out.write(json.dumps(f) + "\n")
+        else:
+            where = f"{f['file']}:{f['line']}" if f["line"] else f["file"]
+            out.write(f"{f['severity']}  {f['rule']}  {where}  {f['evidence']}\n")
+    errors = sum(f["severity"] == "error" for f in found)
+    if not findings_format:
+        out.write(f"result: {errors} error(s), {len(found) - errors} warning(s)\n")
+    return 1 if errors else 0
 
 
 def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, sleeper=time.sleep, stdin=None) -> int:
@@ -126,6 +149,8 @@ def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, slee
             if path := getattr(opts, f"{key}_file"):
                 setattr(opts, key, Path(path).read_text(encoding="utf-8"))
         env = os.environ if env is None else env
+        if opts.command == "doctor":
+            return doctor(opts.site, findings_format=opts.format == "findings", out=out)
         if opts.command == "mcp":
             server = Server(opts.site, env=env, pipeline_options={"transport": transport, "sleeper": sleeper})
 
