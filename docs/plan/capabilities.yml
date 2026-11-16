@@ -182,19 +182,21 @@ platform:
   - id: ideas.brainstorm
     what: AI brainstorming — angles, headlines, outlines — whose results become ideas; ideas clustered and de-duplicated by meaning.
     # G14: a brainstorm is an AI-layer conversation with the bundled Brainstormer; a person keeps the ideas; clusters and duplicates come from stored vectors (graph.Embedding).
-    # G10: the extension's Ideas workspace renders the same Brainstorm and Clusters; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Ideas workspace renders the same Brainstorm and Clusters; a brainstorm started there goes through its host and its ideas show, to keep (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/ideas/test_api.py::test_capture_from_anywhere_and_a_brainstorm_kept_by_a_person
       studio: web/packages/ui/test/ideas.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: research.sources
     what: A sources library — web pages, feeds, documents and notes with extracted text, metadata, summaries and entities — with quotes, citations and collections.
     # G14: content/research (/api/v2/research/) and the studio's Research workspace and source page; collections and sources shared from the studio (only the owner changes who sees one).
-    # G10: the extension's Research workspace and a source's page render the same components; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: missing}
+    # G10: the extension's Research workspace and a source's page render the same components; a passage kept as a quote on a source's page goes through its host (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: missing}
     proof:
       api: content/tests/research/test_api.py::test_quotes_and_citations_follow_their_source_and_what_cites_it
       studio: web/packages/ui/test/research.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: research.capture
     what: Capture by URL, bookmarklet, feed subscription (RSS, Atom, wires) on a schedule, upload, or a web search through a provider's tool.
     # G14: URL capture in a worker behind an SSRF guard (robots.txt honoured, the whole exchange under one deadline, on the research queue), RSS and Atom feeds on Celery beat, PDF/text/Markdown uploads, web search through a provider that declares `search` (anthropic), the studio's bookmarklet. Partial: wire feeds (NewsML-G2, ninjs) are not read yet — feedparser reads RSS and Atom only.
@@ -206,11 +208,12 @@ platform:
   - id: research.synthesize
     what: Ask questions across a collection with cited answers, extract facts and quotes, and fact-check a draft's claims against its sources.
     # G14: cited answers (quotes checked against the source), summaries with entities and suggested quotes, fact-checks that read the draft's citations first and whose exact corrections are proposed through the tool registry as one suggestion per block.
-    # G10: the extension renders the same ask, summary and fact-check panels — in its Research workspace, and in the Research tab of the page editor behind the open file; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: missing}
+    # G10: the extension renders the same ask, summary and fact-check panels — in its Research workspace, and in the Research tab of the page editor behind the open file; a question asked of a collection there goes through its host and its cited answer shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: missing}
     proof:
       api: content/tests/research/test_api.py::test_a_fact_check_of_a_draft_lists_findings_and_the_suggestions_they_became
       studio: web/packages/ui/test/research.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
 
   # ── The newsroom (TARGET.md § The newsroom) ─────────────────────────────────
   - id: news.desk
@@ -227,11 +230,12 @@ platform:
     # and every other publish path (Write, the Wagtail admin, an agent's tool, the scheduled publish) refused for a
     # story still being made or under embargo; the board's drag and menu (a confirmation before anything goes live),
     # the panel's moves. The extension's move-a-stage comes with G10.
-    # G10: the extension's Newsroom workspace is the same board and story panel, and a move that puts a story live (published, scheduled) asks modally in its host first (src/test/webview.test.ts); the moves themselves not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Newsroom workspace is the same board and story panel, and a move that puts a story live (published, scheduled) asks modally in its host first (src/test/webview.test.ts); a story moved from copy to published on the board goes through the real host, which asks once (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/newsroom/test_workflow.py
       studio: web/packages/ui/test/newsroom.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: news.fronts
     what: Home and section fronts — featured, pinned and related stories, curated by hand or by rule.
     # G15: ordered slots, pinned or filled by "the latest of a desk" (content/tests/newsroom/test_fronts_and_newsletters.py,
@@ -244,11 +248,12 @@ platform:
     # partial — the page API carries `corrections` and export_jekyll writes them into the front matter
     # (content/tests/newsroom/test_export.py); showing them is the renderer's (P6) or the Jekyll-theme option's (P2).
     # The extension's add-a-correction comes with G10.
-    # G10: the story panel's corrections render in the extension's Newsroom workspace; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, site: partial}
+    # G10: the story panel's corrections render in the extension's Newsroom workspace, and a correction posted there goes through its host and shows on the story (web/packages/webview/test/host.test.tsx); the host does not ask first, since a correction publishes nothing else (src/test/webview.test.ts).
+    surfaces: {api: done, studio: done, extension: done, site: partial}
     proof:
       api: content/tests/newsroom/test_api.py::test_bylines_and_corrections_are_in_the_page_api
       studio: web/packages/ui/test/newsroom.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: news.newsletters
     what: Newsletters assembled from stories and sent by email, with subscribers.
     # G15: double opt-in subscriptions (emailed links open a page that changes nothing on GET), issues from published
@@ -288,32 +293,36 @@ platform:
   # half is G10's.
   - id: outbox.belt
     what: The outbox harness's belt of handoffs between pipeline stations — its numbers, messages filtered by kind, station and trace, a piece of work's journey, the dead letters, each message's CloudEvents form — read from its files, which are the record.
-    # G10: the extension's Outbox workspace renders the same belt; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Outbox workspace renders the same belt; a message opened there with its CloudEvent and its piece's journey goes through its host (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/outboxdesk/test_belt.py::test_an_approval_answers_a_delivered_message_keeps_its_trace_and_names_its_page
       studio: web/packages/ui/test/outbox.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: outbox.handoff
     what: A person sends a handoff onto the belt as the editor station — an idea, an approval of a delivered message, a signal — validated by the harness and recorded with who sent it; the relay delivers it on beat or now, in the worker.
-    # G10: the extension's Outbox workspace renders the same editor station (SendHandoff); not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Outbox workspace renders the same editor station (SendHandoff); an idea sent onto the belt there goes through its host, and the belt shows it waiting (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/outboxdesk/test_belt.py::test_a_person_sends_an_idea_as_the_editor_and_the_relay_delivers_it
       studio: web/packages/ui/test/outbox.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: outbox.trials
     what: Arena trials from a task card — a scout and two claimants racing, run in the worker, scored at close — with the arena's ledger.
-    # G10: the extension's Outbox workspace renders the same trials and a trial's page; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Outbox workspace renders the same trials and a trial's page; a trial run from a task card there goes through its host with its Idempotency-Key and its scored result shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/outboxdesk/test_runs.py::test_a_trial_runs_in_the_worker_and_keeps_its_scored_result_and_ledger
       studio: web/packages/ui/test/outbox.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: outbox.claim-desk
     what: The claim desk — a draft's claims checked against their sources' timeline in the worker, a verdict per claim, resolved against the truth into Brier scores, and calibration per verifier and per author; it advises and never edits a page.
-    # G10: the extension's Outbox workspace renders the same claim desk and a check's page; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Outbox workspace renders the same claim desk and a check's page; a check resolved against the truth there goes through its host with its Idempotency-Key and each claim's score shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/outboxdesk/test_runs.py::test_a_resolved_check_scores_its_verifiers_and_its_author_and_calibration_averages_them
       studio: web/packages/ui/test/outbox.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: outbox.publish
     what: A page that goes live is announced on the belt as a `published` handoff naming it, from the transactional outbox's event through a consumer group of its own, once per event.
     # The compose belt-publisher service runs the consumer (manage.py consume_events --stream zer0:content --group outboxdesk).
@@ -345,11 +354,12 @@ platform:
   - id: ai.providers
     what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
     # G8 screens: AI → Providers — status and health for everyone, configuration (the credential write-only, shown as set or not set), test, model sync and the default for those with ai.change_providerconfig (one check at a time); the default's status on Home; verify/scenarios/studio-ai-workspace.yml opens it in a browser.
-    # G10: the extension's AI workspace (its agent view) has the same Providers section; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's AI workspace (its agent view) has the same Providers section; a provider's test there goes through its host with its Idempotency-Key and its health shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential
       studio: web/packages/ui/test/ai/providers.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: ai.models
     what: The model catalog, synced from each provider.
     # G8 screens: AI → Models, filtered by provider, activity and name; a provider's "Sync models" fills it.
@@ -360,7 +370,7 @@ platform:
   - id: ai.assistants
     what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
     # G8 screens: AI → Assistants — create, edit (the form read again from the saved row), try on a prompt (the run followed live), export and import; and the editor's AI panel runs one on the open page — the whole page, a block, or a selection placed by its field and occurrence — its answer landing as suggestions proposed through the registry (api: test_on_page.py).
-    # G10: the extension's AI workspace has the same Assistants section and the page editor behind the open file the same AI panel; not yet proved through its host, and an assistant's export is a data: link its host does not open (a gap).
+    # G10: the extension's AI workspace has the same Assistants section and the page editor behind the open file the same AI panel; an assistant run on a prompt there goes through its host with its Idempotency-Key and its answer shows (web/packages/webview/test/host.test.tsx), but an assistant's export downloads as a data: link its host does not open — a gap until downloads go through the host, so the cell stays partial.
     surfaces: {api: done, studio: done, extension: partial, mcp: partial}
     proof:
       api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
@@ -368,11 +378,12 @@ platform:
   - id: ai.pipelines
     what: Ordered pipelines of assistants, each step reading the one before.
     # G8 screens: AI → Pipelines — created from steps, reordered by dragging (pointer or keyboard, @dnd-kit) or the move buttons, each step's assistant and source; run and follow; also on a conversation and from the editor's AI panel; verify/scenarios/studio-ai-workspace.yml builds one and drags its steps from the keyboard in a browser.
-    # G10: the extension's AI workspace has the same Pipelines section (@dnd-kit bundled into dist/studio.js); not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: missing}
+    # G10: the extension's AI workspace has the same Pipelines section (@dnd-kit bundled into dist/studio.js); a pipeline run there goes through its host with its Idempotency-Key and what its last step wrote shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: missing}
     proof:
       api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run
       studio: web/packages/ui/test/ai/pipelines.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: ai.schemas
     what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
     # G8 screens: AI → Output schemas — edited with feedback as typed and the platform's verdict on save, exported, imported, the bundled ones added by staff; an assistant's structured answer shown as its JSON; verify/scenarios/studio-ai-workspace.yml writes one in a browser.
@@ -383,19 +394,21 @@ platform:
   - id: ai.briefs
     what: A brief turns a prompt or a text into a structured draft with extracted metadata (title, slug, description, keywords, tags).
     # G8 screens: Create → Briefs — write, generate (the run followed live), review the rendered Markdown, the metadata and the structured result, apply (the draft opens on its Suggestions tab); verify/scenarios/studio-ai-brief.yml in a browser.
-    # G10: the extension's Create workspace has the same Briefs section; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    # G10: the extension's Create workspace has the same Briefs section; a ready brief applied as a draft there goes through its host, and the draft opens on its suggestions (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: partial}
     proof:
       api: content/tests/ai/test_api.py::test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions
       studio: web/packages/ui/test/ai/briefs.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: ai.conversations
     what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
     # G8 screens: AI → Conversations (and Create) — send and follow the reply's run, filter, ask again (or another assistant), run the pipeline, promote to a brief or a draft, delete; the newest messages first, earlier ones loaded on request; verify/scenarios/studio-ai-chat.yml in a browser.
-    # G10: the extension's AI and Create workspaces have the same Conversations; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's AI and Create workspaces have the same Conversations; a message sent there goes through its host with its Idempotency-Key and the answer its run wrote shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one
       studio: web/packages/ui/test/ai/conversations.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: ai.agents
     what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
     # P4: runs and a run's live step timeline in the studio; definitions, cancel and tokens to come.
@@ -419,11 +432,12 @@ platform:
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
     # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends, and every request that starts a run carries an Idempotency-Key made when the person acts (the API replays the first answer to a repeat); its control waits while the request is out and a double click asks once — conversations.test.tsx (keys, Ctrl+Enter sends once, a message's actions held), providers.test.tsx (one check per double click), briefs.test.tsx and aipanel.test.tsx.
-    # G10: the extension follows the same stream host-side (with the person's token as a header) and relays it to the same RunTimeline.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension follows the same stream host-side (with the person's token as a header) and relays it to the same RunTimeline; a run's steps arrive live through the real host, and every run-starting request there carries its Idempotency-Key (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
       studio: web/packages/ui/test/ai/conversations.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
 
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
@@ -432,13 +446,14 @@ platform:
     # (checkout, content source, renderer, domains, deploy target, digests, findings) and SiteSettings (SEO defaults,
     # analytics ids, navigation, brand voice, skin and tokens, budget); /api/v2/sites/ registers a checkout (workspace.yml's
     # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
-    # G10 (merge): the extension's Sites workspace renders the same registry and site page; registering, the registry fields and the settings not yet proved through its host.
+    # G10 (merge): the extension's Sites workspace renders the same registry and site page; registering a checkout, the registry fields and the settings each go through its host (web/packages/webview/test/host.test.tsx).
     # P4 (G2's BrandRules per site): the settings carry the site's brand rules — its voice and its banned phrases, which the brand guard refuses on its pages (content/tests/suggestions/test_suggestions.py::test_a_sites_own_brand_rules_hold_on_its_pages_and_nowhere_else).
     # P-D7 (2026-10-28): and whether the built-in bans hold on its books' chapters (content/tests/books/test_ai.py::test_a_site_may_switch_the_built_in_bans_off_for_every_books_chapters, sites.test.tsx).
-    surfaces: {api: done, studio: done, extension: partial}
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/sites/test_sites.py
       studio: web/packages/ui/test/sites.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: sites.voice
     what: A site's voice — who it writes for, how it sounds, what it never says — scoped below the site (section, content type, book, channel), resolved for every piece, pushed to every writer and gate, recorded on every result, round-tripped through its files.
     # ADR 0010 (proposed). V0 (2026-10-30): voice/services.py composes today's stores in the guard's order — the built-in
@@ -500,11 +515,12 @@ platform:
     # G4: content/sites/doctor.py — the Ruby doctor ported rule for rule but the theme's (ADR 0006 decision 4); a site's
     # doctor job keeps its findings (api, studio); `python -m sites.doctor`, `manage.py doctor`, `bin/zer0 doctor` and the
     # reusable zer0-doctor.yml run it (ops).
-    # G10 (merge): the extension's Sites workspace starts the same doctor job and reads its findings; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, ops: done}
+    # G10 (merge): the extension's Sites workspace starts the same doctor job (with its Idempotency-Key) and reads its findings, each through its host (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, ops: done}
     proof:
       api: content/tests/sites/test_sites.py::test_the_doctor_job_records_its_findings
       studio: web/packages/ui/test/sites.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
       ops: content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor
   - id: sites.monitor
     what: Scheduled uptime, broken-link, performance and Core Web Vitals, accessibility and SEO checks, with history, trends and alerts.
@@ -524,11 +540,12 @@ platform:
     # G7: the heuristics scored exactly as AIEO scored on the fixtures (test_analyzers.py, golden/source.json); a
     # model's evaluation through the AI layer's bundled evaluator, the heuristics as its fallback; over MCP as
     # aieo.score_text / aieo_score_content.
-    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: done}
+    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); a text audited there goes through its host with its Idempotency-Key and its grade shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: done}
     proof:
       api: content/tests/aieo/test_api.py::test_a_text_is_scored_at_once_and_nothing_is_recorded
       studio: web/packages/ui/test/aieo.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
       mcp: content/tests/aieo/test_tools.py::test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_text
   - id: aieo.audits
     what: Audits of a URL or a crawled site, and reports.
@@ -552,21 +569,23 @@ platform:
     what: Rewrite content to raise its score (score → gaps → AI rewrite) or scrub AI-writing tells, as a suggestion.
     # G7: optimize, expand, scrub, rewrite — on a page as suggestions aligned block by block, on a text a draft; over
     # MCP an agent rewrites a text (only a person asks for suggestions on a page).
-    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: done}
+    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); a text rewritten there goes through its host with its Idempotency-Key and its uplift shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: done}
     proof:
       api: content/tests/aieo/test_rewrites.py::test_optimizing_a_page_lands_its_rewrite_as_suggestions_not_a_revision
       studio: web/packages/ui/test/aieo.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
       mcp: content/tests/aieo/test_tools.py::test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose
   - id: aieo.patterns
     what: The pattern library and applying a pattern as a rewrite proposal.
     # G7: Pattern rows seeded from AIEO's pattern files, changed with aieo.change_pattern (the scorer reads the
     # change), applied to a page (suggestions) or a text (a draft).
-    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial, mcp: done}
+    # G10: the extension's Sites workspace renders AIEO's (AieoWorkspace); a pattern applied to a page there goes through its host with its Idempotency-Key and its suggestions wait on the page (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done, mcp: done}
     proof:
       api: content/tests/aieo/test_api.py::test_everyone_reads_the_pattern_library_and_only_its_keepers_change_it
       studio: web/packages/ui/test/aieo.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
       mcp: content/tests/aieo/test_tools.py::test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose
   - id: aieo.agents
     what: The AIEO agents (SEO, meta, internal links, headlines, conversion and the rest) as agent definitions at suggest.
@@ -652,22 +671,24 @@ platform:
     what: Create a book with AI — premise → outline → chapter plan.
     # G9: a premise is an ai.Brief the bundled outliner generates; the person accepts it and the book is made as a
     # draft with a stub per planned chapter (studio: BookShelf's "From a premise").
-    # G10: the extension's Books workspace renders the same From a premise; not yet proved through its host.
-    surfaces: {api: done, studio: done, extension: partial}
+    # G10: the extension's Books workspace renders the same From a premise; a premise outlined there goes through its host and its chapter plan shows (web/packages/webview/test/host.test.tsx).
+    surfaces: {api: done, studio: done, extension: done}
     proof:
       api: content/tests/books/test_api.py::test_a_book_from_a_premise_over_the_api
       studio: web/packages/ui/test/books.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: books.write
     what: Write with AI — draft, continue, rewrite or expand a chapter in the book's voice, and check continuity and consistency — every result a suggestion.
     # G9: runs of the `books` agent (draft, continue, revise to an instruction, continuity check, critique) with the
     # book's context; writing arrives as suggestions on the chapter (studio: ChapterWriter's book assistant). No
     # MCP tool starts a book task yet.
-    # G10: the extension's Books workspace renders the same ChapterWriter and book assistant; not yet proved through its host.
+    # G10: the extension's Books workspace renders the same ChapterWriter and book assistant; a chapter drafted there goes through its host and its writing arrives as suggestions (web/packages/webview/test/host.test.tsx).
     # P-D7 (2026-10-28): a book (the Books overview) or its site (the Sites area's settings) may switch the brand guard's built-in bans off for its chapters; the markup check and the site's own bans still hold (content/tests/books/test_ai.py::test_a_book_with_the_built_in_bans_off_takes_their_words_but_not_markup_or_its_sites_bans, books.test.tsx).
-    surfaces: {api: done, studio: done, extension: partial, mcp: missing}
+    surfaces: {api: done, studio: done, extension: done, mcp: missing}
     proof:
       api: content/tests/books/test_ai.py::test_draft_replaces_the_chapters_prose_with_a_suggestion_a_person_accepts
       studio: web/packages/ui/test/books.test.tsx
+      extension: web/packages/webview/test/host.test.tsx
   - id: books.abc
     what: The ABC book wizard — themes, lexicons, art styles, letters, export into a site.
     surfaces: {api: missing, studio: missing}
