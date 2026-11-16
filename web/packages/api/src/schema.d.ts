@@ -1552,7 +1552,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish the latest revision now */
+        /** Publish the latest revision now, if it is the one reviewed */
         post: operations["content_pages_publish"];
         delete?: never;
         options?: never;
@@ -1620,7 +1620,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at` */
+        /** Publish the latest revision, if it is the one reviewed, at `go_live_at` (or now) and take it down at `expire_at` */
         post: operations["content_pages_schedule"];
         delete?: never;
         options?: never;
@@ -8160,6 +8160,10 @@ export interface components {
             /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
             credential?: string;
         };
+        PublishRequest: {
+            /** @description The revision the person reviewed (null only for a page without one): the page's latest, or the publish is a 409 and nothing changes — someone saved a newer one that nobody here has seen. */
+            base_revision_id: number | null;
+        };
         /** @description `status` and `error`, from the run that fills the row. */
         Question: {
             /** Format: uuid */
@@ -8441,6 +8445,8 @@ export interface components {
             id: number | null;
         };
         ScheduleRequest: {
+            /** @description The revision the person reviewed (null only for a page without one): the page's latest, or the publish is a 409 and nothing changes — someone saved a newer one that nobody here has seen. */
+            base_revision_id: number | null;
             /**
              * Format: date-time
              * @description When the latest revision goes live; leave it out to publish now.
@@ -16830,7 +16836,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PublishRequest"];
+                "multipart/form-data": components["schemas"]["PublishRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -17117,7 +17129,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
                 "application/json": components["schemas"]["ScheduleRequest"];
                 "application/x-www-form-urlencoded": components["schemas"]["ScheduleRequest"];

@@ -17,7 +17,7 @@ from exporters.jekyll import export_site
 from importers import frontmatter
 from importers.jekyll import import_site
 from importers.models import ImportedSource
-from tests.api.test_pages import PAGES, post, save, signed_in
+from tests.api.test_pages import PAGES, post, reviewed, save, signed_in
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "jekyll" / "site"
 HELLO = "pages/_posts/2026-07-31-hello.md"
@@ -87,7 +87,7 @@ def test_a_person_authors_a_complete_post_and_it_exports_at_its_path(posts, edit
         "File path",
     )
     assert specs["front_matter"]["kind"] == "json" and "categories" in specs["front_matter"]["help_text"]
-    assert post(client, f"{PAGES}{page['id']}/publish/").json()["status"] == "live"
+    assert post(client, f"{PAGES}{page['id']}/publish/", reviewed(page["id"])).json()["status"] == "live"
 
     report = export_site("fixture", tmp_path)
     assert report.rendered == [WIRE] and report.moved == []  # the imported site still exports verbatim
@@ -157,14 +157,14 @@ def test_an_imported_pages_raw_front_matter_edits_in_place_and_a_reorder_is_neve
 
     # Sent back as read, nothing changes: the page still exports as its file, byte for byte.
     assert save(client, hello, {"fields": {"front_matter": fields["front_matter"]}}).status_code == 200
-    post(client, f"{PAGES}{hello.pk}/publish/")
+    assert post(client, f"{PAGES}{hello.pk}/publish/", reviewed(hello)).status_code == 200
     assert HELLO in export_site("fixture", tmp_path / "same").verbatim
     assert (tmp_path / "same" / HELLO).read_bytes() == (FIXTURE / HELLO).read_bytes()
 
     # A reorder alone leaves the content hash as it was; the export still writes the new order.
     reordered = {"comments": True, "preview": "/assets/images/hello.png"}
     assert save(client, hello, {"fields": {"front_matter": reordered}}).status_code == 200
-    post(client, f"{PAGES}{hello.pk}/publish/")
+    assert post(client, f"{PAGES}{hello.pk}/publish/", reviewed(hello)).status_code == 200
     assert ArticlePage.objects.get(pk=hello.pk).content_hash == hello.content_hash
     report = export_site("fixture", tmp_path / "reordered")
     assert report.rendered == [HELLO]
@@ -186,7 +186,7 @@ def test_moving_an_imported_page_exports_it_at_its_new_path_and_a_reimport_never
     refused = errors(save(client, hello, {"fields": {"date": "2026-08-05T10:00:00Z"}}))
     assert "dated 2026-07-31" in refused["date"][0]  # the file name and the date move together
     assert save(client, hello, {"fields": {"file_path": moved_to}}).status_code == 200
-    post(client, f"{PAGES}{hello.pk}/publish/")
+    assert post(client, f"{PAGES}{hello.pk}/publish/", reviewed(hello)).status_code == 200
 
     report = export_site("fixture", tmp_path)
     assert report.rendered == [moved_to] and report.moved == [(HELLO, moved_to)]
