@@ -14,6 +14,17 @@
 # and on a pull request the secondary interpreter skips the `slow` tier. A push
 # to main always runs everything on both.
 #
+# Every pytest step runs on all of the runner's cores (`-n auto`, pytest-xdist):
+# each worker is a session of its own, with its own test database (a private
+# in-memory SQLite, or `test_zer0_gw<N>` on Postgres), migrated and given the
+# published agents before its first test. Tests are handed out one at a time
+# (`--maxschedchunk 1`) and the `slow` tier first (tests/conftest.py), so the
+# theme's round trip, the longest test, starts at once instead of queueing
+# behind the other big round trips on one worker. Keep xdist's default `load`
+# scheduling, never `worksteal`: the transactional test flushes its worker's
+# database, and only in-order dispatch keeps it after every test that needs the
+# migrated rows (bamr87/bamr87#836).
+#
 # The plane's own prose is filtered out: its README.md, AGENTS.md and CLAUDE.md,
 # each app's README.md (content/<app>/README.md) and schemas/events/README.md.
 # Nothing this workflow runs reads them: pytest, ruff, makemigrations, the schema
@@ -112,7 +123,7 @@ jobs:
           persist-credentials: false
       - name: Tests (full suite)
         if: matrix.python == env.PRIMARY_PYTHON || github.event_name != 'pull_request'
-        run: python -m pytest -q
+        run: python -m pytest -q -n auto --maxschedchunk 1
       # On a pull request the secondary interpreter runs everything except the
       # `slow` tier — the round trips of the large in-repo sites, which compare
       # a site export with its recording and so cannot differ between 3.12 and
@@ -120,7 +131,7 @@ jobs:
       # both, so nothing reaches main unproven on either interpreter.
       - name: Tests (fast tier)
         if: matrix.python != env.PRIMARY_PYTHON && github.event_name == 'pull_request'
-        run: python -m pytest -q -m "not slow"
+        run: python -m pytest -q -m "not slow" -n auto --maxschedchunk 1
       - name: The committed GraphQL schema is current
         if: matrix.python == env.PRIMARY_PYTHON
         run: |
@@ -177,4 +188,4 @@ jobs:
       - run: pip install -r requirements-dev.txt
       # No makemigrations check here: the sqlite leg above already runs it, and
       # it reads the migration graph, not the database.
-      - run: python -m pytest -q -m "not slow"
+      - run: python -m pytest -q -m "not slow" -n auto --maxschedchunk 1

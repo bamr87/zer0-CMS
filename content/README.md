@@ -16,6 +16,7 @@ python manage.py createsuperuser && python manage.py runserver        # http://l
 python -m pytest -q -m "not slow"                  # the fast tier (SQLite, ~40 s)
 python -m pytest -q                                # + round trips of the two big in-repo sites
 DATABASE_URL=postgres://… python -m pytest -q      # the same suite on Postgres + pgvector
+python -m pytest -q -n auto --maxschedchunk 1      # any of these on every core (pytest-xdist), as content.yml runs them
 python manage.py makemigrations --check --dry-run
 python manage.py run_evals --all --recorded        # every agent's eval suite, no network
 python manage.py graphql_schema --out ../schemas/graphql/schema.graphql
@@ -94,4 +95,4 @@ Every response carries `X-Request-Id` (echoed when a client sent one) and `X-App
 
 ## Tests
 
-`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14), `outboxdesk/` (ADR 0007), `sites/` and `jobs/` (G4), `distribution/` (G5), `automations/` (G16), `aieo/` (G7), `accounts/` (G10: a person's token). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.
+`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14), `outboxdesk/` (ADR 0007), `sites/` and `jobs/` (G4), `distribution/` (G5), `automations/` (G16), `aieo/` (G7), `accounts/` (G10: a person's token). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider. Under `-n auto` each pytest-xdist worker is a session of its own: pytest-django gives it its own test database (a private in-memory SQLite, or `test_<name>_gw<N>` on Postgres), which it migrates and publishes the agents into before its first test.
