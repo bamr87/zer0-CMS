@@ -1,6 +1,6 @@
 # zer0-CMS
 
-> An agent-native CMS for markdown sites: one Python platform (Django, with Wagtail as a headless library), a React studio and site renderer, and a VS Code extension with the studio's capabilities — publishing only through a gate a human has to walk through.
+> zer0-CMS's direction is to become the ultimate open home for all things markdown site operations: data, tools, resources and transparency, with a governed studio, a human publish gate, and agent-declared effects, for everyone ([constitution](docs/constitution.md) §1).
 
 [![CI](https://img.shields.io/github/actions/workflow/status/bamr87/zer0-CMS/ci.yml?branch=main&label=CI)](https://github.com/bamr87/zer0-CMS/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 

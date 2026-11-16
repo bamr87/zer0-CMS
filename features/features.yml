@@ -394,3 +394,11 @@ features:
       - src/test/mcp.test.ts
     scenarios: []
     evidence: []
+  - id: ZER0-048
+    title: "Missions in constitution §1"
+    description: "Three product missions under one direction statement, ratified through amendment 0003."
+    implemented: false
+    status: planned
+    prd: ["§1.1"]
+    surface: docs
+    docs: "docs/constitution.md"
