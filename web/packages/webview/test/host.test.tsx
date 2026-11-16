@@ -16,7 +16,10 @@
 // Idempotency-Key where the workspace sends one), whether the host asked first
 // (exactly when the change is live), and what the workspace shows from the
 // reply. Each title starts with its capability's id in
-// docs/plan/capabilities.yml, whose `extension: done` cells name this file.
+// docs/plan/capabilities.yml. Every capability whose `extension` proof there
+// names this file has a row here; the other rows prove through the real host
+// workspaces whose cells still name webview.test.tsx, or stay partial
+// (sites.sync, ai.assistants).
 //
 // A mutation of the gate fails the rows that depend on it: without
 // 'Idempotency-Key' in REQUEST_HEADERS every row that sends one (and
@@ -559,7 +562,7 @@ const ROWS: Row[] = [
     shows: 'Bridge closes',
   },
   {
-    title: "news.corrections: posts a correction on a published story's page, after the host asks, through the real host",
+    title: "news.corrections: posts a correction on a published story's page without asking, through the real host",
     view: 'dashboard',
     at: { to: 'story', id: 's1' },
     routes: () => {
@@ -585,7 +588,9 @@ const ROWS: Row[] = [
     // The bridge asks before a story goes live (published, scheduled), not before a note on a live one: a correction
     // publishes nothing else (newsroom.services.correct), and src/test/webview.test.ts pins it as a move that does not ask.
     live: false,
-    shows: /The vote is on Tuesday\./,
+    // The log's line (`<when> — <text>`), not the Note field the person typed into, which still holds the text when
+    // the platform refuses the correction.
+    shows: /— The vote is on Tuesday\./,
   },
   {
     title: 'books.create: outlines a premise with the AI and shows the chapter plan to make a book from, through the real host',
