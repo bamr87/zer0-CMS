@@ -119,6 +119,7 @@ platform:
     what: Publish and unpublish now or on a schedule.
     # P4: publish now, unpublish now, a go-live time and an expiry (each carried out by beat, one page per transaction); the studio's editor offers all four.
     # G10: the extension's editor offers the same four, and its host asks modally before each live-site change, gating the URL it sends so no spelling of a publish path skips the question (src/test/webview.test.ts); file mode keeps the governed path.
+    # #61: a publish and a schedule name the revision the person reviewed (the studio's save, else the revision it shows) and are refused with a 409 when someone saved a newer one in between (content/tests/api/test_pages.py::test_a_publish_or_a_schedule_goes_live_only_with_the_revision_reviewed).
     surfaces: {api: done, studio: done, extension: done, mcp: partial}
     proof:
       api: content/tests/api/test_pages.py::test_publish_and_unpublish_now_or_on_a_schedule

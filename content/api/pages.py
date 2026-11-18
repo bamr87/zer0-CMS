@@ -7,10 +7,11 @@ they live in are sites/views.py).
     GET   /api/v2/content/pages/<id>/                     the latest revision: fields, blocks, Markdown, status
     PATCH /api/v2/content/pages/<id>/                     save a draft revision (never publishes)
     GET   /api/v2/content/pages/<id>/types/               the page types the person may create under it
-    POST  /api/v2/content/pages/<id>/publish/             publish the latest revision now
+    POST  /api/v2/content/pages/<id>/publish/             publish the latest revision now, if it is the one
+                                                          reviewed (`base_revision_id`)
     POST  /api/v2/content/pages/<id>/unpublish/
-    POST  /api/v2/content/pages/<id>/schedule/            publish the latest revision at `go_live_at` (or now),
-                                                          and take it down at `expire_at`
+    POST  /api/v2/content/pages/<id>/schedule/            publish the latest revision, if it is the one reviewed,
+                                                          at `go_live_at` (or now), and take it down at `expire_at`
     POST  /api/v2/content/pages/<id>/unschedule/
     GET   /api/v2/content/pages/<id>/revisions/           newest first
     GET   /api/v2/content/pages/<id>/revisions/compare/   two revisions side by side, for a diff
@@ -32,6 +33,11 @@ hold a permission on and the ancestors that lead there), but opening one — its
 draft, fields, blocks and revisions — needs what Wagtail's own draft view
 needs, the right to edit or publish it; any other page is a 404. A Wagtail
 lock refuses every write but cancelling a schedule (409 `resource.locked`).
+
+A save names the revision it was edited from, and a publish or a schedule the
+revision the person reviewed (`base_revision_id`, null only for a page without
+one): when someone has saved a newer one since, the request is a 409
+`resource.conflict` and nothing changes, so what goes live is what was seen.
 """
 
 from contextlib import contextmanager
@@ -68,6 +74,7 @@ from .serializers import (
     PageSummarySerializer,
     PageTypeSerializer,
     PageUpdateSerializer,
+    PublishSerializer,
     RevisionCompareSerializer,
     RevisionSerializer,
     ScheduleSerializer,
@@ -483,13 +490,14 @@ def _action(operation_id, summary_text, request_serializer=None):
     )
 
 
-@_action("content_pages_publish", "Publish the latest revision now")
+@_action("content_pages_publish", "Publish the latest revision now, if it is the one reviewed", PublishSerializer)
 @api_view(["POST"])
 @permission_classes([IsPerson])
 def publish(request, pk):
+    data = _valid(PublishSerializer, request)
     page = _page(request, pk)
     with service_errors():
-        services.publish_now(page, request.user)
+        services.publish_now(page, request.user, base_revision_id=data["base_revision_id"])
     return _detail_response(request, pk)
 
 
@@ -505,7 +513,7 @@ def unpublish(request, pk):
 
 @_action(
     "content_pages_schedule",
-    "Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at`",
+    "Publish the latest revision, if it is the one reviewed, at `go_live_at` (or now) and take it down at `expire_at`",
     ScheduleSerializer,
 )
 @api_view(["POST"])
@@ -514,7 +522,13 @@ def schedule(request, pk):
     data = _valid(ScheduleSerializer, request)
     page = _page(request, pk)
     with service_errors():
-        services.schedule(page, request.user, data.get("go_live_at"), data.get("expire_at"))
+        services.schedule(
+            page,
+            request.user,
+            data.get("go_live_at"),
+            data.get("expire_at"),
+            base_revision_id=data["base_revision_id"],
+        )
     return _detail_response(request, pk)
 
 

@@ -151,7 +151,18 @@ class PageUpdateSerializer(serializers.Serializer):
     body = BlockSerializer(many=True, required=False)
 
 
+REVIEWED_HELP = (
+    "The revision the person reviewed (null only for a page without one): the page's latest, or the publish is a "
+    "409 and nothing changes — someone saved a newer one that nobody here has seen."
+)
+
+
+class PublishSerializer(serializers.Serializer):
+    base_revision_id = serializers.IntegerField(allow_null=True, help_text=REVIEWED_HELP)
+
+
 class ScheduleSerializer(serializers.Serializer):
+    base_revision_id = serializers.IntegerField(allow_null=True, help_text=REVIEWED_HELP)
     go_live_at = serializers.DateTimeField(
         required=False, allow_null=True, help_text="When the latest revision goes live; leave it out to publish now."
     )

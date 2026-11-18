@@ -28,6 +28,7 @@ from newsroom import services
 from newsroom.models import Correction, StageTask, Story
 from newsroom.wagtail_hooks import held_back_by_its_story
 from ops.errors import Conflict, Forbidden, Invalid
+from tests.api.test_pages import reviewed
 
 from .conftest import person
 
@@ -248,7 +249,8 @@ def test_a_story_still_being_made_goes_live_only_through_the_newsroom(api, desk,
     assert Story.objects.get(pk=drafting.pk).status == S.DRAFTING
 
     editing = advance(desk, S.EDITING, headline="Editing")
-    answer = api(ed).post(f"/api/v2/content/pages/{editing.page_id}/publish/")  # copy skipped, no reason given
+    path = f"/api/v2/content/pages/{editing.page_id}/publish/"
+    answer = api(ed).post(path, reviewed(editing.page_id), format="json")  # copy skipped, no reason given
     assert answer.status_code == 409 and answer.json()["error"]["code"] == "story.in_workflow"
     assert not page_of(editing).live and Story.objects.get(pk=editing.pk).breaking is False
 
@@ -266,9 +268,11 @@ def test_an_embargo_holds_on_every_path(api, desk, ed, copyeditor, advance):
     page = page_of(story)
     url = f"/api/v2/content/pages/{page.pk}"
     assert api(ed).post(f"{url}/unschedule/").status_code == 200  # Write lifts the schedule …
-    early = api(ed).post(f"{url}/publish/")  # … and publishes now: refused
+    early = api(ed).post(f"{url}/publish/", reviewed(page), format="json")  # … and publishes now: refused
     assert early.status_code == 409 and early.json()["error"]["code"] == "story.embargoed"
-    sooner = api(ed).post(f"{url}/schedule/", {"go_live_at": (embargo - timedelta(hours=1)).isoformat()}, format="json")
+    sooner = api(ed).post(
+        f"{url}/schedule/", reviewed(page, go_live_at=(embargo - timedelta(hours=1)).isoformat()), format="json"
+    )
     assert sooner.status_code == 409 and sooner.json()["error"]["code"] == "story.embargoed"
     draft = page_of(story).get_latest_revision_as_object()
     draft.go_live_at = None  # a revision that would go live now: the admin's, an agent's tool's
@@ -278,7 +282,8 @@ def test_an_embargo_holds_on_every_path(api, desk, ed, copyeditor, advance):
     assert not page.live and Story.objects.get(pk=story.pk).status == S.SCHEDULED
 
     with mock.patch("django.utils.timezone.now", return_value=embargo + timedelta(minutes=1)):
-        assert api(ed).post(f"{url}/publish/").status_code == 200  # cleared by copy, and its time has come
+        cleared = api(ed).post(f"{url}/publish/", reviewed(page), format="json")
+        assert cleared.status_code == 200  # cleared by copy, and its time has come
     story.refresh_from_db()
     assert page_of(story).live and story.status == S.PUBLISHED and story.events.last().action == "went live"
 

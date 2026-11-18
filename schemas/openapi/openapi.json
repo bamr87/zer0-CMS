@@ -12480,7 +12480,7 @@
         "/api/v2/content/pages/{id}/publish/": {
             "post": {
                 "operationId": "content_pages_publish",
-                "summary": "Publish the latest revision now",
+                "summary": "Publish the latest revision now, if it is the one reviewed",
                 "parameters": [
                     {
                         "in": "path",
@@ -12494,6 +12494,26 @@
                 "tags": [
                     "content"
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublishRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublishRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublishRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "security": [
                     {
                         "userToken": []
@@ -12932,7 +12952,7 @@
         "/api/v2/content/pages/{id}/schedule/": {
             "post": {
                 "operationId": "content_pages_schedule",
-                "summary": "Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at`",
+                "summary": "Publish the latest revision, if it is the one reviewed, at `go_live_at` (or now) and take it down at `expire_at`",
                 "parameters": [
                     {
                         "in": "path",
@@ -12963,7 +12983,8 @@
                                 "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         }
-                    }
+                    },
+                    "required": true
                 },
                 "security": [
                     {
@@ -42601,6 +42622,21 @@
                     }
                 }
             },
+            "PublishRequest": {
+                "type": "object",
+                "properties": {
+                    "base_revision_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision the person reviewed (null only for a page without one): the page's latest, or the publish is a 409 and nothing changes — someone saved a newer one that nobody here has seen."
+                    }
+                },
+                "required": [
+                    "base_revision_id"
+                ]
+            },
             "Question": {
                 "type": "object",
                 "description": "`status` and `error`, from the run that fills the row.",
@@ -43504,6 +43540,13 @@
             "ScheduleRequest": {
                 "type": "object",
                 "properties": {
+                    "base_revision_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision the person reviewed (null only for a page without one): the page's latest, or the publish is a 409 and nothing changes — someone saved a newer one that nobody here has seen."
+                    },
                     "go_live_at": {
                         "type": [
                             "string",
@@ -43520,7 +43563,10 @@
                         "format": "date-time",
                         "description": "When the page comes down again. Give one of the two, or both."
                     }
-                }
+                },
+                "required": [
+                    "base_revision_id"
+                ]
             },
             "SchemaDocument": {
                 "type": "object",

@@ -261,6 +261,8 @@ describe('the extension webviews', () => {
         '/api/v2/content/pages/5/publish/',
       ]),
     );
+    const published = host.sent.find((m) => m.type === 'api' && m.path === '/api/v2/content/pages/5/publish/');
+    expect(JSON.parse(String(published?.body))).toEqual({ base_revision_id: 41 }); // the revision it shows (#61)
 
     const dashboard = open('dashboard');
     await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
