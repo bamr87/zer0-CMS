@@ -29,6 +29,11 @@
  *     the person opened asks, or the Metadata view asks which file is a page;
  *     `fetch` and the stream opener are injected.
  *
+ * This file imports nothing, on purpose: the webview's own suite
+ * (`web/packages/webview/test/host.test.tsx`) loads it and drives every
+ * workspace through it, so the extension's proofs run the real gate — keep it
+ * free of imports, `vscode` and Node built-ins alike.
+ *
  * A refusal answers like the platform would — the error envelope with a status
  * and a code — so the workspace shows it where the request was made. A body is
  * JSON text and a reply is text: the platform's API answers JSON and event
