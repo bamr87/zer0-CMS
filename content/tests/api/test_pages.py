@@ -59,6 +59,13 @@ def post(client, path, data=None):
     return client.post(path, data or {}, content_type="application/json")
 
 
+def reviewed(page, **data):
+    """A publish or schedule body that names the page's latest revision as the
+    one reviewed, as the studio sends it. `page` is a page or its id."""
+    pk = getattr(page, "pk", page)
+    return {"base_revision_id": Page.objects.get(pk=pk).latest_revision_id, **data}
+
+
 @pytest.fixture
 def draft(site_root):
     return make_article(site_root, "A draft", body=[{"type": "markdown", "value": "Not yet."}], publish=False)
@@ -137,7 +144,7 @@ def test_a_page_a_person_may_only_pass_through_is_listed_but_never_opened(site_r
     for path in ("", "revisions/", f"revisions/compare/?a={site_root.latest_revision_id}&b=1"):
         refused = writer.get(f"{PAGES}{site_root.pk}/{path}")
         assert refused.status_code == 404 and "EMBARGOED" not in refused.content.decode(), path
-    assert post(writer, f"{PAGES}{site_root.pk}/publish/").status_code == 404
+    assert post(writer, f"{PAGES}{site_root.pk}/publish/", reviewed(site_root)).status_code == 404
     assert writer.get(f"{PAGES}{section.pk}/").json()["permissions"]["edit"] is True
 
 
@@ -327,13 +334,13 @@ def test_publish_and_unpublish_now_or_on_a_schedule(draft, editor):
     client = signed_in(editor)
     live = lambda: ArticlePage.objects.get(pk=draft.pk).live  # noqa: E731
 
-    published = post(client, f"{PAGES}{draft.pk}/publish/").json()
+    published = post(client, f"{PAGES}{draft.pk}/publish/", reviewed(draft)).json()
     assert published["status"] == "live" and live()
     down = post(client, f"{PAGES}{draft.pk}/unpublish/").json()
     assert down["status"] == "draft" and not live()
 
     soon, later = timezone.now() + timedelta(hours=2), timezone.now() + timedelta(days=2)
-    both = {"go_live_at": soon.isoformat(), "expire_at": later.isoformat()}
+    both = reviewed(draft, go_live_at=soon.isoformat(), expire_at=later.isoformat())
     scheduled = post(client, f"{PAGES}{draft.pk}/schedule/", both).json()
     assert scheduled["status"] == "scheduled" and not live() and listing_status(client, draft.pk, "scheduled")
     revision = Revision.page_revisions.get(object_id=str(draft.pk), approved_go_live_at__isnull=False)
@@ -347,36 +354,85 @@ def test_publish_and_unpublish_now_or_on_a_schedule(draft, editor):
     page = ArticlePage.objects.get(pk=draft.pk)
     assert not page.live and page.expired and listing_status(client, draft.pk, "expired")
 
-    again = post(client, f"{PAGES}{draft.pk}/publish/").json()  # a past expiry is cleared, or the page would drop again
+    again = post(
+        client, f"{PAGES}{draft.pk}/publish/", reviewed(draft)
+    ).json()  # a past expiry is cleared, or the page would drop again
     assert again["status"] == "live" and again["expire_at"] is None
     publish_scheduled()
     assert live()
-    take_down = post(client, f"{PAGES}{draft.pk}/schedule/", {"expire_at": later.isoformat()}).json()
+    take_down = post(client, f"{PAGES}{draft.pk}/schedule/", reviewed(draft, expire_at=later.isoformat())).json()
     assert take_down["status"] == "live" and take_down["expire_at"]  # a live page, to come down at `later`
 
 
 @pytest.mark.django_db
 def test_who_may_publish_and_what_a_schedule_must_say(draft, editor):
     writer = person("writer", "add_page", "change_page")
-    assert post(signed_in(writer), f"{PAGES}{draft.pk}/publish/").status_code == 403
+    assert post(signed_in(writer), f"{PAGES}{draft.pk}/publish/", reviewed(draft)).status_code == 403
     assert post(signed_in(writer), f"{PAGES}{draft.pk}/unpublish/").status_code == 403
     client = signed_in(editor)
     schedule = f"{PAGES}{draft.pk}/schedule/"
-    past = post(client, schedule, {"go_live_at": (timezone.now() - timedelta(1)).isoformat()})
+    past = post(client, schedule, reviewed(draft, go_live_at=(timezone.now() - timedelta(1)).isoformat()))
     assert past.status_code == 422 and past.json()["error"]["details"][0]["field"] == "go_live_at"
-    assert post(client, schedule, {}).status_code == 422
+    neither = post(client, schedule, reviewed(draft))
+    assert neither.status_code == 422 and neither.json()["error"]["details"][0]["field"] == "go_live_at"
     soon = timezone.now() + timedelta(hours=1)
-    inverted = post(client, schedule, {"go_live_at": soon.isoformat(), "expire_at": soon.isoformat()})
+    inverted = post(client, schedule, reviewed(draft, go_live_at=soon.isoformat(), expire_at=soon.isoformat()))
     assert inverted.status_code == 422 and inverted.json()["error"]["details"][0]["field"] == "expire_at"
+
+
+@pytest.mark.django_db
+def test_a_publish_or_a_schedule_goes_live_only_with_the_revision_reviewed(article, editor):
+    """#61: the studio saves and then publishes in a second request. A save by
+    someone else in between makes the publish (or the schedule) a 409 that
+    changes nothing — never a publish of a revision nobody here has seen."""
+    client = signed_in(editor)
+    seen = save(client, article, {"fields": {"title": "Reviewed"}}).json()["latest_revision"]["id"]
+    ada = person("ada", "change_page")
+    assert save(signed_in(ada), article, {"fields": {"title": "Not reviewed"}}).status_code == 200
+    unseen = Page.objects.get(pk=article.pk).latest_revision_id
+    state = lambda: Page.objects.values(  # noqa: E731
+        "live", "live_revision_id", "latest_revision_id", "title", "go_live_at", "expire_at", "has_unpublished_changes"
+    ).get(pk=article.pk)
+    before = state()
+    soon, later = timezone.now() + timedelta(hours=1), timezone.now() + timedelta(days=1)
+    for path, data in (
+        ("publish/", {"base_revision_id": seen}),
+        ("schedule/", {"base_revision_id": seen, "go_live_at": soon.isoformat()}),
+        ("schedule/", {"base_revision_id": seen, "expire_at": later.isoformat()}),
+    ):
+        stale = post(client, f"{PAGES}{article.pk}/{path}", data)
+        assert stale.status_code == 409 and stale.json()["error"]["code"] == "resource.conflict", (path, stale.json())
+    assert state() == before and before["title"] == "Nightly backups"  # the live page is the one it was
+    assert not Revision.page_revisions.filter(object_id=str(article.pk), approved_go_live_at__isnull=False).exists()
+
+    for path in ("publish/", "schedule/"):  # a publish names what was reviewed, or it is refused
+        unnamed = post(client, f"{PAGES}{article.pk}/{path}", {"go_live_at": soon.isoformat()})
+        assert unnamed.status_code == 422 and unnamed.json()["error"]["details"][0]["field"] == "base_revision_id"
+    assert state() == before
+
+    scheduled = post(
+        client, f"{PAGES}{article.pk}/schedule/", {"base_revision_id": unseen, "go_live_at": soon.isoformat()}
+    )
+    assert scheduled.status_code == 200 and scheduled.json()["status"] == "scheduled"
+    assert post(client, f"{PAGES}{article.pk}/unschedule/").json()["lock"] is None
+    published = post(client, f"{PAGES}{article.pk}/publish/", reviewed(article)).json()
+    assert published["status"] == "live" and published["title"] == "Not reviewed"  # once it is the one reviewed
 
 
 @pytest.mark.django_db
 def test_a_scheduled_page_is_locked_until_the_schedule_is_cancelled(draft, editor):
     client = signed_in(editor)
-    post(client, f"{PAGES}{draft.pk}/schedule/", {"go_live_at": (timezone.now() + timedelta(days=1)).isoformat()})
+    post(
+        client,
+        f"{PAGES}{draft.pk}/schedule/",
+        reviewed(draft, go_live_at=(timezone.now() + timedelta(days=1)).isoformat()),
+    )
     detail = client.get(f"{PAGES}{draft.pk}/").json()
     assert detail["status"] == "scheduled" and "scheduled to go live" in detail["lock"]
-    for refused in (save(client, draft, {"fields": {"title": "x"}}), post(client, f"{PAGES}{draft.pk}/publish/")):
+    for refused in (
+        save(client, draft, {"fields": {"title": "x"}}),
+        post(client, f"{PAGES}{draft.pk}/publish/", reviewed(draft)),
+    ):
         assert refused.status_code == 409 and refused.json()["error"]["code"] == "resource.locked"
     cancelled = post(client, f"{PAGES}{draft.pk}/unschedule/").json()
     assert cancelled["status"] == "draft" and cancelled["lock"] is None
@@ -388,7 +444,7 @@ def test_publish_now_clears_a_future_go_live_on_the_latest_revision(draft, edito
     later = draft.get_latest_revision_as_object()
     later.go_live_at = timezone.now() + timedelta(days=1)
     later.save_revision(user=editor)  # a draft that names a go-live time but was never scheduled
-    now = post(signed_in(editor), f"{PAGES}{draft.pk}/publish/").json()
+    now = post(signed_in(editor), f"{PAGES}{draft.pk}/publish/", reviewed(draft)).json()
     assert now["status"] == "live" and now["go_live_at"] is None
 
 
@@ -402,9 +458,13 @@ def test_another_persons_lock_refuses_every_write(article, editor):
     first = Page.objects.get(pk=article.pk).latest_revision_id
     for refused in (
         save(client, article, {"fields": {"title": "Mine now"}}),
-        post(client, f"{PAGES}{article.pk}/publish/"),
+        post(client, f"{PAGES}{article.pk}/publish/", reviewed(article)),
         post(client, f"{PAGES}{article.pk}/unpublish/"),
-        post(client, f"{PAGES}{article.pk}/schedule/", {"go_live_at": (timezone.now() + timedelta(1)).isoformat()}),
+        post(
+            client,
+            f"{PAGES}{article.pk}/schedule/",
+            reviewed(article, go_live_at=(timezone.now() + timedelta(1)).isoformat()),
+        ),
         post(client, f"{PAGES}{article.pk}/revisions/{first}/revert/"),
     ):
         assert refused.status_code == 409 and refused.json()["error"]["code"] == "resource.locked"

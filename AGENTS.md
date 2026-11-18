@@ -2,6 +2,8 @@
 
 # zer0-CMS
 
+> zer0-CMS's direction is to become the ultimate open home for all things markdown site operations: data, tools, resources and transparency, with a governed studio, a human publish gate, and agent-declared effects, for everyone ([constitution](docs/constitution.md) §1).
+
 > How to work in zer0-CMS while it becomes one Python platform with a React frontend (ADR 0006): the target and what an agent must not do, the commands, the layout, the conventions, the platform boundary and the invariants today's build enforces.
 
 ## What this repo is

@@ -21,7 +21,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
-| [`AGENTS.md`](../AGENTS.md) | How to work in zer0-CMS while it becomes one Python platform with a React frontend (ADR 0006): the target and what an agent must not do, the commands, the layout, the conventions, the platform boundary and the invariants today's build… |
+| [`AGENTS.md`](../AGENTS.md) | zer0-CMS's direction is to become the ultimate open home for all things markdown site operations: data, tools, resources and transparency, with a governed studio, a human publish gate, and agent-declared effects, for everyone… |
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | How to set up, the rules the build enforces, style, tests, and how to report a problem — for anyone sending a change to zer0-CMS. |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
 | [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |
@@ -67,6 +67,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | Document | What it covers |
 | --- | --- |
 | [`docs/plan/agent-native-design.md`](plan/agent-native-design.md) | The design note the plan implements ("the note"): agent runs as content-adjacent data — Wagtail revisions, moderation tasks and graph edges — across a Django/Wagtail content plane and a Rails experience plane. |
+| [`docs/plan/newsroom-journalism-discovery.md`](plan/newsroom-journalism-discovery.md) | Discovery for epic [#92](https://github.com/bamr87/zer0-CMS/issues/92) (a full journalism and media-agency platform, centred on journalist workflow UX): the gap against today's studio, user stories and one journey, low-fidelity UX, the… |
 | [`docs/plan/PLAN.md`](plan/PLAN.md) | The build plan: ADR 0006's order of work (§ 3), every milestone and phase with what is done, what is blocked and what overtook it, and the open decisions. |
 | [`docs/plan/rails-cms-spec.md`](plan/rails-cms-spec.md) | What the deleted Rails fleet CMS (`rails/`) did that the platform does not do yet — one section per open capability, with what Rails did, where the platform stands and what to build — so the code could go while its behaviour stays… |
 | [`docs/plan/TARGET.md`](plan/TARGET.md) | A comprehensive application for writing articles, creating content, brainstorming ideas, gathering information, operating a news site and writing books — a robust React frontend over a Python and Postgres backend, with AI integrations and… |

@@ -5,9 +5,13 @@
 // over someone else's newer one is refused (409) rather than replacing it.
 // Publish, schedule (a time to go live, a time to come down, or both) and
 // unpublish save first when there are unsaved edits; nothing reaches the live
-// site except through those buttons. A page a Wagtail lock keeps from this
-// person (`page.lock`: someone else's, a workflow's, a schedule's) opens
-// read-only and says why; cancelling a schedule is the one thing it allows.
+// site except through those buttons. A publish or a schedule names the
+// revision the person reviewed — the one that save just made, else the one
+// the editor shows — so a revision someone else saved in between is refused
+// (409, the failure notice) rather than published unseen (#61). A page a
+// Wagtail lock keeps from this person (`page.lock`: someone else's, a
+// workflow's, a schedule's) opens read-only and says why; cancelling a
+// schedule is the one thing it allows.
 // The AI panel opens beside the editor: an assistant or a pipeline run on the
 // page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx). The
 // Citability tab scores the page with AIEO and lands an optimize or scrub
@@ -72,20 +76,22 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
   // The revision this editor's own last action made: the draft takes it as its new baseline.
   const [own, setOwn] = useState<number | null>(null);
   const act = useMutation({
-    mutationFn: async ({ action, changes, at }: { action: PageAction; changes: Changes | null; at?: Schedule }) => {
+    mutationFn: async ({ action, changes, reviewed, at }: { action: PageAction; changes: Changes | null; reviewed: number | null; at?: Schedule }) => {
       let saved: PageDetail | undefined;
       if (changes) saved = await call(api.PATCH('/api/v2/content/pages/{id}/', { params: path, body: changes }));
+      // What goes live is what the person reviewed: the revision their save just made, else the one they were shown.
+      const base_revision_id = saved ? (saved.latest_revision?.id ?? null) : reviewed;
       switch (action) {
         case 'save':
           return saved ?? call(api.GET('/api/v2/content/pages/{id}/', { params: path }));
         case 'publish':
-          return call(api.POST('/api/v2/content/pages/{id}/publish/', { params: path }));
+          return call(api.POST('/api/v2/content/pages/{id}/publish/', { params: path, body: { base_revision_id } }));
         case 'unpublish':
           return call(api.POST('/api/v2/content/pages/{id}/unpublish/', { params: path }));
         case 'unschedule':
           return call(api.POST('/api/v2/content/pages/{id}/unschedule/', { params: path }));
         case 'schedule':
-          return call(api.POST('/api/v2/content/pages/{id}/schedule/', { params: path, body: at }));
+          return call(api.POST('/api/v2/content/pages/{id}/schedule/', { params: path, body: { ...at, base_revision_id } }));
       }
     },
     onSuccess: (data, { action }) => {
@@ -105,7 +111,7 @@ export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions
       tab={tab}
       busy={act.isPending}
       failure={act.isError ? errorText(act.error) : null}
-      run={(action, changes, at) => act.mutate({ action, changes, at })}
+      run={(action, changes, reviewed, at) => act.mutate({ action, changes, reviewed, at })}
     />
   );
 }
@@ -117,7 +123,8 @@ interface DraftProps {
   tab?: string;
   busy: boolean;
   failure: string | null;
-  run: (action: PageAction, changes: Changes | null, at?: Schedule) => void;
+  /** `reviewed`: the revision the editor shows, which a publish or a schedule without unsaved edits names. */
+  run: (action: PageAction, changes: Changes | null, reviewed: number | null, at?: Schedule) => void;
 }
 
 function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
@@ -136,9 +143,9 @@ function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
   const changed = Object.fromEntries(Object.entries(fields).filter(([name, value]) => !same(value, base.fields[name])));
   const bodyChanged = !same(body, base.body);
   const dirty = Object.keys(changed).length > 0 || bodyChanged;
-  const changes: Changes | null = dirty
-    ? { base_revision_id: base.latest_revision?.id ?? null, fields: changed, ...(bodyChanged ? { body } : {}) }
-    : null;
+  // The revision these edits began from, and the one the editor shows: what a save and a publish name.
+  const reviewed = base.latest_revision?.id ?? null;
+  const changes: Changes | null = dirty ? { base_revision_id: reviewed, fields: changed, ...(bodyChanged ? { body } : {}) } : null;
 
   const latest = page.latest_revision?.id ?? null;
   const moved = latest !== (base.latest_revision?.id ?? null);
@@ -191,12 +198,12 @@ function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
             Preview
           </Anchor>
           <Distribute pageId={page.id} siteId={page.site_id ?? undefined} disabled={!page.live} />
-          <Button variant="default" disabled={!dirty || !editable} loading={busy} onClick={() => run('save', changes)}>
+          <Button variant="default" disabled={!dirty || !editable} loading={busy} onClick={() => run('save', changes, reviewed)}>
             Save draft
           </Button>
           {can.publish ? (
             <>
-              <Button disabled={!!page.lock} loading={busy} onClick={() => run('publish', changes)}>
+              <Button disabled={!!page.lock} loading={busy} onClick={() => run('publish', changes, reviewed)}>
                 Publish
               </Button>
               <Popover position="bottom-end" withArrow>
@@ -224,7 +231,7 @@ function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
                     <Button
                       size="xs"
                       disabled={!goLive && !comeDown}
-                      onClick={() => run('schedule', changes, { go_live_at: fromLocalInput(goLive), expire_at: fromLocalInput(comeDown) })}
+                      onClick={() => run('schedule', changes, reviewed, { go_live_at: fromLocalInput(goLive), expire_at: fromLocalInput(comeDown) })}
                     >
                       Schedule
                     </Button>
@@ -234,12 +241,12 @@ function Draft({ page, own, tab: firstTab, busy, failure, run }: DraftProps) {
             </>
           ) : null}
           {page.status === 'scheduled' && can.publish ? (
-            <Button variant="subtle" disabled={busy} onClick={() => run('unschedule', null)}>
+            <Button variant="subtle" disabled={busy} onClick={() => run('unschedule', null, reviewed)}>
               Cancel schedule
             </Button>
           ) : null}
           {page.live && can.unpublish ? (
-            <Button variant="subtle" color="red" disabled={busy} onClick={() => run('unpublish', null)}>
+            <Button variant="subtle" color="red" disabled={busy} onClick={() => run('unpublish', null, reviewed)}>
               Unpublish
             </Button>
           ) : null}
