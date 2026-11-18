@@ -479,6 +479,15 @@ CELERY_TASK_ROUTES = {
     **{f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")},
     "automations.tasks.execute_run": {"queue": "research"},
 }
+# Every agent run executes once and ends (#62, W1-9). `run_agent` stops at AGENT_RUN_SOFT_SECONDS
+# (SoftTimeLimitExceeded fails the run; the hard limit is 30 seconds later), unless the caller passes its own (AIEO
+# does). A run no worker will finish — its worker died, or the broker lost its message — is failed by beat once it has
+# been queued or running for AGENT_RUN_STALE_SECONDS, so the brief or reply it was filling settles. That line must
+# outlast every run's hard limit, AIEO_RUN_TIME_LIMIT's too: a duplicate delivery also treats a run running past it as
+# lost, and one inside it as another worker's (agents/runner.py).
+AGENT_RUN_SOFT_SECONDS = env.int("AGENT_RUN_SOFT_SECONDS", default=900)
+AGENT_RUN_STALE_SECONDS = env.int("AGENT_RUN_STALE_SECONDS", default=3600)
+CELERY_BEAT_SCHEDULE["agent-runs-settle"] = {"task": "agents.tasks.settle_stale_runs", "schedule": 300.0}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm

@@ -14,7 +14,12 @@ draft over the latest revision, publish the latest revision now, schedule it
 — which is a new draft revision, never a publish. Each checks the person's
 Wagtail page permissions itself (`PermissionDenied`); bad input is Django's
 `ValidationError`; a save against a revision someone else has since replaced is
-`StaleRevision`.
+`StaleRevision`, and so is a publish or a schedule that names the revision the
+person reviewed (`base_revision_id`) when a newer one has been saved since —
+the studio publishes in a request of its own after saving, and another
+editor's save in between must not go live unseen (#61). A caller that acts on
+whatever is latest by design (the newsroom's release, an agent's tool) names
+no revision.
 
 Every writer of an existing page starts with `writable()`: it takes the page
 row's lock for the transaction, so two writers that start from the same
@@ -43,6 +48,10 @@ class StaleRevision(Exception):
 
 class PageLocked(PermissionDenied):
     """A Wagtail lock keeps this person from changing the page; says why."""
+
+
+# `base_revision_id` left out: act on the latest revision, whichever it is.
+LATEST = object()
 
 
 @transaction.atomic
@@ -110,6 +119,15 @@ def writable(page, user):
 def _require(allowed: bool, message: str):
     if not allowed:
         raise PermissionDenied(message)
+
+
+def _require_base(page, base_revision_id, done: str):
+    """`StaleRevision` unless `page` (locked by `writable`) is still at the
+    revision the caller `done` its work against; `LATEST` names none."""
+    if base_revision_id is not LATEST and page.latest_revision_id != base_revision_id:
+        raise StaleRevision(
+            f"page {page.pk} has a newer revision ({page.latest_revision_id}) than the one {done} ({base_revision_id})"
+        )
 
 
 def creatable_types(parent, user) -> list:
@@ -225,10 +243,7 @@ def save_changes(page, user, *, base_revision_id, fields: dict, body: list | Non
     Never publishes."""
     _require(page.permissions_for_user(user).can_edit(), f"{user} may not edit {page}")
     page = writable(page, user)
-    if page.latest_revision_id != base_revision_id:
-        raise StaleRevision(
-            f"page {page.pk} has a newer revision ({page.latest_revision_id}) than the one edited ({base_revision_id})"
-        )
+    _require_base(page, base_revision_id, "edited")
     draft = page.get_latest_revision_as_object()
     apply_fields(draft, fields)
     if body is not None:
@@ -237,12 +252,15 @@ def save_changes(page, user, *, base_revision_id, fields: dict, body: list | Non
 
 
 @transaction.atomic
-def publish_now(page, user):
-    """Publish the latest revision now. A future go-live time on it is cleared,
-    and so is an expiry that has passed, or the next sweep would take the page
-    straight down again."""
+def publish_now(page, user, *, base_revision_id=LATEST):
+    """Publish the latest revision now — refused (`StaleRevision`) when it is
+    not `base_revision_id`, the revision the person reviewed (None only for a
+    page without one). A future go-live time on it is cleared, and so is an
+    expiry that has passed, or the next sweep would take the page straight
+    down again."""
     _require(page.permissions_for_user(user).can_publish(), f"{user} may not publish {page}")
     page = writable(page, user)
+    _require_base(page, base_revision_id, "reviewed")
     revision = page.get_latest_revision()
     draft = page.get_latest_revision_as_object()
     now = timezone.now()
@@ -256,14 +274,16 @@ def publish_now(page, user):
 
 
 @transaction.atomic
-def schedule(page, user, go_live_at=None, expire_at=None):
+def schedule(page, user, go_live_at=None, expire_at=None, *, base_revision_id=LATEST):
     """Publish the latest revision at `go_live_at` (now, when it is None) and
-    take the page down at `expire_at`. Wagtail holds a future revision until
-    `publish_scheduled` (Celery beat, cms/tasks.py) finds it due, and takes a
-    live page down once its expiry has passed; an expiry belongs to the
-    revision that goes live, as in Wagtail."""
+    take the page down at `expire_at` — refused (`StaleRevision`) when that
+    revision is not `base_revision_id`, the one the person reviewed. Wagtail
+    holds a future revision until `publish_scheduled` (Celery beat,
+    cms/tasks.py) finds it due, and takes a live page down once its expiry has
+    passed; an expiry belongs to the revision that goes live, as in Wagtail."""
     _require(page.permissions_for_user(user).can_publish(), f"{user} may not publish {page}")
     page = writable(page, user)
+    _require_base(page, base_revision_id, "reviewed")
     now = timezone.now()
     if go_live_at is None and expire_at is None:
         raise ValidationError({"go_live_at": ["give a time to publish at, a time to take the page down at, or both"]})

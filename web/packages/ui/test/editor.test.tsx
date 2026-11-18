@@ -1,5 +1,6 @@
 // The editor: it saves only what changed, against the revision it loaded;
-// publish saves pending edits first; a schedule takes a time to go live and
+// publish saves pending edits first, and a publish or a schedule names the
+// revision the person reviewed (#61); a schedule takes a time to go live and
 // a time to come down; a locked page opens read-only and says why; new blocks
 // keep their own text through removes and moves; revisions compare with the
 // latest and revert as a new draft; the page list filters through the platform.
@@ -53,6 +54,70 @@ describe('<PageEditor>', () => {
     expect(order).toEqual(['PATCH', 'POST']);
   });
 
+  describe('goes live only with the revision the person reviewed (#61)', () => {
+    const REVISION_42 = { latest_revision: { id: 42, created_at: '2026-10-21T10:00:00Z', user: 'editor' } };
+    const sentTo = (platform: ReturnType<typeof fakePlatform>, action: string) => platform.calls.find((c) => c.path.endsWith(`/${action}/`))?.body;
+
+    it('publishes and schedules the revision it shows when nothing is unsaved', async () => {
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () => pageDetail(),
+        'POST /api/v2/content/pages/5/publish/': () => pageDetail(),
+        'POST /api/v2/content/pages/5/schedule/': () => pageDetail({ expire_at: '2030-02-01T17:00:00.000Z' }),
+      });
+      renderUi(<PageEditor pageId={5} />, { api: platform.api });
+      await userEvent.click(await screen.findByRole('button', { name: 'Publish' }));
+      await waitFor(() => expect(sentTo(platform, 'publish')).toEqual({ base_revision_id: 41 }));
+      await userEvent.click(screen.getByRole('button', { name: 'Schedule…' }));
+      await userEvent.type(screen.getByLabelText('Take down at'), '2030-02-01T17:00');
+      await userEvent.click(screen.getByRole('button', { name: 'Schedule' }));
+      await waitFor(() => expect(sentTo(platform, 'schedule')).toMatchObject({ base_revision_id: 41, go_live_at: null }));
+      expect(platform.calls.some((c) => c.method === 'PATCH')).toBe(false);
+    });
+
+    it('publishes the revision its save just made, not whatever is latest', async () => {
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () => pageDetail(),
+        'PATCH /api/v2/content/pages/5/': () => pageDetail({ status: 'changed', ...REVISION_42 }),
+        'POST /api/v2/content/pages/5/publish/': () => pageDetail({ ...REVISION_42, live_revision_id: 42 }),
+      });
+      renderUi(<PageEditor pageId={5} />, { api: platform.api });
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+      await waitFor(() => expect(sentTo(platform, 'publish')).toEqual({ base_revision_id: 42 }));
+      expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({ base_revision_id: 41 });
+    });
+
+    it('schedules the revision its save just made', async () => {
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () => pageDetail(),
+        'PATCH /api/v2/content/pages/5/': () => pageDetail({ status: 'changed', ...REVISION_42 }),
+        'POST /api/v2/content/pages/5/schedule/': () => pageDetail({ status: 'scheduled', go_live_at: '2030-01-02T09:30:00.000Z', ...REVISION_42 }),
+      });
+      renderUi(<PageEditor pageId={5} />, { api: platform.api });
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await userEvent.click(screen.getByRole('button', { name: 'Schedule…' }));
+      await userEvent.type(screen.getByLabelText('Publish at'), '2030-01-02T09:30');
+      await userEvent.click(screen.getByRole('button', { name: 'Schedule' }));
+      await waitFor(() => expect(sentTo(platform, 'schedule')).toMatchObject({ base_revision_id: 42, expire_at: null }));
+      expect(platform.calls.filter((c) => c.method !== 'GET').map((c) => c.method)).toEqual(['PATCH', 'POST']);
+    });
+
+    it('shows the platform’s refusal when someone saved a newer revision in between', async () => {
+      const refusal = 'page 5 has a newer revision (43) than the one reviewed (42)';
+      const platform = fakePlatform({
+        'GET /api/v2/content/pages/5/': () => pageDetail(),
+        'PATCH /api/v2/content/pages/5/': () => pageDetail({ status: 'changed', ...REVISION_42 }),
+        'POST /api/v2/content/pages/5/publish/': () => new Reply(409, { error: { code: 'resource.conflict', message: refusal, status: 409, details: [] } }),
+      });
+      renderUi(<PageEditor pageId={5} />, { api: platform.api });
+      await userEvent.type(await screen.findByLabelText(/^Title/), '!');
+      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+      expect(await screen.findByText(refusal)).toBeInTheDocument();
+      expect(sentTo(platform, 'publish')).toEqual({ base_revision_id: 42 });
+      expect(platform.calls.filter((c) => c.method === 'POST')).toHaveLength(1);
+    });
+  });
+
   it('edits the SEO tab’s Open Graph fields, canonical URL and noindex, and saves only those', async () => {
     const seo = (name: string, label: string, kind: string) => ({ name, label, group: 'seo', kind, required: false, help_text: '', max_length: null, choices: [] });
     const detail = pageDetail({
@@ -104,6 +169,7 @@ describe('<PageEditor>', () => {
     expect(await screen.findByText(/Goes live/)).toBeInTheDocument();
     expect(screen.getByText(/Comes down/)).toBeInTheDocument();
     const sent = platform.calls.find((c) => c.path.endsWith('/schedule/'))?.body as { go_live_at: string; expire_at: string };
+    expect(sent).toMatchObject({ base_revision_id: 41 });
     expect(new Date(sent.go_live_at).getTime()).toBe(new Date(2030, 0, 2, 9, 30).getTime());
     expect(new Date(sent.expire_at).getTime()).toBe(new Date(2030, 1, 1, 17, 0).getTime());
     expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled(); // a scheduled page is locked …

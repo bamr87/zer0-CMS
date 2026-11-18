@@ -26,7 +26,7 @@ from importers.models import ImportedSource
 from jobs.models import Job
 from sites import writer
 from sites.models import ManagedSite
-from tests.api.test_pages import PAGES, post, save, signed_in
+from tests.api.test_pages import PAGES, post, reviewed, save, signed_in
 from tests.sites.test_sites import admin, api, start  # noqa: F401 — shared fixtures
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "abc"
@@ -53,7 +53,7 @@ def edit_letter(person, page, letter, **values):
             block["value"].update(values)
     saved = save(client, page, {"body": body})
     assert saved.status_code == 200, saved.json()
-    assert post(client, f"{PAGES}{page.pk}/publish/").json()["status"] == "live"
+    assert post(client, f"{PAGES}{page.pk}/publish/", reviewed(page)).json()["status"] == "live"
 
 
 def drsai_check(site: Path) -> subprocess.CompletedProcess:
