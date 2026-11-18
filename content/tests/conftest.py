@@ -4,8 +4,12 @@ The session database is migrated (which provisions the standard agent users)
 and then gets every agent definition synced from agents/definitions/ and
 published through its eval suite — the same `sync_agents --publish` a
 deployment runs — so tests start from live, eval-passed agents. Each test then
-runs in its own transaction, rolled back afterwards.
+runs in its own transaction, rolled back afterwards. Under pytest-xdist (`-n
+auto`, as content.yml runs the suite) each worker is a session of its own, with
+a test database of its own.
 """
+
+import os
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -15,6 +19,19 @@ from wagtail.models import GroupPagePermission, Page
 
 from agents.models import AgentDefinition
 from cms.models import ArticlePage, SiteRootPage
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(config, items):
+    """With pytest-xdist handing tests out one at a time (`-n auto --maxschedchunk 1`, as content.yml runs the suite),
+    the `slow` tier goes first. Its round trips are the suite's longest tests (the theme's docs site alone is about a
+    third of the full suite), and xdist hands tests out in collection order, so the worker that reached them last
+    finished long after the others; handed out first, one to a worker, they run beside everything else. Only then:
+    xdist's default chunks would queue the whole tier on one worker. The sort is stable and runs before
+    pytest-django's own, which then still puts the transactional test after every test that needs the migrated rows,
+    since it flushes its worker's database. In one process the order is unchanged."""
+    if os.environ.get("PYTEST_XDIST_WORKER") and config.getoption("maxschedchunk") == 1:
+        items.sort(key=lambda item: item.get_closest_marker("slow") is None)
 
 
 @pytest.fixture(scope="session")

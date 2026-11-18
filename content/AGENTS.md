@@ -4,7 +4,7 @@
 
 Guidance for AI coding agents working in `content/`, the Django + Wagtail content plane. The repository-wide rules — the plane boundary, the agent safety rules, the workflow — are in the root [`AGENTS.md`](../AGENTS.md); this file adds what holds inside this project. [`README.md`](README.md) maps the apps; ADR 0001 says why they exist.
 
-"Done" for a change here means `python -m pytest -q` (with `-m "not slow"` as the fast loop) and `python manage.py makemigrations --check --dry-run` pass, `ruff check . && ruff format --check .` are clean, `python manage.py run_evals --all --recorded` passes, and the three committed schemas are current: `schemas/graphql/schema.graphql` (`manage.py graphql_schema --out …`), `schemas/content/ai-schema.json` (`manage.py wagtail_ai_schema --out …`) and `schemas/openapi/openapi.json` (`manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file …`). CI runs the suite on SQLite and on Postgres with pgvector (`content.yml`).
+"Done" for a change here means `python -m pytest -q` (with `-m "not slow"` as the fast loop) and `python manage.py makemigrations --check --dry-run` pass, `ruff check . && ruff format --check .` are clean, `python manage.py run_evals --all --recorded` passes, and the three committed schemas are current: `schemas/graphql/schema.graphql` (`manage.py graphql_schema --out …`), `schemas/content/ai-schema.json` (`manage.py wagtail_ai_schema --out …`) and `schemas/openapi/openapi.json` (`manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file …`). CI runs the suite on SQLite and on Postgres with pgvector (`content.yml`), spread over the runner's cores with pytest-xdist (`-n auto`); the suite must pass both ways, in one process and in parallel.
 
 ## Invariants
 
@@ -42,3 +42,4 @@ Guidance for AI coding agents working in `content/`, the Django + Wagtail conten
 - Every module opens with a docstring saying what it is and why it exists; every app has the README its code points to.
 - Ruff is the linter and formatter (`pyproject.toml`); no blind `except` without a comment saying why, no `# type: ignore`.
 - Migrations are generated (`makemigrations`), never hand-written, except the pgvector extension step in `graph/migrations/0001_initial.py`.
+- A test passes alone, in any order and on any pytest-xdist worker (`content.yml` runs the suite with `-n auto`): it never counts on another test's rows, cache or files, and writes its files under its own `tmp_path`. A `transaction=True` test flushes its worker's database, so pytest-django runs it after every test that needs the migrated rows — an order only xdist's in-order `load` scheduling keeps, which is why CI never uses `worksteal`.

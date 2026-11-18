@@ -2,6 +2,8 @@
 -r requirements.txt
 pytest==9.1.1
 pytest-django==4.14.0
+# Runs the suite across the runner's cores (`-n auto`): each worker gets its own test database.
+pytest-xdist==3.8.0
 fakeredis==2.40.0
 # Recorded HTTP for the research library's fetcher and distribution's channels: no test reaches the web.
 respx==0.23.1
