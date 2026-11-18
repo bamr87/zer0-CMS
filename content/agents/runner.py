@@ -2,8 +2,11 @@
 (PLAN-D3).
 
     queued ──► running ──► succeeded
-                  │  └───► failed     (an error, the budget, the step limit)
-                  └──────► refused    (policy off, not live, no principal)
+       │   ▲      │  └───► failed     (an error, the budget, the step limit, the time limit)
+       │   │      ├──────► refused    (policy off, not live, no principal)
+       │   │      └──────► failed     (worker lost: running past AGENT_RUN_STALE_SECONDS)
+       │   └ claimed by one conditional update: the one delivery that finds it queued runs it
+       └──────────────────► failed     (stale: queued past AGENT_RUN_STALE_SECONDS, no worker took it)
 
 `start_run` creates a queued run and hands it to Celery once the creating
 transaction commits; `execute` is what the worker runs. A run either calls a
@@ -20,16 +23,31 @@ checks; the runner only decides which tool the model asked for.
 that records it, whether or not its handler ever ran — so whatever the run was
 filling (an AI layer brief or reply) can take the run's outcome even when the
 run was refused before the handler started.
+
+A run executes once (#62). The task is acked late, so a worker that dies hands
+it to another, and a task can be delivered twice. `_claim` moves a run from
+queued to running in one conditional update, and only the delivery whose update
+took the row runs the handler or the model loop; any other delivery reads the
+run again and leaves it as it is — a final run as it ended, a running one to the
+worker that claimed it, which may still be alive and must not be failed. A run
+that has been running longer than AGENT_RUN_STALE_SECONDS, which outlasts every
+run's hard time limit, has no worker left: a delivery that finds one fails it
+("worker lost"), and so does `settle_stale` on beat, which also fails a run that
+sat queued that long with no worker taking it. Settling locks the row and asks
+again, so a run is settled once and one that moved on meanwhile is left alone.
 """
 
 import copy
 import json
 import time
+from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Q
 from django.dispatch import Signal
 from django.utils import timezone
 from django.utils.module_loading import import_string
@@ -108,11 +126,8 @@ def _execute(run: AgentRun) -> AgentRun:
     config = apply_profile(run.config(), run)
     from .schema import schema_version
 
-    run.status = AgentRun.RUNNING
-    run.started_at = timezone.now()
-    run.prompt_version = config.prompt_version
-    run.schema_version = schema_version()
-    run.save(update_fields=["status", "started_at", "prompt_version", "schema_version"])
+    if not _claim(run, prompt_version=config.prompt_version, schema_version=schema_version()):
+        return _unclaimed(run)
 
     user = get_user_model().objects.filter(username=config.username).first()
     if not is_agent_user(user):
@@ -135,6 +150,27 @@ def _execute(run: AgentRun) -> AgentRun:
     except Exception as e:  # noqa: BLE001 — the run records the failure; the worker stays up
         return _finish(run, AgentRun.FAILED, error=f"{type(e).__name__}: {e}")
     return _finish(run, AgentRun.SUCCEEDED, output=output)
+
+
+def _claim(run: AgentRun, **fields) -> bool:
+    """Take a queued run for this delivery in one conditional update, as outboxdesk's `_claim` does: True when this
+    delivery moved it from queued to running (and `run` now says so), False when it was not queued any more — another
+    delivery claimed it, it finished, or the sweep settled it — whatever `run`, read earlier, still says."""
+    fields = {"status": AgentRun.RUNNING, "started_at": timezone.now(), **fields}
+    if AgentRun.objects.filter(pk=run.pk, status=AgentRun.QUEUED).update(**fields) != 1:
+        return False
+    for name, value in fields.items():
+        setattr(run, name, value)
+    return True
+
+
+def _unclaimed(run: AgentRun) -> AgentRun:
+    """What a delivery that did not claim its run returns, having run nothing: the run as it is now. One still
+    running belongs to the delivery that claimed it, unless it has run past the stale line, when its worker is lost."""
+    run.refresh_from_db()
+    if run.status == AgentRun.RUNNING:
+        return _settle(run.pk, _stale_cutoff()) or run
+    return run
 
 
 def apply_profile(config, run: AgentRun):
@@ -277,29 +313,73 @@ def final_output(text: str) -> dict:
         return {"text": text}
 
 
+def settle_stale(now=None) -> int:
+    """Fail the runs no worker will finish — queued, or running, for longer than AGENT_RUN_STALE_SECONDS — so whatever
+    each was filling settles (`run_finished`); returns how many."""
+    cutoff = _stale_cutoff(now)
+    pks = list(_stale_runs(cutoff).values_list("pk", flat=True)[:500])
+    return sum(1 for pk in pks if _settle(pk, cutoff) is not None)
+
+
+def _stale_cutoff(now=None):
+    return (now or timezone.now()) - timedelta(seconds=settings.AGENT_RUN_STALE_SECONDS)
+
+
+def _stale_runs(cutoff):
+    return AgentRun.objects.filter(
+        Q(status=AgentRun.QUEUED, created_at__lt=cutoff) | Q(status=AgentRun.RUNNING, started_at__lt=cutoff)
+    )
+
+
+def _settle(pk: int, cutoff) -> AgentRun | None:
+    """Fail one run no worker will finish, once: the row is locked and asked again in the transaction that fails it,
+    so a run claimed, finished or settled since (by a worker, the sweep or another delivery) is left as it is."""
+    with transaction.atomic():
+        run = _stale_runs(cutoff).select_for_update().filter(pk=pk).first()
+        if run is None:
+            return None
+        if run.status == AgentRun.QUEUED:
+            error = f"stale: queued for more than {settings.AGENT_RUN_STALE_SECONDS} s and no worker took it"
+        else:
+            error = f"worker lost: running for more than {settings.AGENT_RUN_STALE_SECONDS} s with no word from it"
+        _record(run, AgentRun.FAILED, error=error)
+    return _followed_up(run)
+
+
 def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:
+    with transaction.atomic():
+        _record(run, status, output=output, error=error)
+    return _followed_up(run)
+
+
+def _record(run: AgentRun, status: str, output=None, error="") -> None:
+    """A final status, its `agent.run.completed` event, `run_finished` and the log entry — in the caller's
+    transaction."""
     from outbox.services import emit
     from suggestions.models import Suggestion
 
-    with transaction.atomic():
-        run.finish(status, output=output, error=error)
-        run.save(update_fields=["status", "output", "error", "finished_at"])
-        emit(
-            "agent.run.completed",
-            subject=f"run:{run.public_id}",
-            version=2,
-            data={
-                "run_id": str(run.public_id),
-                "agent": run.agent.slug,
-                "status": status,
-                "trigger": run.trigger,
-                "cost_usd": format(run.cost_usd.normalize(), "f") if run.cost_usd else "0",
-                "tokens": run.tokens,
-                "suggestions": Suggestion.objects.filter(run=run).count(),
-            },
-        )
-        run_finished.send(sender=AgentRun, run=run)
-        log(run, "zer0.run.finish", data={"agent": run.agent.slug, "status": status, "error": error[:500]})
+    run.finish(status, output=output, error=error)
+    run.save(update_fields=["status", "output", "error", "finished_at"])
+    emit(
+        "agent.run.completed",
+        subject=f"run:{run.public_id}",
+        version=2,
+        data={
+            "run_id": str(run.public_id),
+            "agent": run.agent.slug,
+            "status": status,
+            "trigger": run.trigger,
+            "cost_usd": format(run.cost_usd.normalize(), "f") if run.cost_usd else "0",
+            "tokens": run.tokens,
+            "suggestions": Suggestion.objects.filter(run=run).count(),
+        },
+    )
+    run_finished.send(sender=AgentRun, run=run)
+    log(run, "zer0.run.finish", data={"agent": run.agent.slug, "status": status, "error": error[:500]})
+
+
+def _followed_up(run: AgentRun) -> AgentRun:
+    """What a final run still owes after the transaction that recorded it: a workflow review's verdict on its task."""
     if run.trigger == "workflow":
         from workflow.services import finish_review
 
