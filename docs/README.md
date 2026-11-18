@@ -21,7 +21,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
-| [`AGENTS.md`](../AGENTS.md) | How to work in zer0-CMS while it becomes one Python platform with a React frontend (ADR 0006): the target and what an agent must not do, the commands, the layout, the conventions, the platform boundary and the invariants today's build… |
+| [`AGENTS.md`](../AGENTS.md) | zer0-CMS's direction is to become the ultimate open home for all things markdown site operations: data, tools, resources and transparency, with a governed studio, a human publish gate, and agent-declared effects, for everyone… |
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | How to set up, the rules the build enforces, style, tests, and how to report a problem — for anyone sending a change to zer0-CMS. |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
 | [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |

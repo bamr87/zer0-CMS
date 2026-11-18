@@ -13,3 +13,4 @@ The append-only log of changes to [the constitution](../constitution.md). Proces
 | --- | --- | --- | --- |
 | [0001](0001-ratify-constitution.md) | Ratify the constitution | ratified on merge | whole constitution |
 | [0002](0002-retire-the-rails-invariants.md) | Retire the Rails invariants | proposed | constitution §2 |
+| [0003](0003-mission-statement.md) | Missions | proposed | constitution §1; PRD §1.1; ZER0-048 |

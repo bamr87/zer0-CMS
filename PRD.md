@@ -2,6 +2,16 @@
 
 > What the product must do, with stable requirement ids (`FRn`, `NFRn`) that features in [`features/features.yml`](features/features.yml) name under `prd:`. The constitution (§ 3) ranks this document under AGENTS.md and above the feature catalog. Seeded with the books requirements; the rest of the platform's requirements are still described by [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) and [`docs/plan/TARGET.md`](docs/plan/TARGET.md) until they are lifted here.
 
+## 1.1 Missions
+
+zer0-CMS's direction is to become the ultimate open home for all things markdown site operations — data, tools, resources and transparency, gathered in one place that anyone can inspect and reuse.
+
+1. **Provide data, tools, resources and transparency for all stakeholders, content operators, CMS practitioners and the general public.** Editors, reviewers, site operators, agent authors, and the general public are first-class audiences. The aim is a shared, open commons: the same sources, the same tools, and the same trail of evidence for everyone.
+2. **Turn a repository of markdown into something you can actually operate: a governed CMS with a studio, a site renderer and a VS Code extension, where publishing goes through a gate a human has to walk through.** Agents declare their effect and permissions; page content and user input are treated as untrusted. The path is one Python platform (Django, with Wagtail as a headless library), a React studio, and a VS Code extension with the studio's capabilities.
+3. **Put that platform in every editor's, agent's and builder's hands.** Serve it so zer0-themed markdown sites can be drafted, reviewed and published in the open — an open toolkit for working with all things markdown site operations.
+
+These missions set the course; they do not claim the work is finished. They serve the README and PRD: an agent-native CMS for markdown sites, with a human publish gate. The earlier incomplete §1 sentence — "zer0-CMS turns a repository of markdown into something you can actually operate" — is absorbed into mission 2. Invariants in §2 (headless frontends, declared effects, suggest-by-default, no live LLMs in tests, and the rest) are unchanged. Every feature must trace to them.
+
 ## 1. Requirements
 
 ### Functional
@@ -38,12 +48,16 @@ Every user-facing capability has a stable id in the feature catalog [`features/f
 | [ZER0-044](features/features.yml) | Briefs, conversations and the editor's AI panel | shipped | route `/studio/create/briefs` · [`content/ai/README.md`](content/ai/README.md) | TBD |
 | [ZER0-045](features/features.yml) | The studio's Outbox desk: the belt, arena trials and the claim desk | shipped | route `/studio/outbox` · [`content/outboxdesk/README.md`](content/outboxdesk/README.md) | TBD |
 | [ZER0-046](features/features.yml) | A site's Voice tab: every layer of its voice, who reads it, and the guard on a text | shipped | route `/studio/sites` · [`content/voice/README.md`](content/voice/README.md) | TBD |
+| [ZER0-047](features/features.yml) | Editorial directives become briefs, and the page that answers one closes it | shipped | route `/studio/sites` · [`content/sites/README.md`](content/sites/README.md) | TBD |
 | [ZER0-030](features/features.yml) | Metadata panel: front matter as typed controls | shipped | [`src/panel/panelProvider.ts`](src/panel/panelProvider.ts) · [`README.md`](README.md) | TBD |
 | [ZER0-031](features/features.yml) | Dashboard: every site's content in one place | shipped | [`src/dashboard/dashboardPanel.ts`](src/dashboard/dashboardPanel.ts) · [`README.md`](README.md) | TBD |
 | [ZER0-032](features/features.yml) | Governed publishing: draft → guard → approve → publish → ledger | shipped | [`src/core/governance/`](src/core/governance) · [`README.md`](README.md) | TBD |
 | [ZER0-033](features/features.yml) | Bundled MCP server for the editor's agents | shipped | [`src/mcp/server.ts`](src/mcp/server.ts) · [`README.md`](README.md) | TBD |
+| [ZER0-048](features/features.yml) | Missions in constitution §1 | planned | [`docs/constitution.md`](docs/constitution.md) | §1.1 |
 
 **Requirement → feature trace**
 
-_No feature names a requirement yet (TBD)._
+| Requirement | Features |
+| --- | --- |
+| §1.1 | ZER0-048 |
 <!-- features:end -->
