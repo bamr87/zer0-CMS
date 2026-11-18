@@ -2,6 +2,16 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1](https://github.com/bamr87/zer0-CMS/compare/v1.1.0...v1.1.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* **agents:** claim a queued run atomically and settle stale runs on beat ([1694c24](https://github.com/bamr87/zer0-CMS/commit/1694c24b650834e6ca290aa51d6a3b83d15c6094))
+* **agents:** claim a queued run atomically, so a duplicate delivery never runs it twice, and settle stale runs on beat ([8628094](https://github.com/bamr87/zer0-CMS/commit/86280945e805024e8c3d19386c0da6ee6ccf8e54))
+* **content:** publish only the revision the editor reviewed ([55c9175](https://github.com/bamr87/zer0-CMS/commit/55c9175bd91d6661093dafbba761ef3fa099c0ad))
+* **content:** publish only the revision the editor reviewed ([4f10d26](https://github.com/bamr87/zer0-CMS/commit/4f10d26bdb6db0f92c471f6c6cfa668e4304f98b)), closes [#61](https://github.com/bamr87/zer0-CMS/issues/61)
+
 ## [1.1.0](https://github.com/bamr87/zer0-CMS/compare/v1.0.0...v1.1.0) (2026-11-10)
 
 
