@@ -5,7 +5,11 @@ exports its page and its spec sidecar byte for byte; a letter whose word or
 subject a person changes in the studio exports a plate planned for it — image,
 prompt, status — and a sidecar that agrees, so drsai's own
 `tools/import_abc_book.py --check` accepts the export; and the write-back
-indexes, guards and records the sidecar as it does the page."""
+indexes, guards and records the sidecar as it does the page.
+
+drsai lives in lifehacker.dev's agencies since ADR 0012, so its check is read
+from there (tests/agencies.py): where that tree is absent, a test skips at the
+point it would have run the check, after everything else it asserts."""
 
 import json
 import posixpath
@@ -15,7 +19,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from django.conf import settings
 from django.core.management import call_command
 
 from books import abc
@@ -26,13 +29,14 @@ from importers.models import ImportedSource
 from jobs.models import Job
 from sites import writer
 from sites.models import ManagedSite
+from tests.agencies import agency
 from tests.api.test_pages import PAGES, post, reviewed, save, signed_in
 from tests.sites.test_sites import admin, api, start  # noqa: F401 — shared fixtures
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "abc"
 BOOK = "pages/_books/it-alphabet/index.md"
 SIDECAR = "_data/abc_books/it-alphabet.json"
-DRSAI_CHECK = Path(settings.REPO_ROOT) / "sites" / "drsai" / "tools" / "import_abc_book.py"
+DRSAI_CHECK = "tools/import_abc_book.py"  # in the drsai agency's tree
 GOLDEN_PAGE, _ = frontmatter.split((FIXTURE / BOOK).read_text(encoding="utf-8"))
 GOLDEN_SPEC = json.loads((FIXTURE / SIDECAR).read_text(encoding="utf-8"))
 
@@ -57,11 +61,13 @@ def edit_letter(person, page, letter, **values):
 
 
 def drsai_check(site: Path) -> subprocess.CompletedProcess:
-    """drsai's CI check ("ABC books match their spec") over `site`: the tool
-    reads the Jekyll root its tools/ directory sits in."""
-    tool = site / "tools" / DRSAI_CHECK.name
+    """drsai's own check ("ABC books match their spec") over `site`: the tool
+    reads the Jekyll root its tools/ directory sits in. Skips where the drsai
+    agency is not checked out."""
+    oracle = agency("drsai", needs=DRSAI_CHECK) / DRSAI_CHECK
+    tool = site / DRSAI_CHECK
     tool.parent.mkdir(exist_ok=True)
-    shutil.copy(DRSAI_CHECK, tool)
+    shutil.copy(oracle, tool)
     return subprocess.run([sys.executable, str(tool), "--check"], capture_output=True, text=True, check=False)
 
 
@@ -171,6 +177,7 @@ def test_the_write_back_writes_records_and_keeps_the_sidecar_with_its_page(
     checkout,
     editor,
     django_capture_on_commit_callbacks,
+    tmp_path_factory,
 ):
     sidecar = (checkout / SIDECAR).read_text(encoding="utf-8")
     assert ManagedSite.objects.get(key="abc").digests[SIDECAR] == writer.sha256(sidecar), "a sync indexes it"
@@ -182,7 +189,9 @@ def test_the_write_back_writes_records_and_keeps_the_sidecar_with_its_page(
     source.refresh_from_db()
     assert source.source_text == page_text and source.sidecars == {SIDECAR: sidecar_text}, "each recorded as itself"
     assert ManagedSite.objects.get(key="abc").digests[SIDECAR] == writer.sha256(sidecar_text)
-    assert '"word": "Robotics"' in sidecar_text and drsai_check(checkout).returncode == 0
+    assert '"word": "Robotics"' in sidecar_text
+    as_written = tmp_path_factory.mktemp("abc-as-written") / "site"  # for drsai's check, run last
+    shutil.copytree(checkout, as_written)
     assert start(api, registered, "export", django_capture_on_commit_callbacks).result == {"unchanged": 2}
     assert start(api, registered, "sync", django_capture_on_commit_callbacks).result["updated"] == 0
 
@@ -195,3 +204,4 @@ def test_the_write_back_writes_records_and_keeps_the_sidecar_with_its_page(
     assert post(client, f"{PAGES}{source.page.pk}/unpublish/").json()["status"] == "draft"
     kept = start(api, registered, "export", django_capture_on_commit_callbacks)
     assert "removed" not in kept.result and (checkout / BOOK).exists() and (checkout / SIDECAR).exists()
+    assert drsai_check(as_written).returncode == 0, "drsai accepts what the first write-back wrote"

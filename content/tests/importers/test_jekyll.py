@@ -1,14 +1,14 @@
 """Jekyll → Wagtail → Jekyll (M6, M7, PLAN §4.7): what each file becomes,
 that a re-run changes nothing, that an editor's change is never overwritten,
 that an unchanged site exports byte for byte, that an edited page exports its
-edits over its original front matter, and that the real sites in this
-repository survive the round trip."""
+edits over its original front matter, and that the real sites — the ones in
+this repository, and the content source's, read from lifehacker.dev's agencies
+(ADR 0012, tests/agencies.py) — survive the round trip."""
 
 import os
 from pathlib import Path
 
 import pytest
-from django.conf import settings
 from django.core.management import call_command
 from wagtail.models import Page, Revision
 
@@ -18,12 +18,12 @@ from graph.models import Edge
 from importers.jekyll import import_site
 from importers.models import ImportedSource
 from outbox.models import OutboxEvent
+from tests.agencies import real_site
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "jekyll" / "site"
 # A site whose `source:` is a subdirectory, as zer0-pages's is: preview images and publish states.
 SOURCE_SITE = FIXTURE.parent / "source-site"
 POSTS = "src/_posts"
-REPO = Path(settings.REPO_ROOT)
 
 
 @pytest.fixture
@@ -235,7 +235,7 @@ def test_a_landing_page_carries_its_call_to_action_into_its_file_and_back(import
 @pytest.mark.django_db
 def test_a_preview_under_assets_is_found_like_the_engine_finds_it(tmp_path):
     """rails.assets-terms: `preview: /images/previews/x.png` is a file in the
-    source's `assets/images/previews/` (sites/zer0-pages, sites/2005), an SVG is
+    source's `assets/images/previews/` (sites/zer0-pages, the 2005 agency), an SVG is
     imported like any other image, an `/assets/…` value is the same file, and
     an external or missing one sets nothing and keeps its key."""
     report = import_site(SOURCE_SITE, "sourced")
@@ -417,16 +417,18 @@ def test_a_changed_file_moves_its_page_between_live_scheduled_and_draft(tmp_path
 # pinned tag into .cache/zer0-mistakes; locally, point ZER0_THEME_CHECKOUT at a
 # checkout, or the case skips with a reason.
 THEME_CHECKOUT = os.environ.get("ZER0_THEME_CHECKOUT", ".cache/zer0-mistakes")
+# The content source's sites live in lifehacker.dev (ADR 0012): `agencies/<tree>` is read from its
+# agencies directory (ZER0_AGENCIES_DIR, else a sibling checkout), and skips with a reason where that is absent.
 REAL_SITES = [
     "sites/zer0-demo-garden",
     "sites/zer0-pages-remote",
     "sites/zer0-demo-cookbook",
-    "sites/drsai",
-    "sites/irony-works",
+    "agencies/drsai",
+    "agencies/irony-works",
     # The big ones run in the full suite, not the fast tier: wargames and 2005 (whose bodies are
     # mostly HTML blocks and tables), zer0-pages (210 files) and the theme's docs site (376).
-    pytest.param("sites/wargames", marks=pytest.mark.slow),
-    pytest.param("sites/2005", marks=pytest.mark.slow),
+    pytest.param("agencies/wargames", marks=pytest.mark.slow),
+    pytest.param("agencies/year-of-ai/2005", marks=pytest.mark.slow),
     pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
     pytest.param(THEME_CHECKOUT, marks=pytest.mark.slow, id="zer0-mistakes"),
 ]
@@ -435,7 +437,7 @@ REAL_SITES = [
 @pytest.mark.django_db
 @pytest.mark.parametrize("site", REAL_SITES)
 def test_the_real_sites_round_trip_byte_for_byte(site, capsys):
-    root = REPO / site
+    root = real_site(site)
     if not (root / "_config.yml").is_file():
         pytest.skip(f"{site} is not in this checkout")
     call_command("roundtrip_jekyll", "--path", str(root), "--site", Path(site).name)

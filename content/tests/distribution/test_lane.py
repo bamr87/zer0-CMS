@@ -17,6 +17,7 @@ from distribution.lane.pipeline import Pipeline, banned_patterns
 from distribution.lane.site import Config, ConfigError, default_commentary, hashtags, slug
 from distribution.ledger import Ledger, LedgerError, serialize
 from distribution.linkedin.session import Credentials
+from tests.agencies import site_named
 
 from .conftest import AUTHOR, GOLDEN, MCP_POST, MCP_URL, NOW, TOKEN, tree
 
@@ -279,26 +280,28 @@ def test_permalinks_follow_jekyll_as_the_ruby_lane_computed_them(checkout):
     assert slugify("Hello Wörld") == "hello-wörld"
 
 
-def test_every_site_in_the_repository_gets_the_urls_the_ruby_lane_gave_it():
+@pytest.mark.parametrize("name", sorted(GOLDEN["sites"]))
+def test_every_site_gets_the_urls_the_ruby_lane_gave_it(name):
     """The Ruby catalog and this reader disagree only on which files are pages (`_drafts`, undated posts, HTML
-    pages); on every page both read, the URL is the same."""
-    from django.conf import settings
-
+    pages); on every page both read, the URL is the same. The recording names each site as it was under `sites/`
+    on 2026-10-22; the four that moved to lifehacker.dev's agencies since (ADR 0012) are read from there
+    (tests/agencies.py), each site a case of its own so that an absent one skips alone."""
     from distribution.lane.site import catalog
     from distribution.permalink import path_for
 
+    recorded = GOLDEN["sites"][name]
+    found = catalog(site_named(name), now=NOW)
+    ours = {e.relative: e for e in found.entries}
     compared = 0
-    for name, recorded in GOLDEN["sites"].items():
-        found = catalog(settings.REPO_ROOT / "sites" / name, now=NOW)
-        ours = {e.relative: e for e in found.entries}
-        for relative, expected in recorded.items():
-            if relative in ours:
-                entry = ours[relative]
-                assert path_for(found.config, entry) == expected["url"], f"{name}: {relative}"
-                assert entry.kind == expected["kind"] and entry.live == expected["live"], f"{name}: {relative}"
-                compared += 1
-        assert len(ours) >= len(recorded) - 5, f"{name}: the reader lost pages the Ruby catalog had"
-    assert compared > 500
+    for relative, expected in recorded.items():
+        if relative in ours:
+            entry = ours[relative]
+            assert path_for(found.config, entry) == expected["url"], f"{name}: {relative}"
+            assert entry.kind == expected["kind"] and entry.live == expected["live"], f"{name}: {relative}"
+            compared += 1
+    assert len(ours) >= len(recorded) - 5, f"{name}: the reader lost pages the Ruby catalog had"
+    # Per site what `compared > 500` over all eight (561 recorded) asked: nearly every recorded page is compared.
+    assert compared >= len(recorded) - 5, f"{name}: {compared} of {len(recorded)} recorded pages compared"
 
 
 def test_sources_are_live_titled_non_structural_pages_in_the_configured_collections(checkout):

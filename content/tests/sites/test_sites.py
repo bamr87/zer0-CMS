@@ -99,9 +99,9 @@ def test_the_list_carries_what_the_platform_manages(api, registered):
 
 def test_discover_lists_the_workspace_sites_not_yet_registered(api, registered):
     found = {c["checkout"]: c for c in api.get("/api/v2/sites/discover/").json()}
-    drsai = found["sites/drsai"]
-    assert drsai["render"] == "jekyll-theme" and drsai["theme_tag"] and drsai["server"] == "github-pages"
-    assert drsai["deploy_target"] == "/drsai/"
+    remote = found["sites/zer0-pages-remote"]
+    assert remote["render"] == "jekyll-theme" and remote["theme_tag"] and remote["server"] == "github-pages"
+    assert remote["deploy_target"] == "/zer0-pages-remote/"
     assert not any(c.endswith("fixture-site") for c in found), "a registered checkout is not offered again"
 
 
@@ -170,7 +170,7 @@ def test_seeing_a_site_is_not_managing_it(registered, editor):
     assert seen["can_manage"] is False
     assert client.patch(f"/api/v2/sites/{site_id}/", {"deploy_target": "/x/"}, format="json").status_code == 403
     assert client.post(f"/api/v2/sites/{site_id}/sync/", {}, format="json").status_code == 403
-    assert client.post("/api/v2/sites/", {"checkout": "sites/drsai"}, format="json").status_code == 403
+    assert client.post("/api/v2/sites/", {"checkout": "sites/zer0-pages-remote"}, format="json").status_code == 403
     assert client.get(f"/api/v2/sites/{site_id}/settings/").status_code == 200
 
 

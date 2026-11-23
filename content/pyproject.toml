@@ -11,7 +11,7 @@ DJANGO_SETTINGS_MODULE = "config.settings.testing"
 python_files = ["test_*.py"]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider"
-markers = ["slow: the full-suite tier (round trips of the large in-repo sites)"]
+markers = ["slow: the full-suite tier (round trips of the large sites)"]
 filterwarnings = ["ignore::DeprecationWarning:graphene.*", "ignore::DeprecationWarning:graphql.*"]
 
 [tool.ruff]
