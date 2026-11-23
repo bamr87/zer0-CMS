@@ -22,6 +22,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -672,18 +673,18 @@ class RebuildTest(TempTree):
     def test_a_difference_fails_a_pull_request_for_every_site_on_the_option(self):
         """PLAN P2: an option build pins every input, so a difference from the recording is a change that the
         pull request making it re-records. pages.yml fails such a leg on a pull request (a push only warns, so a
-        deploy is never blocked); sites.yml (2005) and irony-works.yml fail on any difference."""
+        deploy is never blocked). Every site on the option here is routed, so pages.yml is the one comparison:
+        the two that nothing routed, 2005 (compared by sites.yml) and irony-works (by irony-works.yml), moved to
+        lifehacker.dev with those comparisons (ADR 0012) — a workflow that builds a site and compares nothing
+        would be the gap this test is here to catch."""
         workflows = sm.ROOT / ".github" / "workflows"
         pages = (workflows / "pages.yml").read_text(encoding="utf-8")
         self.assertIn("PARITY_GATE: ${{ inputs.check || (matrix.site.render && github.event_name == 'pull_request') }}", pages)
         self.assertEqual(2, pages.count("continue-on-error: ${{ env.PARITY_GATE != 'true' }}"), "the record and compare steps")
         self.assertIn('test "$PARITY_GATE" != "true"', pages)
-        for name in ("sites.yml", "irony-works.yml"):
-            text = (workflows / name).read_text(encoding="utf-8")
-            compare = text[text.index("- name: Compare with the recorded build") :]
-            with self.subTest(workflow=name):
-                self.assertNotIn("continue-on-error", compare)
-                self.assertIn("exit 1", compare)
+        listed = json.loads(subprocess.run([sys.executable, str(sm.ROOT / "bin" / "zer0"), "list", "--json"], check=True, capture_output=True, text=True).stdout)
+        unrouted = sorted(p["name"] for p in listed if p.get("render") and not str(p.get("route") or "").startswith("/"))
+        self.assertEqual([], unrouted, "a site on the option that pages.yml does not build needs its own comparison")
 
 
 if __name__ == "__main__":

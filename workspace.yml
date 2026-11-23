@@ -121,6 +121,14 @@ projects:
   # The zer0 theme is developed in its own repository (ADR 0005). The sites
   # below render with it only through the Jekyll-theme option — their `render:`
   # setting pins its tag (ADR 0006 decision 4, PLAN P2).
+  #
+  # The sites that stay here are the zer0 demo sites: zer0-pages,
+  # zer0-pages-remote and the two installer demos. The content sites — 1987,
+  # 2005, drsai, irony-works and wargames — live in bamr87/lifehacker.dev, the
+  # content source, as trees under its agencies/ directory (ADR 0012). The
+  # platform reaches them as external sites (SITES_DIR), so they are not
+  # projects here; what each one's entry said — its render: setting, its tasks,
+  # its route — is kept in docs/plan/agencies-spec.md.
   zer0-image-generator:
     path: packages/zer0-image-generator
     kind: gem
@@ -152,51 +160,6 @@ projects:
         run: python3 -m pytest -q
         env: {PYTHONPATH: src}
       test: python3 -m pytest -q && ruff check src tests
-
-  "1987":
-    path: sites/1987
-    kind: site
-    stack: [python]
-    summary: The self-growing knowledge base about the year 1987 — plain-markdown topic pages by category, grown by Claude Code slash commands and published by GitHub Pages from the original repository.
-    upstream: bamr87/1987
-    publishes: [pages]
-    route: none — a plain-markdown repository with no Jekyll config of its own; its GitHub Pages site went with the deleted bamr87/1987, and it gets a route once it has a _config.yml
-    ci: ci.yml
-    tasks:
-      check: python3 ../../tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$' . || true
-
-  "2005":
-    path: sites/2005
-    kind: site
-    stack: [jekyll, docker]
-    summary: The year-2005 knowledge base of the year-of-ai lineage — a site on the zer0 theme, built the way zer0-pages-remote is.
-    upstream: year-of-ai/2005
-    publishes: [pages]
-    route: none — published by year-of-ai.github.io at /2005/, which builds it from this repository (ADR 0002 §4)
-    ci: sites.yml
-    site: .
-    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
-    tasks:
-      build: python3 ../../tools/jekyll_theme.py build 2005
-
-  drsai:
-    path: sites/drsai
-    kind: site
-    stack: [jekyll, docker, python]
-    summary: The children's picture-book site and its Python story engine; the CMS's ABC wizard exports into it.
-    upstream: bamr87/drsai
-    publishes: [pages, "pypi:drsai"]
-    ci: drsai.yml
-    site: "."
-    route: /drsai/
-    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
-    tasks:
-      setup: cd drsai && pip install -e ".[dev]"
-      check: python3 tools/import_abc_book.py --check
-      test:
-        run: (cd drsai && pytest tests/ -q) && python3 tools/import_abc_book.py --check
-      build: python3 ../../tools/jekyll_theme.py build drsai
-      pages: python3 ../../tools/jekyll_theme.py build drsai
 
   zer0-pages:
     path: sites/zer0-pages
@@ -258,40 +221,6 @@ projects:
     tasks:
       build: python3 ../../tools/jekyll_theme.py build zer0-demo-garden
       pages: python3 ../../tools/jekyll_theme.py build zer0-demo-garden
-
-  irony-works:
-    path: sites/irony-works
-    kind: site
-    stack: [node, jekyll, docker]
-    summary: The perpetual encyclopedia of irony — a self-growing, AI-tended Obsidian vault whose engine transplants entries into a Jekyll collection published with the zer0 theme.
-    upstream: bamr87/irony-works
-    publishes: [pages]
-    route: none — bamr87/irony-works still deploys it; it builds here with the Jekyll-theme option after its node transplant step, and routes at /irony-works/ once its deploy moves here (C4)
-    ci: irony-works.yml
-    site: "."
-    # Its build publishes node_modules/ (its exclude: replaces Jekyll 3's defaults; PLAN P1),
-    # so js-yaml and argparse are pinned at the versions its recording holds.
-    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages, before: npm i js-yaml@5.5.0 argparse@3.0.3 --no-save && node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs}
-    tasks:
-      setup: npm i js-yaml --no-save
-      check: for f in engine/scripts/*.mjs; do node --check "$f" || exit 1; done
-      build: python3 ../../tools/jekyll_theme.py build irony-works --repository bamr87/irony-works
-
-  wargames:
-    path: sites/wargames
-    kind: site
-    stack: [jekyll, docker, python]
-    summary: OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a site on the zer0 theme.
-    upstream: bamr87/wargames
-    publishes: [pages]
-    ci: sites.yml
-    site: "."
-    route: /wargames/
-    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}
-    tasks:
-      check: python3 ../../tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$' .
-      build: python3 ../../tools/jekyll_theme.py build wargames
-      pages: python3 ../../tools/jekyll_theme.py build wargames
 
   parodynews:
     path: apps/parodynews

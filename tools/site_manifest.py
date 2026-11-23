@@ -413,8 +413,8 @@ def resolved_differently(recorded: dict, candidate: dict) -> list[str]:
 
 def routes() -> list[dict]:
     """Every site `--check` can rebuild: the routed ones, as pages.yml plans them (`bin/zer0 routes --json`),
-    then those on the Jekyll-theme option that nothing routes (2005, irony-works), with `route` None —
-    each recorded as its own `build` task builds it, with its own url and baseurl."""
+    then those on the Jekyll-theme option that nothing routes, with `route` None — each recorded as its own
+    `build` task builds it, with its own url and baseurl (2005 and irony-works were, until ADR 0012; none is today)."""
     zer0 = str(ROOT / "bin" / "zer0")
     routed = json.loads(subprocess.run([zer0, "routes", "--json"], cwd=ROOT, check=True, capture_output=True, text=True).stdout)
     listed = json.loads(subprocess.run([zer0, "list", "--json"], cwd=ROOT, check=True, capture_output=True, text=True).stdout)

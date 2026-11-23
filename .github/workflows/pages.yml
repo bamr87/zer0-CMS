@@ -2,8 +2,8 @@
 # amended by ADR 0005, PLAN C4).
 #
 # A repository has one Pages site, so every in-repo site is built separately and stitched
-# into one artifact at its route, each under its own sub-path (/zer0-pages/, /drsai/,
-# /demos/cookbook/, …). The routes live in workspace.yml (`route:`) and `bin/zer0 check`
+# into one artifact at its route, each under its own sub-path (/zer0-pages/,
+# /zer0-pages-remote/, /demos/cookbook/, …). The routes live in workspace.yml (`route:`) and `bin/zer0 check`
 # holds them honest; `bin/zer0 routes --json` is this workflow's plan. Each site keeps its
 # own build: its `pages` task, run with a generated config file that sets only `url` and
 # `baseurl` for its route. A site on the Jekyll-theme option (its `render:` setting, PLAN P2)
@@ -128,7 +128,7 @@ jobs:
           ROUTE: ${{ matrix.site.route }}
         run: |
           set -euo pipefail
-          # "/" → the base path itself; "/drsai/" → <base>/drsai
+          # "/" → the base path itself; "/zer0-pages/" → <base>/zer0-pages
           baseurl="${PAGES_BASE_PATH%/}${ROUTE%/}"
           printf 'url: "%s"\nbaseurl: "%s"\n' "$PAGES_URL" "$baseurl" > "$RUNNER_TEMP/route.yml"
           export ZER0_PAGES_CONFIG="$RUNNER_TEMP/route.yml" ZER0_PAGES_DEST="$RUNNER_TEMP/out" ZER0_PAGES_BASEURL="$baseurl"
