@@ -124,7 +124,6 @@ def _real_bodies(site: str):
         "sites/zer0-demo-cookbook",
         "agencies/drsai",
         "agencies/irony-works",
-        pytest.param("agencies/wargames", marks=pytest.mark.slow),
         pytest.param("agencies/year-of-ai/2005", marks=pytest.mark.slow),
         pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
     ],

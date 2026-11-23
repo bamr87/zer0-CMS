@@ -425,9 +425,9 @@ REAL_SITES = [
     "sites/zer0-demo-cookbook",
     "agencies/drsai",
     "agencies/irony-works",
-    # The big ones run in the full suite, not the fast tier: wargames and 2005 (whose bodies are
-    # mostly HTML blocks and tables), zer0-pages (210 files) and the theme's docs site (376).
-    pytest.param("agencies/wargames", marks=pytest.mark.slow),
+    # The big ones run in the full suite, not the fast tier: 2005 (whose bodies are mostly HTML
+    # blocks and tables), zer0-pages (210 files) and the theme's docs site (376). Wargames was one
+    # of them until lifehacker.dev published it as a collection of its own site (tests/agencies.py).
     pytest.param("agencies/year-of-ai/2005", marks=pytest.mark.slow),
     pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
     pytest.param(THEME_CHECKOUT, marks=pytest.mark.slow, id="zer0-mistakes"),

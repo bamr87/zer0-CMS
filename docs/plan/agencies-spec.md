@@ -253,6 +253,8 @@ Never ported here, and still only reference copies in the tree: the scheduled Ge
 
 ## site-wargames
 
+**Since 2026-11-23 it is no longer a site of its own.** lifehacker.dev published Wargames as a collection of its own site (its ADR 0003, `docs/adr/0003-agencies-as-collections.md` there): the 219 pages moved from `agencies/wargames/overthewire/` to `pages/_wargames/` and are served under `/wargames/…` of that site, their pinned permalinks rewritten from `/docs/wargames/…` and their byline key from `bamr87` to `amr`; the 21 images moved to `assets/images/wargames/`. `agencies/wargames` is now the agency's back office — the old site configuration, `index.md`, `tags.md`, `search.json`, the guides, the aggregator and `tools/carry-study-guides.py` — with no pages in it. The platform reaches the pages as part of the lifehacker.dev site, not as a site it registers by this tree. What follows describes the tree as it moved here on 2026-11-22.
+
 **Lives at** `bamr87/lifehacker.dev` `agencies/wargames`. The tree holds the site (`_config.yml`, `index.md`, `tags.md`, `search.json`, `overthewire/<game>/` — 219 pages across Bandit, Natas, Leviathan, Krypton, Narnia, Behemoth, Utumno, Maze, Vortex, Semtex, Manpage, Drifter, FormulaOne and more — `_data/`, 21 images, `assets/css/user-overrides.css`), the aggregator (`scripts/docs-aggregator/`: `aggregate_docs.sh`, `aggregate.py`, `transform.py`, `docs_config.yml`), `tools/carry-study-guides.py`, and a reference copy of its original workflow (`.github/workflows/jekyll-gh-pages.yml`).
 
 Its `workspace.yml` entry at `9b68af57`:
@@ -281,15 +283,15 @@ A re-sync from upstream is a person's procedure, not a job: run the aggregator, 
 
 **Did.** The importer read the tree — bodies that are mostly HTML blocks and tables — and the exporter wrote it back unchanged, in the slow tier.
 
-**Platform today.** `content/tests/importers/test_jekyll.py::test_the_real_sites_round_trip_byte_for_byte[agencies/wargames]`, `content/tests/importers/test_blocks.py::test_on_the_real_sites_each_cut_is_its_own_text_and_changes_nothing_the_body_writes[agencies/wargames]` and `content/tests/distribution/test_lane.py::test_every_site_gets_the_urls_the_ruby_lane_gave_it[wargames]`.
+**Platform today.** Nothing in this suite reads Wargames any more. Its round-trip and block cases left `test_jekyll.py` and `test_blocks.py` when the pages left the tree, and `content/tests/distribution/test_lane.py::test_every_site_gets_the_urls_the_ruby_lane_gave_it[wargames]` skips with the reason (`content/tests/agencies.py`, `ABSORBED`): the Ruby lane's recording names a site that no longer exists as one. Until 2026-11-23 all three ran against `agencies/wargames`.
 
-**Owed.** As [site-2005.content](#site-2005content). The upstream text of `overthewire/**` is vendored: a platform edit to it would be overwritten by the next re-sync, so the study-guide block and the site-owned front matter are the editable parts.
+**Owed.** As [site-2005.content](#site-2005content). The upstream text of `overthewire/**` is vendored: a platform edit to it would be overwritten by the next re-sync, so the study-guide block and the site-owned front matter are the editable parts. The pages now round-trip, if at all, as part of the lifehacker.dev site, which this suite does not read: whether the platform's corpus should include the content source's own site is open.
 
 ### site-wargames.publish
 
 **Did.** `pages.yml` built it at `/wargames/` through the option (the theme at `v1.31.3`, the jekyll-4 server) and failed a pull request whose build differed from `web/site/fixtures/wargames/manifest.json` (587 paths, 221 pages, 221 sitemap URLs); `sites.yml` built it too, with its own `url` and `baseurl`. The deploy was never switched on, so `/wargames/` was built and checked, not served.
 
-**Platform today, owed.** As [site-2005.publish](#site-2005publish). No site answers for it today: `bamr87/wargames` no longer exists.
+**Platform today, owed.** Published since 2026-11-23, but not by the platform and not as this row describes: lifehacker.dev serves the pages as a collection of its own site, by its own build, under `/wargames/…` rather than the `/docs/wargames/…` the recording holds, and with no feed of its own. The recording therefore describes a site that no longer exists, and nothing can reproduce it. Whether the row is still owed, in any form, is the owner's to say; it stays `specified` until they do.
 
 ## Found while writing this spec
 

@@ -10,6 +10,12 @@ else a sibling checkout: `<this repository>/../lifehacker.dev/agencies`.
 content.yml fetches it from bamr87/lifehacker.dev. A tree that is absent skips
 its cases with a reason that names the variable, so a checkout without the
 content source still runs everything else.
+
+A tree does not have to stay a site. lifehacker.dev publishes an agency by
+moving its pages into a collection of its own site (its ADR 0003), which leaves
+the tree under `agencies/` as a back office with no pages in it. Wargames went
+first, on 2026-11-23. Such a site is listed in `ABSORBED`: a recording that
+names it has nothing left to compare, so its case skips with that reason.
 """
 
 import os
@@ -23,6 +29,8 @@ PREFIX = "agencies/"
 # The Jekyll sites that moved, by the name this repository held each under (`sites/<name>`), and its
 # tree in the agencies directory. (1987 moved too, to `1987`; it has no Jekyll config, so no test reads it.)
 MOVED = {"2005": "year-of-ai/2005", "drsai": "drsai", "irony-works": "irony-works", "wargames": "wargames"}
+# The moved sites lifehacker.dev has since published as a collection of its own site: where the pages went.
+ABSORBED = {"wargames": "pages/_wargames/ of the lifehacker.dev site, served under /wargames/ since 2026-11-23"}
 
 
 def agencies_dir() -> Path:
@@ -54,4 +62,9 @@ def real_site(site: str) -> Path:
 def site_named(name: str) -> Path:
     """`sites/<name>` as a recording made before ADR 0012 names it: its tree in the
     agencies directory (or a skip) when it moved, else in this repository."""
+    if name in ABSORBED:
+        pytest.skip(
+            f"{name} is no longer a site of its own: lifehacker.dev published it as a collection "
+            f"({ABSORBED[name]}), so {PREFIX}{MOVED[name]} holds no pages to compare (ADR 0012, agencies-spec.md)"
+        )
     return real_site(f"{PREFIX}{MOVED[name]}" if name in MOVED else f"sites/{name}")

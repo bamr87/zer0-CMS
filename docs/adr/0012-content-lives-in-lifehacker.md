@@ -45,7 +45,7 @@ What it costs, plainly:
 
 ## Open — the owner's decisions
 
-1. **Where the agencies publish, and at which URLs** — lifehacker.dev's own Pages, the platform's Jekyll-theme option over an external checkout, or the React renderer — and whether drsai, irony-works and wargames return at the URLs their recordings hold.
+1. **Where the agencies publish, and at which URLs** — lifehacker.dev's own Pages, the platform's Jekyll-theme option over an external checkout, or the React renderer — and whether drsai, irony-works and wargames return at the URLs their recordings hold. lifehacker.dev has since answered for one of them: on 2026-11-23 it published Wargames as a collection of its own site under `/wargames/` (its ADR 0003), so `agencies/wargames` is a back office with no pages, and the Wargames cases left this suite ([`agencies-spec.md`](../plan/agencies-spec.md#site-wargames)).
 2. **Pin or float.** `content.yml` reads lifehacker.dev's default branch. Pinning a commit (as the theme's docs fixture is pinned at a tag) would make a run reproducible, a corpus change deliberate and the one script the suite runs from there a reviewed one, at the price of a bump per change.
 3. **Skip or fail.** Once the import has landed, a missing tree could fail the suite instead of skipping.
 4. **Discovery depth.** The platform discovers Jekyll roots one or two levels under `SITES_DIR`. From a lifehacker.dev checkout `agencies/year-of-ai/2005` is three levels down: it registers by path and is not discovered ([`agencies-spec.md`](../plan/agencies-spec.md) § How the platform reaches an agency today).

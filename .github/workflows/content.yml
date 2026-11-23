@@ -111,7 +111,7 @@ jobs:
       - name: Migrations are complete
         if: matrix.python == env.PRIMARY_PYTHON
         run: python manage.py makemigrations --check --dry-run
-      # The content source's sites — drsai, irony-works, wargames, 2005 — live in
+      # The content source's sites — drsai, irony-works, 2005 — live in
       # bamr87/lifehacker.dev as trees under agencies/ (ADR 0012), and the suite
       # round-trips them from there (tests/agencies.py reads ZER0_AGENCIES_DIR).
       # A public repository, so no token; only agencies/ is checked out, at its
@@ -127,7 +127,7 @@ jobs:
         working-directory: .cache/lifehacker.dev
         run: |
           echo "ZER0_AGENCIES_DIR=$PWD/agencies" >> "$GITHUB_ENV"
-          for tree in drsai irony-works wargames year-of-ai/2005; do
+          for tree in drsai irony-works year-of-ai/2005; do
             if [ -f "agencies/$tree/_config.yml" ]; then
               echo "agencies/$tree: found"
             else
