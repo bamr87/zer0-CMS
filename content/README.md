@@ -9,12 +9,13 @@ cd content
 pip install -r requirements-dev.txt
 pip install -r requirements-providers.txt                           # optional: the model providers' SDKs (ai/README.md)
 python manage.py migrate && python manage.py sync_agents --publish   # agent users, definitions, evals → live
-python manage.py import_jekyll --site drsai --path ../sites/drsai     # a site → pages
+python manage.py import_jekyll --site zer0-pages-remote --path ../sites/zer0-pages-remote   # a site → pages
 python manage.py seed_demo                                            # or a demo site, the person `editor` and suggestions to review
 python manage.py createsuperuser && python manage.py runserver        # http://localhost:8000/studio/ (built in ../web), /admin/
 
 python -m pytest -q -m "not slow"                  # the fast tier (SQLite, ~40 s)
-python -m pytest -q                                # + round trips of the two big in-repo sites
+python -m pytest -q                                # + the round trips of the big sites
+ZER0_AGENCIES_DIR=~/github/lifehacker.dev/agencies python -m pytest -q   # with the content source's sites (ADR 0012; default ../lifehacker.dev/agencies beside this checkout); absent, their cases skip
 DATABASE_URL=postgres://… python -m pytest -q      # the same suite on Postgres + pgvector
 python -m pytest -q -n auto --maxschedchunk 1      # any of these on every core (pytest-xdist), as content.yml runs them
 python manage.py makemigrations --check --dry-run
