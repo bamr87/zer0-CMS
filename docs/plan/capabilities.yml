@@ -920,8 +920,8 @@ sources:
       - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs — the seed of the platform's design system.", target: sites.render, status: partial}
 
   # The five content sites below moved to bamr87/lifehacker.dev — the content source — on the owner's direction of
-  # 2026-11-22 (ADR 0012): each is a tree under its agencies/ directory, imported whole and byte-identical from
-  # 9b68af57, and the platform reaches it as an external site. Every row is `specified`: docs/plan/agencies-spec.md
+  # 2026-11-22 (ADR 0012): each is a tree under its agencies/ directory, imported whole from 9b68af57 (its
+  # registry, _data/agencies.yml, records what the import changed), and the platform reaches it as an external site. Every row is `specified`: docs/plan/agencies-spec.md
   # says what it did and where its source is, and its target still owes it. `path:` names the directory this
   # repository held, now gone.
   - id: site-1987
