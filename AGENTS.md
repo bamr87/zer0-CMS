@@ -18,7 +18,7 @@
 - **Content in the database, files generated:** every site and book lives in the platform and also exists as a generated, committed, re-importable file tree (a site's source, a book's `library/<slug>/`).
 - **Sites:** manage (registry, settings, render, deploy), monitor (uptime, links, performance, accessibility, SEO, analytics, AIEO scores) and improve (agents propose changes from those signals; a person accepts them). Sites render with React by default; zer0-mistakes survives only as an option — render a site with that theme and deploy it with a Jekyll server.
 - **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS is gone ([ADR 0008](docs/adr/0008-retire-the-rails-cms.md)); every site builds with the Jekyll-theme option's Jekyll server, Ruby only inside its container (PLAN P2, zer0-pages last); the image generator's gem is being ported away, and until it is, a ratchet in CI stops Ruby from growing or spreading.
-- **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test), `dropped` by the owner, or — by the owner's decision, as for the Rails CMS — `specified`: what it did kept in a written spec the platform still owes ([`docs/plan/rails-cms-spec.md`](docs/plan/rails-cms-spec.md)).
+- **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the sites' content. A source directory leaves only when the ledger shows every capability `done` (with a test), `dropped` by the owner, or — by the owner's decision — `specified`: what it did kept in a written spec the platform still owes. Two sources are `specified`: the Rails CMS, deleted ([`docs/plan/rails-cms-spec.md`](docs/plan/rails-cms-spec.md)), and the five content sites — 1987, 2005, drsai, irony-works and wargames — which the owner moved to lifehacker.dev ([ADR 0012](docs/adr/0012-content-lives-in-lifehacker.md), [`docs/plan/agencies-spec.md`](docs/plan/agencies-spec.md)).
 
 **What an agent must not do** — each of these has happened, or is the next obvious mistake:
 
@@ -32,6 +32,7 @@
 - Add a dependency on zer0-mistakes — a vendored file, a fixture checkout, a CI job against it, a design port, an overlay. Only the Jekyll-theme option names it (`theme_allowed:` in the ledger); its home is `bamr87/zer0-mistakes` ([ADR 0005](docs/adr/0005-theme-goes-home.md)).
 - Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated. Likewise a recorded site build (`web/site/fixtures/`): re-record it with `tools/site_manifest.py`, never edit it to make a check pass.
 - Delete a source directory, a site or a capability because it looks obsolete, or mark a capability `dropped`. Deletion follows the ledger; dropping a capability, or deleting its source before it moved (`specified`), is the owner's decision.
+- Add a content site's tree to this repository. lifehacker.dev is the content source and this is the platform (ADR 0012): a content site is a tree under `agencies/` in `bamr87/lifehacker.dev`, reached here as an external site through `SITES_DIR` and by the tests through `ZER0_AGENCIES_DIR`. `sites/` holds the zer0 demo sites.
 - Run a fleet-wide kit (docs framework, governance, standards) over an imported project as if it were a live product. Imported projects under `apps/`, `packages/` and `sites/` are **sources being absorbed**; fleet kits apply to the platform, `web/` and the extension.
 - Pick work by "the first unchecked box" in the plan. The order of work is PLAN § 3's list; older phases keep boxes later decisions overtook.
 - Stack a pull request on another unmerged branch. Base every pull request on `main` (#52 merged into a dead branch and left `main` contradicting the owner for a day).
@@ -68,12 +69,13 @@ SITES_DIR=$HOME/github docker compose --profile imagegen up --build    # (repo r
 cd content && pip install -r requirements-dev.txt
 python manage.py migrate && python manage.py sync_agents --publish     # agent users, definitions, evals → live
 python -m pytest -q -m "not slow"                                      # fast tier; drop -m for big-site round trips
+ZER0_AGENCIES_DIR=~/github/lifehacker.dev/agencies python -m pytest -q # with the content source's sites (default: ../lifehacker.dev/agencies beside this checkout); absent, their cases skip
 python manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
 python manage.py run_evals --all --recorded                            # every agent's evals, no network
 python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json   # the committed OpenAPI document
 DATABASE_URL=postgres://… python -m pytest -q                          # the same suite on Postgres + pgvector
-python manage.py import_jekyll --site drsai --path ../sites/drsai      # a site → pages (idempotent)
-python manage.py roundtrip_jekyll --path ../sites/drsai                # import → export → byte-compare
+python manage.py import_jekyll --site zer0-pages-remote --path ../sites/zer0-pages-remote   # a site → pages (idempotent)
+python manage.py roundtrip_jekyll --path ../sites/zer0-pages-remote    # import → export → byte-compare
 python manage.py seed_demo                                             # a demo site, the person `editor` (password zer0-demo under DEBUG), pending suggestions
 # Docker, from the repository root: http://localhost:8000 (/studio/, /admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 
@@ -95,7 +97,7 @@ python3 tools/docs_index.py --lint            # every indexed doc has one H1 and
 python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
 
 # ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Docker (the Jekyll-theme option's server), network ──
-python3 tools/site_manifest.py --check --site drsai    # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
+python3 tools/site_manifest.py --check --site zer0-pages-remote   # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
 python3 tools/site_manifest.py compare --pages <recorded> <candidate>   # what a renderer must match: pages, titles, text, feeds, sitemaps, redirects
 ```
 
@@ -183,7 +185,7 @@ The rules the Rails fleet CMS kept, carried into the platform by PLAN G4 and exp
 
 ## The monorepo (`workspace.yml`, `bin/zer0`)
 
-Fourteen imported repositories, each a **source being absorbed** into the platform and `web/` (ADR 0006): keep them working, don't extend them. Explained in [`docs/MONOREPO.md`](docs/MONOREPO.md) and [`tools/workspace/README.md`](tools/workspace/README.md).
+Eight imported repositories — the image generator, books, four zer0 sites, parodynews and aieo — each a **source being absorbed** into the platform and `web/` (ADR 0006): keep them working, don't extend them. Five content sites that were imported too now live in lifehacker.dev's `agencies/` (ADR 0012). Explained in [`docs/MONOREPO.md`](docs/MONOREPO.md) and [`tools/workspace/README.md`](tools/workspace/README.md).
 
 - **`workspace.yml` is the registry**; run a project's commands with `bin/zer0 run <task> <project>`, never restate them elsewhere.
 - **A new directory under `packages/`, `sites/` or `apps/`, or a new top-level project, gets its `workspace.yml` entry in the same change**, with a root workflow or `ci: none — <reason>`, or `bin/zer0 check` fails.
@@ -191,7 +193,7 @@ Fourteen imported repositories, each a **source being absorbed** into the platfo
 - **Nothing under `packages/`, `sites/` or `apps/` assumes it is the git root**; resolve paths from the file.
 - **A file two projects need is `vendored:`** in `workspace.yml` with one source: edit the source, `bin/zer0 vendor --write`, read the diff.
 - **A Jekyll site lists `AGENTS.md` and `CLAUDE.md` under `exclude:`**, or Jekyll publishes them.
-- **This repository is the only home** (ADR 0002): change an imported project here, never in its original; originals publish until cutover C1–C7, so don't archive one `docs/MONOREPO.md` still lists. The theme is the exception ([ADR 0005](docs/adr/0005-theme-goes-home.md)): `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes`, never here; a site here renders with it only through the Jekyll-theme option (PLAN P2), at the tag its `render:` setting pins, and a theme change is a pull request there.
+- **This repository is the only home** (ADR 0002): change an imported project here, never in its original; originals publish until cutover C1–C7, so don't archive one `docs/MONOREPO.md` still lists. The theme is the exception ([ADR 0005](docs/adr/0005-theme-goes-home.md)): `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes`, never here; a site here renders with it only through the Jekyll-theme option (PLAN P2), at the tag its `render:` setting pins, and a theme change is a pull request there. So are the five content sites ([ADR 0012](docs/adr/0012-content-lives-in-lifehacker.md)): 1987, 2005, drsai, irony-works and wargames are changed in `bamr87/lifehacker.dev`, under `agencies/`, never by adding them back here.
 
 ## Fleet context
 

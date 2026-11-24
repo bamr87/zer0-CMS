@@ -18,9 +18,10 @@
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
-# /sites/sites/drsai) is mounted at /sites; register sites by their container
-# path. Point it at a wider fleet checkout (SITES_DIR=~/github) to manage
-# repositories that live outside this one.
+# /sites/sites/zer0-pages) is mounted at /sites; register sites by their
+# container path. Point it at a wider fleet checkout (SITES_DIR=~/github) to
+# manage repositories that live outside this one, or at lifehacker.dev's
+# agencies/ directory for the content source's sites (ADR 0012).
 # The image generator's profile mounts the same directory at the same path,
 # so a site means the same checkout in both apps.
 #

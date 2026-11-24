@@ -20,8 +20,8 @@ from .models import ImportedSource
 
 def _same_folder(above: str, source_root: str) -> bool:
     """Whether the folders the client sees above the file can be the site's:
-    one must end with the other — the site's own folder (`drsai` for
-    `sites/drsai`), a folder above the repository (`code/zer0-CMS/sites/a` for
+    one must end with the other — the site's own folder (`zer0-pages` for
+    `sites/zer0-pages`), a folder above the repository (`code/zer0-CMS/sites/a` for
     `sites/a`), or a site imported by an absolute path (`it-journey` for
     `/home/me/it-journey`). No folder at all is no evidence, and matches no site.
     """
@@ -32,8 +32,8 @@ def _same_folder(above: str, source_root: str) -> bool:
 def pages_imported_from(path: str) -> list[int]:
     """The ids of the pages imported from the file at `path`, a POSIX path
     from the folder the client has open, starting with that folder's name:
-    the site's folder (`drsai/_posts/a.md`) or one above it
-    (`zer0-CMS/sites/drsai/_posts/a.md`). An absolute path or one with `..`
+    the site's folder (`zer0-pages/_posts/a.md`) or one above it
+    (`zer0-CMS/sites/zer0-pages/_posts/a.md`). An absolute path or one with `..`
     names no file the client could have opened inside a folder, and finds
     nothing."""
     pure = PurePosixPath(path)

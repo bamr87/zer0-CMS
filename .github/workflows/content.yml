@@ -3,11 +3,13 @@
 # own tree and the shared schemas it owns, and run inside content/.
 #
 # Two jobs, because the plane runs on both databases: `sqlite` is the full
-# suite (including the round trips of the large in-repo sites, which read
-# sites/ and packages/ from the checkout) plus every drift check; `postgres`
-# runs the fast tier against pgvector, where the vector column, `<=>` kNN and
-# `SKIP LOCKED` are real. No job reaches a model provider: the LLM backend is
-# the recorded one (content/agents/recordings/).
+# suite (including the round trips of the large sites: the ones in this
+# repository, read from sites/ and packages/ in the checkout, and the content
+# source's, read from a checkout of bamr87/lifehacker.dev's agencies/ — ADR
+# 0012) plus every drift check; `postgres` runs the fast tier against
+# pgvector, where the vector column, `<=>` kNN and `SKIP LOCKED` are real. No
+# job reaches a model provider: the LLM backend is the recorded one
+# (content/agents/recordings/).
 #
 # The sqlite job is a two-interpreter matrix, and what each leg runs differs on
 # purpose (see `PRIMARY_PYTHON` below): the version-independent checks run once,
@@ -109,6 +111,29 @@ jobs:
       - name: Migrations are complete
         if: matrix.python == env.PRIMARY_PYTHON
         run: python manage.py makemigrations --check --dry-run
+      # The content source's sites — drsai, irony-works, 2005 — live in
+      # bamr87/lifehacker.dev as trees under agencies/ (ADR 0012), and the suite
+      # round-trips them from there (tests/agencies.py reads ZER0_AGENCIES_DIR).
+      # A public repository, so no token; only agencies/ is checked out, at its
+      # default branch. A tree that is not there (agencies/ before it lands, a
+      # renamed agency) skips its cases, and this step says which trees it found.
+      - uses: actions/checkout@v7
+        with:
+          repository: bamr87/lifehacker.dev
+          path: .cache/lifehacker.dev
+          sparse-checkout: agencies
+          persist-credentials: false
+      - name: The agencies the suite will read
+        working-directory: .cache/lifehacker.dev
+        run: |
+          echo "ZER0_AGENCIES_DIR=$PWD/agencies" >> "$GITHUB_ENV"
+          for tree in drsai irony-works year-of-ai/2005; do
+            if [ -f "agencies/$tree/_config.yml" ]; then
+              echo "agencies/$tree: found"
+            else
+              echo "::notice::bamr87/lifehacker.dev has no agencies/$tree: its round-trip cases will skip (ADR 0012)"
+            fi
+          done
       # The theme's docs site is the largest round-trip fixture (376 files). It lives in
       # its own repository (ADR 0005), so the suite reads it from a pinned checkout under
       # ZER0_THEME_CHECKOUT and skips that one case when the directory is absent.
@@ -125,7 +150,7 @@ jobs:
         if: matrix.python == env.PRIMARY_PYTHON || github.event_name != 'pull_request'
         run: python -m pytest -q -n auto --maxschedchunk 1
       # On a pull request the secondary interpreter runs everything except the
-      # `slow` tier — the round trips of the large in-repo sites, which compare
+      # `slow` tier — the round trips of the large sites, which compare
       # a site export with its recording and so cannot differ between 3.12 and
       # 3.13. The push to main that follows the merge runs the full suite on
       # both, so nothing reaches main unproven on either interpreter.
@@ -186,6 +211,26 @@ jobs:
           cache: pip
           cache-dependency-path: content/requirements*.txt
       - run: pip install -r requirements-dev.txt
+      # The fast tier round-trips two of the content source's sites (drsai,
+      # irony-works) and checks an ABC export with drsai's own tool: the same
+      # checkout as the sqlite job's, and the same skips where a tree is absent.
+      - uses: actions/checkout@v7
+        with:
+          repository: bamr87/lifehacker.dev
+          path: .cache/lifehacker.dev
+          sparse-checkout: agencies
+          persist-credentials: false
+      - name: The agencies the suite will read
+        working-directory: .cache/lifehacker.dev
+        run: |
+          echo "ZER0_AGENCIES_DIR=$PWD/agencies" >> "$GITHUB_ENV"
+          for tree in drsai irony-works; do
+            if [ -f "agencies/$tree/_config.yml" ]; then
+              echo "agencies/$tree: found"
+            else
+              echo "::notice::bamr87/lifehacker.dev has no agencies/$tree: its round-trip cases will skip (ADR 0012)"
+            fi
+          done
       # No makemigrations check here: the sqlite leg above already runs it, and
       # it reads the migration graph, not the database.
       - run: python -m pytest -q -m "not slow" -n auto --maxschedchunk 1

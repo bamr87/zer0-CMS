@@ -21,10 +21,15 @@
 #     and the platform capability it lands in (`target:`, a platform id). A row
 #     is `missing`, `partial`, `done` (with `proof:`) or `dropped` (with
 #     `decided_by:` naming the owner's decision — an agent never drops a row) or
-#     `specified` (the owner deleted the source before the row moved: `decided_by:`
-#     names that decision, `spec:` the file that keeps what it did, and the
-#     `target:` still owes it). A source's directory may be deleted only when no
-#     row is missing/partial.
+#     `specified` (the owner took the source out of this repository before the
+#     row moved — deleted it, as the Rails CMS (ADR 0008), or moved it to another
+#     repository, as the five content sites now in lifehacker.dev (ADR 0012):
+#     `decided_by:` names that decision, `spec:` the file that keeps what it did
+#     and, for a moved source, where it lives, and the `target:` still owes it).
+#     A source's directory may leave only when no row is missing/partial. `path:`
+#     is the source's directory in this repository, and keeps naming it once it
+#     is gone: its absence is what that rule tests, so it never points at the
+#     source's new home (a moved source's `content:` says where that is).
 #
 # Statuses here were set on 2026-10-21 from two code inventories, conservatively:
 # nothing is `done` without a test that proves it, and `partial` means the
@@ -45,10 +50,6 @@ theme_ratchet:
   media/: 1
   packages/zer0-image-generator/: 7
   schemas/: 1
-  sites/2005/: 1
-  sites/drsai/: 3
-  sites/irony-works/: 5
-  sites/wargames/: 4
   sites/zer0-demo-cookbook/: 2
   sites/zer0-demo-garden/: 2
   sites/zer0-pages-remote/: 1
@@ -499,6 +500,9 @@ platform:
     # pages.yml and zer0-pages.yml build the ninth, zer0-pages, so no site builds with Ruby. G4: a site's renderer, the theme's tag
     # and the Jekyll server are its registry fields, chosen over the API and in the studio (partial: running its build
     # as a job a person follows needs the Jekyll server's container, which the worker does not start — still to come).
+    # ADR 0012 (2026-11-22): four of those nine (2005, drsai, irony-works, wargames) moved to lifehacker.dev with
+    # their workflows' legs; pages.yml, sites.yml and zer0-pages.yml build the five that stay through it (zer0-pages,
+    # zer0-pages-remote, the two demos and parodynews's sidecar).
     surfaces: {api: partial, studio: partial, ops: done}
     proof: {ops: tools/tests/test_jekyll_theme.py}
   - id: sites.obsidian
@@ -915,49 +919,50 @@ sources:
       - {id: imagegen.jekyll-command, what: "[Ruby] jekyll preview-images and the facade the Rails CMS calls — replaced by the platform's commands and API.", target: media.generate, status: missing}
       - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs — the seed of the platform's design system.", target: sites.render, status: partial}
 
+  # The five content sites below moved to bamr87/lifehacker.dev — the content source — on the owner's direction of
+  # 2026-11-22 (ADR 0012): each is a tree under its agencies/ directory, imported whole from 9b68af57 (its
+  # registry, _data/agencies.yml, records what the import changed), and the platform reaches it as an external site. Every row is `specified`: docs/plan/agencies-spec.md
+  # says what it did and where its source is, and its target still owes it. `path:` names the directory this
+  # repository held, now gone.
   - id: site-1987
     path: sites/1987
     summary: The self-growing knowledge base about the year 1987, grown by Claude Code slash commands.
-    content: Every topic page by category.
+    content: Every topic page by category, with the seed, the roadmap and the growth framework's prompts, agents and skills — moved whole to bamr87/lifehacker.dev agencies/1987 (ADR 0012).
     capabilities:
-      - {id: site-1987.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      - {id: site-1987.publish, what: "The public site at its route with the same URLs.", target: sites.render, status: missing}
-      - {id: site-1987.grow, what: "Grow the knowledge base with agent commands that research and add topics.", target: sites.evolve, status: partial}
+      - {id: site-1987.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-1987content, note: "Plain Markdown by category with no _config.yml: the Jekyll importer has no site root to read, so no test round-trips it"}
+      - {id: site-1987.publish, what: "The public site at its route with the same URLs.", target: sites.render, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-1987publish, note: "It has no build and no recording: its GitHub Pages site went with bamr87/1987"}
+      - {id: site-1987.grow, what: "Grow the knowledge base with agent commands that research and add topics.", target: sites.evolve, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-1987grow, note: "The growth commands travel with the tree (.claude/, .github/prompts, seed.md) and run where it lives"}
   - id: site-2005
     path: sites/2005
     summary: The year-2005 knowledge base of the year-of-ai lineage.
-    content: Every page.
+    content: Every page (80 posts in five categories, their preview images, the growth ledger in telemetry/) — moved whole to bamr87/lifehacker.dev agencies/year-of-ai/2005 (ADR 0012).
     capabilities:
-      - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
+      - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-2005content, note: "Round-trips byte for byte from the agencies directory: content/tests/importers/test_jekyll.py::test_the_real_sites_round_trip_byte_for_byte[agencies/year-of-ai/2005] (slow tier; skipped where ZER0_AGENCIES_DIR has no such tree)"}
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-2005publish, note: "Until ADR 0012 it rendered here through the Jekyll-theme option, identical to its P1 recording (its own build task and config, sites.yml failing a pull request whose build differed); web/site/fixtures/2005/ is kept as the parity record for whoever publishes it next. Nothing in this repository builds or publishes it now; the archived year-of-ai/2005 still serves the site it last built"}
   - id: site-drsai
     path: sites/drsai
     summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
-    content: Every page and book, _data/abc_books/*.json, images.
+    content: Every page and book, _data/abc_books/*.json, images, the story engine (drsai/) and the import and illustration tools (tools/) — moved whole to bamr87/lifehacker.dev agencies/drsai (ADR 0012).
     capabilities:
-      - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
-      - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
-      - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
+      - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-drsaicontent, note: "Round-trips byte for byte from the agencies directory: content/tests/importers/test_jekyll.py::test_the_real_sites_round_trip_byte_for_byte[agencies/drsai] (skipped where ZER0_AGENCIES_DIR has no such tree)"}
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-drsaipublish, note: "Until ADR 0012 it rendered here through the Jekyll-theme option, identical to its P1 recording (pages.yml failing a pull request whose build differed); web/site/fixtures/drsai/ is kept as the parity record for whoever publishes it next. Nothing in this repository builds or publishes it now, and /drsai/ has left its Pages plan"}
+      - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-drsaistory-engine, note: "The engine (drsai/, its tests and its PyPI packaging) travels with the tree; drsai.yml, which ran its lint and tests here, is deleted"}
+      - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-drsaiabc-import, note: "tools/import_abc_book.py travels with the tree and stays the oracle of the platform's ABC export (content/tests/books/test_abc.py reads it from the agencies directory); the golden it-alphabet book stays frozen in content/tests/fixtures/abc/"}
   - id: site-irony-works
     path: sites/irony-works
     summary: The irony-works site, with a Node pre-build that resolves wikilinks.
-    content: Every page.
+    content: Every page — the Obsidian vault (vault/), the germination engine (engine/), the theme layer and the site's pages — moved whole to bamr87/lifehacker.dev agencies/irony-works (ADR 0012).
     capabilities:
-      - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
-      - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
+      - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-irony-workscontent, note: "Round-trips byte for byte from the agencies directory: content/tests/importers/test_jekyll.py::test_the_real_sites_round_trip_byte_for_byte[agencies/irony-works] (skipped where ZER0_AGENCIES_DIR has no such tree)"}
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-irony-workspublish, note: "Until ADR 0012 it rendered here through the Jekyll-theme option, identical to its P1 recording (its build task after its node before: step, irony-works.yml failing a pull request whose build differed); web/site/fixtures/irony-works/ is kept as the parity record for whoever publishes it next. Nothing in this repository builds or publishes it now; irony-works.yml is deleted"}
+      - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-irony-workswikilinks, note: "engine/scripts/transplant.mjs travels with the tree; the option's before: step that ran it here went with the site's workspace.yml entry"}
   - id: site-wargames
     path: sites/wargames
     summary: The wargames site.
-    content: Every page.
+    content: Every page (the OverTheWire mirror with its study guides), the upstream aggregator (scripts/docs-aggregator/) and tools/carry-study-guides.py — moved whole to bamr87/lifehacker.dev agencies/wargames (ADR 0012); since 2026-11-23 lifehacker.dev publishes the pages as a collection of its own site (pages/_wargames/), and the tree is the agency's back office.
     capabilities:
-      - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
+      - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-wargamescontent, note: "Round-trips byte for byte from the agencies directory: content/tests/importers/test_jekyll.py::test_the_real_sites_round_trip_byte_for_byte[agencies/wargames] (slow tier; skipped where ZER0_AGENCIES_DIR has no such tree)"}
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: specified, decided_by: "the owner, 2026-11-22: lifehacker.dev is the content source and zer0-CMS the platform, so the content sites move there as agencies (ADR 0012)", spec: docs/plan/agencies-spec.md#site-wargamespublish, note: "Until ADR 0012 it rendered here through the Jekyll-theme option, identical to its P1 recording (pages.yml failing a pull request whose build differed); web/site/fixtures/wargames/ is kept as the parity record for whoever publishes it next. Nothing in this repository builds or publishes it now, and /wargames/ has left its Pages plan"}
   - id: site-zer0-demo-cookbook
     path: sites/zer0-demo-cookbook
     summary: The cookbook demo site.

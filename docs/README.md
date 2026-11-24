@@ -46,7 +46,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/SUBSTACK.md`](SUBSTACK.md) | Carrying a book's chapters — a serial such as the books library's `cost-line` pilot — to a Substack publication: the sanctioned routes (an RSS feed for Substack's importer, a paste-ready copy), the unofficial adapter that is off by… |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010 and 0012 (0011 is on an unmerged branch), one per decision that changes how the repository is put together; ADR 0006 (one Python platform, a React frontend, no Ruby) is the current target. |
 | [`docs/amendments/`](amendments/README.md) | The numbered, append-only record of every change to the constitution, with its status. |
 
 ### `schemas/`
@@ -66,6 +66,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
+| [`docs/plan/agencies-spec.md`](plan/agencies-spec.md) | What five content sites — 1987, 2005, drsai, irony-works and wargames — did here before they moved to lifehacker.dev's `agencies/` (ADR 0012): where each lives now and, per ledger row, what it did, where the platform is and what it owes. |
 | [`docs/plan/agent-native-design.md`](plan/agent-native-design.md) | The design note the plan implements ("the note"): agent runs as content-adjacent data — Wagtail revisions, moderation tasks and graph edges — across a Django/Wagtail content plane and a Rails experience plane. |
 | [`docs/plan/newsroom-journalism-discovery.md`](plan/newsroom-journalism-discovery.md) | Discovery for epic [#92](https://github.com/bamr87/zer0-CMS/issues/92) (a full journalism and media-agency platform, centred on journalist workflow UX): the gap against today's studio, user stories and one journey, low-fidelity UX, the… |
 | [`docs/plan/PLAN.md`](plan/PLAN.md) | The build plan: ADR 0006's order of work (§ 3), every milestone and phase with what is done, what is blocked and what overtook it, and the open decisions. |

@@ -15,7 +15,7 @@ and this module carries it out in two steps:
            tracks under the site's Jekyll source, with its _config.yml merged
            with a route's config (url, baseurl) and `remote_theme:` pinned to
            the theme's tag; then the site's own `before:` command, if it has one
-           (irony-works transplants its vault); then, for an Obsidian vault
+           (irony-works transplanted its vault with one); then, for an Obsidian vault
            (`obsidian: true`, zer0-pages), every wikilink, embed, callout and
            Dataview query resolved and the graph index written (tools/obsidian),
            which a plugin-less Jekyll cannot do;

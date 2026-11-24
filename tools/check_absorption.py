@@ -40,13 +40,16 @@ It asserts:
     command line or a CI job, which prove nothing by existing;
   * **the sources** — every capability has a unique id, a known status and a
     `target` that is a platform capability id; a `done` capability names a `proof` that is such a test; a `dropped`
-    one names the owner's decision in `decided_by`; a `specified` one — its source deleted by the owner's decision
-    before it moved, what it did kept as a written spec — names that decision in `decided_by` and the spec, a file
-    that exists, in `spec`, and keeps a live `target`: the platform still owes it;
+    one names the owner's decision in `decided_by`; a `specified` one — its source taken out of this repository
+    by the owner's decision before it moved (deleted, ADR 0008; or moved to another repository, ADR 0012), what it
+    did kept as a written spec — names that decision in `decided_by` and the spec, a file that exists, in `spec`,
+    and keeps a live `target`: the platform still owes it;
   * **the deletion gate** — a source whose `path` no longer exists has no
     capability left `missing` or `partial`. Deleting a directory before its
     capabilities moved is exactly the loss ADR 0006 forbids, unless the owner
     decided it and what each capability did survives as its spec (`specified`).
+    `path` is always the directory in this repository, also for a source that
+    now lives elsewhere: its absence here is what this rule tests.
 
 `--report` prints the burn-down: Ruby files per prefix, capability status per
 source, surface coverage per platform domain, and every capability the studio

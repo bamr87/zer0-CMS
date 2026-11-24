@@ -2,13 +2,14 @@
 each one the importer cuts — a table, a typed table, a callout, an embed, a
 document link, an HTML block, a Liquid template — writes its paragraph back
 byte for byte, a paragraph no block writes back exactly stays Markdown, and on
-every real site in the repository the cut changes nothing the body writes."""
+every real site — this repository's, and the content source's in
+lifehacker.dev's agencies (ADR 0012, tests/agencies.py) — the cut changes
+nothing the body writes."""
 
 import re
 from pathlib import Path
 
 import pytest
-from django.conf import settings
 
 from importers import frontmatter
 from importers import markdown as md
@@ -16,8 +17,7 @@ from importers.jekyll import import_site
 from importers.markdown import block_to_markdown, from_blocks, to_blocks
 from importers.models import ImportedSource
 from sites import catalog
-
-REPO = Path(settings.REPO_ROOT)
+from tests.agencies import real_site
 
 EVERY_BLOCK = """
 Intro paragraph with an {% include note.html %} inside it.
@@ -107,7 +107,7 @@ def test_a_paragraph_no_block_writes_back_exactly_stays_markdown(text):
 
 
 def _real_bodies(site: str):
-    root = REPO / site
+    root = real_site(site)
     if not (root / "_config.yml").is_file():
         pytest.skip(f"{site} is not in this checkout")
     for entry in catalog.scan(root).entries:
@@ -122,10 +122,9 @@ def _real_bodies(site: str):
     [
         "sites/zer0-demo-garden",
         "sites/zer0-demo-cookbook",
-        "sites/drsai",
-        "sites/irony-works",
-        pytest.param("sites/wargames", marks=pytest.mark.slow),
-        pytest.param("sites/2005", marks=pytest.mark.slow),
+        "agencies/drsai",
+        "agencies/irony-works",
+        pytest.param("agencies/year-of-ai/2005", marks=pytest.mark.slow),
         pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
     ],
 )
