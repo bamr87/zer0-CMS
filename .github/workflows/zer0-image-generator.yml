@@ -25,7 +25,12 @@ defaults:
 jobs:
   python-unit:
     name: Python unit (${{ matrix.python }})
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: the matrix tests the engine's documented floor,
+    # Python 3.9 (README: "python3 (3.9+)"), and setup-python has no 3.9 build for
+    # Ubuntu 26.04, which ubuntu-latest became — the 3.9 leg failed at setup and
+    # fail-fast cancelled 3.12 with it. Move this back to ubuntu-latest in the
+    # change that raises the floor.
+    runs-on: ubuntu-24.04
     # Capped so a wedged step cannot run to the six-hour default.
     timeout-minutes: 15
     strategy:
