@@ -745,7 +745,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(agreed.sent.length, 4);
   });
 
-  test("main's other live changes ask too: a story moved live, a distribution post published, scheduled or approved, a newsletter issue sent", async () => {
+  test("main's other live changes ask too: a story moved live, a distribution post published, scheduled or approved, a newsletter issue sent, a content switch flipped", async () => {
     const declined = fake({ answer: false });
     const bridge = new StudioBridge(declined.deps);
     await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"published","reason":"breaking"}'));
@@ -754,6 +754,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     await bridge.receive(api('/api/v2/distribution/posts/p-1/schedule/', 'POST', '{}'));
     await bridge.receive(api('/api/v2/distribution/posts/p-1/approve/', 'POST'));
     await bridge.receive(api('/api/v2/newsroom/issues/i-1/send/', 'POST'));
+    await bridge.receive(api('/api/v2/switches/apply/', 'POST', '{"confirm":true}'));
     assert.deepEqual(declined.asked, [
       `Publish story s-1 on ${ORIGIN}?`,
       `Schedule story s-1 to go live on ${ORIGIN}?`,
@@ -761,6 +762,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
       `Schedule distribution post p-1 to publish to its channel from ${ORIGIN}?`,
       `Approve distribution post p-1 on ${ORIGIN}? On a channel with a cadence, it then publishes in the channel's next free slot.`,
       `Send newsletter issue i-1 to its subscribers from ${ORIGIN}?`,
+      `Flip an outlet's content switches on GitHub from ${ORIGIN}? Its loops start or stop on their next run.`,
     ]);
     assert.equal(declined.sent.length, 0, 'a declined live change reached the platform');
 
