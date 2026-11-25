@@ -69,35 +69,52 @@ export interface FleetLaneState {
 }
 
 /**
+ * Which way a switch points, as `readSwitchPolarity` reads it from the lane's
+ * workflow: `enabled-when-true` (opt-in, the fleet's default — the lane runs
+ * only when the variable is exactly `true`) or `disabled-when-false` (opt-out —
+ * it runs unless the variable is exactly `false`, so unset is ON). `unknown` is
+ * read as opt-in, as the console always did.
+ */
+export type SwitchPolarity = 'enabled-when-true' | 'disabled-when-false' | 'unknown';
+
+/**
  * The value a repository variable holds → a switch value.
  *
- * Workflows gate on `vars.X_ENABLED == 'true'`, so anything other than the
- * literal string `true` — `false`, `0`, `yes`, an empty string — leaves the
- * lane OFF. Reporting those as `false` is what the workflow itself would do.
+ * An opt-in workflow gates on `vars.X_ENABLED == 'true'`, so anything other
+ * than the literal string `true` — `false`, `0`, `yes`, an empty string —
+ * leaves the lane OFF; an opt-out one gates on `vars.X_ENABLED != 'false'`, so
+ * anything other than the literal `false` leaves it ON. Reporting those as
+ * `false` and `true` is what the workflow itself would do.
  */
-export function switchValueOf(raw: string | undefined | null): FleetSwitchValue {
+export function switchValueOf(raw: string | undefined | null, polarity: SwitchPolarity = 'enabled-when-true'): FleetSwitchValue {
   if (raw === undefined || raw === null) {
     return 'unset';
+  }
+  if (polarity === 'disabled-when-false') {
+    return raw.trim() === 'false' ? 'false' : 'true';
   }
   return raw.trim() === 'true' ? 'true' : 'false';
 }
 
-/**
- * What flipping a switch would write. Derived from the freshly fetched
- * current value — never from the webview, which sends `{lane}` and nothing
- * else. `unknown` has no next value: a toggle that could not read the current
- * state must refuse rather than guess.
- */
-export function nextSwitchValue(current: FleetSwitchValue): 'true' | 'false' | null {
-  switch (current) {
-    case 'true':
-      return 'false';
-    case 'false':
-    case 'unset':
-      return 'true';
-    case 'unknown':
-      return null;
+/** Whether a switch value runs its lane under `polarity`; `null` while it is unknown. */
+export function switchIsOn(value: FleetSwitchValue, polarity: SwitchPolarity = 'enabled-when-true'): boolean | null {
+  if (value === 'unknown') {
+    return null;
   }
+  return polarity === 'disabled-when-false' ? value !== 'false' : value === 'true';
+}
+
+/**
+ * What flipping a switch would write: `false` when it is ON, `true` when it is
+ * OFF — so an opt-out switch that is unset (ON) is written `false`, never
+ * `true`, which would leave it on. Derived from the freshly fetched current
+ * value — never from the webview, which sends `{lane}` and nothing else.
+ * `unknown` has no next value: a toggle that could not read the current state
+ * must refuse rather than guess.
+ */
+export function nextSwitchValue(current: FleetSwitchValue, polarity: SwitchPolarity = 'enabled-when-true'): 'true' | 'false' | null {
+  const on = switchIsOn(current, polarity);
+  return on === null ? null : on ? 'false' : 'true';
 }
 
 /** `true` when the lane is ON: gated and armed, or ungated (always on). */
