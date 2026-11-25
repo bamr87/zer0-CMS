@@ -9,7 +9,7 @@ A Ruby gem (`jekyll preview-images` command) wrapping a single-file Python engin
 
 ## Prerequisites
 
-- `python3` (3.9+) with PyYAML — the engine. `python3 -m pip install pyyaml`
+- `python3` (3.10+) with PyYAML — the engine. `python3 -m pip install pyyaml`
   if missing.
 - Ruby ≥ 2.7 + bundler for the gem CLI path. On macOS the **system Ruby 2.6
 cannot run the CLI** (it can `gem build`, nothing more) — use `export PATH="/opt/homebrew/opt/ruby/bin:$PATH"` (Homebrew Ruby 4.x works; the fixture pins jekyll ~> 4.3 which runs fine there).

@@ -101,7 +101,7 @@ module Zer0ImageGenerator
     def ensure_python!(python)
       unless command_available?(python)
         Jekyll.logger.abort_with "preview-images:",
-                                 "#{python} not found — install Python 3.9+ " \
+                                 "#{python} not found — install Python 3.10+ " \
                                  "(or set PYTHON=/path/to/python3)."
       end
       return if system(python, "-c", "import yaml", out: File::NULL, err: File::NULL)
