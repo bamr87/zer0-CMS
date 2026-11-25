@@ -1,6 +1,6 @@
 # Architecture decision records
 
-> The architecture decision records, 0001–0010 and 0012 (0011 is on an unmerged branch), one per decision that changes how the repository is put together; ADR 0006 (one Python platform, a React frontend, no Ruby) is the current target.
+> The architecture decision records, 0001–0010, 0012 and 0013 (0011 is on an unmerged branch), one per decision that changes how the repository is put together; ADR 0006 (one Python platform, a React frontend, no Ruby) is the current target.
 
 One file per decision that changes how the repository is put together. An ADR records the question, the answer and what it costs; it changes only when the decision does. The extension's own decisions (D1–D17) and lettered decisions (D-A–D-I) predate this directory and live in [`../ARCHITECTURE.md`](../ARCHITECTURE.md); the build plan the ADRs feed is [`../plan/PLAN.md`](../plan/PLAN.md).
 
@@ -17,5 +17,6 @@ One file per decision that changes how the repository is put together. An ADR re
 | [0009](0009-public-ids.md) | Public ids (P-D6): a platform row is named on every surface by a UUID public id, never its integer key; agent runs and suggestions moved to theirs in one change across REST, GraphQL, MCP, events, the studio and the extension; Wagtail's and Django's rows keep their integer ids as a recorded exception | accepted |
 | [0010](0010-voice.md) | Voice: a site's voice as one scoped, versioned model (site, section, content type, book, channel), resolved by one pure function, pushed into every AI run, read by every gate, recorded on every result, round-tripped through the site's files and managed from the studio's Voice area; the platform ships no brand | proposed |
 | [0012](0012-content-lives-in-lifehacker.md) | Content lives in lifehacker.dev: the five content sites (1987, 2005, drsai, irony-works, wargames) leave `sites/` for lifehacker.dev's `agencies/`, zer0-CMS manages them as external sites, their ledger rows are `specified` ([`plan/agencies-spec.md`](../plan/agencies-spec.md)), the platform's round-trip corpus for them is read from there, and the zer0 demo sites stay — amends 0002 and 0006 (decisions 10 and 13) for those five only. Numbered 0012 because 0011 is on an unmerged branch | accepted |
+| [0013](0013-content-switches.md) | Content switches: the platform holds one encrypted, write-only credential that reads and writes the content outlets' Actions variables through a declared call plan (never a secret), previews before it writes, applies only on confirmation with a reason, records each flip as `content.switches.flipped`, never switches merge authority on, and reads the hub's switch map without writing it | proposed |
 
 A new ADR takes the next number, opens with a status line, and names the mechanism that enforces it — a decision no test or gate defends is a preference.
