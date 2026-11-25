@@ -147,22 +147,24 @@ function OutletCard({ outlet, canFlip, onFlip }: { outlet: SwitchOutlet; canFlip
         ) : null}
         {outlet.switches.length === 0 ? (
           <Text size="sm" c="dimmed">
-            The hub map has no loop of this repository, and it has no *_ENABLED variable{outlet.readable ? '' : ' that could be read'}.
+            {outlet.readable
+              ? 'The hub map has no loop of this repository, and it has no *_ENABLED variable.'
+              : 'The hub map has no loop of this repository, and its variables were not read.'}
           </Text>
         ) : (
-          <Table.ScrollContainer minWidth={980}>
+          <Table.ScrollContainer minWidth={1060}>
             <Table verticalSpacing={6} aria-label={`Switches of ${outlet.repo}`}>
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Workflow</Table.Th>
                   <Table.Th>Variable</Table.Th>
+                  <Table.Th>Switch</Table.Th>
                   <Table.Th>Semantics</Table.Th>
                   <Table.Th>Live</Table.Th>
                   <Table.Th>Effective</Table.Th>
                   <Table.Th>Map</Table.Th>
                   <Table.Th>Drift</Table.Th>
                   <Table.Th>Hold</Table.Th>
-                  <Table.Th>Switch</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -193,6 +195,17 @@ function SwitchRow({ repo, row, live, onFlip }: { repo: string; row: SwitchRow; 
       </Table.Td>
       <Table.Td>{variable ? <Code>{variable}</Code> : <Text size="sm" c="dimmed">no switch ({row.gate})</Text>}</Table.Td>
       <Table.Td>
+        {variable && row.flippable ? (
+          <Switch
+            aria-label={`${variable} on ${repo}`}
+            checked={row.effective === 'on'}
+            disabled={!live || row.live_state === 'unreadable' || brakeOnly}
+            title={brakeOnly ? 'It decides what merges without a person: switch it on in the hub' : undefined}
+            onChange={(event) => onFlip({ repo, variable, target: event.currentTarget.checked ? 'on' : 'off' })}
+          />
+        ) : null}
+      </Table.Td>
+      <Table.Td>
         <Text size="sm">{row.semantics ? row.semantics.replace('_', '-') : variable ? 'unknown' : '—'}</Text>
       </Table.Td>
       <Table.Td>
@@ -200,7 +213,7 @@ function SwitchRow({ repo, row, live, onFlip }: { repo: string; row: SwitchRow; 
       </Table.Td>
       <Table.Td>
         <Tooltip label={row.why} multiline w={320} withArrow>
-          <Badge color={EFFECT_COLOR[row.effective]} variant="light" tabIndex={0}>
+          <Badge color={EFFECT_COLOR[row.effective]} variant="light" miw="max-content" tabIndex={0}>
             {row.effective}
           </Badge>
         </Tooltip>
@@ -226,11 +239,11 @@ function SwitchRow({ repo, row, live, onFlip }: { repo: string; row: SwitchRow; 
       </Table.Td>
       <Table.Td>
         {row.drift ? (
-          <Badge color="orange" variant="light">
+          <Badge color="orange" variant="light" miw="max-content">
             drift: record it in the hub map
           </Badge>
         ) : !row.in_map ? (
-          <Badge color="gray" variant="outline">
+          <Badge color="gray" variant="outline" miw="max-content">
             not in the hub map
           </Badge>
         ) : null}
@@ -238,21 +251,10 @@ function SwitchRow({ repo, row, live, onFlip }: { repo: string; row: SwitchRow; 
       <Table.Td>
         {row.hold ? (
           <Tooltip label={row.hold.lift ? `To lift: ${row.hold.lift}` : 'A code-level hold'} multiline w={320} withArrow>
-            <Badge color="red" variant="light" tabIndex={0}>
+            <Badge color="red" variant="light" miw="max-content" tabIndex={0}>
               held: {row.hold.name ?? 'yes'}
             </Badge>
           </Tooltip>
-        ) : null}
-      </Table.Td>
-      <Table.Td>
-        {variable && row.flippable ? (
-          <Switch
-            aria-label={`${variable} on ${repo}`}
-            checked={row.effective === 'on'}
-            disabled={!live || row.live_state === 'unreadable' || brakeOnly}
-            title={brakeOnly ? 'It decides what merges without a person: switch it on in the hub' : undefined}
-            onChange={(event) => onFlip({ repo, variable, target: event.currentTarget.checked ? 'on' : 'off' })}
-          />
         ) : null}
       </Table.Td>
     </Table.Tr>
