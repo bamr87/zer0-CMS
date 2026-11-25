@@ -22,7 +22,7 @@ django-environ
 django-import-export
 django-json-widget
 django-markdownify
-django-allauth[mfa,saml,socialaccount,steam]
+django-allauth[mfa,saml,socialaccount,steam]>=65.19.7
 # oauthlib 3.3.1 is vulnerable to PYSEC-2026-4114, fixed in 4.0.0. allauth
 # 65.14.1 capped oauthlib at <4 through its socialaccount extra, so the patch is
 # only reachable by upgrading allauth alongside it.
@@ -45,7 +45,7 @@ jsonschema-specifications
 Markdown>=3.8.1
 PyYAML
 martor>=1.7
-setuptools
+setuptools>=84.1.0
 
 # Database
 psycopg2-binary
