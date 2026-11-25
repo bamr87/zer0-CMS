@@ -92,6 +92,11 @@ export type VoiceLayer = Schemas['VoiceLayer'];
 export type VoiceBan = Schemas['VoiceBan'];
 export type VoiceFinding = Schemas['VoiceFinding'];
 export type DoctorFinding = Schemas['DoctorFinding'];
+// Content switches (/api/v2/switches/): the outlets' GitHub Actions switches against the hub's switch map.
+export type SwitchBoard = Schemas['SwitchBoard'];
+export type SwitchRow = Schemas['Switch'];
+export type SwitchOutlet = Schemas['SwitchOutlet'];
+export type SwitchPreview = Schemas['SwitchPreview'];
 export type Job = Schemas['Job'];
 export type JobDetail = Schemas['JobDetail'];
 export type JobLine = Schemas['JobLine'];

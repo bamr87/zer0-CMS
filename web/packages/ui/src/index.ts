@@ -69,6 +69,7 @@ export { SitePicker } from './SitePicker';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
 export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
 export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
+export { ContentSwitches, FlipModal, type Flip } from './sites/ContentSwitches';
 export { SiteView } from './sites/SiteView';
 export { Voice, type VoiceScope } from './voice';
 export { SuggestionInbox } from './SuggestionInbox';

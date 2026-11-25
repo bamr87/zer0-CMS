@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconSparkles,
   IconTarget,
+  IconToggleRight,
   IconWorld,
   type Icon,
 } from '@tabler/icons-react';
@@ -67,6 +68,12 @@ export const AREAS: Area[] = [
     label: 'AIEO',
     summary: 'Citability scores and audits, rewrites, patterns, agents, citations, connectors, priorities, reports.',
     icon: IconTarget,
+  },
+  {
+    path: '/sites/switches',
+    label: 'Content switches',
+    summary: 'The content outlets’ GitHub Actions loops: their switches against the hub’s map, and flipping them.',
+    icon: IconToggleRight,
   },
   { path: '/media', label: 'Media', summary: 'The library, generation runs, compositions, the SVG studio.', icon: IconPhoto, milestone: 'G6' },
   { path: '/distribution', label: 'Distribution', summary: 'Channels, the queue, the ledger, statistics.', icon: IconSend },
