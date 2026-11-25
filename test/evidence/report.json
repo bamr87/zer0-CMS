@@ -1,11 +1,11 @@
 {
   "schema": "verify-report/v1",
-  "base": "http://127.0.0.1:8000",
-  "generated": "2026-10-31T04:40:12.673Z",
+  "base": "http://127.0.0.1:8017",
+  "generated": "2026-11-25T21:39:26.029Z",
   "by": "agent",
   "run": null,
-  "total": 4,
-  "passed": 4,
+  "total": 5,
+  "passed": 5,
   "failed": 0,
   "scenarios": [
     {
@@ -19,6 +19,19 @@
       "screenshots": [
         "test/evidence/studio-accept-suggestion/desktop-inbox-with-diff.png",
         "test/evidence/studio-accept-suggestion/desktop-accepted.png"
+      ]
+    },
+    {
+      "id": "studio-content-switches",
+      "title": "Read the content outlets' switches against the hub's map, read-only without a credential",
+      "features": [
+        "ZER0-049"
+      ],
+      "ok": true,
+      "dir": "test/evidence/studio-content-switches",
+      "screenshots": [
+        "test/evidence/studio-content-switches/desktop-read-only.png",
+        "test/evidence/studio-content-switches/mobile-read-only.png"
       ]
     },
     {

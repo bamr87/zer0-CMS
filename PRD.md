@@ -49,6 +49,7 @@ Every user-facing capability has a stable id in the feature catalog [`features/f
 | [ZER0-045](features/features.yml) | The studio's Outbox desk: the belt, arena trials and the claim desk | shipped | route `/studio/outbox` · [`content/outboxdesk/README.md`](content/outboxdesk/README.md) | TBD |
 | [ZER0-046](features/features.yml) | A site's Voice tab: every layer of its voice, who reads it, and the guard on a text | shipped | route `/studio/sites` · [`content/voice/README.md`](content/voice/README.md) | TBD |
 | [ZER0-047](features/features.yml) | Editorial directives become briefs, and the page that answers one closes it | shipped | route `/studio/sites` · [`content/sites/README.md`](content/sites/README.md) | TBD |
+| [ZER0-049](features/features.yml) | Content switches: the outlets' GitHub Actions loops, read against the hub's map and flipped with a reason | shipped | route `/studio/sites/switches` · [`content/switches/README.md`](content/switches/README.md) | TBD |
 | [ZER0-030](features/features.yml) | Metadata panel: front matter as typed controls | shipped | [`src/panel/panelProvider.ts`](src/panel/panelProvider.ts) · [`README.md`](README.md) | TBD |
 | [ZER0-031](features/features.yml) | Dashboard: every site's content in one place | shipped | [`src/dashboard/dashboardPanel.ts`](src/dashboard/dashboardPanel.ts) · [`README.md`](README.md) | TBD |
 | [ZER0-032](features/features.yml) | Governed publishing: draft → guard → approve → publish → ledger | shipped | [`src/core/governance/`](src/core/governance) · [`README.md`](README.md) | TBD |
