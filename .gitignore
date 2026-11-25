@@ -28,3 +28,17 @@ test/evidence/agent/
 .agents/
 .codex/
 .frontmatter/
+# --- always-latest dependency policy: lockfiles are local ephemera (bamr87/bamr87 docs/DEPENDENCIES.md) ---
+package-lock.json
+npm-shrinkwrap.json
+pnpm-lock.yaml
+yarn.lock
+Gemfile.lock
+poetry.lock
+Pipfile.lock
+uv.lock
+composer.lock
+# The two recorded exceptions (AGENTS.md § Standard deviations): the extension's
+# and web/'s lockfiles stay committed for `npm ci` and the exact-pinned engines.
+!/package-lock.json
+!/web/package-lock.json

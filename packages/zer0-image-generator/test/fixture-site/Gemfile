@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-gem "jekyll", "~> 4.3"
+gem "jekyll"
 
 group :jekyll_plugins do
   gem "zer0-image-generator", path: "../.."

@@ -18,11 +18,11 @@ type LandingPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -428,11 +428,11 @@ type SiteRootPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -625,11 +625,11 @@ type CollectionPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -822,11 +822,11 @@ type ArticlePage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -1026,11 +1026,11 @@ type StandardPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -1222,11 +1222,11 @@ type BookPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -1422,11 +1422,11 @@ type ChapterPage implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   agentPolicy: String
   aiSummary: String
   contentHash: String
@@ -1623,11 +1623,11 @@ type Page implements PageInterface {
   slug: String!
   contentType: String!
   urlPath: String!
-  seoTitle: String!
-  showInMenus: Boolean!
-  searchDescription: String
   latestRevisionCreatedAt: DateTime
   aliasOf: Page
+  showInMenus: Boolean!
+  seoTitle: String!
+  searchDescription: String
   sitesRootedHere: [SiteObjectType!]!
   aliases: [Page!]!
   siterootpage: SiteRootPage
