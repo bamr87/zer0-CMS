@@ -1,0 +1,22 @@
+{
+  "specversion": "1.0",
+  "id": "9b1f2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d",
+  "source": "zer0-cms/content",
+  "type": "content.switches.flipped",
+  "subject": "repo:bamr87/lifehacker.dev",
+  "time": "2026-11-25T12:00:00Z",
+  "datacontenttype": "application/json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.switches.flipped.v1.json",
+  "data": {
+    "repo": "bamr87/lifehacker.dev",
+    "scope": "switch",
+    "switch": "WEEKLY_EPIC_ENABLED",
+    "target": "off",
+    "reason": "Pausing the weekly epic while the top story is rewritten by hand.",
+    "by": "editor",
+    "job": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+    "changes": [
+      { "name": "WEEKLY_EPIC_ENABLED", "loops": ["lifehacker.dev/weekly-epic"], "old": "true", "new": "false", "result": "updated", "verified": true }
+    ]
+  }
+}

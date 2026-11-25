@@ -13,7 +13,13 @@ from outbox.models import OutboxEvent
 from outbox.schemas import EventSchemaError, check_envelope
 
 SCHEMAS = Path(settings.EVENTS_SCHEMA_DIR)
-TYPES = ["content.page.published", "content.suggestion.created", "agent.run.completed", "app.user.interaction"]
+TYPES = [
+    "content.page.published",
+    "content.suggestion.created",
+    "content.switches.flipped",
+    "agent.run.completed",
+    "app.user.interaction",
+]
 
 
 @pytest.mark.parametrize("path", sorted(SCHEMAS.glob("*.json")), ids=lambda p: p.name)
