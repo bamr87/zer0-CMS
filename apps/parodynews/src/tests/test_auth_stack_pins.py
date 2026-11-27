@@ -43,7 +43,9 @@ def test_oauthlib_has_a_patched_floor():
 
 def test_allauth_is_new_enough_to_accept_oauthlib_4():
     spec = requirement("django-allauth")
-    assert release(spec, "==") >= (65, 19, 7), (
+    # A floor, not a pin: dependencies float to their newest release (the hub's
+    # always-latest policy), so the contract is the minimum allauth may resolve to.
+    assert release(spec, ">=") >= (65, 19, 7), (
         "django-allauth 65.14.1 requires oauthlib<4 for its socialaccount extra, "
         f"which makes the oauthlib floor unresolvable: {spec}"
     )

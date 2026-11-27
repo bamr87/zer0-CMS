@@ -1,12 +1,12 @@
 # Tests and lint for the content plane. Tests never reach a network or a model.
 -r requirements.txt
-pytest==9.1.1
-pytest-django==4.14.0
+pytest
+pytest-django
 # Runs the suite across the runner's cores (`-n auto`): each worker gets its own test database.
-pytest-xdist==3.8.0
-fakeredis==2.40.0
+pytest-xdist
+fakeredis
 # Recorded HTTP for the research library's fetcher and distribution's channels: no test reaches the web.
-respx==0.23.1
+respx
 # PyGithub speaks `requests`, not httpx: its recorded HTTP (distribution's GitHub pull requests).
-responses==0.26.3
-ruff==0.17.1
+responses
+ruff
