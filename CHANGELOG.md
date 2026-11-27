@@ -2,6 +2,22 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/bamr87/zer0-CMS/compare/v1.1.1...v1.2.0) (2026-11-27)
+
+
+### Features
+
+* **content:** content switches — the outlets' Actions variables against the hub's switch map ([cb74516](https://github.com/bamr87/zer0-CMS/commit/cb7451600ab9ec57105b8ab7aa32338bf787e5a4))
+* **content:** the demo editor manages the demo's sites ([648fc98](https://github.com/bamr87/zer0-CMS/commit/648fc989343a7531f2a718dddb21205414013067))
+* **extension:** ask before an outlet's content switches are flipped ([f37701e](https://github.com/bamr87/zer0-CMS/commit/f37701ee84f5536a38be0ce1fe5c1ef6906f7614))
+* **web:** Content switches in the Sites area ([4f5e012](https://github.com/bamr87/zer0-CMS/commit/4f5e0122c6f332a8ad1d700cba3d1574a6467347))
+
+
+### Bug Fixes
+
+* **extension:** toggle an opt-out switch the way its workflow reads it ([d3edbf6](https://github.com/bamr87/zer0-CMS/commit/d3edbf6e68d3b1209b8b3d6823ba095b6aa52e2f))
+* **web:** a content switch sits beside its variable, and its badges are whole ([eedb015](https://github.com/bamr87/zer0-CMS/commit/eedb0152ccfa830e6ce3ef4dcfe59507978ddbea))
+
 ## [1.1.1](https://github.com/bamr87/zer0-CMS/compare/v1.1.0...v1.1.1) (2026-11-18)
 
 
