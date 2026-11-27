@@ -244,6 +244,7 @@ describe('the shell and its routes', () => {
     expect(pathFor({ to: 'aieo' })).toBe('/sites/aieo');
     expect(pathFor({ to: 'aieo', section: 'audit' })).toBe('/sites/aieo');
     expect(pathFor({ to: 'aieo', section: 'citations' })).toBe('/sites/aieo/citations');
+    expect(pathFor({ to: 'switches' })).toBe('/sites/switches');
   });
 
   it('opens the Outbox desk on its tabs, and a trial and a claim check at their addresses', async () => {
@@ -272,6 +273,12 @@ describe('the shell and its routes', () => {
     expect(await screen.findByRole('form', { name: 'Audit' })).toBeInTheDocument();
     renderStudio('/sites/aieo/patterns', platformFor({ 'GET /api/v2/aieo/patterns/': () => [] }));
     expect(await screen.findByRole('table', { name: 'Pattern library' })).toBeInTheDocument();
+  });
+
+  it('opens the content switches at /sites/switches, not as a site', async () => {
+    renderStudio('/sites/switches');
+    expect(await screen.findByRole('heading', { name: 'Content switches' })).toBeInTheDocument();
+    expect(await screen.findByText('For people who manage sites')).toBeInTheDocument(); // the person signed in may not
   });
 
   it('opens the shelf at /books', async () => {

@@ -102,7 +102,7 @@ The dashboard posts `{type:'command', id:'fleet.<verb>', args:{repo, lane}}` —
 
 | Verb | Where the value comes from | What the modal says it does |
 |---|---|---|
-| `doToggleSwitch` | `nextSwitchValue()` of the variable as GitHub reports it inside the action | ON means the lane runs on its schedule spending its tokens; OFF means scheduled runs skip and `workflow_dispatch` still bypasses it. `unknown` has no next value, so a failed read refuses rather than guesses |
+| `doToggleSwitch` | `nextSwitchValue()` of the variable as GitHub reports it inside the action, under the polarity its workflow reads it with (`readSwitchPolarity` over the lane's file: an opt-out switch that is unset is ON, so it is switched off with `false`) | ON means the lane runs on its schedule spending its tokens; OFF means scheduled runs skip and `workflow_dispatch` still bypasses it. `unknown` has no next value, so a failed read refuses rather than guesses |
 | `doDispatchLane` | the default branch, read inside the action | queues exactly one run; merges nothing — the lane opens a pull request for a person, or it does nothing |
 | `doRerunLastFailure` | the newest `completed` non-`success` run in the bounded page **the last Refresh read**, joined to this lane host-side | re-running queues a **new attempt**; the original attempt stays on the record with its logs, and nothing is overwritten or deleted |
 | `doCancelNewest` | the newest run in that same page whose status is not `completed` | cancelling stops what is in flight and leaves the run recorded as **cancelled** — not removed, and not failed; work it had already done stays done |

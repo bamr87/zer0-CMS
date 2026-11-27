@@ -489,6 +489,20 @@ platform:
       api: content/tests/jobs/test_jobs.py
       studio: web/packages/ui/test/sites.test.tsx
       extension: web/packages/webview/test/webview.test.tsx
+  - id: sites.switches
+    what: The content outlets' GitHub Actions switches — read against the hub's switch map (opt-in and opt-out, drift, holds), previewed, and flipped on confirmation with a reason, each flip recorded.
+    # ADR 0013 (2026-11-25): content/switches — the hub's map read (GitHub, or ZER0_HUB_CHECKOUT) and never written,
+    # each outlet's variables read through a declared call plan with the platform's credential (encrypted, write-only),
+    # a preview that writes nothing, an apply that needs confirm, a reason and the preview's digest, a job that sets and
+    # reads back each variable and emits content.switches.flipped; merge authority is off-only. The studio's Content
+    # switches section in the Sites area (/studio/sites/switches; verify/scenarios/studio-content-switches.yml). The
+    # extension renders it through WORKSPACES' Sites workspace and asks before an apply (bridge LIVE_CHANGES), not yet
+    # proved through its host; its own Fleet console flips a lane's switch with the person's session and now reads an
+    # opt-out switch the way its workflow does (src/test/fleet.test.ts).
+    surfaces: {api: done, studio: done, extension: partial}
+    proof:
+      api: content/tests/switches/test_api.py
+      studio: web/packages/ui/test/switches.test.tsx
   - id: sites.render
     what: The React site renderer, in the platform's own design system — layouts, skins, feeds, sitemap, robots, search index, redirects — reproducing each site's recorded build.
     surfaces: {site: missing, ops: missing}

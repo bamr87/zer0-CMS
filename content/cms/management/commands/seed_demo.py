@@ -4,7 +4,8 @@ Creates, once, a site (`demo`, served at demo.localhost) with a section, a
 published article and a draft, reviewed by the "Editorial" workflow (the
 brand agent, then a moderator: `manage.py seed_editorial`), and a person to
 sign in as (`editor`, in Wagtail's Editors and Moderators groups, so they may
-edit and publish). Every
+edit and publish, and holding `sites.manage_site`, so the Sites area's
+registration and the content switches open for them too). Every
 run then makes sure the published article has a finished SEO-agent run with
 pending suggestions, so the review inbox is never empty. Local development and
 the browser scenarios (verify/scenarios/studio-*.yml) start from it.
@@ -20,7 +21,7 @@ demo value only under DEBUG; anywhere else it must be given.
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -77,6 +78,7 @@ class Command(BaseCommand):
         user.set_password(password)
         user.save()
         user.groups.add(*Group.objects.filter(name__in=["Editors", "Moderators"]))
+        user.user_permissions.add(*Permission.objects.filter(content_type__app_label="sites", codename="manage_site"))
         # The demo person's address counts as verified, so they sign in at once wherever verification is mandatory.
         EmailAddress.objects.update_or_create(user=user, email=user.email, defaults={"verified": True, "primary": True})
         return user

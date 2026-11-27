@@ -77,6 +77,8 @@ const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
     "Approve distribution post $1 on $origin? On a channel with a cadence, it then publishes in the channel's next free slot.",
   ],
   [/^\/api\/v2\/newsroom\/issues\/([^/]+)\/send\/$/, 'Send newsletter issue $1 to its subscribers from $origin?'],
+  // A flip writes an outlet's GitHub Actions variables: its content loops start or stop on their next run.
+  [/^\/api\/v2\/switches\/apply\/$/, "Flip an outlet's content switches on GitHub from $origin? Its loops start or stop on their next run."],
 ];
 /** A story's move that puts its page live, by the `status` the body asks for. */
 const STORY_MOVE = /^\/api\/v2\/newsroom\/stories\/([^/]+)\/move\/$/;

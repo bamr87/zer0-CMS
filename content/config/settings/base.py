@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "distribution",
     "automations",
     "aieo",
+    "switches",
     "suggestions",
     "graph",
     "workflow",
@@ -407,6 +408,14 @@ SPECTACULAR_SETTINGS = {
         "AieoAgentGroupEnum": "aieo.serializers.GROUPS",
         "TokenScopeEnum": "accounts.models.SCOPES",
         "TokenStateEnum": "accounts.serializers.TOKEN_STATES",
+        "SwitchSemanticsEnum": "switches.serializers.SEMANTICS",
+        "SwitchOnOffEnum": "switches.serializers.ON_OFF",
+        "SwitchEffectiveEnum": "switches.serializers.EFFECTIVE",
+        "SwitchLiveStateEnum": "switches.serializers.LIVE_STATES",
+        "SwitchMapStateEnum": "switches.serializers.MAP_STATES",
+        "SwitchActionEnum": "switches.serializers.ACTIONS",
+        "SwitchScopeEnum": "switches.serializers.SCOPES",
+        "SwitchHubSourceEnum": "switches.serializers.HUB_SOURCES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -600,6 +609,14 @@ AIEO_RUN_TIME_LIMIT = env.int("AIEO_RUN_TIME_LIMIT", default=900)
 AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
 # The citability review (the `aieo` agent as a workflow task) passes a page that scores at least this.
 AIEO_REVIEW_MIN_SCORE = env.float("AIEO_REVIEW_MIN_SCORE", default=40.0)
+
+# ── Content switches (switches/README.md) ───────────────────────────────────
+# Where the hub's switch map (bamr87/bamr87 `_data/fleet.yml`) is read: a local checkout of the hub when this is set,
+# else GitHub. The API's address and how long one of its calls may take; the credential is a person's, set in the
+# studio and kept encrypted (never the environment's).
+SWITCHES_HUB_CHECKOUT = env("ZER0_HUB_CHECKOUT", default="")
+SWITCHES_GITHUB_API = env("ZER0_GITHUB_API", default="https://api.github.com")
+SWITCHES_GITHUB_TIMEOUT = env.float("ZER0_GITHUB_TIMEOUT", default=10.0)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

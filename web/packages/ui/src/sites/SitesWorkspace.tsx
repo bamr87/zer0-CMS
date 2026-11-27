@@ -2,7 +2,8 @@
 // its files live, when it was last synced and what its last doctor run found;
 // and, for someone who may manage sites, registering another — one the
 // repository's workspace.yml declares, a checkout under SITES_DIR, or a path
-// typed in — whose first sync starts at once. Opening a site goes to its view.
+// typed in — whose first sync starts at once, and the way to the content
+// outlets' switches. Opening a site goes to its view.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ManagedSite, Site } from '@zer0/api';
@@ -37,10 +38,18 @@ export function SitesWorkspace() {
   const api = useApi();
   const go = useGo();
   const sites = useQuery({ queryKey: ['sites'], queryFn: () => call(api.GET('/api/v2/sites/')) });
+  const manages = useMe().data?.permissions.includes('sites.manage_site') ?? false;
   if (sites.isPending) return <Loader />;
   if (sites.isError) return <Alert color="red">{errorText(sites.error)}</Alert>;
   return (
     <Stack>
+      {manages ? (
+        <Group justify="flex-end">
+          <Button variant="light" onClick={() => go({ to: 'switches' })}>
+            Content switches
+          </Button>
+        </Group>
+      ) : null}
       {sites.data.length === 0 ? <Text c="dimmed">No sites yet.</Text> : null}
       {sites.data.length ? (
         <Table highlightOnHover verticalSpacing="xs">

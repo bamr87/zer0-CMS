@@ -1,0 +1,292 @@
+{
+  "id": "studio-content-switches",
+  "title": "Read the content outlets' switches against the hub's map, read-only without a credential",
+  "features": [
+    "ZER0-049"
+  ],
+  "path": "verify/scenarios/studio-content-switches.yml",
+  "started": "2026-11-25T21:39:22.071Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 659
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 31
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 185
+        },
+        {
+          "step": "goto",
+          "arg": "/studio/sites",
+          "ok": true,
+          "ms": 631
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Content switches']",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Content switches']"
+          },
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=table[name='Switches of bamr87/lifehacker.dev']"
+          },
+          "ok": true,
+          "ms": 78
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "Read-only: no GitHub credential"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "“Variables”"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "held: HUB_ORIGINATION_HOLD"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=switch[name='CONTENT_FACTORY_ENABLED on bamr87/lifehacker.dev']"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_horizontal_scroll": true
+          },
+          "ok": true,
+          "value": {
+            "sw": 1280,
+            "cw": 1280
+          },
+          "ms": 0
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "read-only",
+          "ok": true,
+          "file": "test/evidence/studio-content-switches/desktop-read-only.png",
+          "ms": 91
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-content-switches/desktop-read-only.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:8017/studio/sites/switches"
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 599
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 13
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 32
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 182
+        },
+        {
+          "step": "goto",
+          "arg": "/studio/sites",
+          "ok": true,
+          "ms": 619
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Content switches']",
+          "ok": true,
+          "ms": 15
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Content switches']"
+          },
+          "ok": true,
+          "ms": 24
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=table[name='Switches of bamr87/lifehacker.dev']"
+          },
+          "ok": true,
+          "ms": 42
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "Read-only: no GitHub credential"
+          },
+          "ok": true,
+          "ms": 7
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "“Variables”"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "held: HUB_ORIGINATION_HOLD"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=switch[name='CONTENT_FACTORY_ENABLED on bamr87/lifehacker.dev']"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_horizontal_scroll": true
+          },
+          "ok": true,
+          "value": {
+            "sw": 390,
+            "cw": 390
+          },
+          "ms": 1
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "read-only",
+          "ok": true,
+          "file": "test/evidence/studio-content-switches/mobile-read-only.png",
+          "ms": 65
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-content-switches/mobile-read-only.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:8017/studio/sites/switches"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-11-25T21:39:25.861Z",
+  "base": "http://127.0.0.1:8017"
+}

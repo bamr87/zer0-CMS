@@ -1,0 +1,384 @@
+# verify/fixtures/hub/_data/fleet.yml — the hub's switch map, as a checkout of the hub
+#
+# What the studio-content-switches scenario reads instead of GitHub: verify.yml
+# starts the app with ZER0_HUB_CHECKOUT pointing here, so the scenario needs no
+# network (content/switches/README.md). It is the `switches:` section of
+# bamr87/bamr87 `_data/fleet.yml` at b67885d7f253 (2026-11-25), cut to the
+# content outlets' records: lifehacker.dev's 21 — bash-365.com and it-journey
+# had none in the map that day — and the levels they belong to. The hub is the
+# source of truth; refresh this by copying those records again, never by
+# editing them here.
+switches:
+  schema: switches/v1
+  global:
+    state: 'on'
+    reason: null
+    set_by: null
+    set_at: null
+    expires: null
+    gate:
+      kind: planned
+      name: FLEET_AGENTS_PAUSED
+      source: bamr87/bamr87#511 (not wired in any workflow yet)
+  groups:
+    lifehacker-agents:
+      state: 'on'
+      reason: null
+      expires: null
+    lifehacker-loops:
+      state: 'on'
+      reason: null
+      expires: null
+  loops:
+    lifehacker.dev/agent-review:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/agent-review.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: AGENT_REVIEW_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set AGENT_REVIEW_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/ai-usage:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/ai-usage.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: AI_USAGE_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'off'
+      verified: true
+      flip: 'gh variable set AI_USAGE_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: 'paused by hand 2026-10-31 (amendment 0014 context: 17 *_ENABLED set to false); read back false 2026-11-24 with gh variable list'
+      set_by: bamr87
+      set_at: '2026-10-31'
+    lifehacker.dev/auto-fix:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/auto-fix.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: AUTO_FIX_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set AUTO_FIX_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/auto-merge:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/auto-merge.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: AUTO_MERGE_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'off'
+      verified: true
+      flip: 'gh variable set AUTO_MERGE_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: 'set true 2026-11-24 16:16 UTC and back to false the same day: held by amendment `lifehacker-drafting-lines` (a human merges; lifehacker.dev constitution § 1 mission 3)'
+      set_by: bamr87
+      set_at: '2026-11-24'
+      hold:
+        kind: env
+        name: HUB_ORIGINATION_HOLD
+        value: 'true'
+        source: bamr87/lifehacker.dev#800 (merged 2026-11-06)
+        lift: none — kept by amendment `lifehacker-drafting-lines`; turning auto-merge on needs a new amendment here and in lifehacker.dev
+    lifehacker.dev/auto-update:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/auto-update.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: AUTO_UPDATE_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set AUTO_UPDATE_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/brand-sweep:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/brand-sweep.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: BRAND_SWEEP_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'off'
+      verified: true
+      flip: 'gh variable set BRAND_SWEEP_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: 'paused by hand 2026-10-31 (amendment 0014 context: 17 *_ENABLED set to false); read back false 2026-11-24 with gh variable list'
+      set_by: bamr87
+      set_at: '2026-10-31'
+    lifehacker.dev/content-factory:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/content-factory.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: CONTENT_FACTORY_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set CONTENT_FACTORY_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/content-scout:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/content-scout.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: CONTENT_SCOUT_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set CONTENT_SCOUT_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/explore:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/explore.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: EXPLORER_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'off'
+      verified: true
+      flip: 'gh variable set EXPLORER_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: 'paused by hand 2026-10-31 (amendment 0014 context: 17 *_ENABLED set to false); read back false 2026-11-24 with gh variable list'
+      set_by: bamr87
+      set_at: '2026-10-31'
+    lifehacker.dev/factory--issue-factory-1:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/factory--issue-factory-1.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: ISSUE_FACTORY_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set ISSUE_FACTORY_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/factory--issue-factory-2:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/factory--issue-factory-2.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: ISSUE_FACTORY_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set ISSUE_FACTORY_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/fleet-dispatch:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/fleet-dispatch.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: FLEET_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'off'
+      verified: true
+      flip: 'gh variable set FLEET_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: 'paused by hand 2026-10-31 (amendment 0014 context: 17 *_ENABLED set to false); read back false 2026-11-24 with gh variable list'
+      set_by: bamr87
+      set_at: '2026-10-31'
+    lifehacker.dev/loop-tuner:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/loop-tuner.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: LOOP_TUNER_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set LOOP_TUNER_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/quest-forge:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/quest-forge.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: QUEST_FORGE_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set QUEST_FORGE_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/theme-scout:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/theme-scout.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: THEME_SCOUT_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set THEME_SCOUT_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/triage:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/triage.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: TRIAGE_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set TRIAGE_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/weekly-epic:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/weekly-epic.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: WEEKLY_EPIC_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set WEEKLY_EPIC_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+      note: images additionally need OPENAI_IMAGES_ENABLED=true (opt_in) plus the OPENAI_API_KEY secret
+    lifehacker.dev/wire-scout:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/wire-scout.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: repo_variable
+        name: WIRE_SCOUT_ENABLED
+        semantics: opt_in
+      default: 'off'
+      state: 'on'
+      verified: true
+      flip: 'gh variable set WIRE_SCOUT_ENABLED -R bamr87/lifehacker.dev --body true  # enable; record the flip here in the same PR'
+      reason: maintainer instruction 2026-11-24 ("turn on lifehackers automation"); set true 16:16 UTC by Claude Code, read back with gh variable list (amendment `lifehacker-drafting-lines`)
+      set_by: bamr87
+      set_at: '2026-11-24'
+    lifehacker.dev/nightly:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/nightly.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: none
+      default: 'on'
+      state: unverified
+      verified: false
+      note: scheduled, no switch (amendment 0014 follow-up)
+      flip: 'no switch yet: `gh workflow disable nightly.yml -R bamr87/lifehacker.dev` (was disabled by hand 2026-10-31); record it here'
+    lifehacker.dev/zer0-doctor:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/zer0-doctor.yml
+      group: lifehacker-loops
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: none
+      default: 'on'
+      state: unverified
+      verified: false
+      note: scheduled, no switch (amendment 0014 follow-up)
+      flip: 'no switch yet: `gh workflow disable zer0-doctor.yml -R bamr87/lifehacker.dev` (was disabled by hand 2026-10-31); record it here'
+    lifehacker.dev/claude:
+      repo: bamr87/lifehacker.dev
+      workflow: .github/workflows/claude.yml
+      group: lifehacker-agents
+      owner: bamr87
+      scope: loop
+      gate:
+        kind: none
+      default: 'on'
+      state: unverified
+      verified: false
+      note: '@claude mention handler, disabled by hand 2026-10-31 (amendment 0014); no switch yet'
+      flip: '`gh workflow enable|disable claude.yml -R bamr87/lifehacker.dev`; record it here'

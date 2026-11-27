@@ -46,7 +46,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/SUBSTACK.md`](SUBSTACK.md) | Carrying a book's chapters — a serial such as the books library's `cost-line` pilot — to a Substack publication: the sanctioned routes (an RSS feed for Substack's importer, a paste-ready copy), the unofficial adapter that is off by… |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010 and 0012 (0011 is on an unmerged branch), one per decision that changes how the repository is put together; ADR 0006 (one Python platform, a React frontend, no Ruby) is the current target. |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0010, 0012 and 0013 (0011 is on an unmerged branch), one per decision that changes how the repository is put together; ADR 0006 (one Python platform, a React frontend, no Ruby) is the current target. |
 | [`docs/amendments/`](amendments/README.md) | The numbered, append-only record of every change to the constitution, with its status. |
 
 ### `schemas/`
