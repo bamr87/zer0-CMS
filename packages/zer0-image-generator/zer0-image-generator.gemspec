@@ -51,7 +51,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 2.7.0"
   spec.add_dependency "jekyll", ">= 3.9", "< 5.0"
 
-  # The engine itself needs python3 (3.9+) with PyYAML at runtime — checked
+  # The engine itself needs python3 (3.10+) with PyYAML at runtime — checked
   # with an actionable message when the command runs.
-  spec.requirements << "Python 3.9+ with PyYAML (python3 -m pip install pyyaml)"
+  spec.requirements << "Python 3.10+ with PyYAML (python3 -m pip install pyyaml)"
 end

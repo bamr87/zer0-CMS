@@ -6,7 +6,7 @@ This package lives in the zer0-CMS monorepo at `packages/zer0-image-generator/`,
 
 | Workflow | What green means |
 |---|---|
-| root `zer0-image-generator.yml` | Python engine tests (3.9 + 3.12), Ruby port byte-identity (`test/ruby/test_*.rb`), gem build, fixture-site generate with `local` — the old `test.yml`, run inside this package |
+| root `zer0-image-generator.yml` | Python engine tests (the 3.10 floor + the newest 3.x), Ruby port byte-identity (`test/ruby/test_*.rb`), gem build, fixture-site generate with `local` — the old `test.yml`, run inside this package |
 | root `markdown-oneline.yml` | One paragraph per line, for the whole repository |
 | root `claude.yml` | `@claude` mentions; never merges |
 | `.github/workflows/release.yml` (here) | Gem / tag — not yet ported, so it does not run from the monorepo; releases still happen from the original repository |
