@@ -44,6 +44,7 @@ import { PageList } from './PageList';
 import { ResearchWorkspace } from './research/ResearchWorkspace';
 import { SourceView } from './research/SourceView';
 import { RunList, RunTimeline } from './RunTimeline';
+import { ContentSwitches } from './sites/ContentSwitches';
 import { JobLog } from './sites/JobLog';
 import { SitesWorkspace } from './sites/SitesWorkspace';
 import { SiteView } from './sites/SiteView';
@@ -113,6 +114,7 @@ export const HOME: { readonly [To in Destination['to']]: WorkspaceId } = {
   channel: 'distribution',
   automation: 'ai',
   aieo: 'sites',
+  switches: 'sites',
   account: 'account',
 };
 
@@ -263,6 +265,7 @@ function Outbox({ at }: WorkspaceProps) {
 
 function Sites({ siteId, at }: WorkspaceProps) {
   if (at?.to === 'aieo') return <AieoWorkspace siteId={siteId} section={at.section ?? 'audit'} />;
+  if (at?.to === 'switches') return <ContentSwitches />;
   if (at?.to === 'site') return <SiteView key={at.id} siteId={at.id} />;
   if (at?.to === 'job') return <JobLog key={at.id} jobId={at.id} />;
   return <SitesWorkspace />;
@@ -351,7 +354,7 @@ export const WORKSPACES: readonly Workspace[] = [
   {
     id: 'sites',
     label: 'Sites',
-    summary: 'The site registry and settings, sync, write-back and the doctor, and their jobs.',
+    summary: 'The site registry and settings, sync, write-back and the doctor, their jobs, and the content outlets’ switches.',
     shows: showing('sites'),
     View: Sites,
   },

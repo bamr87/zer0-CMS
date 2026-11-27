@@ -109,7 +109,9 @@ import {
   parseUsageSummary,
   prStage,
   readFleetManifest,
+  readSwitchPolarity,
   rosterSlugOf,
+  switchIsOn,
   switchValueOf,
   workflowFileOf,
   type AuditFindingView,
@@ -126,6 +128,7 @@ import {
   type FleetSwitchValue,
   type FleetWorkflowState,
   type LaneCost,
+  type SwitchPolarity,
   type ManifestDrift,
   type MergePolicy,
   type ParsedFleetManifest,
@@ -639,12 +642,32 @@ function liveFactsFor(read: FleetLive | undefined, laneId: string): FleetGateInp
 // ---------------------------------------------------------------------------
 
 /**
+ * Which way a lane's switch points, read from its workflow file on the default
+ * branch (`readSwitchPolarity`, one contents read in `FLEET_PLAN`). A file that
+ * cannot be read, or says nothing either way, is `unknown`, which the toggle
+ * reads as opt-in, as it always did.
+ */
+async function polarityOf(client: FleetClient, lane: FleetLane, variable: string): Promise<SwitchPolarity> {
+  if (!lane.implementation) {
+    return 'unknown';
+  }
+  try {
+    const file = await client.readFile(lane.implementation);
+    return file ? readSwitchPolarity(file.content, [variable]) : 'unknown';
+  } catch {
+    return 'unknown'; // unreadable is not a polarity; the confirm detail says which was assumed
+  }
+}
+
+/**
  * Flip a lane's `*_ENABLED` repository variable.
  *
- * The new value is `nextSwitchValue(current)` where `current` is the variable
- * as GitHub reports it *now* — not as the dashboard last drew it, and never as
- * a webview message claims it. A read that fails leaves `current` unknown,
- * and unknown has no next value, so the toggle refuses rather than guesses.
+ * The new value is `nextSwitchValue(current, polarity)` where `current` is the
+ * variable as GitHub reports it *now* — not as the dashboard last drew it, and
+ * never as a webview message claims it — and `polarity` is how the lane's
+ * workflow reads it, so an opt-out switch that is unset (ON) is switched off
+ * with `false`. A read that fails leaves `current` unknown, and unknown has no
+ * next value, so the toggle refuses rather than guesses.
  */
 export async function doToggleSwitch(
   shell: Zer0Shell,
@@ -663,14 +686,15 @@ export async function doToggleSwitch(
     return false;
   }
 
+  const polarity = await polarityOf(client, lane, variable);
   let current: FleetSwitchValue;
   try {
-    current = switchValueOf(await client.getVariable(variable));
+    current = switchValueOf(await client.getVariable(variable), polarity);
   } catch (error) {
     await notifyError(`Toggle switch blocked: could not read ${variable} (${describeError(error)}).`);
     return false;
   }
-  const next = nextSwitchValue(current);
+  const next = nextSwitchValue(current, polarity);
   if (next === null) {
     await notifyError(`Toggle switch blocked: the current value of ${variable} is unknown.`);
     return false;
@@ -681,7 +705,8 @@ export async function doToggleSwitch(
     `Lane: ${lane.id} (${lane.kind}, ${lane.harness})`,
     `Workflow: ${lane.implementation || '(none)'}`,
     `Variable: ${variable}`,
-    `Current value: ${current === 'unset' ? '(unset — the lane is off)' : current}`,
+    `Reads it: ${polarity === 'disabled-when-false' ? "opt-out — the lane runs unless it is 'false'" : polarity === 'enabled-when-true' ? "opt-in — the lane runs only when it is 'true'" : 'not said by the workflow — read as opt-in'}`,
+    `Current value: ${current === 'unset' ? `(unset — the lane is ${switchIsOn(current, polarity) ? 'on' : 'off'})` : current}`,
     `New value: ${next}`,
     `Triggers: ${describeTriggers(lane.triggers)}`,
     `Guardrails: ${describeGuardrails(lane.guardrails)}`,

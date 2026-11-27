@@ -29,8 +29,11 @@ jobs:
     # Capped so a wedged step cannot run to the six-hour default.
     timeout-minutes: 15
     strategy:
+      # The supported floor and whatever Python is newest. The floor is 3.10,
+      # the oldest setup-python builds for the current ubuntu-latest (3.9 has
+      # no 26.04 build); raise it when that changes, never pin the runner.
       matrix:
-        python: ['3.9', '3.12']
+        python: ['3.10', '3.x']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -56,7 +59,7 @@ jobs:
           ruby-version: "3.3"
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.x"
       - run: python3 -m pip install pyyaml
       - name: Ruby port tests
         run: |

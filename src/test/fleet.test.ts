@@ -37,7 +37,9 @@ import {
   nextSwitchValue,
   parseFleetManifest,
   readFleetManifest,
+  readSwitchPolarity,
   requestIsInPlan,
+  switchIsOn,
   switchValueOf,
   workflowFileOf,
   type FleetCall,
@@ -259,6 +261,23 @@ suite('fleet: lane state', () => {
     assert.equal(nextSwitchValue('false'), 'true');
     assert.equal(nextSwitchValue('unset'), 'true');
     assert.equal(nextSwitchValue('unknown'), null, 'a toggle that could not read must refuse');
+  });
+
+  test("an opt-out switch is ON unless it is exactly 'false', so its toggle writes 'false' from unset", () => {
+    const workflow = "jobs:\n  run:\n    if: vars.LINK_CHECKER_ENABLED != 'false'\n";
+    const polarity = readSwitchPolarity(workflow, ['LINK_CHECKER_ENABLED']);
+    assert.equal(polarity, 'disabled-when-false');
+    assert.equal(switchValueOf(undefined, polarity), 'unset');
+    assert.equal(switchValueOf('yes', polarity), 'true', "vars.X != 'false' runs on anything but 'false'");
+    assert.equal(switchValueOf(' false ', polarity), 'false');
+    assert.equal(switchIsOn('unset', polarity), true, 'unset is ON for an opt-out switch');
+    assert.equal(switchIsOn('unset'), false, 'and OFF for an opt-in one');
+    assert.equal(switchIsOn('unknown', polarity), null);
+    assert.equal(nextSwitchValue('unset', polarity), 'false', "writing 'true' would leave it on");
+    assert.equal(nextSwitchValue('true', polarity), 'false');
+    assert.equal(nextSwitchValue('false', polarity), 'true');
+    assert.equal(nextSwitchValue('unknown', polarity), null);
+    assert.equal(nextSwitchValue('unset', 'unknown'), 'true', 'a polarity the workflow does not say is read as opt-in');
   });
 
   test('buildLaneStates joins the manifest with what the repository said', () => {

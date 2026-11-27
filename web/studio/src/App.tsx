@@ -8,6 +8,7 @@ import {
   AccountWorkspace,
   AieoWorkspace,
   BookShelf,
+  ContentSwitches,
   BookView,
   ChapterWriter,
   ClaimCheckView,
@@ -108,6 +109,8 @@ export function pathFor(to: Destination): string {
       return `/ai/automations/${to.id ?? 'new'}`;
     case 'aieo':
       return to.section && to.section !== 'audit' ? `/sites/aieo/${to.section}` : '/sites/aieo';
+    case 'switches':
+      return '/sites/switches';
     case 'account':
       return to.section && to.section !== 'security' ? `/account/${to.section}` : '/account';
   }
@@ -162,6 +165,7 @@ export function App({ api, stream, auth = browserAuth, leave }: { api: ApiClient
                 <Route path="distribution/posts/:post" element={<DistributionArea />} />
                 <Route path="distribution/channels/:channel" element={<DistributionArea />} />
                 <Route path="sites/aieo/:section?" element={<Aieo />} />
+                <Route path="sites/switches" element={<Switches />} />
                 <Route path="account/provider/callback" element={<ProviderReturn />} />
                 <Route path="account/:section?" element={<Account />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
@@ -369,6 +373,14 @@ function Aieo() {
   return (
     <Section title="AIEO">
       <AieoWorkspace siteId={siteId} section={(section as AieoSection | undefined) ?? 'audit'} />
+    </Section>
+  );
+}
+
+function Switches() {
+  return (
+    <Section title="Content switches">
+      <ContentSwitches />
     </Section>
   );
 }

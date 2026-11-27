@@ -341,6 +341,28 @@ features:
     scenarios:
       - verify/scenarios/studio-directive-brief.yml
     evidence: []
+  - id: ZER0-049
+    title: "Content switches: the outlets' GitHub Actions loops, read against the hub's map and flipped with a reason"
+    description: "A person who manages sites opens Sites → Content switches and reads each content outlet's loops (bash-365.com, lifehacker.dev, it-journey by default) — workflow, variable, opt-in or opt-out, the live value, whether the loop is on, what the hub's switch map records, drift and holds — and, with the platform's GitHub credential set (encrypted, write-only), flips one switch or every switch of an outlet through a modal that shows what each variable is and will be and takes a reason; the write is a job that reads each variable back and is recorded as an event, and the hub's map stays the record. Without a credential it is read-only and says what is needed."
+    implemented: true
+    surface: ui
+    link: /studio/sites/switches
+    docs: content/switches/README.md
+    tags: [ studio, web, sites, fleet, switches, github ]
+    date: 2026-11-25
+    tests:
+      - content/tests/switches/test_services.py
+      - content/tests/switches/test_github.py
+      - content/tests/switches/test_api.py
+      - content/tests/outbox/test_contracts.py
+      - web/packages/ui/test/switches.test.tsx
+      - web/studio/test/app.test.tsx
+      - src/test/webview.test.ts
+      - src/test/fleet.test.ts
+    scenarios:
+      - verify/scenarios/studio-content-switches.yml
+    evidence:
+      - test/evidence/studio-content-switches/
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030

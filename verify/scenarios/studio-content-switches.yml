@@ -1,0 +1,44 @@
+# =============================================================================
+# verify/scenarios/studio-content-switches.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# The content outlets' switches (ADR 0013), on the seeded demo: the editor —
+# who manages sites there — opens Sites → Content switches and reads each
+# outlet's loops against the hub's switch map, read-only, because the platform
+# holds no GitHub credential yet: the section says exactly what it needs, every
+# live value is "unreadable" (never "off"), every toggle and every "All on" is
+# disabled, and the map's own word — its state, its hold on auto-merge — is
+# shown. The page never scrolls sideways; each table scrolls in its own box.
+#
+# What this scenario cannot record, and why: a preview, an apply and the job
+# that writes the variables. Each reads or writes a real repository's Actions
+# variables with a credential; the scenario has none and reaches no network
+# (verify.yml reads the hub's map from verify/fixtures/hub/). They are covered
+# without a network by content/tests/switches/ (GitHub recorded with respx) and
+# web/packages/ui/test/switches.test.tsx; the confirm modal over a stub GitHub
+# is in test/evidence/studio-content-switches/ (its README says how).
+# =============================================================================
+id: studio-content-switches
+feature: ZER0-049
+title: "Read the content outlets' switches against the hub's map, read-only without a credential"
+description: "An editor who manages sites opens Content switches and sees each outlet's GitHub Actions loops — workflow, variable, semantics, live value, effective state, the map's state, drift and holds — read-only, because no credential is set, with what the platform needs to read and flip them."
+viewports: [desktop, mobile]
+# Before the sign-in form the studio asks allauth whether anyone is signed in;
+# signed out, that answer is a 401, which Chromium logs as a console error.
+ignore_console: ["status of 401 \\(Unauthorized\\)"]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - goto: /studio/sites
+  - click: "role=button[name='Content switches']"
+  - wait: { selector: "role=heading[name='Content switches']" }
+  - wait: { selector: "role=table[name='Switches of bamr87/lifehacker.dev']" }
+  - expect: { text: "Read-only: no GitHub credential" }
+  - expect: { text: "“Variables”" }
+  - expect: { text: "held: HUB_ORIGINATION_HOLD" }
+  - expect: { visible: "role=switch[name='CONTENT_FACTORY_ENABLED on bamr87/lifehacker.dev']" }
+  - expect: { no_horizontal_scroll: true }
+  - expect: { no_console_errors: true }
+  - { screenshot: read-only, full_page: true }

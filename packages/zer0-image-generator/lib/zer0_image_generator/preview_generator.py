@@ -62,7 +62,7 @@ Usage (from a Jekyll site root — via the gem or the bare file):
     python3 preview_generator.py --provider local -f <file>
     python3 preview_generator.py --front-matter-key image --review none ...
 
-Dependencies: Python 3.9+ stdlib + PyYAML (`pip3 install pyyaml`). No other
+Dependencies: Python 3.10+ stdlib + PyYAML (`pip3 install pyyaml`). No other
 packages — HTTP goes through urllib, multipart bodies are hand-rolled.
 
 Exit codes: 0 = success; 1 = validation failure or any per-file errors.

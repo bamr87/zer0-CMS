@@ -48,6 +48,7 @@ WITHOUT = {
     "outbox.ProcessedEvent": "on no surface: by event id and consumer",
     "sites.SiteSettings": "one per site, by the site's id",
     "suggestions.BlockProvenance": "on no surface",
+    "switches.SwitchConfig": "the one row, at /api/v2/switches/config/",
 }
 
 WAGTAIL_OWNED = (Page, AbstractImage, AbstractRendition, Task)

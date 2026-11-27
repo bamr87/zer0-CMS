@@ -28995,6 +28995,632 @@
                 }
             }
         },
+        "/api/v2/switches/": {
+            "get": {
+                "operationId": "switches_board",
+                "summary": "Every outlet's switches as set now, against the hub's switch map",
+                "tags": [
+                    "switches"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SwitchBoard"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/switches/apply/": {
+            "post": {
+                "operationId": "switches_apply",
+                "summary": "Apply a previewed, confirmed flip with its reason (a job: set, read back, recorded as an event)",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    }
+                ],
+                "tags": [
+                    "switches"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchApplyRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchApplyRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchApplyRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SwitchFlipAccepted"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/switches/config/": {
+            "get": {
+                "operationId": "switches_config",
+                "tags": [
+                    "switches"
+                ],
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SwitchConfig"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "switches_config_update",
+                "summary": "Change the outlets; set or remove the credential (never returned)",
+                "tags": [
+                    "switches"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSwitchConfigRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSwitchConfigRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedSwitchConfigRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SwitchConfig"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/switches/preview/": {
+            "post": {
+                "operationId": "switches_preview",
+                "summary": "What a flip would write, read from GitHub now; writes nothing",
+                "tags": [
+                    "switches"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchFlipRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchFlipRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SwitchFlipRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "userToken": []
+                    },
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SwitchPreview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/tools/": {
             "get": {
                 "operationId": "tools_retrieve",
@@ -42131,6 +42757,27 @@
                     }
                 }
             },
+            "PatchedSwitchConfigRequest": {
+                "type": "object",
+                "properties": {
+                    "outlets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 140
+                        },
+                        "description": "owner/name each.",
+                        "maxItems": 20
+                    },
+                    "credential": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "description": "Write-only; encrypted at rest. An empty string removes it.",
+                        "maxLength": 400
+                    }
+                }
+            },
             "Person": {
                 "type": "object",
                 "properties": {
@@ -45255,6 +45902,566 @@
                         "type": "string"
                     }
                 }
+            },
+            "Switch": {
+                "type": "object",
+                "properties": {
+                    "loop": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The hub map's id for the loop; null: not in the map."
+                    },
+                    "workflow": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variable": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The repository variable that gates it, if any."
+                    },
+                    "gate": {
+                        "type": "string",
+                        "description": "repo_variable, none, env, fleet_config or planned (the map's gate kind)."
+                    },
+                    "semantics": {
+                        "description": "null: not in the map, so unknown.\n\n* `opt_in` - opt_in\n* `opt_out` - opt_out",
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchSemanticsEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
+                    "default": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchOnOffEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
+                    "in_map": {
+                        "type": "boolean"
+                    },
+                    "live": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The variable's value now; null when unset or unread."
+                    },
+                    "live_state": {
+                        "$ref": "#/components/schemas/SwitchLiveStateEnum"
+                    },
+                    "effective": {
+                        "$ref": "#/components/schemas/SwitchEffectiveEnum"
+                    },
+                    "why": {
+                        "type": "string"
+                    },
+                    "map_state": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchMapStateEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
+                    "verified": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "set_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "set_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "drift": {
+                        "type": "boolean",
+                        "description": "The live value disagrees with what the map records: record it there."
+                    },
+                    "hold": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchHold"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "A code-level hold that idles the workflow whatever the variable."
+                    },
+                    "flippable": {
+                        "type": "boolean"
+                    },
+                    "merge_authority": {
+                        "type": "boolean",
+                        "description": "It decides what merges without a person: off only, here."
+                    }
+                },
+                "required": [
+                    "default",
+                    "drift",
+                    "effective",
+                    "flippable",
+                    "gate",
+                    "hold",
+                    "in_map",
+                    "live",
+                    "live_state",
+                    "loop",
+                    "map_state",
+                    "merge_authority",
+                    "reason",
+                    "semantics",
+                    "set_at",
+                    "set_by",
+                    "variable",
+                    "verified",
+                    "why",
+                    "workflow"
+                ]
+            },
+            "SwitchActionEnum": {
+                "enum": [
+                    "update",
+                    "create",
+                    "none",
+                    "refused",
+                    "unreadable"
+                ],
+                "type": "string",
+                "description": "* `update` - update\n* `create` - create\n* `none` - none\n* `refused` - refused\n* `unreadable` - unreadable"
+            },
+            "SwitchApplyRequest": {
+                "type": "object",
+                "properties": {
+                    "repo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The outlet, owner/name."
+                    },
+                    "switch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "One variable; leave it out for every switch."
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SwitchOnOffEnum"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Why; recorded with the flip.",
+                        "maxLength": 500
+                    },
+                    "digest": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The preview's digest: the flip is refused if anything changed since."
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "description": "Must be true: the person confirmed the preview."
+                    }
+                },
+                "required": [
+                    "confirm",
+                    "digest",
+                    "reason",
+                    "repo",
+                    "target"
+                ]
+            },
+            "SwitchBoard": {
+                "type": "object",
+                "properties": {
+                    "hub": {
+                        "$ref": "#/components/schemas/SwitchHub"
+                    },
+                    "credential": {
+                        "$ref": "#/components/schemas/SwitchCredential"
+                    },
+                    "outlets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SwitchOutlet"
+                        }
+                    }
+                },
+                "required": [
+                    "credential",
+                    "hub",
+                    "outlets"
+                ]
+            },
+            "SwitchChange": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "loops": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "in_map": {
+                        "type": "boolean"
+                    },
+                    "current": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "current_state": {
+                        "$ref": "#/components/schemas/SwitchLiveStateEnum"
+                    },
+                    "new": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "$ref": "#/components/schemas/SwitchActionEnum"
+                    },
+                    "why": {
+                        "type": "string"
+                    },
+                    "hold": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchHold"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "action",
+                    "current",
+                    "current_state",
+                    "hold",
+                    "in_map",
+                    "loops",
+                    "name",
+                    "new",
+                    "why"
+                ]
+            },
+            "SwitchConfig": {
+                "type": "object",
+                "properties": {
+                    "outlets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 140
+                        },
+                        "description": "owner/name each.",
+                        "maxItems": 20
+                    },
+                    "has_credential": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "has_credential",
+                    "updated_at"
+                ]
+            },
+            "SwitchCredential": {
+                "type": "object",
+                "properties": {
+                    "set": {
+                        "type": "boolean"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "needs": {
+                        "type": "string",
+                        "description": "What the platform needs to read and set the variables."
+                    }
+                },
+                "required": [
+                    "error",
+                    "needs",
+                    "set"
+                ]
+            },
+            "SwitchEffectiveEnum": {
+                "enum": [
+                    "on",
+                    "off",
+                    "unknown"
+                ],
+                "type": "string",
+                "description": "* `on` - on\n* `off` - off\n* `unknown` - unknown"
+            },
+            "SwitchFlipAccepted": {
+                "type": "object",
+                "properties": {
+                    "job": {
+                        "$ref": "#/components/schemas/Job"
+                    }
+                },
+                "required": [
+                    "job"
+                ]
+            },
+            "SwitchFlipRequest": {
+                "type": "object",
+                "properties": {
+                    "repo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The outlet, owner/name."
+                    },
+                    "switch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "One variable; leave it out for every switch."
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SwitchOnOffEnum"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "repo",
+                    "target"
+                ]
+            },
+            "SwitchHold": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "lift": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SwitchHub": {
+                "type": "object",
+                "properties": {
+                    "repo": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "ref": {
+                        "type": "string"
+                    },
+                    "read_from": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SwitchHubSourceEnum"
+                            }
+                        ],
+                        "description": "GitHub, or the hub checkout ZER0_HUB_CHECKOUT names.\n\n* `github` - github\n* `checkout` - checkout"
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "path",
+                    "read",
+                    "read_from",
+                    "ref",
+                    "repo"
+                ]
+            },
+            "SwitchHubSourceEnum": {
+                "enum": [
+                    "github",
+                    "checkout"
+                ],
+                "type": "string",
+                "description": "* `github` - github\n* `checkout` - checkout"
+            },
+            "SwitchLiveStateEnum": {
+                "enum": [
+                    "set",
+                    "unset",
+                    "unreadable",
+                    "none"
+                ],
+                "type": "string",
+                "description": "* `set` - set\n* `unset` - unset\n* `unreadable` - unreadable\n* `none` - none"
+            },
+            "SwitchMapStateEnum": {
+                "enum": [
+                    "on",
+                    "off",
+                    "unverified"
+                ],
+                "type": "string",
+                "description": "* `on` - on\n* `off` - off\n* `unverified` - unverified"
+            },
+            "SwitchOnOffEnum": {
+                "enum": [
+                    "on",
+                    "off"
+                ],
+                "type": "string",
+                "description": "* `on` - on\n* `off` - off"
+            },
+            "SwitchOutlet": {
+                "type": "object",
+                "properties": {
+                    "repo": {
+                        "type": "string"
+                    },
+                    "readable": {
+                        "type": "boolean"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "switches": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Switch"
+                        }
+                    }
+                },
+                "required": [
+                    "error",
+                    "readable",
+                    "repo",
+                    "switches"
+                ]
+            },
+            "SwitchPreview": {
+                "type": "object",
+                "properties": {
+                    "repo": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "$ref": "#/components/schemas/SwitchScopeEnum"
+                    },
+                    "switch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "target": {
+                        "$ref": "#/components/schemas/SwitchOnOffEnum"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "changes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SwitchChange"
+                        }
+                    },
+                    "writes": {
+                        "type": "integer",
+                        "description": "How many variables a flip would write."
+                    },
+                    "digest": {
+                        "type": "string"
+                    },
+                    "credential": {
+                        "$ref": "#/components/schemas/SwitchCredential"
+                    },
+                    "hub": {
+                        "$ref": "#/components/schemas/SwitchHub"
+                    }
+                },
+                "required": [
+                    "changes",
+                    "credential",
+                    "digest",
+                    "hub",
+                    "reason",
+                    "repo",
+                    "scope",
+                    "switch",
+                    "target",
+                    "writes"
+                ]
+            },
+            "SwitchScopeEnum": {
+                "enum": [
+                    "switch",
+                    "outlet"
+                ],
+                "type": "string",
+                "description": "* `switch` - switch\n* `outlet` - outlet"
+            },
+            "SwitchSemanticsEnum": {
+                "enum": [
+                    "opt_in",
+                    "opt_out"
+                ],
+                "type": "string",
+                "description": "* `opt_in` - opt_in\n* `opt_out` - opt_out"
             },
             "SyncOptionsRequest": {
                 "type": "object",

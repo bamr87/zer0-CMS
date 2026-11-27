@@ -3753,6 +3753,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/switches/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every outlet's switches as set now, against the hub's switch map */
+        get: operations["switches_board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/switches/apply/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a previewed, confirmed flip with its reason (a job: set, read back, recorded as an event) */
+        post: operations["switches_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/switches/config/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["switches_config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the outlets; set or remove the credential (never returned) */
+        patch: operations["switches_config_update"];
+        trace?: never;
+    };
+    "/api/v2/switches/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What a flip would write, read from GitHub now; writes nothing */
+        post: operations["switches_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/tools/": {
         parameters: {
             query?: never;
@@ -7990,6 +8058,12 @@ export interface components {
             /** @description Authors, in byline order. */
             byline_ids?: string[];
         };
+        PatchedSwitchConfigRequest: {
+            /** @description owner/name each. */
+            outlets?: string[];
+            /** @description Write-only; encrypted at rest. An empty string removes it. */
+            credential?: string;
+        };
         Person: {
             id: number;
             username: string;
@@ -8992,6 +9066,190 @@ export interface components {
             with?: string[];
             reason?: string;
         };
+        Switch: {
+            /** @description The hub map's id for the loop; null: not in the map. */
+            loop: string | null;
+            workflow: string | null;
+            /** @description The repository variable that gates it, if any. */
+            variable: string | null;
+            /** @description repo_variable, none, env, fleet_config or planned (the map's gate kind). */
+            gate: string;
+            /**
+             * @description null: not in the map, so unknown.
+             *
+             *     * `opt_in` - opt_in
+             *     * `opt_out` - opt_out
+             */
+            semantics: components["schemas"]["SwitchSemanticsEnum"] | components["schemas"]["NullEnum"];
+            default: components["schemas"]["SwitchOnOffEnum"] | components["schemas"]["NullEnum"];
+            in_map: boolean;
+            /** @description The variable's value now; null when unset or unread. */
+            live: string | null;
+            live_state: components["schemas"]["SwitchLiveStateEnum"];
+            effective: components["schemas"]["SwitchEffectiveEnum"];
+            why: string;
+            map_state: components["schemas"]["SwitchMapStateEnum"] | components["schemas"]["NullEnum"];
+            verified: boolean;
+            reason: string | null;
+            set_by: string | null;
+            set_at: string | null;
+            /** @description The live value disagrees with what the map records: record it there. */
+            drift: boolean;
+            /** @description A code-level hold that idles the workflow whatever the variable. */
+            hold: components["schemas"]["SwitchHold"] | null;
+            flippable: boolean;
+            /** @description It decides what merges without a person: off only, here. */
+            merge_authority: boolean;
+        };
+        /**
+         * @description * `update` - update
+         *     * `create` - create
+         *     * `none` - none
+         *     * `refused` - refused
+         *     * `unreadable` - unreadable
+         * @enum {string}
+         */
+        SwitchActionEnum: "update" | "create" | "none" | "refused" | "unreadable";
+        SwitchApplyRequest: {
+            /** @description The outlet, owner/name. */
+            repo: string;
+            /** @description One variable; leave it out for every switch. */
+            switch?: string | null;
+            target: components["schemas"]["SwitchOnOffEnum"];
+            /** @description Why; recorded with the flip. */
+            reason: string;
+            /** @description The preview's digest: the flip is refused if anything changed since. */
+            digest: string;
+            /** @description Must be true: the person confirmed the preview. */
+            confirm: boolean;
+        };
+        SwitchBoard: {
+            hub: components["schemas"]["SwitchHub"];
+            credential: components["schemas"]["SwitchCredential"];
+            outlets: components["schemas"]["SwitchOutlet"][];
+        };
+        SwitchChange: {
+            name: string;
+            loops: string[];
+            in_map: boolean;
+            current: string | null;
+            current_state: components["schemas"]["SwitchLiveStateEnum"];
+            new: string;
+            action: components["schemas"]["SwitchActionEnum"];
+            why: string;
+            hold: components["schemas"]["SwitchHold"] | null;
+        };
+        SwitchConfig: {
+            /** @description owner/name each. */
+            outlets?: string[];
+            readonly has_credential: boolean;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        SwitchCredential: {
+            set: boolean;
+            error: string;
+            /** @description What the platform needs to read and set the variables. */
+            needs: string;
+        };
+        /**
+         * @description * `on` - on
+         *     * `off` - off
+         *     * `unknown` - unknown
+         * @enum {string}
+         */
+        SwitchEffectiveEnum: "on" | "off" | "unknown";
+        SwitchFlipAccepted: {
+            job: components["schemas"]["Job"];
+        };
+        SwitchFlipRequest: {
+            /** @description The outlet, owner/name. */
+            repo: string;
+            /** @description One variable; leave it out for every switch. */
+            switch?: string | null;
+            target: components["schemas"]["SwitchOnOffEnum"];
+            /** @default  */
+            reason: string;
+        };
+        SwitchHold: {
+            kind?: string;
+            name?: string;
+            value?: string;
+            source?: string;
+            lift?: string;
+        };
+        SwitchHub: {
+            repo: string;
+            path: string;
+            ref: string;
+            /**
+             * @description GitHub, or the hub checkout ZER0_HUB_CHECKOUT names.
+             *
+             *     * `github` - github
+             *     * `checkout` - checkout
+             */
+            read_from: components["schemas"]["SwitchHubSourceEnum"];
+            read: boolean;
+            error: string;
+        };
+        /**
+         * @description * `github` - github
+         *     * `checkout` - checkout
+         * @enum {string}
+         */
+        SwitchHubSourceEnum: "github" | "checkout";
+        /**
+         * @description * `set` - set
+         *     * `unset` - unset
+         *     * `unreadable` - unreadable
+         *     * `none` - none
+         * @enum {string}
+         */
+        SwitchLiveStateEnum: "set" | "unset" | "unreadable" | "none";
+        /**
+         * @description * `on` - on
+         *     * `off` - off
+         *     * `unverified` - unverified
+         * @enum {string}
+         */
+        SwitchMapStateEnum: "on" | "off" | "unverified";
+        /**
+         * @description * `on` - on
+         *     * `off` - off
+         * @enum {string}
+         */
+        SwitchOnOffEnum: "on" | "off";
+        SwitchOutlet: {
+            repo: string;
+            readable: boolean;
+            error: string;
+            switches: components["schemas"]["Switch"][];
+        };
+        SwitchPreview: {
+            repo: string;
+            scope: components["schemas"]["SwitchScopeEnum"];
+            switch: string | null;
+            target: components["schemas"]["SwitchOnOffEnum"];
+            reason: string;
+            changes: components["schemas"]["SwitchChange"][];
+            /** @description How many variables a flip would write. */
+            writes: number;
+            digest: string;
+            credential: components["schemas"]["SwitchCredential"];
+            hub: components["schemas"]["SwitchHub"];
+        };
+        /**
+         * @description * `switch` - switch
+         *     * `outlet` - outlet
+         * @enum {string}
+         */
+        SwitchScopeEnum: "switch" | "outlet";
+        /**
+         * @description * `opt_in` - opt_in
+         *     * `opt_out` - opt_out
+         * @enum {string}
+         */
+        SwitchSemanticsEnum: "opt_in" | "opt_out";
         SyncOptionsRequest: {
             /**
              * @description Take a changed file over a page changed here since (else a conflict).
@@ -26683,6 +26941,442 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuggestionDecided"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switches_board: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchBoard"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switches_apply: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchApplyRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SwitchApplyRequest"];
+                "multipart/form-data": components["schemas"]["SwitchApplyRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchFlipAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switches_config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchConfig"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switches_config_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSwitchConfigRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSwitchConfigRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSwitchConfigRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchConfig"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switches_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchFlipRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SwitchFlipRequest"];
+                "multipart/form-data": components["schemas"]["SwitchFlipRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchPreview"];
                 };
             };
             401: {

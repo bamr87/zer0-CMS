@@ -53,7 +53,7 @@ group :jekyll_plugins do
 end
 ```
 
-Requires `python3` (3.9+) with PyYAML — the command checks and tells you if either is missing:
+Requires `python3` (3.10+) with PyYAML — the command checks and tells you if either is missing. macOS's built-in `/usr/bin/python3` is 3.9 and is not tested; install a current one (`brew install python`) or point `PYTHON=` at it:
 
 ```bash
 python3 -m pip install pyyaml

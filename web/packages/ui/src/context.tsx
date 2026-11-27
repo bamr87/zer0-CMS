@@ -57,6 +57,8 @@ export type Destination =
   | { to: 'automation'; id?: string }
   // The AIEO workspace (G7), under Sites.
   | { to: 'aieo'; section?: AieoSection }
+  // The content outlets' switches, under Sites.
+  | { to: 'switches' }
   // The person's account (G3): security, sessions, API tokens.
   | { to: 'account'; section?: AccountSection };
 
